@@ -97,10 +97,9 @@ fun SitulaApp(context: Context) {
                     userAgentString = userAgentString.replace("; wv", "")
                 }
 
-                CookieManager.getInstance().also { cookies ->
-                    cookies.setAcceptCookie(true)
-                    cookies.setAcceptThirdPartyCookies(this, true)
-                }
+                val cookieManager = CookieManager.getInstance()
+                cookieManager.setAcceptCookie(true)
+                cookieManager.setAcceptThirdPartyCookies(this, true)
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
