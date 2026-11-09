@@ -49,14 +49,21 @@ fun MoviePlayerScreen(movie: Movie, onBack: () -> Unit) {
     val appContext = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
     val player = remember(movie.tmdbId, streamUrl) { ExoPlayer.Builder(appContext).build() }
-    val recorder = remember(movie.tmdbId) { WatchProgressRecorder(SitulaDatabase.get(appContext).watchHistoryDao()) }
+    val historyDao = remember(movie.tmdbId) { SitulaDatabase.get(appContext).watchHistoryDao() }
+    val recorder = remember(movie.tmdbId) { WatchProgressRecorder(historyDao) }
     val playerScope = remember(movie.tmdbId, streamUrl) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
     DisposableEffect(player, movie.tmdbId, lifecycleOwner) {
         player.setMediaItem(MediaItem.fromUri(streamUrl))
         player.prepare()
-        recorder.start(movie, player)
-        player.playWhenReady = true
+        playerScope.launch {
+            val previous = historyDao.find(movie.tmdbId)
+            if (previous != null && !previous.completed && previous.positionMs > 0L) {
+                player.seekTo(previous.positionMs)
+            }
+            recorder.start(movie, player)
+            player.playWhenReady = true
+        }
 
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
