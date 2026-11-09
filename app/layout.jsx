@@ -33,7 +33,12 @@ const extensionAttributeCleanup = `(function () {
         }
       }
     });
-    observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true });
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["bis_skin_checked", "bis_register"]
+    });
   }
 })();`;
 
