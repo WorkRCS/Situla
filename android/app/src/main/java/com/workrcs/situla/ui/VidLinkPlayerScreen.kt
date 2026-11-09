@@ -184,7 +184,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
         <body>
           <iframe id="situla-vidlink-player"
                   src="${htmlAttribute(playerUrl)}"
-                  allow="autoplay; fullscreen; picture-in-picture"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                   referrerpolicy="strict-origin-when-cross-origin"
                   sandbox="allow-scripts allow-same-origin allow-presentation"
                   allowfullscreen></iframe>
