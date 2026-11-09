@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeInput, normalizeImportIds, describeTmdbNetworkError, tmdbRequest } from '../src/crawler.js';
+import { normalizeNumericIds } from '../src/series.js';
 
 test('uses the requested release years and safe page defaults', () => {
   const result = normalizeInput({ startYear: 2010, endYear: 2026 });
@@ -58,4 +59,16 @@ test('normalizes a deduplicated batch of IMDb IDs and caps requests at 20', () =
   assert.throws(() => normalizeImportIds({ source: 'imdb', ids: ['wrong-id'] }), /IMDb IDs/);
   assert.throws(() => normalizeImportIds({ source: 'imdb', ids: Array.from({ length: 21 }, (_, i) => 'tt' + String(i + 1000000)) }), /between 1 and 20/);
   assert.throws(() => normalizeImportIds({ source: 'tmdb', ids: ['27205'] }), /Only IMDb title IDs/);
+});
+
+
+test('normalizes and deduplicates TMDB TV series IDs', () => {
+  assert.deepEqual(normalizeNumericIds(['1396', 1399, '1396'], 'TMDB TV IDs'), [1396, 1399]);
+  assert.throws(() => normalizeNumericIds(['tt0944947'], 'TMDB TV IDs'), /positive numeric IDs/);
+});
+
+test('validates MyAnimeList IDs and limits imports to 12 per batch', () => {
+  assert.deepEqual(normalizeNumericIds(['5114', 16498], 'MyAnimeList IDs', 12), [5114, 16498]);
+  assert.throws(() => normalizeNumericIds(['bad-id'], 'MyAnimeList IDs', 12), /positive numeric IDs/);
+  assert.throws(() => normalizeNumericIds(Array.from({ length: 13 }, (_, index) => index + 1), 'MyAnimeList IDs', 12), /between 1 and 12/);
 });
