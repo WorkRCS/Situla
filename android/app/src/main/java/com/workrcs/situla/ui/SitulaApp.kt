@@ -71,6 +71,8 @@ private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HIST
 @Composable
 fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
+    var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+    var playingMovie by remember { mutableStateOf<Movie?>(null) }
     val api = remember { SitulaApiProvider.create(BuildConfig.API_BASE_URL) }
     val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
@@ -82,7 +84,10 @@ fun SitulaApp(context: Context) {
     val history by database.watchHistoryDao().observeRecent().collectAsState(initial = emptyList())
 
     suspend fun loadMovies() {
-        if (api == null) { error = "Set situlaApiBaseUrl in android/local.properties to your deployed backend URL."; return }
+        if (api == null) {
+            error = "Set situlaApiBaseUrl in android/local.properties to your deployed backend URL."
+            return
+        }
         loading = true
         runCatching { api.movies(page = 1, limit = 20) }
             .onSuccess { movies = it.items; error = null }
@@ -94,72 +99,118 @@ fun SitulaApp(context: Context) {
     Scaffold(
         containerColor = Color(0xFF080B12),
         bottomBar = {
-            NavigationBar(containerColor = Color(0xFF101722)) {
-                Tab.entries.forEach { target ->
-                    val icon = when (target) {
-                        Tab.HOME -> Icons.Default.Home
-                        Tab.SEARCH -> Icons.Default.Search
-                        Tab.HISTORY -> Icons.Default.History
-                        Tab.SETTINGS -> Icons.Default.Settings
+            if (selectedMovie == null && playingMovie == null) {
+                NavigationBar(containerColor = Color(0xFF101722)) {
+                    Tab.entries.forEach { target ->
+                        val icon = when (target) {
+                            Tab.HOME -> Icons.Default.Home
+                            Tab.SEARCH -> Icons.Default.Search
+                            Tab.HISTORY -> Icons.Default.History
+                            Tab.SETTINGS -> Icons.Default.Settings
+                        }
+                        NavigationBarItem(
+                            selected = tab == target,
+                            onClick = { tab = target },
+                            icon = { Icon(icon, target.label) },
+                            label = { Text(target.label) }
+                        )
                     }
-                    NavigationBarItem(selected = tab == target, onClick = { tab = target }, icon = { Icon(icon, target.label) }, label = { Text(target.label) })
                 }
             }
         }
     ) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).background(Color(0xFF080B12)).padding(horizontal = 16.dp)) {
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                BrandMark()
-                Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                    Text("SITULA", fontSize = 17.sp, fontWeight = FontWeight.Black, letterSpacing = 2.1.sp)
-                    Text("MOVIES · DISCOVER MORE", fontSize = 8.sp, color = Color(0xFF8D98A9), letterSpacing = 1.2.sp)
-                }
-                if (tab != Tab.SEARCH) IconButton(onClick = { tab = Tab.SEARCH }) { Icon(Icons.Default.Search, "Search movies") }
-            }
-            when (tab) {
-                Tab.HOME -> HomeScreen(movies, loading, error, history, onRetry = { scope.launch { loadMovies() } }, onSearch = { tab = Tab.SEARCH })
-                Tab.SEARCH -> SearchScreen(
-                    query, searchResults, loading,
-                    onQueryChange = { query = it },
-                    onSearch = {
-                        if (api != null && query.isNotBlank()) scope.launch {
-                            loading = true
-                            runCatching { api.movies(page = 1, limit = 40, query = query.trim()) }
-                                .onSuccess { searchResults = it.items; error = null }
-                                .onFailure { error = it.message ?: "Search failed." }
-                            loading = false
-                        } else error = "Configure the backend URL and enter a movie title."
-                    },
-                    error = error
+            when {
+                playingMovie != null -> MoviePlayerScreen(
+                    context = context,
+                    movie = playingMovie!!,
+                    onBack = { playingMovie = null }
                 )
-                Tab.HISTORY -> HistoryScreen(history)
-                Tab.SETTINGS -> SettingsScreen(api)
+                selectedMovie != null -> MovieDetailScreen(
+                    movie = selectedMovie!!,
+                    onBack = { selectedMovie = null },
+                    onPlay = { selectedMovie?.let { if (!it.playbackUrl.isNullOrBlank()) playingMovie = it } }
+                )
+                else -> {
+                    Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        BrandMark()
+                        Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                            Text("SITULA", fontSize = 17.sp, fontWeight = FontWeight.Black, letterSpacing = 2.1.sp)
+                            Text("MOVIES · DISCOVER MORE", fontSize = 8.sp, color = Color(0xFF8D98A9), letterSpacing = 1.2.sp)
+                        }
+                        if (tab != Tab.SEARCH) IconButton(onClick = { tab = Tab.SEARCH }) { Icon(Icons.Default.Search, "Search movies") }
+                    }
+                    when (tab) {
+                        Tab.HOME -> HomeScreen(
+                            movies, loading, error, history,
+                            onRetry = { scope.launch { loadMovies() } },
+                            onOpenMovie = { selectedMovie = it }
+                        )
+                        Tab.SEARCH -> SearchScreen(
+                            query, searchResults, loading,
+                            onQueryChange = { query = it },
+                            onSearch = {
+                                if (api != null && query.isNotBlank()) scope.launch {
+                                    loading = true
+                                    runCatching { api.movies(page = 1, limit = 40, query = query.trim()) }
+                                        .onSuccess { searchResults = it.items; error = null }
+                                        .onFailure { error = it.message ?: "Search failed." }
+                                    loading = false
+                                } else error = "Configure the backend URL and enter a movie title."
+                            },
+                            onOpenMovie = { selectedMovie = it },
+                            error = error
+                        )
+                        Tab.HISTORY -> HistoryScreen(history)
+                        Tab.SETTINGS -> SettingsScreen(api)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(movies: List<Movie>, loading: Boolean, error: String?, history: List<WatchHistoryEntity>, onRetry: () -> Unit, onSearch: () -> Unit) {
+private fun HomeScreen(
+    movies: List<Movie>,
+    loading: Boolean,
+    error: String?,
+    history: List<WatchHistoryEntity>,
+    onRetry: () -> Unit,
+    onOpenMovie: (Movie) -> Unit
+) {
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        item { if (movies.isNotEmpty()) HeroMovie(movies.first(), onOpen = onSearch) else EmptyCatalog(loading, error, onRetry) }
+        item {
+            if (movies.isNotEmpty()) HeroMovie(movies.first(), onOpen = { onOpenMovie(movies.first()) })
+            else EmptyCatalog(loading, error, onRetry)
+        }
         item {
             SectionTitle("Continue watching", if (history.isNotEmpty()) "ON THIS DEVICE" else null)
-            if (history.isEmpty()) Text("Your watch progress will appear here after playback is connected.", color = Color(0xFF8D98A9), fontSize = 12.sp)
-            else LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(history.take(10), key = { it.tmdbId }) { item ->
-                    Column(Modifier.size(width = 122.dp, height = 148.dp)) {
-                        AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.weight(1f).fillMaxWidth())
-                        Text(item.title, fontSize = 11.sp, maxLines = 1)
-                        Text(formatDuration(item.positionMs) + " / " + formatDuration(item.durationMs), fontSize = 9.sp, color = Color(0xFF9BA5B4))
+            if (history.isEmpty()) {
+                Text("Your watch progress will appear here after playback is connected.", color = Color(0xFF8D98A9), fontSize = 12.sp)
+            } else {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(history.take(10), key = { it.tmdbId }) { item ->
+                        Column(Modifier.size(width = 122.dp, height = 148.dp)) {
+                            AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.weight(1f).fillMaxWidth())
+                            Text(item.title, fontSize = 11.sp, maxLines = 1)
+                            Text(formatDuration(item.positionMs) + " / " + formatDuration(item.durationMs), fontSize = 9.sp, color = Color(0xFF9BA5B4))
+                        }
                     }
                 }
             }
         }
         item {
             SectionTitle("Discover movies", "TMDB CATALOG")
-            if (movies.isEmpty() && !loading) Text("No approved titles in the catalog yet. Import titles in Admin and approve them first.", color = Color(0xFF8D98A9), fontSize = 12.sp)
-            else LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(movies, key = { it.tmdbId }) { movie -> MoviePoster(movie, Modifier.size(width = 116.dp)) } }
+            if (movies.isEmpty() && !loading) {
+                Text("No approved titles in the catalog yet. Import titles in Admin and approve them first.", color = Color(0xFF8D98A9), fontSize = 12.sp)
+            } else {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(movies, key = { it.tmdbId }) { movie ->
+                        MoviePoster(movie, Modifier.size(width = 116.dp), onClick = { onOpenMovie(movie) })
+                    }
+                }
+            }
         }
     }
 }
@@ -179,15 +230,30 @@ private fun EmptyCatalog(loading: Boolean, error: String?, onRetry: () -> Unit) 
 }
 
 @Composable
-private fun SearchScreen(query: String, results: List<Movie>, busy: Boolean, onQueryChange: (String) -> Unit, onSearch: () -> Unit, error: String?) {
+private fun SearchScreen(
+    query: String,
+    results: List<Movie>,
+    busy: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onOpenMovie: (Movie) -> Unit,
+    error: String?
+) {
     Column(Modifier.fillMaxSize()) {
-        OutlinedTextField(query, onQueryChange, singleLine = true, label = { Text("Search movies") }, leadingIcon = { Icon(Icons.Default.Search, null) }, modifier = Modifier.fillMaxWidth())
-        Button(onClick = onSearch, enabled = !busy && query.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(if (busy) "Searching…" else "Search") }
+        OutlinedTextField(
+            query, onQueryChange, singleLine = true,
+            label = { Text("Search movies") },
+            leadingIcon = { Icon(Icons.Default.Search, null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Button(onClick = onSearch, enabled = !busy && query.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Text(if (busy) "Searching…" else "Search")
+        }
         if (error != null) Text(error, color = Color(0xFFFF9DAE), fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
         LazyColumn(contentPadding = PaddingValues(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(results, key = { it.tmdbId }) { movie ->
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    MoviePoster(movie, Modifier.size(width = 76.dp), onClick = {})
+                    MoviePoster(movie, Modifier.size(width = 76.dp), onClick = { onOpenMovie(movie) })
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text(movie.title, fontWeight = FontWeight.SemiBold)
                         Text((movie.releaseYear?.toString() ?: "—") + " · ★ " + String.format("%.1f", movie.voteAverage), color = Color(0xFF9BA5B4), fontSize = 11.sp)
