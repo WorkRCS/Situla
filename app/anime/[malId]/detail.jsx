@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Play } from "lucide-react";
 
 export default function AnimeSeriesExperience({ malId }) {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function AnimeSeriesExperience({ malId }) {
   return (
     <main className="app-shell min-h-screen">
       <div className="mx-auto max-w-[1080px] px-4 py-6 md:px-8 md:py-10">
-        <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back">←</button>
+        <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         {loading ? (
           <div className="empty-panel">Loading anime…</div>
         ) : error ? (
@@ -79,7 +80,7 @@ export default function AnimeSeriesExperience({ malId }) {
                   <button type="button" className={audio === "dub" ? "gold-button" : "ghost-button"} onClick={() => setAudio("dub")}>English · Dub</button>
                 </div>
                 <p className="mt-3 text-xs leading-5 text-[#858b9b]">VidLink uses this MyAnimeList ID and falls back to the other audio type if the selected version is unavailable.</p>
-                <button className="gold-button mt-5" disabled={!episode || Number(episode) < 1 || (anime.episodes && Number(episode) > anime.episodes)} onClick={playAnime}>▶ Play anime</button>
+                <button className="gold-button mt-5" disabled={!episode || Number(episode) < 1 || (anime.episodes && Number(episode) > anime.episodes)} onClick={playAnime}><Play size={16} fill="currentColor" strokeWidth={1.8} /> Play anime</button>
               </div>
             </section>
           </div>
