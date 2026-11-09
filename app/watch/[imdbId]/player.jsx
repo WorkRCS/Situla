@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
-function Icon({ name, size = 20 }) {
-  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
-  if (name === "back") return <svg {...common}><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>;
-  return <svg {...common}><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
-}
+import { ArrowLeft, Maximize, Minimize } from "lucide-react";
 
 async function lockLandscape() {
   try {
@@ -182,13 +177,13 @@ export default function PlayerExperience({ imdbId }) {
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
           else router.replace("/");
-        }} className="watch-control" aria-label="Back to Situla"><Icon name="back" /></button>
+        }} className="watch-control" aria-label="Back to Situla"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · IMDb</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
         </div>
         <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
-          <Icon name="expand" />
+          {fullscreen ? <Minimize size={19} strokeWidth={1.9} /> : <Maximize size={19} strokeWidth={1.9} />}
         </button>
       </header>
     </main>
