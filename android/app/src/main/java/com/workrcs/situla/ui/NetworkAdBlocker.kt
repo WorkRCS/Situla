@@ -178,7 +178,7 @@ object NetworkAdBlocker {
         }
 
         return try {
-            if (connection.contentLengthLong > MAX_FILTER_LIST_CHARS) return null
+            if (connection.contentLengthLong > MAX_FILTER_LIST_CHARS.toLong()) return null
             val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { reader ->
                 val result = StringBuilder()
                 val buffer = CharArray(8_192)
