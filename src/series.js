@@ -142,36 +142,62 @@ export async function importTvSeriesIds(body = {}) {
 
 export async function getTvSeason(tmdbId, seasonNumber) {
   const cached = await TvSeason.findOne({ seriesTmdbId: tmdbId, seasonNumber }).lean();
-  if (cached && Date.now() - new Date(cached.lastSyncedAt || 0).getTime() < 7 * 86400000) return cached;
+  // Previously fetched episode metadata remains useful even when stale. Player
+  // startup must never block on an external TMDB request.
+  if (cached?.episodes?.length) return cached;
 
-  const data = await tmdbRequest('/tv/' + tmdbId + '/season/' + seasonNumber, { language: 'en-US' });
+  const series = await TvSeries.findOne({ tmdbId, moderationStatus: 'approved', adult: false })
+    .select('seasons')
+    .lean();
+  const summary = (series?.seasons || []).find((item) => Number(item.seasonNumber) === Number(seasonNumber));
+  if (!summary) {
+    if (cached) return cached;
+    return {
+      seriesTmdbId: tmdbId, seasonNumber, name: 'Season ' + seasonNumber,
+      overview: '', airDate: null, episodeCount: 0, posterPath: null,
+      voteAverage: 0, episodes: []
+    };
+  }
+
+  // Imported TV metadata contains the season's episode count. Generate stable
+  // episode-number choices from that cached count so playback and Next Episode
+  // still work when the TMDB season endpoint is unreachable. Episode titles are
+  // clearly generic until a trusted episode metadata sync is available.
+  const episodeCount = Math.max(0, Math.min(2000, Number(summary.episodeCount) || 0));
+  const episodes = Array.from({ length: episodeCount }, (_, index) => ({
+    tmdbEpisodeId: null,
+    episodeNumber: index + 1,
+    name: 'Episode ' + (index + 1),
+    overview: '',
+    airDate: null,
+    runtime: null,
+    stillPath: null,
+    voteAverage: 0
+  }));
   const record = {
     seriesTmdbId: tmdbId,
-    tmdbSeasonId: Number(data.id) || null,
+    tmdbSeasonId: Number(summary.tmdbSeasonId) || null,
     seasonNumber,
-    name: data.name || '',
-    overview: data.overview || '',
-    airDate: data.air_date || null,
-    episodeCount: Number(data.episodes?.length || 0),
-    posterPath: data.poster_path || null,
-    voteAverage: Number(data.vote_average || 0),
-    episodes: (data.episodes || []).map((episode) => ({
-      tmdbEpisodeId: Number(episode.id) || null,
-      episodeNumber: Number(episode.episode_number),
-      name: episode.name || '',
-      overview: episode.overview || '',
-      airDate: episode.air_date || null,
-      runtime: Number(episode.runtime) || null,
-      stillPath: episode.still_path || null,
-      voteAverage: Number(episode.vote_average || 0)
-    })),
+    name: summary.name || 'Season ' + seasonNumber,
+    overview: summary.overview || '',
+    airDate: summary.airDate || null,
+    episodeCount,
+    posterPath: summary.posterPath || null,
+    voteAverage: Number(summary.voteAverage || 0),
+    episodes,
     lastSyncedAt: new Date()
   };
-  return TvSeason.findOneAndUpdate(
-    { seriesTmdbId: tmdbId, seasonNumber },
-    { $set: record },
-    { new: true, upsert: true, runValidators: true }
-  ).lean();
+  try {
+    return await TvSeason.findOneAndUpdate(
+      { seriesTmdbId: tmdbId, seasonNumber },
+      { $set: record },
+      { new: true, upsert: true, runValidators: true }
+    ).lean();
+  } catch (error) {
+    // The episode picker can still render directly from the cached summary.
+    console.warn('TV season placeholder cache write failed:', error.message);
+    return record;
+  }
 }
 
 async function jikanRequest(path, options = {}) {
