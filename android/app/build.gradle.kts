@@ -20,7 +20,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-        buildConfigField("String", "API_BASE_URL", "\""+(project.findProperty("situlaApiBaseUrl")?.toString() ?: "")+"\"")
+        buildConfigField("String", "API_BASE_URL", "\"" + localProperties.getProperty("situlaApiBaseUrl", "") + "\"")
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions {
