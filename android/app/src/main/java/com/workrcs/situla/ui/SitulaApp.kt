@@ -110,7 +110,16 @@ fun SitulaApp(context: Context) {
             val region = VpnProfileStore.autoConnectRegion(context)
             val profile = region?.let { VpnProfileStore.load(context, it) }
             if (region != null && profile != null) {
-                scope.launch { runCatching { WireGuardVpnManager.connect(context, region, profile) } }
+                scope.launch {
+                    runCatching {
+                        WireGuardVpnManager.connect(context, region, profile)
+                        if (VpnProfileStore.autoRotateEnabled(context) &&
+                            VpnProfileStore.availableRegions(context).size == VpnProfileStore.regions.size
+                        ) {
+                            WireGuardVpnManager.startAutoRotation(context)
+                        }
+                    }
+                }
             }
         }
     }
@@ -135,7 +144,16 @@ fun SitulaApp(context: Context) {
         if (autoRegion != null && autoProfile != null) {
             val permissionIntent = VpnService.prepare(context)
             if (permissionIntent == null) {
-                launch { runCatching { WireGuardVpnManager.connect(context, autoRegion, autoProfile) } }
+                launch {
+                    runCatching {
+                        WireGuardVpnManager.connect(context, autoRegion, autoProfile)
+                        if (VpnProfileStore.autoRotateEnabled(context) &&
+                            VpnProfileStore.availableRegions(context).size == VpnProfileStore.regions.size
+                        ) {
+                            WireGuardVpnManager.startAutoRotation(context)
+                        }
+                    }
+                }
             } else {
                 vpnAutoConnectPermission.launch(permissionIntent)
             }
