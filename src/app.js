@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun } from './models.js';
-import { runManualCrawl, checkTmdbConnection } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection, importMovieIds } from './crawler.js';
 
 const app = new Hono();
 const attempts = new Map();
@@ -95,7 +95,7 @@ const imageUrl = (path, size = 'w342') => path
 
 function movieDto(movie) {
   return {
-    id: String(movie._id), tmdbId: movie.tmdbId, title: movie.title,
+    id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
     originalTitle: movie.originalTitle, overview: movie.overview,
     posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
     releaseDate: movie.releaseDate, releaseYear: movie.releaseYear, runtime: movie.runtime,
@@ -253,6 +253,20 @@ app.get('/api/admin/tmdb-status', requireAdmin, async (c) => {
       status: 'unavailable',
       error: error.message || 'TMDB connectivity check failed.'
     }, 502);
+  }
+});
+
+
+app.post('/api/admin/import-ids', requireSameOrigin, requireAdmin, async (c) => {
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  try {
+    const result = await importMovieIds(body);
+    return c.json({ result });
+  } catch (error) {
+    const invalid = /Import source|between 1 and 20|at least one|IMDb IDs|TMDB IDs/.test(error.message || '');
+    console.error('Manual IMDb/TMDB import failed:', error.message);
+    return c.json({ error: error.message || 'Movie ID import failed.' }, invalid ? 400 : 502);
   }
 });
 
