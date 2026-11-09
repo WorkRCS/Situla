@@ -7,7 +7,7 @@ const ANIME_ALLOWED_TYPES = new Set(['TV', 'ONA']);
 const ANIME_BLOCKED_GENRES = new Set(['Hentai', 'Ecchi']);
 let lastJikanRequestAt = 0;
 
-function normalizeNumericIds(ids, label, max = 20) {
+export function normalizeNumericIds(ids, label, max = 20) {
   if (!Array.isArray(ids) || ids.length < 1 || ids.length > max) {
     throw new Error('Submit between 1 and ' + max + ' ' + label + ' per import request.');
   }
