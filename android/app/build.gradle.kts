@@ -74,6 +74,7 @@ val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
     workingDir(rootProject.file("adblock-rust"))
     inputs.dir(rootProject.file("adblock-rust"))
     outputs.dir(adblockJniLibs)
+    environment("CARGO_TARGET_DIR", layout.buildDirectory.dir("rust-target").get().asFile.absolutePath)
     commandLine(
         "cargo", "ndk",
         "-t", "arm64-v8a",
