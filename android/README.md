@@ -18,17 +18,53 @@ Use the real Vercel project origin. For Android Emulator only, `http://10.0.2.2:
 
 ## Implemented foundation
 
-- Netflix-inspired dark Home, branded splash/icon, native vector icons, Search and local History screens.
+- Netflix-inspired Home, branded vector splash/icon, native vector icons, Search, movie detail and local History screens.
+- System appearance follows Android dark/light mode. Back navigation returns through player → detail → previous tab → Home; player fullscreen requests landscape and restores the device's normal orientation on exit.
+- Movie lists are lazy, image requests are asynchronous, and the player surface expands edge-to-edge while fullscreen.
 - TMDB posters load asynchronously and lists use lazy layouts with stable TMDB IDs.
 - Retrofit/OkHttp requests have bounded connect/read/call timeouts; admin cookies are kept in memory.
 - Room history database is app-private and excluded from backup/device transfer. Indexes support recent history and continue-watching queries.
 - History stores resume position separately from cumulative actual playback time; recorder flushes every 15 seconds.
 - Admin sign-in and IMDb-ID import form call the backend resolver.
-- Media3 dependencies are present for the licensed player integration.
+- Media3 player surface and playback-progress recorder are wired to an optional `playbackUrl`; the app requires an authorized HTTPS stream URL for each playable movie. No video URL is generated from an IMDb/TMDB identifier.
 
 ## IMDb import test set
 
 The in-app test set contains IMDb title IDs only (no hard-coded movie metadata). The backend resolves IDs through TMDB `/find/{external_id}` and imports only English, non-adult titles with release dates, posters, and one of the configured Action/Adventure/Fantasy/Horror/Mystery/Science Fiction genres. New titles remain pending until an admin approves them.
+
+## VS Code / emulator smoke test (Windows PowerShell)
+
+From the repository root, pull the merged main branch:
+
+```powershell
+git checkout main
+git pull origin main
+```
+
+Add the actual Vercel origin to `android/local.properties` (keep the local SDK path too):
+
+```properties
+sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
+situlaApiBaseUrl=https://YOUR-VERCEL-PROJECT.vercel.app/
+```
+
+Start an existing Android Virtual Device from VS Code's terminal:
+
+```powershell
+emulator -list-avds
+emulator -avd YOUR_AVD_NAME
+adb wait-for-device
+```
+
+Install and launch the app (requires Gradle 9.4.1 and JDK 17 on PATH):
+
+```powershell
+cd android
+gradle --no-daemon :app:installDebug
+adb shell monkey -p com.workrcs.situla 1
+```
+
+On macOS/Linux use `./gradle` only after generating the standard Gradle wrapper; with a Gradle 9.4.1 install, run `gradle --no-daemon :app:installDebug` from `android/`. Android Studio is not required after Android SDK, platform 36, build-tools 36.0.0 and an AVD are installed.
 
 ## Requires real deployment data before activation
 
