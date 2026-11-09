@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play } from "lucide-react";
 
-export default function TvSeriesExperience({ tmdbId }) {
+export default function TvSeriesExperience({ imdbId }) {
   const router = useRouter();
   const [series, setSeries] = useState(null);
   const [seasonNumber, setSeasonNumber] = useState("");
@@ -17,7 +17,7 @@ export default function TvSeriesExperience({ tmdbId }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/tv/" + encodeURIComponent(tmdbId), { cache: "no-store", signal: controller.signal })
+    fetch("/api/tv/" + encodeURIComponent(imdbId), { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "TV series not found.");
@@ -25,7 +25,7 @@ export default function TvSeriesExperience({ tmdbId }) {
         let progress = null;
         try {
           const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
-          progress = Array.isArray(saved) ? saved.find((item) => Number(item.tmdbId) === Number(tmdbId)) : null;
+          progress = Array.isArray(saved) ? saved.find((item) => String(item.imdbId).toLowerCase() === imdbId.toLowerCase()) : null;
         } catch {}
         const seasons = payload.item?.seasons || [];
         const resumedSeason = progress && seasons.find((item) => item.seasonNumber === Number(progress.season) && item.episodeCount > 0);
@@ -45,13 +45,13 @@ export default function TvSeriesExperience({ tmdbId }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [tmdbId]);
+  }, [imdbId]);
 
   useEffect(() => {
     if (!seasonNumber) return;
     const controller = new AbortController();
     setSeasonLoading(true);
-    fetch("/api/tv/" + encodeURIComponent(tmdbId) + "/seasons/" + encodeURIComponent(seasonNumber), {
+    fetch("/api/tv/" + encodeURIComponent(imdbId) + "/seasons/" + encodeURIComponent(seasonNumber), {
       cache: "no-store",
       signal: controller.signal
     }).then(async (response) => {
@@ -68,7 +68,7 @@ export default function TvSeriesExperience({ tmdbId }) {
       if (!controller.signal.aborted) setSeasonLoading(false);
     });
     return () => controller.abort();
-  }, [tmdbId, seasonNumber]);
+  }, [imdbId, seasonNumber]);
 
   const episodes = season?.episodes || [];
   const selectedEpisode = episodes.find((item) => item.episodeNumber === Number(episodeNumber));
@@ -76,7 +76,7 @@ export default function TvSeriesExperience({ tmdbId }) {
   function playEpisode() {
     const number = Number(episodeNumber);
     if (!Number.isSafeInteger(number) || number < 1) return;
-    router.push("/watch/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(seasonNumber) + "/" + number);
+    router.push("/watch/tv/" + encodeURIComponent(imdbId) + "/" + encodeURIComponent(seasonNumber) + "/" + number);
   }
 
   return (
@@ -93,7 +93,7 @@ export default function TvSeriesExperience({ tmdbId }) {
               {series.posterUrl && <img src={series.posterUrl} alt={series.title} className="w-full object-cover" />}
             </div>
             <section>
-              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">TV SERIES</p>
+              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">TV SERIES · IMDb {series.imdbId}</p>
               <h1 className="mt-2 text-3xl font-black text-white">{series.title}</h1>
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
