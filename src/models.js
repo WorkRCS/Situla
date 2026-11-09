@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const movieSchema = new mongoose.Schema({
   imdbId: { type: String, required: true, trim: true, lowercase: true },
-  // VidLink movie embeds require a TMDB numeric ID; IMDb remains Situla's canonical movie key.
-  tmdbId: { type: Number, min: 1, default: null },
+  // Provider-native numeric ID used internally by VidLink; IMDb remains Situla's canonical movie key.
+  vidlinkId: { type: Number, min: 1, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
@@ -27,7 +27,7 @@ const movieSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false });
 
 movieSchema.index({ imdbId: 1 }, { unique: true, partialFilterExpression: { imdbId: { $type: 'string' } } });
-movieSchema.index({ tmdbId: 1 }, { sparse: true });
+movieSchema.index({ vidlinkId: 1 }, { sparse: true });
 movieSchema.index({ moderationStatus: 1, releaseYear: -1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ originalLanguage: 1, adult: 1, releaseYear: -1 });
