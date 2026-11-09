@@ -31,6 +31,9 @@ Never commit .env. The real credentials are not in this repository.
 ## Web app features
 
 - Responsive navigation for Movies, TV, Anime, Search, My List, and Settings.
+- Header search, selectable System/Light/Dark appearance, progressive catalog pagination, and locally stored watch history with per-entry or full-history clearing.
+- Full catalog browsing uses page counts from the API; the Load more controls fetch subsequent 40-record pages so catalogs do not stop at the first page.
+- See [Catalog Content Policy (A–Z)](docs/CATALOG_CONTENT_POLICY.md) for complete Movie, TV and Anime inclusion, exclusion, safety, metadata, and quality rules.
 - Consistent, tree-shakable Lucide React icons (ISC license) across cards, navigation, detail and player controls.
 - Movie cards retain their posters, backdrops, thumbnails, ratings and saved list.
 - TV series pages load seasons and episodes and let the viewer choose the exact episode before playback.
@@ -39,6 +42,7 @@ Never commit .env. The real credentials are not in this repository.
 - Movie playback uses /watch/{IMDb_ID} and VidLink's movie endpoint; the server resolves the numeric player ID while keeping IMDb as the catalog identity.
 - TV playback uses /watch/tv/{TMDB_TV_ID}/{season}/{episode} and the VidLink TV endpoint.
 - Anime playback uses /watch/anime/{MAL_ID}/{episode}/{subOrDub} and the VidLink Anime endpoint, with fallback enabled.
+- Movie, TV and Anime playback progress is saved locally as watch history with HH:MM:SS timing; users can remove individual entries or clear all local history from Settings.
 - TV episode progress is saved locally and resumed through VidLink startAt.
 - Fullscreen playback requests landscape orientation where the browser supports the Screen Orientation API.
 - The Android package opens the deployed website URL directly inside a native WebView. Fullscreen player requests landscape orientation through Android's WebChromeClient.
