@@ -128,7 +128,7 @@ object WireGuardVpnManager {
         }
         rotationJob = scope.launch {
             while (isActive) {
-                delay(4L * 60L * 60L * 1000L)
+                delay(5L * 60L * 60L * 1000L)
                 val current = state.value.region ?: profiles.first()
                 val index = profiles.indexOf(current).let { if (it < 0) 0 else it }
                 val next = profiles[(index + 1) % profiles.size]
