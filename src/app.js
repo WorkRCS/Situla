@@ -96,7 +96,7 @@ const imageUrl = (path, size = 'w342') => path
 function movieDto(movie) {
   return {
     id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
-    originalTitle: movie.originalTitle, overview: movie.overview,
+    originalTitle: movie.originalTitle, overview: movie.overview, playbackUrl: movie.playbackUrl || null,
     posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
     releaseDate: movie.releaseDate, releaseYear: movie.releaseYear, runtime: movie.runtime,
     voteAverage: movie.voteAverage, voteCount: movie.voteCount, popularity: movie.popularity,
