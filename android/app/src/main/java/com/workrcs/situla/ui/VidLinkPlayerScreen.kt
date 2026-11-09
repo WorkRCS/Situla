@@ -125,7 +125,7 @@ fun VidLinkPlayerScreen(
                     settings.mediaPlaybackRequiresUserGesture = false
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                     settings.javaScriptCanOpenWindowsAutomatically = false
-                    settings.setSupportMultipleWindows(false)
+                    settings.setSupportMultipleWindows(true)
                     settings.allowFileAccess = false
                     settings.allowContentAccess = false
                     CookieManager.getInstance().setAcceptCookie(true)
