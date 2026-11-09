@@ -14,6 +14,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const router = useRouter();
   const screenRef = useRef(null);
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
+  const [posterUrl, setPosterUrl] = useState(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const lastWrite = useRef(0);
@@ -24,7 +25,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     fetch(endpoint, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
-        if (response.ok && payload.item) setTitle(payload.item.titleEnglish || payload.item.title);
+        if (response.ok && payload.item) {
+          setTitle(payload.item.titleEnglish || payload.item.title);
+          setPosterUrl(payload.item.posterUrl || null);
+        }
       })
       .catch(() => {});
     return () => controller.abort();
@@ -89,7 +93,8 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           key: mediaKey,
           mediaType: kind,
           mediaId: kind === "tv" ? String(tmdbId) : String(malId),
-          title: kind === "tv" ? title : title,
+          title,
+          posterUrl,
           season: kind === "tv" ? Number(season) : null,
           episode: Number(episode),
           audio: kind === "anime" ? (audio || "sub") : null,
@@ -135,7 +140,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     };
     window.addEventListener("message", onVidLinkMessage);
     return () => window.removeEventListener("message", onVidLinkMessage);
-  }, [kind, tmdbId, season, episode, title]);
+  }, [kind, tmdbId, malId, season, episode, audio, title, posterUrl]);
 
   useEffect(() => {
     const onFullscreenChange = async () => {
