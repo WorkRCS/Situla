@@ -6,6 +6,8 @@ import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.graphics.Color as AndroidColor
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.view.View
@@ -26,6 +28,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +36,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,13 +63,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import org.json.JSONObject
 
 private class VidLinkProgressBridge(
     private val movie: Movie,
     private val dao: WatchHistoryDao,
     initialPositionMs: Long,
-    private val bridgeToken: String
+    private val bridgeToken: String,
+    private val reportStatus: (String, String) -> Unit
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
     private var lastPositionMs = initialPositionMs
@@ -79,6 +85,12 @@ private class VidLinkProgressBridge(
         totalWatchedMs = watchedMs.coerceAtLeast(0L)
         lastEventElapsedMs = SystemClock.elapsedRealtime()
         lastPersistElapsedMs = lastEventElapsedMs
+    }
+
+    @JavascriptInterface
+    fun onPlayerStatus(token: String, status: String, detail: String) {
+        if (token != bridgeToken) return
+        reportStatus(status.take(80), detail.take(700))
     }
 
     @JavascriptInterface
@@ -156,6 +168,21 @@ fun VidLinkPlayerScreen(
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
     var playerError by remember(movie.tmdbId) { mutableStateOf<String?>(null) }
+    var playerStatus by remember(movie.tmdbId) { mutableStateOf("Preparing VidLink player…") }
+    var playerDetail by remember(movie.tmdbId) { mutableStateOf("") }
+    var iframeLoaded by remember(movie.tmdbId) { mutableStateOf(false) }
+    var directPlayerMode by remember(movie.tmdbId) { mutableStateOf(false) }
+    val directPlayerModeHolder = remember(movie.tmdbId) { booleanArrayOf(false) }
+    directPlayerModeHolder[0] = directPlayerMode
+    val mainThreadHandler = remember { Handler(Looper.getMainLooper()) }
+    val reportPlayerStatus: (String, String) -> Unit = { status, detail ->
+        mainThreadHandler.post {
+            playerStatus = status
+            if (detail.isNotBlank()) playerDetail = detail
+            if (status == "iframe_loaded") iframeLoaded = true
+            if (status == "iframe_error") playerError = "VidLink iframe failed to load. $detail"
+        }
+    }
     val playerWebViewHolder = remember(movie.tmdbId) { arrayOfNulls<WebView>(1) }
 
     val exitFullScreen = remember(activity) {
@@ -213,8 +240,8 @@ fun VidLinkPlayerScreen(
 
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
     val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
-    val progressBridge = remember(movie.tmdbId) {
-        VidLinkProgressBridge(movie, dao, 0L, progressToken)
+    val progressBridge = remember(movie.tmdbId, progressToken) {
+        VidLinkProgressBridge(movie, dao, 0L, progressToken, reportPlayerStatus)
     }
     val historyLoaded = produceState(initialValue = false, movie.tmdbId) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
@@ -252,6 +279,18 @@ fun VidLinkPlayerScreen(
             }
             .build().toString()
     }
+
+    LaunchedEffect(playerUrl, directPlayerMode) {
+        if (directPlayerMode) return@LaunchedEffect
+        delay(12_000)
+        if (!iframeLoaded && !directPlayerMode) {
+            playerStatus = "Iframe did not report a load within 12 seconds; switching to direct player page."
+            playerDetail = playerUrl
+            directPlayerMode = true
+        }
+    }
+
+    val playerLoadKey = "$playerUrl|${if (directPlayerMode) "direct" else "iframe"}"
 
     val wrapperHtml = remember(playerUrl, progressToken) {
         """
