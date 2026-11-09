@@ -148,7 +148,7 @@ fun SitulaApp(context: Context) {
                     runCatching {
                         WireGuardVpnManager.connect(context, autoRegion, autoProfile)
                         if (VpnProfileStore.autoRotateEnabled(context) &&
-                            VpnProfileStore.availableRegions(context).size == VpnProfileStore.regions.size
+                            VpnProfileStore.availableRegions(context).size >= 2
                         ) {
                             WireGuardVpnManager.startAutoRotation(context)
                         }
