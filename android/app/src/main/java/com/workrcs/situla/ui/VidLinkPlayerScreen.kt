@@ -111,7 +111,8 @@ fun VidLinkPlayerScreen(
                     settings.loadsImagesAutomatically = true
                     settings.mediaPlaybackRequiresUserGesture = false
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                    settings.javaScriptCanOpenWindowsAutomatically = true
+                    // Keep JavaScript popups disabled; multiple windows remain off below.
+                    settings.javaScriptCanOpenWindowsAutomatically = false
                     settings.setSupportMultipleWindows(false)
                     settings.allowFileAccess = false
                     settings.allowContentAccess = false
@@ -119,7 +120,25 @@ fun VidLinkPlayerScreen(
                     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
                     playerWebView = this
-                    webViewClient = WebViewClient()
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldInterceptRequest(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?
+                        ): android.webkit.WebResourceResponse? {
+                            val uri = request?.url ?: return null
+                            if (NetworkAdBlocker.shouldBlock(uri)) return NetworkAdBlocker.emptyResponse()
+                            return super.shouldInterceptRequest(view, request)
+                        }
+
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?
+                        ): Boolean {
+                            val uri = request?.url ?: return true
+                            if (NetworkAdBlocker.shouldBlock(uri)) return true
+                            return request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)
+                        }
+                    }
                     webChromeClient = object : WebChromeClient() {
                         private fun showPlayerFullScreen(view: View?, callback: CustomViewCallback?) {
                             val host = activity
