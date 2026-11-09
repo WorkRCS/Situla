@@ -132,9 +132,9 @@ fun VidLinkPlayerScreen(
                         ): Boolean {
                             val uri = request?.url ?: return true
                             if (NetworkAdBlocker.shouldBlock(uri)) return true
-                            if (!request.isForMainFrame && request.hasGesture() &&
-                                !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)
-                            ) return true
+                            // Let the player navigate between its legitimate embed/source hosts.
+                            // Known advertising and tracker domains are still blocked above.
+                            // Only prevent unexpected top-level navigation away from Situla/VidLink.
                             return request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)
                         }
                     }
