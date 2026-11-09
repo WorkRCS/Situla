@@ -16,8 +16,7 @@ data class Movie(
     @SerializedName("voteAverage") val voteAverage: Double = 0.0,
     @SerializedName("voteCount") val voteCount: Int = 0,
     val genres: List<String> = emptyList(),
-    @SerializedName("moderationStatus") val moderationStatus: String? = null,
-    @SerializedName("playbackUrl") val playbackUrl: String? = null
+    @SerializedName("moderationStatus") val moderationStatus: String? = null
 )
 data class MoviePage(val items: List<Movie> = emptyList(), val pagination: Pagination? = null)
 data class Pagination(val page: Int, val limit: Int, val total: Int, val totalPages: Int)
