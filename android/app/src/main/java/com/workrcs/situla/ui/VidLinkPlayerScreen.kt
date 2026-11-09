@@ -78,7 +78,22 @@ fun VidLinkPlayerScreen(
     DisposableEffect(activity) { onDispose { exitFullScreen() } }
 
     val playerUrl = remember(movie.imdbId) {
-        if (movie.imdbId.matches(Regex("^tt\\d{5,12}$", RegexOption.IGNORE_CASE))) "https://vidlink.pro/movie/${movie.imdbId}" else null
+        if (!movie.imdbId.matches(Regex("^tt\\d{5,12}$", RegexOption.IGNORE_CASE))) {
+            null
+        } else {
+            android.net.Uri.parse("https://vidlink.pro/movie/${movie.imdbId}")
+                .buildUpon()
+                .appendQueryParameter("primaryColor", "e8b65b")
+                .appendQueryParameter("secondaryColor", "171a23")
+                .appendQueryParameter("iconColor", "ffffff")
+                .appendQueryParameter("icons", "default")
+                .appendQueryParameter("player", "default")
+                .appendQueryParameter("title", "false")
+                .appendQueryParameter("poster", "true")
+                .appendQueryParameter("autoplay", "false")
+                .build()
+                .toString()
+        }
     }
     val boxModifier = if (embedded) {
         Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black)
