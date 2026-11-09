@@ -4,12 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-async function lockLandscape() {
-  try {
-    if (screen.orientation && typeof screen.orientation.lock === "function") await screen.orientation.lock("landscape");
-  } catch {}
-}
-
 export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
