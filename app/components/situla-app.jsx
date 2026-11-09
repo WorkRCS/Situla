@@ -90,6 +90,7 @@ export default function SitulaApp() {
   const [movies, setMovies] = useState([]);
   const [savedMovies, setSavedMovies] = useState([]);
   const [recentMovies, setRecentMovies] = useState([]);
+  const [progressMovies, setProgressMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -100,9 +101,12 @@ export default function SitulaApp() {
     try {
       setSavedMovies(JSON.parse(localStorage.getItem("situla:saved:v1") || "[]"));
       setRecentMovies(JSON.parse(localStorage.getItem("situla:recent:v1") || "[]"));
+      const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
+      setProgressMovies(Array.isArray(progress) ? progress.filter((item) => item.duration > 0 && item.watched / item.duration < 0.95) : []);
     } catch {
       setSavedMovies([]);
       setRecentMovies([]);
+      setProgressMovies([]);
     }
     setStorageReady(true);
     const onInstall = (event) => {
@@ -277,8 +281,11 @@ export default function SitulaApp() {
               </div>
             )}
 
+            {progressMovies.length > 0 && (
+              <MovieShelf title="Continue watching" eyebrow="RESUME YOUR MOVIE" movies={progressMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+            )}
             {recentMovies.length > 0 && (
-              <MovieShelf title="Pick up where you left" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+              <MovieShelf title="Recently opened" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             )}
             <MovieShelf title={genre === "All" ? "Popular on Situla" : genre + " movies"} eyebrow="CURATED FOR YOU" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
