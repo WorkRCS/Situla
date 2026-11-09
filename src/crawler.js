@@ -3,7 +3,7 @@ import { Movie, CrawlRun } from './models.js';
 
 const TMDB_BASE = (process.env.TMDB_API_BASE_URL || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
 
-function normalizeInput(body = {}) {
+export function normalizeInput(body = {}) {
   const currentYear = new Date().getFullYear();
   const startYear = Number(body.startYear ?? process.env.CRAWL_DEFAULT_START_YEAR ?? 2010);
   const endYear = Number(body.endYear ?? process.env.CRAWL_DEFAULT_END_YEAR ?? currentYear);
