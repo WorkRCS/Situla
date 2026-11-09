@@ -18,6 +18,13 @@ export default function AnimeSeriesExperience({ malId }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Anime series not found.");
         setAnime(payload.item);
+        try {
+          const last = JSON.parse(localStorage.getItem("situla:anime-last-episode:v1") || "{}");
+          if (Number(last.malId) === Number(malId)) {
+            if (Number.isSafeInteger(Number(last.episode)) && Number(last.episode) > 0) setEpisode(String(last.episode));
+            if (last.audio === "sub" || last.audio === "dub") setAudio(last.audio);
+          }
+        } catch {}
       })
       .catch((requestError) => {
         if (!controller.signal.aborted) setError(requestError.message);
@@ -31,6 +38,7 @@ export default function AnimeSeriesExperience({ malId }) {
   function playAnime() {
     const number = Number(episode);
     if (!Number.isSafeInteger(number) || number < 1 || (anime?.episodes && number > anime.episodes)) return;
+    try { localStorage.setItem("situla:anime-last-episode:v1", JSON.stringify({ malId: Number(malId), episode: number, audio })); } catch {}
     router.push("/watch/anime/" + encodeURIComponent(malId) + "/" + number + "/" + audio);
   }
 
