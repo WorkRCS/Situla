@@ -24,7 +24,7 @@ Situla is a mobile-first media discovery and streaming website built with Next.j
 6. Open http://localhost:3000.
 7. Check http://localhost:3000/api/health.
 
-Run npm run build to verify the production Next.js build and npm test for the API/crawler/schema tests. To add 60 new eligible popular movies to the connected MongoDB database, run npm run seed:movies from the project root. The command prints the actual number inserted and never counts existing IMDb IDs as new records.
+Run npm run build to verify the production Next.js build and npm test for the API/crawler/schema tests. From the project root, run npm run seed:movies to add 60 new eligible movies, or npm run seed:series to add 50 new popular TV shows and 50 new popular anime titles (in addition to any missing curated starter titles). Use npm run seed:tv or npm run seed:anime to run either catalog independently. Append a target count, for example npm run seed:series -- 40, to request 40 new titles of each type. Each importer prints actual insert counts, skips IDs already in MongoDB, and saves accepted records as it goes.
 
 Never commit .env. The real credentials are not in this repository.
 
@@ -72,6 +72,13 @@ The Admin → TV series screen is prefilled with 20 curated popular TMDB TV IDs.
 Anime metadata is resolved from MyAnimeList IDs through Jikan v4. The Anime Series model stores MAL ID, English/Japanese titles, synopsis, poster, episode count, season, type, genres/themes, score, rank, popularity and rating. The importer accepts TV/ONA titles, excludes Hentai and Ecchi genres, requires a poster and episode count, and filters to a MAL score of at least 6.5 with at least 500 votes. New entries enter Pending review.
 
 The Admin → Anime series screen is prefilled with 12 curated MAL IDs. On the first public Anime catalog request, all 12 are resolved and eligible titles are automatically approved. Further Admin imports enter Pending review. Jikan is an unofficial, read-only MyAnimeList API; imports are throttled to stay under its published request-rate limits.
+
+
+### Import troubleshooting
+
+- If the TV seed reports `Unable to reach TMDB`, the machine running Node.js cannot establish outbound HTTPS access to `api.themoviedb.org:443`. Check DNS, firewall, VPN/proxy and antivirus HTTPS inspection, then retry `npm run seed:tv`. The anime importer uses Jikan separately and can be run with `npm run seed:anime`.
+- Catalog GET requests do not seed data. Run the explicit seed command once after configuring `.env`.
+- A React hydration warning that lists injected attributes such as `bis_skin_checked`, `bis_register` or `__processed_...` is typically caused by a browser extension mutating the page before React hydrates. Verify in a private/incognito window with extensions disabled; do not hide the warning with broad hydration suppression.
 
 ## API and backend
 
