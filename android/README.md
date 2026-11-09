@@ -1,78 +1,98 @@
 # Situla Android app
 
-Movie-first Android MVP built with Kotlin and Jetpack Compose. The app reads only approved movie metadata from the Situla backend; it does not ship hard-coded movie/demo records.
+Kotlin + Jetpack Compose Android client for the Situla movie catalog.
 
-## Build locally
+## Integrations now wired into the app
 
-Open the `android/` folder in Android Studio with JDK 17, Android SDK platform 36, AGP 9.2.1 and Gradle 9.4.1. The GitHub Actions Android workflow also builds the debug APK.
+- **VidLink movie player:** movies use the backend's `tmdbId` in `https://vidlink.pro/movie/{tmdbId}`. The app embeds VidLink in a WebView wrapper, blocks pop-up windows and JavaScript alert/confirm dialogs, filters player network requests with Brave adblock-rust, and rejects non-HTTPS or external top-level redirects.
+- **Watch progress:** VidLink `PLAYER_EVENT` and `MEDIA_DATA` postMessage events update the local Room history. Saved resume position is passed back with VidLink's `startAt` query parameter. Progress remains local to this device.
+- **Brave adblock-rust:** the official Rust engine is compiled as an Android JNI library for arm64-v8a, armeabi-v7a and x86_64. EasyList, EasyPrivacy and URLHaus host rules are fetched over HTTPS, cached in no-backup app storage, and refreshed after three days. The engine filters requests inside the VidLink WebView and uses cosmetic filter resources where the page origin permits them.
+- **WireGuard VPN:** the app embeds the official WireGuard Android tunnel library. Four region slots are available (Malaysia, Singapore, Japan and Germany). Import one provider-issued WireGuard `.conf` profile per region, connect/disconnect manually, optionally auto-connect to a selected region on app launch, and rotate through the four profiles every four hours while Situla stays in the foreground. The app disconnects and stops rotation when the process moves to the background.
+- **DNS protection through VPN:** the app replaces the profile DNS line with AdGuard DNS `94.140.14.14` and `94.140.15.15` when connecting. This filters known ad/tracker domains and provides phishing-domain protection when traffic uses the VPN's DNS resolver.
 
-## Configure backend URL
+## Important limitations
 
-Create or edit `android/local.properties` (do not commit it) and add:
+1. The application code cannot create VPN servers or regional exit IP addresses. You must obtain four real full-tunnel WireGuard profiles from a VPN provider or operate your own WireGuard servers. Without those `.conf` files, the VPN stays disconnected and never shows a fake connected state.
+2. The imported profiles must contain an `[Interface]` section, a valid private key, a `[Peer]` section and an endpoint, and route **both** IPv4 and IPv6 using `AllowedIPs = 0.0.0.0/0, ::/0`. The app validates the full-tunnel routes before saving. DNS is replaced with AdGuard DNS by the app.
+3. DNS blocking only blocks domains included in the DNS provider's block policy. It cannot reliably remove ads served from the same host as the video, ads stitched into the video stream, every app's private DNS-over-HTTPS traffic, or all clickable overlays. Brave request filtering and pop-up/redirect blocking apply to Situla's VidLink WebView; they are not a system-wide packet inspection firewall.
+4. VidLink's cosmetic rules can affect documents that the WebView can control. The VidLink player is a cross-origin iframe, so browser same-origin isolation prevents Situla from forcibly hiding every element inside that remote frame. Its network requests and pop-up/redirect paths are still filtered where the WebView exposes them.
+5. VidLink is an external playback provider. A valid TMDB ID starts the player, but the provider may not have a playable source for every movie. Availability is not guaranteed by Situla.
+6. WireGuard region rotation is a foreground coroutine. The app intentionally disconnects on app background/exit; the next launch auto-connects to the saved region if enabled and the Android VPN permission has been granted.
 
-```properties
-situlaApiBaseUrl=https://YOUR-VERCEL-PROJECT.vercel.app/
-```
+## Backend configuration
 
-Use the real Vercel project origin. For Android Emulator only, `http://10.0.2.2:3000/` reaches a local Node.js backend. The URL is not a secret; TMDB and admin credentials must remain server-side.
-
-## Implemented foundation
-
-- Netflix-inspired Home, branded vector splash/icon, native vector icons, Search, movie detail and local History screens.
-- System appearance follows Android dark/light mode. Back navigation returns through player → detail → previous tab → Home; player fullscreen requests landscape and restores the device's normal orientation on exit.
-- Movie lists are lazy, image requests are asynchronous, and the player surface expands edge-to-edge while fullscreen.
-- TMDB posters load asynchronously and lists use lazy layouts with stable TMDB IDs.
-- Retrofit/OkHttp requests have bounded connect/read/call timeouts; admin cookies are kept in memory.
-- Room history database is app-private and excluded from backup/device transfer. Indexes support recent history and continue-watching queries.
-- History stores resume position separately from cumulative actual playback time; recorder flushes every 15 seconds.
-- Admin sign-in and IMDb-ID import form call the backend resolver.
-- Media3 player surface and playback-progress recorder are wired to an optional `playbackUrl`; the app requires an authorized HTTPS stream URL for each playable movie. No video URL is generated from an IMDb/TMDB identifier.
-
-## IMDb import test set
-
-The in-app test set contains IMDb title IDs only (no hard-coded movie metadata). The backend resolves IDs through TMDB `/find/{external_id}` and imports only English, non-adult titles with release dates, posters, and one of the configured Action/Adventure/Fantasy/Horror/Mystery/Science Fiction genres. New titles remain pending until an admin approves them.
-
-## VS Code / emulator smoke test (Windows PowerShell)
-
-From the repository root, pull the merged main branch:
-
-```powershell
-git checkout main
-git pull origin main
-```
-
-Add the actual Vercel origin to `android/local.properties` (keep the local SDK path too):
+Create or edit `android/local.properties` (do not commit it):
 
 ```properties
 sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
 situlaApiBaseUrl=https://YOUR-VERCEL-PROJECT.vercel.app/
 ```
 
-Start an existing Android Virtual Device from VS Code's terminal:
+The API must return the movie's numeric `tmdbId` and imported movie records must be approved in the backend before they appear in the public catalog. IMDb IDs are resolved by the backend to TMDB IDs; the VidLink movie route requires the TMDB ID.
+
+## Windows PowerShell setup (VS Code terminal)
+
+Run these from the repository root. Install JDK 17 and Gradle 9.4.1 first; verify with `java -version` and `gradle --version`.
 
 ```powershell
-emulator -list-avds
-emulator -avd YOUR_AVD_NAME
+# Android SDK environment (change path if your SDK is elsewhere)
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+$env:Path += ";$env:ANDROID_HOME\platform-tools;$env:ANDROID_HOME\emulator;$env:ANDROID_HOME\cmdline-tools\latest\bin"
+
+# Required Android SDK packages, including the NDK used by Rust
+sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "emulator" "ndk;27.2.12479018" "system-images;android-36;google_apis;x86_64"
+
+# Rust compiler + Android Rust targets + cargo-ndk (for Brave adblock-rust)
+rustup toolchain install stable
+rustup default stable
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+cargo install cargo-ndk --locked
+
+# Create an emulator once (skip if you already have an AVD)
+avdmanager create avd -n Situla_API_36 -k "system-images;android-36;google_apis;x86_64" -d pixel_7
+
+# Start emulator
+emulator -avd Situla_API_36
 adb wait-for-device
-```
 
-Install and launch the app (requires Gradle 9.4.1 and JDK 17 on PATH):
+# Pull the latest main branch (the changes are committed directly on main)
+git checkout main
+git pull origin main
 
-```powershell
+# Build and install
 cd android
+gradle --no-daemon :app:assembleDebug
 gradle --no-daemon :app:installDebug
+
+# Launch Situla and inspect runtime logs
 adb shell monkey -p com.workrcs.situla 1
+adb logcat -s AndroidRuntime System.err
 ```
 
-On macOS/Linux, use the same `gradle --no-daemon :app:installDebug` command from `android/` after installing Gradle 9.4.1. The checked-in repository currently includes wrapper properties but not the generated wrapper scripts, so use the installed Gradle command for this first emulator test. Android Studio is not required after Android SDK, platform 36, build-tools 36.0.0 and an AVD are installed.
+The debug APK output is:
 
-## Requires real deployment data before activation
+`android/app/build/outputs/apk/debug/app-debug.apk`
 
-- VPN tunnel and four-region failover: actual region, gateway endpoint, peer/public key and client configuration are required. The app deliberately does not claim a connection without them. Android has only one active VpnService per user/profile.
-- Brave adblock-rust: must be compiled for target Android ABIs and connected to the chosen network path. This first branch does not yet intercept traffic or claim protection.
-- Playback: the existing player's authorized media provider/URL integration is not in this metadata-only backend. No third-party streaming URLs are invented or scraped.
-- Real IMDb import: requires TMDB API connectivity and a valid key on the backend. Imported movies start pending and must be approved before public display.
+Android Studio is not required for the command-line build once JDK, Gradle, Android command-line tools, SDK packages, Rust and cargo-ndk are installed. The repository has Gradle wrapper properties but does not include generated `gradlew` scripts or `gradle-wrapper.jar`; use the installed `gradle` command shown above.
 
-## Performance and privacy
+## First-run configuration inside Situla
 
-No background crawler, periodic network polling or eager poster downloads. UI lists are lazy, image decoding is asynchronous, and network timeouts are bounded. History stays in app-private storage; uninstalling or clearing app data removes it. Admin passwords are entered at login and are not compiled into the APK or stored in an INI file.
+1. Open **Settings → VPN**.
+2. Select Malaysia, Singapore, Japan or Germany and import the matching provider-issued `.conf` file. Repeat for all four regions.
+3. Grant Android's VPN permission when prompted, then connect. Confirm the WireGuard provider shows a successful handshake/connected tunnel.
+4. Enable **Auto-connect on app launch** for the selected region. Enable **Automatic region rotation** after all four profiles are imported and the tunnel is connected.
+5. Open **Brave Adblock → Update ad & malware filters**. On first launch the app also tries to download and initialize these lists automatically.
+6. Open an approved movie. The player uses the numeric TMDB ID returned by the Situla backend. The player provider must have a source available for that movie.
+
+## Source and license references
+
+- Brave adblock-rust: https://github.com/brave/adblock-rust (MPL-2.0)
+- WireGuard for Android tunnel library: https://git.zx2c4.com/wireguard-android/ (Apache-2.0)
+- EasyList: https://easylist.to/
+- URLHaus: https://urlhaus.abuse.ch/
+- AdGuard DNS: https://adguard-dns.io/kb/general/dns-providers/
+
+## Privacy and performance
+
+VPN profiles live in the app's no-backup private directory and are not uploaded to Situla's backend. Watch history is local to the device. Filter lists are cached locally and refreshed on demand/when stale; there is no background crawler or always-on list updater. The Android app disconnects the WireGuard tunnel when the process goes to the background.
