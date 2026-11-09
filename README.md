@@ -117,5 +117,9 @@ Set the Vercel project framework to Next.js, use the repository root as the Root
 - Admin sessions use signed, HttpOnly, SameSite cookies and same-origin checks.
 - MongoDB enforces unique IDs separately in each media collection.
 - Do not place credentials in browser JavaScript.
+- VidLink's documented iframe examples do not use the HTML `sandbox` attribute. Situla therefore leaves the cross-origin VidLink frame unsandboxed so the provider player can initialize; adding sandbox restrictions can stop its verification/player flow.
+- The Android WebView blocks known ad/tracker request domains and rejects new popup windows. A normal desktop/mobile browser cannot reliably inspect or cancel arbitrary navigation inside a cross-origin VidLink frame; do not describe this best-effort list as complete ad removal.
+- Playback streams are fetched directly by the user's browser from VidLink and its media providers. The Situla server API does not proxy video streams. A server-side TMDB/Jikan API proxy would not bypass ISP restrictions on the browser's direct VidLink/media requests.
+- Do not deploy a public or automatically rotating VPN/proxy exit service from the website. Any outbound proxy must be a private, operator-managed service with explicit hosting, privacy, access-control, capacity, and provider-policy review.
 - Use third-party player embeds only where their terms and content rights permit.
 - TMDB does not endorse or certify this product. Jikan is not affiliated with MyAnimeList.
