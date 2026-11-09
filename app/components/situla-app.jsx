@@ -394,11 +394,26 @@ export default function SitulaApp() {
   return (
     <main className="app-shell">
       <header className="app-header safe-top">
-        <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 md:px-8">
+        <div className="header-inner mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 md:px-8">
           <div className="brand-mark" aria-hidden="true">S</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[17px] font-black tracking-[.18em] text-white">SITULA</p>
-            <p className="text-[9px] font-bold tracking-[.19em] text-[#828898]">MOVIES · DISCOVER MORE</p>
+          <div className="brand-copy min-w-0">
+            <p className="text-[17px] font-black tracking-[.18em]">SITULA</p>
+            <p className="text-[9px] font-bold tracking-[.19em]">MOVIES · DISCOVER MORE</p>
+          </div>
+          <label className="header-search search-box" aria-label="Search catalog">
+            <Search size={18} strokeWidth={1.9} aria-hidden="true" />
+            <input value={query} onFocus={() => setTab("search")} onChange={(event) => { setTab("search"); setQuery(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter") setTab("search"); }} placeholder="Search movies, TV, anime…" aria-label="Search movies, TV and anime" />
+            {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search"><X size={16} /></button>}
+          </label>
+          <div className="theme-switcher">
+            <button type="button" className="theme-trigger watch-control" onClick={() => setThemeMenuOpen((open) => !open)} aria-label="Choose appearance" aria-expanded={themeMenuOpen} title="Appearance">
+              {themeMode === "dark" ? <Moon size={19} /> : themeMode === "light" ? <Sun size={19} /> : <Monitor size={19} />}
+            </button>
+            {themeMenuOpen && <div className="theme-menu" role="group" aria-label="Choose theme">
+              <button type="button" className={themeMode === "system" ? "selected" : ""} onClick={() => { setThemeMode("system"); setThemeMenuOpen(false); }}><Monitor size={16} /> System</button>
+              <button type="button" className={themeMode === "light" ? "selected" : ""} onClick={() => { setThemeMode("light"); setThemeMenuOpen(false); }}><Sun size={16} /> Light</button>
+              <button type="button" className={themeMode === "dark" ? "selected" : ""} onClick={() => { setThemeMode("dark"); setThemeMenuOpen(false); }}><Moon size={16} /> Dark</button>
+            </div>}
           </div>
         </div>
       </header>
@@ -470,6 +485,8 @@ export default function SitulaApp() {
             <MovieShelf title={genre === "All" ? "Picked for you" : genre + " movies"} eyebrow="RANDOMIZED DISCOVERY" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <ArrowRight size={16} /></button></div>}
+            {moviesTotal > 0 && <p className="mt-3 text-center text-xs text-[#858b9b]">Showing {movies.length} of {moviesTotal} movies</p>}
           </>
         )}
 
