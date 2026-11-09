@@ -133,15 +133,15 @@ img { display: block; }
   padding: 34px 18px; text-align: center; color: #9297a7; background: rgba(255,255,255,.02);
 }
 .watch-screen { position: fixed; inset: 0; z-index: 100; overflow: hidden; background: #05060a; }
-.watch-frame { position: absolute; top: 5dvh; left: 0; width: 100%; height: 90dvh; border: 0; background: #000; }
+.watch-frame { position:absolute; inset:0; width:100%; height:100%; border:0; background:#000; }
 .watch-topbar {
-  position: absolute; left: 0; right: 0; top: 5dvh; z-index: 3;
+  position:absolute; left:0; right:0; top:0; z-index:3;
   display:flex; align-items:center; gap:12px; padding: max(12px,env(safe-area-inset-top)) 14px 12px;
   background: linear-gradient(180deg,rgba(0,0,0,.72),transparent);
   pointer-events: none; transition: opacity .2s ease;
 }
 .watch-topbar > * { pointer-events:auto; }
-.watch-topbar .watch-title { min-width:0; flex:1; text-shadow:0 1px 8px #000; }
+.watch-topbar .watch-title { min-width:0; flex:1; text-shadow:0 1px 8px #000; pointer-events:none; }
 .watch-control {
   display:grid; place-items:center; width:40px; height:40px; border-radius:13px;
   color:white; background:rgba(15,17,24,.72); border:1px solid rgba(255,255,255,.13);
@@ -425,71 +425,17 @@ html[data-theme="light"] .watch-screen { color:#fff; }
 }
 @keyframes situla-spin { to { transform:rotate(360deg); } }
 
-/* TV/Anime: reserve the bottom strip for episode choices and Next Episode */
-.series-watch-screen { --series-dock-height:clamp(76px,10dvh,104px); background:#030407; }
-.series-watch-frame {
-  top:0; left:0; width:100%; height:calc(100dvh - var(--series-dock-height));
-  background:#000;
-}
+/* TV/Anime player now uses the full viewport; VidLink owns its native next-episode control. */
+.series-watch-screen { background:#030407; }
+.series-watch-frame { inset:0; top:0; left:0; width:100%; height:100%; background:#000; }
 .series-watch-topbar {
-  top:0; padding-top:max(12px,env(safe-area-inset-top));
+  top:0;
+  padding-top:max(12px,env(safe-area-inset-top));
   background:linear-gradient(180deg,rgba(0,0,0,.78),transparent);
 }
-.episode-dock {
-  position:absolute; z-index:5; left:0; right:0; bottom:0;
-  height:var(--series-dock-height);
-  display:grid; grid-template-columns:130px minmax(0,1fr) auto;
-  align-items:center; gap:12px;
-  padding:8px max(14px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
-  color:#f5f6fa; background:rgba(10,12,17,.98);
-  border-top:1px solid rgba(255,255,255,.12);
-}
-.episode-dock-heading { display:grid; gap:3px; min-width:0; }
-.episode-dock-heading span { color:#d9aa5f; font-size:9px; font-weight:900; letter-spacing:.16em; }
-.episode-dock-heading strong { overflow:hidden; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-.episode-dock-options {
-  display:flex; align-items:center; gap:6px; min-width:0; height:100%;
-  overflow-x:auto; scrollbar-width:thin; scrollbar-color:#424957 transparent;
-}
-.episode-choice {
-  min-width:36px; height:34px; padding:0 10px; flex:none;
-  border:1px solid rgba(255,255,255,.13); border-radius:8px;
-  color:#c4cad5; background:#171b25; font-size:11px; font-weight:800;
-}
-.episode-choice.active { color:#17120b; border-color:#e8b65b; background:#e8b65b; }
-.episode-next {
-  display:flex; align-items:center; justify-content:center; gap:9px;
-  min-height:42px; padding:0 13px; border-radius:9px;
-  color:#17120b; background:#e8b65b; font-size:11px; font-weight:850;
-}
-.episode-next span { display:none; }
-.episode-next strong { white-space:nowrap; }
-.episode-end-label { color:#9aa2b2; font-size:10px; white-space:nowrap; }
-.series-watch-screen:fullscreen { --series-dock-height:0px; }
 .series-watch-screen:fullscreen .series-watch-frame { inset:0; width:100vw; height:100vh; }
-.series-watch-screen:fullscreen .episode-dock { display:none; }
 .series-watch-screen:fullscreen .series-watch-topbar { top:0; }
-@media(max-width:620px) {
-  .hero-card { min-height:clamp(420px,64vh,600px); }
-  .header-search-wrap { min-width:0; }
-  .episode-dock { grid-template-columns:72px minmax(0,1fr) auto; gap:6px; padding-left:8px; padding-right:8px; }
-  .episode-dock-heading span { font-size:8px; }
-  .episode-dock-heading strong { font-size:10px; }
-  .episode-choice { min-width:32px; height:31px; padding:0 8px; }
-  .episode-next { gap:5px; min-height:38px; padding:0 8px; }
-  .episode-next strong { font-size:10px; }
-}
-@media(max-width:390px) {
-  .episode-dock { grid-template-columns:60px minmax(0,1fr) auto; gap:5px; }
-  .episode-choice { min-width:29px; padding:0 6px; }
-  .episode-next { padding:0 6px; }
-  .episode-next strong { font-size:9px; }
-}
-@media(orientation:landscape) and (max-height:600px) {
-  .series-watch-screen { --series-dock-height:62px; }
-  .episode-dock { padding-top:4px; padding-bottom:4px; }
-  .episode-dock-heading span { display:none; }
-}
+
 @media(prefers-reduced-motion:reduce) {
   .skeleton-poster,.skeleton-line,.skeleton-label,.suggestion-spinner { animation:none; }
   .movie-poster { transition:none; }
@@ -501,18 +447,6 @@ html[data-theme="light"] .watch-screen { color:#fff; }
   .suggestion-panel { left:auto; right:-44px; width:min(88vw,420px); }
   .netflix-shelf { margin-top:25px; }
   .shelf-heading h2 { font-size:17px; }
-}
-
-.provider-open-control {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-height:34px; margin-right:8px; padding:0 11px; border-radius:9px;
-  border:1px solid rgba(255,255,255,.18); background:rgba(12,14,20,.72);
-  color:#f5f6fa; font-size:10px; font-weight:850; white-space:nowrap;
-  backdrop-filter:blur(8px);
-}
-.provider-open-control:hover { border-color:rgba(232,182,91,.65); color:#f1c978; }
-@media(max-width:390px) {
-  .provider-open-control { min-height:32px; padding:0 8px; font-size:9px; }
 }
 
 /* Keep the brand on the left and the only search/theme controls on the right. */
