@@ -288,8 +288,12 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                     it.key.equals("referer", ignoreCase = true)
                                 }?.value ?: "https://vidlink.pro/"
                                 val cleanUrl = address.substringBefore("?")
+                                val fetchDestination = request.requestHeaders.entries.firstOrNull {
+                                    it.key.equals("sec-fetch-dest", ignoreCase = true)
+                                }?.value?.lowercase()
                                 val requestType = when {
                                     request.isForMainFrame -> "document"
+                                    fetchDestination == "iframe" || fetchDestination == "frame" -> "subdocument"
                                     cleanUrl.endsWith(".js", true) -> "script"
                                     cleanUrl.endsWith(".css", true) -> "stylesheet"
                                     cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm)$")) -> "media"
