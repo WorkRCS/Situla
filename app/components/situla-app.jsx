@@ -94,6 +94,7 @@ export default function SitulaApp() {
   const [error, setError] = useState("");
   const [installPrompt, setInstallPrompt] = useState(null);
   const [installState, setInstallState] = useState("");
+  const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
     try {
@@ -103,6 +104,7 @@ export default function SitulaApp() {
       setSavedMovies([]);
       setRecentMovies([]);
     }
+    setStorageReady(true);
     const onInstall = (event) => {
       event.preventDefault();
       setInstallPrompt(event);
@@ -121,12 +123,14 @@ export default function SitulaApp() {
   }, []);
 
   useEffect(() => {
+    if (!storageReady) return;
     try { localStorage.setItem("situla:saved:v1", JSON.stringify(savedMovies.slice(0, 100))); } catch {}
-  }, [savedMovies]);
+  }, [savedMovies, storageReady]);
 
   useEffect(() => {
+    if (!storageReady) return;
     try { localStorage.setItem("situla:recent:v1", JSON.stringify(recentMovies.slice(0, 12))); } catch {}
-  }, [recentMovies]);
+  }, [recentMovies, storageReady]);
 
   useEffect(() => {
     if (tab !== "home" && tab !== "search") return;
@@ -194,7 +198,6 @@ export default function SitulaApp() {
   }
 
   const featured = movies[0];
-  const searchActive = tab === "search";
 
   return (
     <main className="app-shell">
