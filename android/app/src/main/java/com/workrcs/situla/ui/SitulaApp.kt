@@ -87,7 +87,8 @@ fun SitulaApp(context: Context) {
                     loadsImagesAutomatically = true
                     mediaPlaybackRequiresUserGesture = false
                     mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                    javaScriptCanOpenWindowsAutomatically = true
+                    // Do not let player scripts spawn ad tabs/windows.
+                    javaScriptCanOpenWindowsAutomatically = false
                     setSupportMultipleWindows(false)
                     allowFileAccess = false
                     allowContentAccess = false
@@ -102,17 +103,26 @@ fun SitulaApp(context: Context) {
                 cookieManager.setAcceptThirdPartyCookies(this, true)
 
                 webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(
+                        view: WebView?,
+                        request: android.webkit.WebResourceRequest?
+                    ): android.webkit.WebResourceResponse? {
+                        val uri = request?.url ?: return null
+                        if (NetworkAdBlocker.shouldBlock(uri)) return NetworkAdBlocker.emptyResponse()
+                        return super.shouldInterceptRequest(view, request)
+                    }
+
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
                         request: android.webkit.WebResourceRequest?
                     ): Boolean {
-                        val uri = request?.url ?: return false
+                        val uri = request?.url ?: return true
+                        if (NetworkAdBlocker.shouldBlock(uri)) return true
+                        if (request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)) return true
                         return when (uri.scheme?.lowercase()) {
                             "http", "https", "about", "javascript", "blob" -> false
                             "mailto", "tel" -> {
-                                runCatching {
-                                    viewContext.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                                }
+                                runCatching { viewContext.startActivity(Intent(Intent.ACTION_VIEW, uri)) }
                                 true
                             }
                             else -> true
