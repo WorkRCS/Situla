@@ -83,10 +83,15 @@ object VpnProfileStore {
         val dnsLine = "DNS = 94.140.14.14, 94.140.15.15"
         val dnsRegex = Regex("(?im)^DNS\\s*=.*$")
         val withDns = if (dnsRegex.containsMatchIn(withAutomaticRoutes)) {
-            dnsRegex.replace(withAutomaticRoutes, dnsLine, limit = 1)
+            dnsRegex.replaceFirst(withAutomaticRoutes, dnsLine)
         } else {
             val interfaceHeader = Regex("(?im)^\\s*\\[Interface]\\s*$")
-            interfaceHeader.replaceFirst(withAutomaticRoutes) { "${it.value}\n$dnsLine" }
+            val interfaceMatch = interfaceHeader.find(withAutomaticRoutes)
+                ?: error("WireGuard profile has no [Interface] section.")
+            val insertAt = interfaceMatch.range.last + 1
+            withAutomaticRoutes.substring(0, insertAt) +
+                "\n" + dnsLine +
+                withAutomaticRoutes.substring(insertAt)
         }
         val parsed = com.wireguard.config.Config.parse(withDns.byteInputStream(Charsets.UTF_8))
         require(parsed.peers.size == 1 && parsed.peers.single().endpoint.isPresent) {
