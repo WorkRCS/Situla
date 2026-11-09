@@ -22,6 +22,10 @@ Use the real Vercel project origin. For Android Emulator only, `http://10.0.2.2:
 - Admin sign-in and IMDb-ID import form call the backend resolver.
 - Media3 dependencies are present for the licensed player integration.
 
+## IMDb import test set
+
+The in-app test set contains IMDb title IDs only (no hard-coded movie metadata). The backend resolves IDs through TMDB `/find/{external_id}` and imports only English, non-adult titles with release dates, posters, and one of the configured Action/Adventure/Fantasy/Horror/Mystery/Science Fiction genres. New titles remain pending until an admin approves them.
+
 ## Requires real deployment data before activation
 
 - VPN tunnel and four-region failover: actual region, gateway endpoint, peer/public key and client configuration are required. The app deliberately does not claim a connection without them. Android has only one active VpnService per user/profile.
