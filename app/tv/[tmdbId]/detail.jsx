@@ -92,7 +92,7 @@ export default function TvSeriesExperience({ tmdbId }) {
               {series.posterUrl && <img src={series.posterUrl} alt={series.title} className="w-full object-cover" />}
             </div>
             <section>
-              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">TV SERIES · TMDB {series.tmdbId}</p>
+              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">TV SERIES</p>
               <h1 className="mt-2 text-3xl font-black text-white">{series.title}</h1>
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
