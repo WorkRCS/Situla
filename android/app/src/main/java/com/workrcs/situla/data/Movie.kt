@@ -5,8 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class Movie(
     val id: String,
     @SerializedName("imdbId") val imdbId: String,
-    // VidLink's numeric provider key is stored separately from the IMDb route ID.
-    @SerializedName("vidlinkId") val vidlinkId: Int? = null,
+    @SerializedName("playerAvailable") val playerAvailable: Boolean = false,
     val title: String,
     val overview: String? = null,
     @SerializedName("posterUrl") val posterUrl: String? = null,
