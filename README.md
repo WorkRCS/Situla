@@ -37,7 +37,7 @@ First run the read-only audit to see the exact record counts. It also reports ca
 npm run audit:imdb-only
 ```
 
-After reviewing the counts and resolving any duplicate IMDb IDs, run the migration once, before deploying the new schema. The migration prints the invalid-ID counts again, deletes invalid Movie and TV documents, converts the valid records, and removes the old TMDB-named fields and cache collections while retaining VidLink mappings:
+After reviewing the counts and resolving any duplicate IMDb IDs, run the migration once, before deploying the new schema. The migration prints the invalid-ID counts again, deletes invalid Movie and TV documents, converts the valid records, and removes legacy TMDB/provider fields and cache collections:
 
 ```powershell
 npm run migrate:imdb-only
