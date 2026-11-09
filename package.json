@@ -11,7 +11,10 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "test": "node --test",
-    "seed:movies": "node scripts/seed-movies.js"
+    "seed:movies": "node scripts/seed-movies.js",
+    "seed:series": "node scripts/seed-series.js all",
+    "seed:tv": "node scripts/seed-series.js tv",
+    "seed:anime": "node scripts/seed-series.js anime"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
