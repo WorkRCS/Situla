@@ -30,7 +30,13 @@ Back up the MongoDB database before migrating. The migration performs these oper
 - Removes old provider ID fields and obsolete crawler history.
 - Retains anime records under MAL IDs.
 
-Run the migration once, before deploying the new schema:
+First run the read-only audit to see the exact record counts. It also reports case-insensitive duplicate IMDb IDs and makes no database changes:
+
+```powershell
+npm run audit:imdb-only
+```
+
+After reviewing the counts and resolving any duplicate IMDb IDs, run the migration once, before deploying the new schema. The migration prints the invalid-ID counts again, deletes invalid Movie and TV documents, converts the valid records, and removes the old provider fields and cache collections:
 
 ```powershell
 npm run migrate:imdb-only
