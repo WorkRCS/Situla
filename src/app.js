@@ -153,6 +153,90 @@ async function ensureStarterCatalog() {
   return starterCatalogPromise;
 }
 
+
+const STARTER_TV_IDS = [
+  1396, 1399, 87108, 70523, 66732, 76479,
+  100088, 95396, 94605, 63639, 19885, 82856
+];
+const STARTER_ANIME_MAL_IDS = [5114, 16498, 1535, 11061, 9253, 38000, 40748, 30276];
+let starterTvPromise;
+let starterAnimePromise;
+
+async function ensureStarterTvCatalog() {
+  const apiKey = (process.env.TMDB_API_KEY || '').trim();
+  if (!apiKey || apiKey.startsWith('replace_')) return 0;
+  if (!starterTvPromise) {
+    starterTvPromise = (async () => {
+      const existing = await TvSeries.find({ tmdbId: { $in: STARTER_TV_IDS } }).select('tmdbId').lean();
+      const present = new Set(existing.map((item) => item.tmdbId));
+      const missing = STARTER_TV_IDS.filter((id) => !present.has(id));
+      for (let index = 0; index < missing.length; index += 20) {
+        try {
+          await importTvSeriesIds({ ids: missing.slice(index, index + 20) });
+        } catch (error) {
+          console.error('Curated TV series import failed:', error.message);
+        }
+      }
+      const eligible = await TvSeries.find({
+        tmdbId: { $in: STARTER_TV_IDS },
+        adult: false,
+        originalLanguage: 'en',
+        moderationStatus: { $ne: 'rejected' }
+      }).select('tmdbId').lean();
+      const ids = eligible.map((item) => item.tmdbId);
+      if (ids.length) {
+        await TvSeries.updateMany(
+          { tmdbId: { $in: ids }, moderationStatus: { $ne: 'rejected' } },
+          { $set: { moderationStatus: 'approved', manualReviewNote: 'Curated Situla TV series; filters and artwork validated.' } }
+        );
+      }
+      console.info('Situla curated TV series ready:', ids.length);
+      return ids.length;
+    })().catch((error) => {
+      starterTvPromise = undefined;
+      console.error('Curated TV catalog seed failed:', error.message);
+      return 0;
+    });
+  }
+  return starterTvPromise;
+}
+
+async function ensureStarterAnimeCatalog() {
+  if (!starterAnimePromise) {
+    starterAnimePromise = (async () => {
+      const existing = await AnimeSeries.find({ malId: { $in: STARTER_ANIME_MAL_IDS } }).select('malId').lean();
+      const present = new Set(existing.map((item) => item.malId));
+      const missing = STARTER_ANIME_MAL_IDS.filter((id) => !present.has(id));
+      for (let index = 0; index < missing.length; index += 12) {
+        try {
+          await importAnimeIds({ ids: missing.slice(index, index + 12) });
+        } catch (error) {
+          console.error('Curated anime import failed:', error.message);
+        }
+      }
+      const eligible = await AnimeSeries.find({
+        malId: { $in: STARTER_ANIME_MAL_IDS },
+        type: { $in: ['TV', 'ONA'] },
+        moderationStatus: { $ne: 'rejected' }
+      }).select('malId').lean();
+      const ids = eligible.map((item) => item.malId);
+      if (ids.length) {
+        await AnimeSeries.updateMany(
+          { malId: { $in: ids }, moderationStatus: { $ne: 'rejected' } },
+          { $set: { moderationStatus: 'approved', manualReviewNote: 'Curated Situla anime; MAL score, episode count and artwork validated.' } }
+        );
+      }
+      console.info('Situla curated anime series ready:', ids.length);
+      return ids.length;
+    })().catch((error) => {
+      starterAnimePromise = undefined;
+      console.error('Curated anime catalog seed failed:', error.message);
+      return 0;
+    });
+  }
+  return starterAnimePromise;
+}
+
 app.use('*', logger());
 app.use('/api/*', bodyLimit({ maxSize: 64 * 1024 }));
 app.use('*', async (c, next) => {
@@ -656,6 +740,7 @@ app.get('/api/movies/:imdbId', async (c) => {
 app.get('/api/tv', async (c) => {
   try {
     await connectDatabase();
+    await ensureStarterTvCatalog();
     const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
     const limit = Math.max(1, Math.min(40, Number(c.req.query('limit') || 20) || 20));
     const query = (c.req.query('q') || '').trim().slice(0, 80);
@@ -715,6 +800,7 @@ app.get('/api/tv/:tmdbId', async (c) => {
 app.get('/api/anime', async (c) => {
   try {
     await connectDatabase();
+    await ensureStarterAnimeCatalog();
     const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
     const limit = Math.max(1, Math.min(40, Number(c.req.query('limit') || 20) || 20));
     const query = (c.req.query('q') || '').trim().slice(0, 80);
