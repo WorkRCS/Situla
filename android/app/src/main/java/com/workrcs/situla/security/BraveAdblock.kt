@@ -20,7 +20,8 @@ object BraveAdblock {
     }
 
     external fun nativeLoadFilters(standardRules: String, hostsRules: String): Boolean
-    private external fun nativeShouldBlock(url: String, sourceUrl: String): Boolean
+    private external fun nativeShouldBlock(url: String, sourceUrl: String, requestType: String): Boolean
+    external fun nativeCosmeticPayload(url: String): String
 
     @Synchronized
     fun loadFilters(standardRules: String, hostsRules: String): Boolean {
@@ -35,10 +36,10 @@ object BraveAdblock {
         }
     }
 
-    fun shouldBlock(url: String, sourceUrl: String): Boolean {
+    fun shouldBlock(url: String, sourceUrl: String, requestType: String): Boolean {
         if (!ready || url.isBlank()) return false
         return try {
-            nativeShouldBlock(url, sourceUrl)
+            nativeShouldBlock(url, sourceUrl, requestType)
         } catch (_: Throwable) {
             false
         }
