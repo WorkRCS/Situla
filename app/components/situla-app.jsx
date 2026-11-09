@@ -55,6 +55,33 @@ function MovieCard({ movie, onOpen, onSave, saved }) {
   );
 }
 
+
+function SeriesCard({ item, kind, onOpen }) {
+  const isTv = kind === "tv";
+  const title = isTv ? item.title : (item.titleEnglish || item.title);
+  const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
+  const rating = isTv ? item.voteAverage : item.score;
+  const meta = isTv
+    ? (item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "TV series")
+    : (item.episodes ? item.episodes + " episodes" : "Anime series");
+  return (
+    <article className="movie-card">
+      <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
+        <div className="movie-poster">
+          {item.posterUrl
+            ? <img src={item.posterUrl} alt={title} loading="lazy" />
+            : <div className="poster-fallback"><Icon name="film" size={30} /></div>}
+          {rating > 0 && (
+            <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
+          )}
+        </div>
+        <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
+        <p className="mt-1 text-[11px] text-[#858b9b]">{year ? year + " · " : ""}{meta}</p>
+      </button>
+    </article>
+  );
+}
+
 function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
   if (!movies.length) return null;
   return (
@@ -76,7 +103,9 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
 }
 
 const NAV_ITEMS = [
-  { id: "home", label: "Home", icon: "home" },
+  { id: "home", label: "Movies", icon: "home" },
+  { id: "tv", label: "TV", icon: "film" },
+  { id: "anime", label: "Anime", icon: "play" },
   { id: "search", label: "Search", icon: "search" },
   { id: "saved", label: "My List", icon: "saved" },
   { id: "settings", label: "Settings", icon: "settings" }
@@ -88,6 +117,8 @@ export default function SitulaApp() {
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
+  const [tvShows, setTvShows] = useState([]);
+  const [animeShows, setAnimeShows] = useState([]);
   const [savedMovies, setSavedMovies] = useState([]);
   const [recentMovies, setRecentMovies] = useState([]);
   const [progressMovies, setProgressMovies] = useState([]);
@@ -150,6 +181,35 @@ export default function SitulaApp() {
     };
   }, [query, tab]);
 
+
+  useEffect(() => {
+    if (tab !== "tv" && tab !== "anime") return;
+    const controller = new AbortController();
+    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40" : "/api/anime?page=1&limit=40";
+    async function loadSeries() {
+      setLoading(true);
+      try {
+        const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Series catalog is not available.");
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        if (tab === "tv") setTvShows(items);
+        else setAnimeShows(items);
+        setError("");
+      } catch (requestError) {
+        if (!controller.signal.aborted) {
+          setError(requestError.message || "Could not load the series catalog.");
+          if (tab === "tv") setTvShows([]);
+          else setAnimeShows([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+    loadSeries();
+    return () => controller.abort();
+  }, [tab]);
+
   const allGenres = useMemo(() => {
     const values = new Set();
     movies.forEach((movie) => (movie.genres || []).forEach((value) => values.add(value)));
@@ -165,6 +225,14 @@ export default function SitulaApp() {
   function openMovie(movie) {
     setRecentMovies((current) => [movie, ...current.filter((item) => item.imdbId !== movie.imdbId)].slice(0, 12));
     router.push("/watch/" + encodeURIComponent(movie.imdbId));
+  }
+
+  function openTvSeries(series) {
+    router.push("/tv/" + encodeURIComponent(series.tmdbId));
+  }
+
+  function openAnimeSeries(series) {
+    router.push("/anime/" + encodeURIComponent(series.malId));
   }
 
   function toggleSaved(movie) {
@@ -263,6 +331,47 @@ export default function SitulaApp() {
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
           </>
+        )}
+
+
+        {tab === "tv" && (
+          <section className="pb-8">
+            <div className="section-heading">
+              <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
+              <span>{tvShows.length} SHOWS</span>
+            </div>
+            {loading ? (
+              <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading TV series…</p></div>
+            ) : error ? (
+              <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
+            ) : tvShows.length ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+                {tvShows.map((item) => <SeriesCard key={item.tmdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
+              </div>
+            ) : (
+              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Import TV TMDB IDs in Admin, then approve the series.</p></div>
+            )}
+          </section>
+        )}
+
+        {tab === "anime" && (
+          <section className="pb-8">
+            <div className="section-heading">
+              <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
+              <span>{animeShows.length} SERIES</span>
+            </div>
+            {loading ? (
+              <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading anime…</p></div>
+            ) : error ? (
+              <div className="empty-panel"><p className="font-bold text-white">Anime catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
+            ) : animeShows.length ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+                {animeShows.map((item) => <SeriesCard key={item.malId} item={item} kind="anime" onOpen={openAnimeSeries} />)}
+              </div>
+            ) : (
+              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Import MAL IDs in Admin, then approve the anime series.</p></div>
+            )}
+          </section>
         )}
 
         {tab === "search" && (
