@@ -59,20 +59,15 @@ The Movie collection does not store a TMDB numeric ID. TMDB is only used server-
 
 ### Movies
 
-The curated first-run movie list contains 80 IMDb title IDs: the original 20 plus 60 additional candidates. The existing filters remain: English original language, adult titles excluded, a release date and poster required, plus one of Science Fiction, Mystery, Fantasy, Horror, Action or Adventure. Eligible curated entries are approved on first public catalog request when TMDB metadata access is configured.
+The explicit movie seed command discovers popular titles through TMDB and adds 60 new eligible IMDb records by default. The filters require English original language, non-adult titles, a release date and poster, and at least one of Science Fiction, Mystery, Fantasy, Horror, Action or Adventure. Successfully seeded titles are approved. Public GET /api/movies requests only read MongoDB and do not run discovery.
 
 ### TV series
 
-The TV Series model stores series metadata, season summaries, air dates, ratings, genres, and episode totals. Season/episode metadata is fetched from TMDB when a viewer opens a season and cached in MongoDB. Imported series are English-language, non-adult titles with a poster and first-air date, from the existing action/adventure, science-fiction/fantasy, mystery, crime, drama or war/politics genre set, with a minimum rating of 5.5 and 100 votes. New entries enter Pending review.
-
-The Admin → TV series screen is prefilled with 20 curated popular TMDB TV IDs. On the first public TV catalog request, all 20 are resolved and eligible titles are automatically approved. Further Admin imports enter Pending review.
+The TV Series model stores series metadata, season summaries, air dates, ratings, genres, and episode totals. Season/episode metadata is fetched from TMDB when a viewer opens a season and cached in MongoDB. Discovery filters to English-language, non-adult shows with a poster and first-air date, from the action/adventure, science-fiction/fantasy, mystery, crime, drama or war/politics genre set, with a minimum rating of 5.5 and 100 votes. The explicit seeder imports the 20 curated starter IDs when missing and discovers 50 additional popular eligible shows by default. Seeded titles that pass the filters are automatically approved; manual Admin imports enter Pending review. Public GET /api/tv requests only read the database.
 
 ### Anime series
 
-Anime metadata is resolved from MyAnimeList IDs through Jikan v4. The Anime Series model stores MAL ID, English/Japanese titles, synopsis, poster, episode count, season, type, genres/themes, score, rank, popularity and rating. The importer accepts TV/ONA titles, excludes Hentai and Ecchi genres, requires a poster and episode count, and filters to a MAL score of at least 6.5 with at least 500 votes. New entries enter Pending review.
-
-The Admin → Anime series screen is prefilled with 12 curated MAL IDs. On the first public Anime catalog request, all 12 are resolved and eligible titles are automatically approved. Further Admin imports enter Pending review. Jikan is an unofficial, read-only MyAnimeList API; imports are throttled to stay under its published request-rate limits.
-
+Anime metadata is resolved from MyAnimeList IDs through Jikan v4. The Anime Series model stores MAL ID, English/Japanese titles, synopsis, poster, episode count, season, type, genres/themes, score, rank, popularity and rating. Popular discovery selects SFW TV anime, excludes Hentai and Ecchi genres, requires a poster and episode count, and filters to a MAL score of at least 6.5 with at least 500 votes. The explicit seeder imports the 12 curated starter IDs when missing and discovers 50 additional popular anime by default. Seeded titles that pass the filters are automatically approved; manual Admin imports enter Pending review. Public GET /api/anime requests only read the database. Jikan is an unofficial, read-only MyAnimeList API; imports are throttled to stay under its published request-rate limits.
 
 ### Import troubleshooting
 
