@@ -9,7 +9,7 @@ import java.util.Locale
  * Best-effort request filtering for the Android WebView.
  *
  * The list targets common ad/affiliate/measurement hosts only. It does not
- * proxy or rewrite media traffic for the IMDb-compatible VidSrc iframe or anime player.
+ * proxy or rewrite media traffic for the VidLink movie, TV, and anime player.
  */
 object NetworkAdBlocker {
     private val blockedDomains = setOf(
@@ -75,16 +75,12 @@ object NetworkAdBlocker {
 
     fun isTrustedPlayerFrameNavigation(uri: Uri): Boolean {
         val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
-        return host == "vidsrc.sh" || host.endsWith(".vidsrc.sh") || host == "vidlink.pro" || host.endsWith(".vidlink.pro")
+        return host == "vidlink.pro" || host.endsWith(".vidlink.pro")
     }
 
     fun isTrustedTopLevel(uri: Uri): Boolean {
         val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
         return host == "situla.vercel.app" ||
-            host == "vidsrc.sh" ||
-            host.endsWith(".vidsrc.sh") ||
-            host == "vidlink.pro" ||
-            host.endsWith(".vidlink.pro") ||
             host == "localhost" ||
             host == "10.0.2.2"
     }
