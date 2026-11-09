@@ -190,11 +190,21 @@ fun VidLinkPlayerScreen(
         mainThreadHandler.post {
             // WebView forwards console errors from cross-origin iframe scripts too.
             // Keep those as diagnostics instead of replacing a successful iframe load status.
-            if (status == "javascript_console_error") {
-                playerDetail = "Console error (may be non-fatal): $detail"
-            } else {
-                playerStatus = status
-                if (detail.isNotBlank()) playerDetail = detail
+            when {
+                status == "javascript_console_error" -> {
+                    // Console errors may originate inside VidLink's cross-origin page.
+                    // Blocked ad/tracker fetches commonly produce a harmless "Failed to fetch".
+                    playerDetail = "VidLink page console (may be non-fatal): $detail"
+                }
+                status.startsWith("blocked_by_brave") -> {
+                    // A blocked ad/tracker is a protection event, not a player-load failure.
+                    // Keep the iframe's actual lifecycle status visible.
+                    playerDetail = "Brave blocked a request: $detail"
+                }
+                else -> {
+                    playerStatus = status
+                    if (detail.isNotBlank()) playerDetail = detail
+                }
             }
             if (status == "iframe_load_event") iframeLoaded = true
             if (status == "iframe_error") playerError = "VidLink iframe reported a load error. $detail"
