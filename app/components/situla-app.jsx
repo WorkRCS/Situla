@@ -163,7 +163,8 @@ export default function SitulaApp() {
       try {
         const params = new URLSearchParams({ page: "1", limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
-        const response = await fetch("/api/movies?" + params.toString(), {
+        const response = await params.set("random", "true");
+        fetch("/api/movies?" + params.toString(), {
           cache: "no-store",
           signal: controller.signal
         });
@@ -190,7 +191,7 @@ export default function SitulaApp() {
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
     const controller = new AbortController();
-    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40" : "/api/anime?page=1&limit=40";
+    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40&random=true" : "/api/anime?page=1&limit=40&random=true";
     async function loadSeries() {
       setLoading(true);
       try {
@@ -263,19 +264,11 @@ export default function SitulaApp() {
             <p className="text-[17px] font-black tracking-[.18em] text-white">SITULA</p>
             <p className="text-[9px] font-bold tracking-[.19em] text-[#828898]">MOVIES · DISCOVER MORE</p>
           </div>
-          <button
-            type="button"
-            onClick={() => { setTab("search"); setQuery(""); }}
-            className="watch-control !h-10 !w-10 !bg-[#171a23]"
-            aria-label="Open search"
-          >
-            <Icon name="search" />
-          </button>
         </div>
       </header>
 
       <div className="mx-auto max-w-[1320px] px-4 pt-5 md:px-8 md:pt-8">
-        <div className="mb-5">
+        {(tab === "home" || tab === "search") && <div className="mb-5">
           <label className="search-box">
             <Icon name="search" size={19} />
             <input
@@ -288,7 +281,7 @@ export default function SitulaApp() {
             />
             {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search"><Icon name="close" size={16} /></button>}
           </label>
-        </div>
+        </div>}
 
         {tab === "home" && (
           <>
@@ -338,7 +331,7 @@ export default function SitulaApp() {
             {recentMovies.length > 0 && (
               <MovieShelf title="Recently opened" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             )}
-            <MovieShelf title={genre === "All" ? "Popular on Situla" : genre + " movies"} eyebrow="CURATED FOR YOU" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+            <MovieShelf title={genre === "All" ? "Picked for you" : genre + " movies"} eyebrow="RANDOMIZED DISCOVERY" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
           </>
@@ -427,7 +420,7 @@ export default function SitulaApp() {
               </a>
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Movie information is served by the Situla catalog API. Playback opens the IMDb-compatible player using each movie’s IMDb ID.</p>
+                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb title IDs for movie identity and VidLink for movie, TV and anime playback.</p>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
@@ -435,7 +428,7 @@ export default function SitulaApp() {
         )}
 
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
-          SITULA · DISCOVER MORE · IMDb IDs · movie metadata via TMDB
+          SITULA · DISCOVER MORE · IMDb · VIDLINK
         </footer>
       </div>
 
