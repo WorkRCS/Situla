@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Maximize, Minimize } from "lucide-react";
 
 async function lockLandscape() {
   try {
@@ -157,12 +158,12 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         referrerPolicy="no-referrer"
       />
       <header className="watch-topbar">
-        <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series">←</button>
+        <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>
         </div>
-        <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>⛶</button>
+        <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>{fullscreen ? <Minimize size={19} strokeWidth={1.9} /> : <Maximize size={19} strokeWidth={1.9} />}</button>
       </header>
     </main>
   );
