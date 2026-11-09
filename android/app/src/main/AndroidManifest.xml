@@ -13,6 +13,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Situla"
         android:usesCleartextTraffic="false">
+        <meta-data
+            android:name="com.workrcs.situla.API_BASE_URL"
+            android:value="${situlaApiBaseUrl}" />
         <service
             android:name="com.wireguard.android.backend.GoBackend$VpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
