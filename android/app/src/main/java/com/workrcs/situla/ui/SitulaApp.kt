@@ -134,7 +134,8 @@ fun SitulaApp(context: Context) {
         }
     ) { insets ->
         val contentModifier = Modifier.fillMaxSize().padding(insets)
-            .background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .then(if (selectedMovie == null) Modifier.padding(horizontal = 16.dp) else Modifier)
         Column(contentModifier) {
             when {
                 selectedMovie != null -> MoviePlayerScreen(
