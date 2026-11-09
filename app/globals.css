@@ -28,7 +28,6 @@ body {
 }
 button, input { font: inherit; }
 button { cursor: pointer; }
-input, textarea, select, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
 img { display: block; }
 ::selection { background: transparent; color: inherit; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
