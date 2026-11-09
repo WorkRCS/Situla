@@ -73,8 +73,11 @@ fun SitulaVpnControls(context: Context) {
                     runCatching {
                         val raw = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                             ?: error("Could not read the selected file.")
-                        require(Regex("(?im)^AllowedIPs\\s*=.*(?:0\\.0\\.0\\.0/0|::/0)").containsMatchIn(raw)) {
-                            "The WireGuard profile must route all IPv4 or IPv6 traffic (AllowedIPs = 0.0.0.0/0, ::/0)."
+                        require(
+                            Regex("(?im)^AllowedIPs\\s*=.*0\\.0\\.0\\.0/0").containsMatchIn(raw) &&
+                                Regex("(?im)^AllowedIPs\\s*=.*::/0").containsMatchIn(raw)
+                        ) {
+                            "The profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0) to avoid IP leaks."
                         }
                         Config.parse(raw.byteInputStream(Charsets.UTF_8))
                         VpnProfileStore.save(context, selectedRegion, raw)
