@@ -22,7 +22,7 @@ Anime remains keyed by MAL ID because its current player integration requires th
 
 ## Playback notes
 
-Movie and TV playback uses an IMDb-compatible VidSrc iframe URL. Anime playback uses VidLink with MAL ID. Player availability depends on the provider and is not guaranteed by the catalog.
+Movie and TV playback uses VidLink Pro with a private numeric `vidlinkId` mapping. The Situla route and unique catalog identity remain the IMDb ID. VidLink's documented movie/TV endpoints currently require the numeric provider key, even though Situla never places it in the browser address. Anime playback uses VidLink with MAL ID. Player availability depends on the provider and is not guaranteed by the catalog.
 
 A parent page cannot arbitrarily amplify audio inside a cross-origin iframe. The embedded player's own volume control and the device's output volume remain the available controls.
 
