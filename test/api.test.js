@@ -131,8 +131,8 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
   assert.equal(Movie.schema.path('tmdbId'), undefined);
   assert.equal(Movie.schema.path('vidlinkId'), undefined);
   assert.equal(TvSeries.schema.path('tmdbId'), undefined);
-  assert.equal(TvSeries.schema.path('imdbId').options.unique, true);
-  assert.equal(Movie.schema.path('imdbId').options.unique, true);
+  assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
+  assert.ok(Movie.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
 });
 
 test('public movie and TV routes reject non-IMDb identifiers before database access', async () => {
