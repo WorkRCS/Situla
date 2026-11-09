@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { vidlinkTvUrl } from "../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
@@ -142,9 +143,8 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
 
   const playerUrl = (() => {
     if (kind === "tv") {
-      if (!catalogVerified || !/^tt\d{5,12}$/i.test(String(imdbId || ""))) return null;
-      return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(imdbId) + "/" +
-        encodeURIComponent(season) + "/" + encodeURIComponent(episode);
+      if (!catalogVerified) return null;
+      return vidlinkTvUrl(imdbId, season, episode);
     }
     const params = new URLSearchParams({
       primaryColor: "e8b65b",
