@@ -280,11 +280,11 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
                                 if (!uri.scheme.equals("https", ignoreCase = true)) return true
-                                val source = view?.url ?: "https://situla.app/"
+                                val source = view?.url ?: "https://situla.invalid/"
                                 val type = if (request.isForMainFrame) "document" else "subdocument"
                                 if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
                                 if (request.isForMainFrame &&
-                                    !uri.host.equals("situla.app", ignoreCase = true) &&
+                                    !uri.host.equals("situla.invalid", ignoreCase = true) &&
                                     !uri.host.equals("vidlink.pro", ignoreCase = true)
                                 ) return true
                                 false
@@ -321,13 +321,13 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                         }
 
                         tag = playerUrl
-                        loadDataWithBaseURL("https://situla.app/", wrapperHtml, "text/html", "UTF-8", null)
+                        loadDataWithBaseURL("https://situla.invalid/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 update = { webView ->
                     if (webView.tag != playerUrl) {
                         webView.tag = playerUrl
-                        webView.loadDataWithBaseURL("https://situla.app/", wrapperHtml, "text/html", "UTF-8", null)
+                        webView.loadDataWithBaseURL("https://situla.invalid/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 onRelease = { webView ->
