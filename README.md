@@ -28,7 +28,7 @@ Back up the MongoDB database before migrating. The migration performs these oper
 - Converts existing Movie and TV artwork paths to stored absolute artwork URLs.
 - Changes TV series identity to IMDb IDs, moves cached season/episode data into each TV document, and removes the obsolete per-season cache collection.
 - Deletes TV series that do not have a valid IMDb ID, because they cannot participate in the IMDb-only TV catalog.
-- Removes old provider ID fields and obsolete crawler history.
+- Removes legacy TMDB-named fields and obsolete crawler history while retaining the required numeric VidLink mapping as `vidlinkId`.
 - Retains anime records under MAL IDs.
 
 First run the read-only audit to see the exact record counts. It also reports case-insensitive duplicate IMDb IDs and makes no database changes:
@@ -37,13 +37,13 @@ First run the read-only audit to see the exact record counts. It also reports ca
 npm run audit:imdb-only
 ```
 
-After reviewing the counts and resolving any duplicate IMDb IDs, run the migration once, before deploying the new schema. The migration prints the invalid-ID counts again, deletes invalid Movie and TV documents, converts the valid records, and removes the old provider fields and cache collections:
+After reviewing the counts and resolving any duplicate IMDb IDs, run the migration once, before deploying the new schema. The migration prints the invalid-ID counts again, deletes invalid Movie and TV documents, converts the valid records, and removes the old TMDB-named fields and cache collections while retaining VidLink mappings:
 
 ```powershell
 npm run migrate:imdb-only
 ```
 
-The existing poster files may still be hosted on their previous image CDN; this migration stores them as direct URLs and removes the metadata API/path dependency. To remove that CDN host too, manually replace poster/backdrop URLs with images hosted on your own storage.
+The existing poster files may still be hosted on the old TMDB image CDN; this migration stores them as direct URLs but does not re-host the image bytes. To remove that CDN host too, manually replace poster/backdrop URLs with images hosted on your own storage. If an earlier migration already removed both `tmdbId` and `vidlinkId`, the audit will report missing provider mappings; those numeric VidLink mappings must be restored manually before the affected Movie/TV titles can play.
 
 ## Manual catalog maintenance
 
