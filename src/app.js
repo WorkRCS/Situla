@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun, TvSeries, TvSeason, AnimeSeries } from './models.js';
-import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds, importPopularMovies } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds, importPopularMovies, tmdbRequest } from './crawler.js';
 import { importTvSeriesIds, importAnimeIds, getTvSeason } from './series.js';
 
 const app = new Hono();
@@ -99,6 +99,7 @@ export function movieDto(movie) {
   return {
     id: String(movie._id),
     imdbId,
+    tmdbId: Number(movie.tmdbId) || null,
     imdbUrl: /^tt\d{5,12}$/.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
     title: movie.title,
     originalTitle: movie.originalTitle,
@@ -499,8 +500,16 @@ app.get('/api/movies', async (c) => {
     const sort = query && !imdbQuery
       ? { score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }
       : { popularity: -1, releaseDate: -1 };
+    const randomOrder = c.req.query('random') === 'true';
     const [items, total] = await Promise.all([
-      Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      randomOrder
+        ? Movie.aggregate([
+            { $match: filter },
+            { $sample: { size: Math.min(page * limit, 1000) } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ])
+        : Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       Movie.countDocuments(filter)
     ]);
     return c.json({ items: items.map(movieDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
@@ -515,10 +524,24 @@ app.get('/api/movies/:imdbId', async (c) => {
   if (!/^tt\d{5,12}$/.test(imdbId)) return c.json({ error: 'Invalid IMDb title ID.' }, 400);
   try {
     await connectDatabase();
-    const movie = await Movie.findOne({
+    let movie = await Movie.findOne({
       imdbId, moderationStatus: 'approved', adult: false, originalLanguage: 'en'
     }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
+
+    // Keep IMDb as the catalog/player route identity. VidLink's official movie
+    // endpoint requires a TMDB numeric ID, so resolve and cache that provider ID
+    // once when older movie records do not have it yet.
+    if (!Number(movie.tmdbId)) {
+      const found = await tmdbRequest('/find/' + encodeURIComponent(imdbId), {
+        external_source: 'imdb_id',
+        language: 'en-US'
+      });
+      const tmdbId = Number(found.movie_results?.[0]?.id) || null;
+      if (!tmdbId) return c.json({ error: 'This IMDb title has no matching VidLink movie ID.' }, 404);
+      await Movie.updateOne({ imdbId }, { $set: { tmdbId } });
+      movie = { ...movie, tmdbId };
+    }
     return c.json({ item: movieDto(movie) });
   } catch (error) {
     console.error('Public IMDb movie detail failed:', error.message);
@@ -541,8 +564,16 @@ app.get('/api/tv', async (c) => {
     const sort = query && !/^\d+$/.test(query)
       ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
       : { popularity: -1, firstAirDate: -1 };
+    const randomOrder = c.req.query('random') === 'true';
     const [items, total] = await Promise.all([
-      TvSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      randomOrder
+        ? TvSeries.aggregate([
+            { $match: filter },
+            { $sample: { size: Math.min(page * limit, 1000) } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ])
+        : TvSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       TvSeries.countDocuments(filter)
     ]);
     return c.json({ items: items.map(tvSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
@@ -600,8 +631,16 @@ app.get('/api/anime', async (c) => {
     const sort = query && !/^\d+$/.test(query)
       ? { score: { $meta: 'textScore' }, rank: 1, popularity: 1 }
       : { rank: 1, score: -1, popularity: 1 };
+    const randomOrder = c.req.query('random') === 'true';
     const [items, total] = await Promise.all([
-      AnimeSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      randomOrder
+        ? AnimeSeries.aggregate([
+            { $match: filter },
+            { $sample: { size: Math.min(page * limit, 1000) } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ])
+        : AnimeSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       AnimeSeries.countDocuments(filter)
     ]);
     return c.json({ items: items.map(animeSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
