@@ -518,6 +518,9 @@ html[data-theme="light"] .watch-screen { color:#fff; }
     min-height:clamp(350px,64dvh,500px);
     border-radius:10px;
   }
+  .hero-skeleton {
+    min-height:clamp(350px,64dvh,500px);
+  }
   .hero-image { object-position:62% center; }
   .hero-card::after {
     background:
@@ -526,7 +529,7 @@ html[data-theme="light"] .watch-screen { color:#fff; }
   }
 }
 @media (max-width:420px) {
-  .hero-card { min-height:clamp(330px,60dvh,440px); }
+  .hero-card,.hero-skeleton { min-height:clamp(330px,60dvh,440px); }
   .movie-card { width:clamp(116px,35vw,146px); flex-basis:clamp(116px,35vw,146px); }
   .netflix-shelf { margin-top:22px; }
 }
