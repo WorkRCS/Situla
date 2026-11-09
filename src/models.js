@@ -10,9 +10,6 @@ const imdbIdField = {
 
 const movieSchema = new mongoose.Schema({
   imdbId: imdbIdField,
-  // VidLink currently requires its numeric provider key for movie/TV embeds.
-  // IMDb remains the only public/catalog identity.
-  vidlinkId: { type: Number, min: 1, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
@@ -57,8 +54,6 @@ const tvSeasonSchema = new mongoose.Schema({
 
 const tvSeriesSchema = new mongoose.Schema({
   imdbId: imdbIdField,
-  // Internal VidLink provider key; never used in Situla routes.
-  vidlinkId: { type: Number, min: 1, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
