@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie discovery and streaming web app built with Next.js App Router and Tailwind CSS. It is installable as a Progressive Web App and uses the Situla API for approved movie metadata.
+Situla is a mobile-first movie discovery and streaming website built with Next.js App Router and Tailwind CSS. The Android app is a native WebView wrapper that opens the hosted website directly; there is no PWA installation flow.
 
 ## Stack
 
@@ -32,7 +32,7 @@ Never commit `.env`. The real credentials are not in this repository.
 - Saved movies and recently opened titles are stored locally in the browser.
 - Movie playback opens at `/watch/{TMDB_ID}`; the web app constructs `https://vidlink.pro/movie/{TMDB_ID}` directly from the catalog ID.
 - Fullscreen playback requests landscape orientation where the browser and installed PWA support the Screen Orientation API.
-- PWA manifest, install prompt, app icon, and a small offline shell cache.
+- The Android package opens the deployed website URL directly inside a native WebView. Fullscreen player requests landscape orientation through Android's WebChromeClient.
 - Existing admin dashboard remains available at `/index.html`.
 
 ## API and backend
@@ -57,7 +57,7 @@ The public API returns metadata and TMDB IDs only. The browser builds the VidLin
 
 ## Vercel deployment
 
-Set the Vercel project framework to Next.js (auto-detected when the root package is deployed), use the repository root as the Root Directory, and keep the Node.js runtime at 22.x or newer. Add the same environment variable names from `.env.example` in Vercel Project Settings. The Next.js app and Hono API are deployed together at the same origin.
+Set the Vercel project framework to Next.js (auto-detected when the root package is deployed), use the repository root as the Root Directory, and keep the Node.js runtime at 22.x or newer. Add the same environment variable names from `.env.example` in Vercel Project Settings. The Next.js app and Hono API are deployed together at the same origin. The Android APK simply opens `https://situla.vercel.app/` in a native WebView; the website controls the UI and navigation.
 
 ## Security and content boundaries
 
