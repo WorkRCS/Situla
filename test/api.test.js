@@ -67,7 +67,8 @@ test('movie DTO keeps IMDb route identity and provides internal VidLink mapping'
   assert.equal(dto.title, 'Inception');
   assert.equal(dto.posterUrl, 'https://images.example/inception.jpg');
   assert.equal(dto.backdropUrl, 'https://images.example/inception-backdrop.jpg');
-  assert.equal(dto.vidlinkId, 27205);
+  assert.equal(dto.playerAvailable, true);
+  assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   for (const forbidden of ['tmdbId', 'tmdbUrl', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
     assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must never be returned');
   }
@@ -91,7 +92,8 @@ test('TV DTO is keyed by IMDb and embeds seasons and episode metadata', () => {
     tmdbId: 1399
   });
   assert.equal(dto.imdbId, 'tt0944947');
-  assert.equal(dto.vidlinkId, 1399);
+  assert.equal(dto.playerAvailable, true);
+  assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   assert.equal(dto.seasons[0].seasonNumber, 1);
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
   assert.equal(dto.posterUrl, 'https://images.example/got.jpg');
@@ -143,6 +145,10 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
 test('public movie and TV routes reject non-IMDb identifiers before database access', async () => {
   const movie = await app.request('/api/movies/27205');
   const tv = await app.request('/api/tv/1399');
+  const moviePlayer = await app.request('/api/player/movie/27205');
+  const tvPlayer = await app.request('/api/player/tv/1399/1/1');
   assert.equal(movie.status, 400);
   assert.equal(tv.status, 400);
+  assert.equal(moviePlayer.status, 400);
+  assert.equal(tvPlayer.status, 400);
 });
