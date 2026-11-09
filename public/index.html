@@ -79,6 +79,14 @@
 
       <section class="view" id="view-crawler">
         <div class="page-head"><div><div class="overline">METADATA IMPORT</div><h1>Movie discovery</h1><p class="muted">Start a manual discovery batch. There are no automatic crawl jobs.</p></div></div>
+
+        <div class="panel mb-4">
+          <div class="panel-head"><div><h2><i class="bi bi-stars me-2"></i>Add 60 more popular movies</h2><p>Finds new eligible English-language titles using your existing genre, poster, release-date and adult-content filters. Existing IMDb IDs are skipped.</p></div></div>
+          <div class="filter-callout"><i class="bi bi-database-add"></i><span>Each successful title is saved to MongoDB immediately. A single failed TMDB lookup will not cancel the other movies.</span></div>
+          <button class="primary-btn" type="button" id="seed-movies-btn"><i class="bi bi-plus-circle"></i><span>Add 60 movies to database</span></button>
+          <p class="crawl-message d-none" id="seed-movies-message" role="status"></p>
+        </div>
+
         <div class="crawler-grid">
           <div class="panel crawler-panel">
             <div class="panel-head"><div><h2><i class="bi bi-search me-2"></i>Discover movies</h2><p>English-language movie metadata from TMDB.</p></div><div class="crawler-head-actions"><button class="secondary-btn" type="button" id="tmdb-check-btn"><i class="bi bi-wifi"></i> Test TMDB connection</button><span class="manual-label"><i class="bi bi-hand-index-thumb"></i> Manual only</span></div></div>
