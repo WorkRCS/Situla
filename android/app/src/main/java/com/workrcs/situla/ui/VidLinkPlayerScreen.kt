@@ -53,6 +53,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.workrcs.situla.data.Movie
 import com.workrcs.situla.data.SitulaDatabase
 import com.workrcs.situla.data.WatchHistoryDao
@@ -72,7 +74,8 @@ private class VidLinkProgressBridge(
     initialPositionMs: Long,
     private val bridgeToken: String,
     private val reportStatus: (String, String) -> Unit,
-    private val onPlayerPlay: () -> Unit
+    private val onPlayerPlay: () -> Unit,
+    private val isFilteringActive: () -> Boolean
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
     private var lastPositionMs = initialPositionMs
@@ -92,6 +95,17 @@ private class VidLinkProgressBridge(
     fun onPlayerPlay(token: String) {
         if (token != bridgeToken) return
         onPlayerPlay()
+    }
+
+    @JavascriptInterface
+    fun cosmeticPayload(token: String, pageUrl: String): String {
+        if (token != bridgeToken || !isFilteringActive() || !BraveAdblock.ready) {
+            return "__SITULA_FILTERS_NOT_READY__"
+        }
+        val pageUri = runCatching { Uri.parse(pageUrl) }.getOrNull() ?: return "{}"
+        if (!isVidLinkHost(pageUri)) return "{}"
+        return runCatching { BraveAdblock.nativeCosmeticPayload(pageUrl) }
+            .getOrDefault("{\"css\":\"\",\"script\":\"\"}")
     }
 
     @JavascriptInterface
@@ -175,7 +189,7 @@ fun VidLinkPlayerScreen(
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
     var playerError by remember(movie.tmdbId) { mutableStateOf<String?>(null) }
-    var playerStatus by remember(movie.tmdbId) { mutableStateOf("Loading embedded VidLink iframe · Brave filter OFF for diagnostics") }
+    var playerStatus by remember(movie.tmdbId) { mutableStateOf("Loading VidLink player · Brave filtering waits for Play") }
     var playerDetail by remember(movie.tmdbId) { mutableStateOf("") }
     var iframeLoaded by remember(movie.tmdbId) { mutableStateOf(false) }
     var braveUiActive by remember(movie.tmdbId) { mutableStateOf(false) }
@@ -249,7 +263,7 @@ fun VidLinkPlayerScreen(
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
     val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
     val progressBridge = remember(movie.tmdbId, progressToken) {
-        VidLinkProgressBridge(movie, dao, 0L, progressToken, reportPlayerStatus, enableBraveAfterPlay)
+        VidLinkProgressBridge(movie, dao, 0L, progressToken, reportPlayerStatus, enableBraveAfterPlay, { braveFilterActive.get() })
     }
     val historyLoaded = produceState(initialValue = false, movie.tmdbId) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
@@ -416,6 +430,67 @@ fun VidLinkPlayerScreen(
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                         addJavascriptInterface(progressBridge, "SitulaProgress")
 
+                        val cosmeticInjection = """
+                            (function() {
+                              'use strict';
+                              var token = '__SITULA_TOKEN__';
+                              var attempts = 0;
+                              var timer = setInterval(function() {
+                                attempts += 1;
+                                try {
+                                  if (!window.SitulaProgress || typeof window.SitulaProgress.cosmeticPayload !== 'function') {
+                                    if (attempts >= 120) clearInterval(timer);
+                                    return;
+                                  }
+                                  var raw = window.SitulaProgress.cosmeticPayload(token, String(window.location.href));
+                                  if (raw === '__SITULA_FILTERS_NOT_READY__') {
+                                    if (attempts >= 120) {
+                                      clearInterval(timer);
+                                      window.SitulaProgress.onPlayerStatus(token, 'cosmetic_filter_timeout', 'Brave filters did not become ready within 60 seconds.');
+                                    }
+                                    return;
+                                  }
+                                  var payload = JSON.parse(raw || '{}');
+                                  var applyPayload = function() {
+                                    var css = String(payload.css || '');
+                                    var script = String(payload.script || '');
+                                    if (css && !document.getElementById('situla-brave-cosmetic')) {
+                                      var style = document.createElement('style');
+                                      style.id = 'situla-brave-cosmetic';
+                                      style.textContent = css;
+                                      (document.head || document.documentElement || document.body).appendChild(style);
+                                    }
+                                    if (script && !window.__situlaBraveScriptletsApplied) {
+                                      window.__situlaBraveScriptletsApplied = true;
+                                      try { (0, eval)(script); }
+                                      catch (scriptError) { window.SitulaProgress.onPlayerStatus(token, 'cosmetic_scriptlet_error', String(scriptError)); }
+                                    }
+                                    window.SitulaProgress.onPlayerStatus(token, 'cosmetic_filter_applied', 'CSS bytes: ' + css.length + '; scriptlet bytes: ' + script.length);
+                                  };
+                                  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyPayload, { once: true });
+                                  else applyPayload();
+                                  clearInterval(timer);
+                                } catch (error) {
+                                  window.SitulaProgress.onPlayerStatus(token, 'cosmetic_filter_error', String(error));
+                                  if (attempts >= 120) clearInterval(timer);
+                                }
+                              }, 500);
+                            })();
+                        """.trimIndent().replace("__SITULA_TOKEN__", progressToken)
+                        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                            runCatching {
+                                WebViewCompat.addDocumentStartJavaScript(
+                                    this,
+                                    cosmeticInjection,
+                                    setOf("https://vidlink.pro", "https://*.vidlink.pro")
+                                )
+                            }.onFailure {
+                                reportPlayerStatus("cosmetic_injection_unavailable", it.message ?: "Could not register iframe cosmetic filter.")
+                            }
+                        } else {
+                            reportPlayerStatus("cosmetic_injection_unsupported", "This Android System WebView does not support document-start iframe scripts.")
+                        }
+
                         webChromeClient = object : WebChromeClient() {
                             private fun showCustomView(view: View?, callback: CustomViewCallback?) {
                                 if (view == null || activity == null || fullScreenView != null) {
@@ -537,7 +612,6 @@ fun VidLinkPlayerScreen(
                                 // provider iframe bootstrap normally; after Play, filter subframe
                                 // document navigations as well.
                                 if (!request.isForMainFrame && !braveFilterActive.get()) return false
-                                if (!request.isForMainFrame && isVidLinkHost(uri)) return false
 
                                 if (braveFilterActive.get()) {
                                     val source = view?.url ?: "https://situla.vercel.app/"
@@ -559,10 +633,9 @@ fun VidLinkPlayerScreen(
                                     return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
                                 }
 
-                                // VidLink's own player document/API is allowed to operate. All
-                                // other HTTPS resources pass through until Play, then Brave filters
-                                // requests by destination type (including ad/media endpoints).
-                                if (isVidLinkHost(requestedUri)) return null
+                                // Before Play, allow the iframe bootstrap and poster normally.
+                                // After Play, inspect all HTTPS resources, including VidLink-hosted
+                                // ad paths and third-party player/media requests.
                                 if (!braveFilterActive.get()) return null
 
                                 val address = requestedUri.toString()
