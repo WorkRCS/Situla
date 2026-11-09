@@ -35,7 +35,7 @@ test('health route requires only MongoDB settings and does not connect if absent
   assert.deepEqual(new Set(body.missing), new Set(names));
 });
 
-test('movie DTO uses saved artwork URLs and exposes no TMDB or provider key', () => {
+test('movie DTO keeps IMDb route identity and provides internal VidLink mapping', () => {
   const dto = movieDto({
     _id: '507f1f77bcf86cd799439011',
     imdbId: 'TT1375666',
@@ -66,7 +66,8 @@ test('movie DTO uses saved artwork URLs and exposes no TMDB or provider key', ()
   assert.equal(dto.title, 'Inception');
   assert.equal(dto.posterUrl, 'https://images.example/inception.jpg');
   assert.equal(dto.backdropUrl, 'https://images.example/inception-backdrop.jpg');
-  for (const forbidden of ['tmdbId', 'tmdbUrl', 'vidlinkId', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
+  assert.equal(dto.vidlinkId, 27205);
+  for (const forbidden of ['tmdbId', 'tmdbUrl', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
     assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must never be returned');
   }
 });
@@ -75,6 +76,7 @@ test('TV DTO is keyed by IMDb and embeds seasons and episode metadata', () => {
   const dto = tvSeriesDto({
     _id: '507f1f77bcf86cd799439012',
     imdbId: 'tt0944947',
+    vidlinkId: 1399,
     title: 'Game of Thrones',
     posterUrl: 'https://images.example/got.jpg',
     backdropUrl: 'https://images.example/got-bg.jpg',
@@ -88,6 +90,7 @@ test('TV DTO is keyed by IMDb and embeds seasons and episode metadata', () => {
     tmdbId: 1399
   });
   assert.equal(dto.imdbId, 'tt0944947');
+  assert.equal(dto.vidlinkId, 1399);
   assert.equal(dto.seasons[0].seasonNumber, 1);
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
   assert.equal(dto.posterUrl, 'https://images.example/got.jpg');
@@ -129,7 +132,7 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
   assert.ok(tvError.errors.imdbId);
   assert.ok(animeError.errors.malId);
   assert.equal(Movie.schema.path('tmdbId'), undefined);
-  assert.equal(Movie.schema.path('vidlinkId'), undefined);
+  assert.equal(Movie.schema.path('vidlinkId').instance, 'Number');
   assert.equal(TvSeries.schema.path('tmdbId'), undefined);
   assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
   assert.ok(Movie.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
