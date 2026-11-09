@@ -11,7 +11,7 @@ The Android application is a native WebView shell for the hosted Situla website.
 ## Catalog IDs and playback
 
 - Movie and TV catalog records use IMDb title IDs (`tt...`).
-- Movie and TV iframe playback uses VidLink Pro. IMDb remains the visible Situla route/catalog identity; a numeric VidLink provider mapping stays internal to the record.
+- Movie and TV playback opens VidLink Pro directly with the IMDb title ID; no numeric player source ID is stored or queried.
 - Anime uses a MyAnimeList ID with the VidLink anime endpoint.
 - No Admin API, metadata importer, or crawler is used by the Android client.
 
