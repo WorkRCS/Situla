@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -108,6 +109,20 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     val context = LocalContext.current
     val dao = remember { SitulaDatabase.get(context.applicationContext).watchHistoryDao() }
+    val protectionReady = produceState(initialValue = BraveAdblock.ready) {
+        value = if (BraveAdblock.ready) true else
+            com.workrcs.situla.security.AdblockFilterRepository.refreshAndInitialize(context.applicationContext)
+    }
+
+    if (!protectionReady.value) {
+        Column(Modifier.fillMaxSize().background(Color.Black).padding(20.dp)) {
+            Text("Situla protection is not ready. The player is paused so video loads are not sent without the ad/malware filter.")
+            Button(onClick = onBack, modifier = Modifier.padding(top = 14.dp)) {
+                Text("Back to movie details")
+            }
+        }
+        return
+    }
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
     val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
     val progressBridge = remember(movie.tmdbId) {
