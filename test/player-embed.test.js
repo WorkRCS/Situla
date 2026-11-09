@@ -23,13 +23,13 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
   assert.match(blocker, /private val blockedDomains = setOf/);
   assert.match(blocker, /fun shouldBlock\(/);
   assert.match(blocker, /org\.mlm\.adblock\.AdblockEngine/);
-  assert.match(blocker, /AdblockEngine\\.create\(\)/);
+  assert.match(blocker, /AdblockEngine\.create\(\)/);
   assert.match(blocker, /checkNetworkRequest\(/);
   assert.match(blocker, /cosmeticResources\(/);
   assert.match(blocker, /easylist\.to\/easylist\/easylist\.txt/);
   assert.match(blocker, /easylist\.to\/easylist\/easyprivacy\.txt/);
   assert.match(blocker, /brave\/adblock-lists\/master\/brave-unbreak\.txt/);
-  assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri\)/);
+  assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri, sourceUrl, accept, request\.isForMainFrame\)/);
   assert.doesNotMatch(player, /isTrustedPlayerFrameNavigation/);
   assert.match(player, /return request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)/);
 });
