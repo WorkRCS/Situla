@@ -95,6 +95,10 @@ object WireGuardVpnManager {
             }
         }
 
+    fun disconnectOnBackground() {
+        scope.launch { runCatching { disconnect() } }
+    }
+
     suspend fun disconnect(): String = withContext(Dispatchers.IO) {
         stopAutoRotation()
         val currentBackend = backend
