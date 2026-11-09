@@ -66,8 +66,6 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val ENABLE_BRAVE_FILTER_FOR_VIDLINK = false
-
 private class VidLinkProgressBridge(
     private val movie: Movie,
     private val dao: WatchHistoryDao,
