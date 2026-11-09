@@ -122,7 +122,6 @@ fun SitulaApp(context: Context) {
         Column(Modifier.fillMaxSize().padding(insets).background(Color(0xFF080B12)).padding(horizontal = 16.dp)) {
             when {
                 playingMovie != null -> MoviePlayerScreen(
-                    context = context,
                     movie = playingMovie!!,
                     onBack = { playingMovie = null }
                 )
