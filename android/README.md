@@ -21,4 +21,4 @@ Room watch history uses IMDb ID as its primary key. The Room 1-to-2 migration cl
 
 ## Network filtering
 
-The WebView uses the app's curated request blocker to filter common advertising and tracking hosts. It is best-effort filtering and does not guarantee that all ads, redirects, or media-hosted promotions can be blocked.
+The WebView uses the app's curated request blocker to filter known advertising and tracking request hosts. Player subframes may navigate to provider/source hosts so media can resolve; unexpected top-level redirects and popup windows remain blocked. Filtering is best-effort and does not guarantee that all ads or media-hosted promotions can be blocked.
