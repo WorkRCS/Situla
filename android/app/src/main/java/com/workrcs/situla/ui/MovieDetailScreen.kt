@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.workrcs.situla.data.Movie
 
 @Composable
-fun MovieDetailScreen(movie: Movie, onBack: () -> Unit) {
+fun MovieDetailScreen(movie: Movie, onBack: () -> Unit, onPlay: () -> Unit) {
     BackHandler(onBack = onBack)
     LazyColumn(
         contentPadding = PaddingValues(bottom = 28.dp),
@@ -48,9 +49,13 @@ fun MovieDetailScreen(movie: Movie, onBack: () -> Unit) {
             }
         }
         item {
-            // Keep the VidLink controls inside the movie page. The provider's own
-            // play, seek, volume and fullscreen controls remain in the iframe.
-            VidLinkPlayerScreen(movie = movie, onBack = onBack, embedded = true)
+            Button(
+                onClick = onPlay,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Text(" Play")
+            }
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
