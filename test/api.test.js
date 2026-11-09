@@ -33,6 +33,7 @@ test('health route requires only MongoDB settings and does not connect if absent
   const body = await response.json();
   assert.equal(body.status, 'needs_configuration');
   assert.deepEqual(new Set(body.missing), new Set(names));
+  assert.match(response.headers.get('permissions-policy') || '', /picture-in-picture=\(\)/);
 });
 
 test('movie DTO keeps IMDb route identity and provides internal VidLink mapping', () => {
@@ -134,6 +135,7 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
   assert.equal(Movie.schema.path('tmdbId'), undefined);
   assert.equal(Movie.schema.path('vidlinkId').instance, 'Number');
   assert.equal(TvSeries.schema.path('tmdbId'), undefined);
+  assert.equal(TvSeries.schema.path('vidlinkId').instance, 'Number');
   assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
   assert.ok(Movie.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
 });
