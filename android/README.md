@@ -7,7 +7,7 @@ Kotlin + Jetpack Compose Android client for the Situla movie catalog.
 - **VidLink movie player:** movies use the backend's `tmdbId` in `https://vidlink.pro/movie/{tmdbId}`. The app embeds VidLink in a WebView wrapper, blocks pop-up windows and JavaScript alert/confirm dialogs, filters player network requests with Brave adblock-rust, and rejects non-HTTPS or external top-level redirects.
 - **Watch progress:** VidLink `PLAYER_EVENT` and `MEDIA_DATA` postMessage events update the local Room history. Saved resume position is passed back with VidLink's `startAt` query parameter. Progress remains local to this device.
 - **Brave adblock-rust:** the Rust engine is compiled as an Android JNI library. The default Windows Emulator Debug build compiles x86_64 only; a physical-device build can select ARM ABIs with a Gradle property. EasyList, EasyPrivacy and URLHaus host rules are fetched over HTTPS, cached in no-backup app storage, and refreshed after three days. Network rules filter requests inside the VidLink WebView; popup windows, JavaScript dialogs and external top-level redirects are blocked.
-- **WireGuard VPN:** the app embeds the official WireGuard Android tunnel library. Four region slots are available (Malaysia, Singapore, Japan and Germany). The app defaults to Malaysia auto-connect and five-hour rotation whenever all four working region profiles are available. For each provider profile, Situla automatically writes `AllowedIPs = 0.0.0.0/0, ::/0` and AdGuard DNS; nobody has to edit IP-routing lines by hand. The app disconnects and stops rotation when the process moves to the background.
+- **WireGuard VPN:** the app embeds the official WireGuard Android tunnel library. Six region slots are available (Singapore, Malaysia, Japan, Germany, Netherlands and Poland). Singapore is the default auto-connect region; if no Singapore profile is provisioned, the app falls back to the first available region. Five-hour rotation works across any two or more provisioned region profiles. For each provider profile, Situla automatically writes `AllowedIPs = 0.0.0.0/0, ::/0` and AdGuard DNS; nobody has to edit IP-routing lines by hand. The app disconnects and stops rotation when the process moves to the background.
 - **DNS protection through VPN:** the app replaces the profile DNS line with AdGuard DNS `94.140.14.14` and `94.140.15.15` when connecting. This filters known ad/tracker domains and provides phishing-domain protection when traffic uses the VPN's DNS resolver.
 
 ## Important limitations
@@ -85,9 +85,9 @@ Use Android Studio's normal Run button after syncing Gradle; the commands above 
 ## First-run configuration inside Situla
 
 1. Open **Settings → VPN**.
-2. Select Malaysia, Singapore, Japan or Germany and import the matching provider-issued `.conf` file. Repeat for all four regions.
+2. Select Singapore, Malaysia, Japan, Germany, Netherlands or Poland and provision the matching region profile. Repeat for each region you intend to use.
 3. Grant Android's VPN permission when prompted, then connect. Confirm the WireGuard provider shows a successful handshake/connected tunnel.
-4. Enable **Auto-connect on app launch** for the selected region. Enable **Automatic region rotation** after all four profiles are imported and the tunnel is connected.
+4. Singapore is the default auto-connect region. Automatic rotation becomes available when at least two working region profiles are provisioned and the tunnel is connected.
 5. Open **Brave Adblock → Update ad & malware filters**. On first launch the app also tries to download and initialize these lists automatically.
 6. Open an approved movie. The player uses the numeric TMDB ID returned by the Situla backend. The player provider must have a source available for that movie.
 
