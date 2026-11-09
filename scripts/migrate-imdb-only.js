@@ -35,6 +35,16 @@ async function main() {
 
   const invalidMovieCount = await movies.countDocuments(invalidImdbFilter());
   const invalidTvCount = await tvSeries.countDocuments(invalidImdbFilter());
+  const duplicateMovieIds = await movies.aggregate([
+    { $match: { imdbId: IMDB_ID } },
+    { $group: { _id: { $toLower: '$imdbId' }, count: { $sum: 1 } } },
+    { $match: { count: { $gt: 1 } } },
+    { $limit: 10 }
+  ]).toArray();
+  if (duplicateMovieIds.length) {
+    throw new Error('Duplicate IMDb IDs exist in the Movie collection. Resolve these duplicates first: ' +
+      duplicateMovieIds.map((item) => item._id + ' (' + item.count + ')').join(', '));
+  }
   const duplicateTvIds = await tvSeries.aggregate([
     { $match: { imdbId: IMDB_ID } },
     { $group: { _id: { $toLower: '$imdbId' }, count: { $sum: 1 } } },
