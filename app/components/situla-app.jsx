@@ -326,7 +326,7 @@ export default function SitulaApp() {
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
           const selected = categoryShelves.find((item) => item.name === genre);
-          if (selected?.genreIds?.length) params.set("genreIds", selected.genreIds.join(","));
+          if (selected?.genre) params.set("genre", selected.genre);
         }
         const endpoint = isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString();
         const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
@@ -410,13 +410,11 @@ export default function SitulaApp() {
     try { localStorage.setItem("situla:movie:" + imdbId, JSON.stringify(normalized)); } catch {}
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
     setSearchOpen(false);
-    const providerId = Number(normalized.vidlinkId) || 0;
-    const providerQuery = providerId > 0 ? "?vidlinkId=" + encodeURIComponent(providerId) : "";
-    router.push("/watch/" + encodeURIComponent(imdbId) + providerQuery);
+    router.push("/watch/" + encodeURIComponent(imdbId));
   }
 
   function openTvSeries(series) {
-    router.push("/tv/" + encodeURIComponent(series.tmdbId));
+    router.push("/tv/" + encodeURIComponent(series.imdbId));
   }
 
   function openAnimeSeries(series) {
@@ -458,8 +456,8 @@ export default function SitulaApp() {
         if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
         setTvShows((current) => {
-          const ids = new Set(current.map((item) => item.tmdbId));
-          return [...current, ...nextItems.filter((item) => !ids.has(item.tmdbId))];
+          const ids = new Set(current.map((item) => item.imdbId));
+          return [...current, ...nextItems.filter((item) => !ids.has(item.imdbId))];
         });
         setTvPage(Number(payload.pagination?.page) || nextPage);
         setTvTotal(Number(payload.pagination?.total) || tvTotal);
@@ -493,12 +491,12 @@ export default function SitulaApp() {
         const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
         localStorage.setItem("situla:progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) => item.imdbId !== imdbId) : []));
       } else if (key.startsWith("tv:")) {
-        const [, tmdbId, seasonPart, episodePart] = key.split(":");
+        const [, imdbId, seasonPart, episodePart] = key.split(":");
         const season = Number(seasonPart?.replace(/^s/, ""));
         const episode = Number(episodePart?.replace(/^e/, ""));
         const progress = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
         localStorage.setItem("situla:tv-progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) =>
-          !(Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === season && Number(item.episode) === episode)
+          !(String(item.imdbId).toLowerCase() === imdbId && Number(item.season) === season && Number(item.episode) === episode)
         ) : []));
       } else if (key.startsWith("anime:")) {
         const [, malId, episodePart, audio] = key.split(":");
@@ -653,10 +651,10 @@ export default function SitulaApp() {
               <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : tvShows.length ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
-                {tvShows.map((item) => <SeriesCard key={item.tmdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
+                {tvShows.map((item) => <SeriesCard key={item.imdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
               </div>
             ) : (
-              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Import TV TMDB IDs in Admin, then approve the series.</p></div>
+              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with IMDb IDs to the database.</p></div>
             )}
             {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <ArrowRight size={16} /></button></div>}
           </section>
@@ -742,12 +740,9 @@ export default function SitulaApp() {
                   </div>
                 ) : <p className="mt-4 text-sm text-[#9297a7]">Nothing watched yet. Playback progress will appear here.</p>}
               </div>
-              <a href="/index.html" className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#11131b] p-5 transition hover:bg-[#181b25]">
-                <div><h2 className="font-bold">Admin console</h2><p className="mt-1 text-xs text-[#9297a7]">Manage the catalog and import movie IDs.</p></div><Icon name="external" />
-              </a>
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb title IDs for movie identity and VidLink for movie, TV and anime playback.</p>
+                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies and TV, and MAL IDs for anime playback.</p>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
@@ -755,7 +750,7 @@ export default function SitulaApp() {
         )}
 
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
-          SITULA · DISCOVER MORE · IMDb · VIDLINK
+          SITULA · DISCOVER MORE · IMDb
         </footer>
       </div>
 
