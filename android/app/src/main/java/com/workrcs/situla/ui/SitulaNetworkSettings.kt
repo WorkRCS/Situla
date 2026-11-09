@@ -56,7 +56,13 @@ fun SitulaVpnControls(context: Context) {
         scope.launch {
             message = "Connecting to ${profile.first}…"
             runCatching { WireGuardVpnManager.connect(context, profile.first, profile.second) }
-                .onSuccess { message = it }
+                .onSuccess {
+                    message = it
+                    if (autoRotate && available.size == VpnProfileStore.regions.size) {
+                        runCatching { WireGuardVpnManager.startAutoRotation(context) }
+                            .onFailure { message = it.message ?: "Could not start automatic rotation." }
+                    }
+                }
                 .onFailure { message = it.message ?: "VPN connection failed." }
         }
     }
@@ -217,8 +223,8 @@ fun SitulaProtectionControls(context: Context) {
             onClick = {
                 scope.launch {
                     refreshing = true
-                    ready = withContext(Dispatchers.IO) { AdblockFilterRepository.refreshAndInitialize(context) }
-                    message = if (ready) "EasyList, EasyPrivacy and URLHaus filters loaded." else "Filter engine failed: ${BraveAdblock.lastError ?: "native library unavailable"}"
+                    ready = withContext(Dispatchers.IO) { AdblockFilterRepository.refreshAndInitialize(context, forceRefresh = true) }
+                    message = if (ready) "Brave engine initialized with downloaded or cached filter rules." else "Filter engine failed: ${BraveAdblock.lastError ?: "native library unavailable"}"
                     refreshing = false
                 }
             },
