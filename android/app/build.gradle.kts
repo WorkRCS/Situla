@@ -17,6 +17,8 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
+val braveAdblockOutput = layout.buildDirectory.dir("generated/braveAdblock")
+
 android {
     namespace = "com.workrcs.situla"
     compileSdk = 36
@@ -36,12 +38,10 @@ android {
     }
     packaging { resources { excludes += setOf("/META-INF/AL2.0", "/META-INF/LGPL2.1") } }
     sourceSets.getByName("main") {
-        val braveAdblockOutput = layout.buildDirectory.dir("generated/braveAdblock")
-        jniLibs.srcDir(braveAdblockOutput.map { it.dir("jniLibs") })
-        assets.srcDir(braveAdblockOutput.map { it.dir("assets") })
+        jniLibs.srcDir(braveAdblockOutput.get().dir("jniLibs").asFile)
+        assets.srcDir(braveAdblockOutput.get().dir("assets").asFile)
     }
 }
-val braveAdblockOutput = layout.buildDirectory.dir("generated/braveAdblock")
 val extractBraveAdblockAar = tasks.register<Copy>("extractBraveAdblockAar") {
     from({ braveAdblockAar.files.map { zipTree(it) } }) {
         include("jni/**/*.so")
