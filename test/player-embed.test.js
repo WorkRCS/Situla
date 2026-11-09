@@ -28,8 +28,14 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
   assert.ok(blocker.includes("cosmeticResources("));
   assert.ok(blocker.includes("https://easylist.to/easylist/easylist.txt"));
   assert.ok(blocker.includes("https://easylist.to/easylist/easyprivacy.txt"));
+  assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt"));
+  assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt"));
+  assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-regional.txt"));
   assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt"));
+  assert.ok(blocker.includes("12L * 60L * 60L * 1000L"));
   assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri, sourceUrl, accept, request\.isForMainFrame\)/);
+  assert.ok(player.includes("settings.setSupportMultipleWindows(true)"));
+  assert.match(player, /onCreateWindow\\([\\s\\S]*?\\): Boolean = false/);
   assert.doesNotMatch(player, /isTrustedPlayerFrameNavigation/);
   assert.match(player, /return request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)/);
 });
@@ -111,6 +117,6 @@ test('Android app retains popup rejection and the existing targeted request filt
   assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri, sourceUrl, accept, request.isForMainFrame)'));
   assert.ok(wrapper.includes('): Boolean = false'));
   assert.ok(wrapper.includes('javaScriptCanOpenWindowsAutomatically = false'));
-  assert.ok(wrapper.includes('setSupportMultipleWindows(false)'));
+  assert.ok(wrapper.includes('setSupportMultipleWindows(true)'));
   assert.ok(blocker.includes('"doubleclick.net"'));
 });
