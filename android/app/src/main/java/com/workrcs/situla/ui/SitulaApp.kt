@@ -165,7 +165,7 @@ fun SitulaApp(context: Context) {
                     mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                     // Do not let player scripts spawn ad tabs/windows.
                     javaScriptCanOpenWindowsAutomatically = false
-                    setSupportMultipleWindows(false)
+                    setSupportMultipleWindows(true)
                     allowFileAccess = false
                     allowContentAccess = false
                     useWideViewPort = true
