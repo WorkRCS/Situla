@@ -26,7 +26,7 @@ class WatchProgressRecorder(
         ticker = scope.launch {
             var lastPosition = player.currentPosition.coerceAtLeast(0L)
             lastElapsedMs = SystemClock.elapsedRealtime()
-            watchedMs = dao.find(movie.tmdbId)?.watchedMs ?: 0L
+            watchedMs = dao.find(movie.imdbId)?.watchedMs ?: 0L
             while (isActive) {
                 delay(15_000)
                 val now = SystemClock.elapsedRealtime()
@@ -54,7 +54,7 @@ class WatchProgressRecorder(
     private suspend fun save(movie: Movie, position: Long, duration: Long, totalWatched: Long) {
         val safeDuration = duration.takeIf { it > 0L } ?: 0L
         dao.upsert(WatchHistoryEntity(
-            tmdbId = movie.tmdbId, title = movie.title, posterUrl = movie.posterUrl,
+            imdbId = movie.imdbId, title = movie.title, posterUrl = movie.posterUrl,
             releaseYear = movie.releaseYear, positionMs = position.coerceAtLeast(0L),
             durationMs = safeDuration, watchedMs = totalWatched.coerceAtLeast(0L),
             completed = safeDuration > 0L && position >= safeDuration * 0.95,
