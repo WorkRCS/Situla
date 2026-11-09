@@ -17,3 +17,13 @@ export function vidlinkTvUrl(imdbId, season, episode) {
   return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(id) + "/" +
     seasonNumber + "/" + episodeNumber;
 }
+
+const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
+
+export function hindiMoviePlayerUrl(imdbId) {
+  const id = String(imdbId || "").trim().toLowerCase();
+  if (!IMDB_TITLE_ID.test(id)) return null;
+  const url = new URL(HINDI_MOVIE_PLAYER);
+  url.searchParams.set("id", id);
+  return url.toString();
+}
