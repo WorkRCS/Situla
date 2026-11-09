@@ -1,8 +1,6 @@
 package com.workrcs.situla.ui
 
 import android.content.Context
-import android.net.VpnService
-import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,8 +25,6 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Refresh
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -41,13 +37,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ProcessLifecycleOwner
-import com.workrcs.situla.security.AdblockFilterRepository
-import com.workrcs.situla.vpn.WireGuardVpnManager
-import com.workrcs.situla.vpn.VpnProfileStore
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -102,27 +91,6 @@ fun SitulaApp(context: Context) {
     val history by historyDao.observeRecent().collectAsState(initial = emptyList())
     val continueWatching by historyDao.observeContinueWatching().collectAsState(initial = emptyList())
 
-    val vpnAutoConnectPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val region = VpnProfileStore.preferredAvailableRegion(context)
-            val profile = region?.let { VpnProfileStore.load(context, it) }
-            if (region != null && profile != null) {
-                scope.launch {
-                    runCatching {
-                        WireGuardVpnManager.connect(context, region, profile)
-                        if (VpnProfileStore.autoRotateEnabled(context) &&
-                            VpnProfileStore.availableRegions(context).size >= 2
-                        ) {
-                            WireGuardVpnManager.startAutoRotation(context)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     suspend fun loadMovies() {
         if (api == null) {
             error = "Situla backend URL is unavailable. Reinstall the latest app build or check its configuration."
@@ -135,38 +103,7 @@ fun SitulaApp(context: Context) {
         loading = false
     }
     LaunchedEffect(Unit) {
-        launch { loadMovies() }
-        launch { AdblockFilterRepository.refreshAndInitialize(context.applicationContext) }
-
-        val autoRegion = VpnProfileStore.preferredAvailableRegion(context)
-        val autoProfile = autoRegion?.let { VpnProfileStore.load(context, it) }
-        if (autoRegion != null && autoProfile != null) {
-            val permissionIntent = VpnService.prepare(context)
-            if (permissionIntent == null) {
-                launch {
-                    runCatching {
-                        WireGuardVpnManager.connect(context, autoRegion, autoProfile)
-                        if (VpnProfileStore.autoRotateEnabled(context) &&
-                            VpnProfileStore.availableRegions(context).size >= 2
-                        ) {
-                            WireGuardVpnManager.startAutoRotation(context)
-                        }
-                    }
-                }
-            } else {
-                vpnAutoConnectPermission.launch(permissionIntent)
-            }
-        }
-    }
-
-    DisposableEffect(context) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) {
-                WireGuardVpnManager.disconnectOnBackground()
-            }
-        }
-        ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
-        onDispose { ProcessLifecycleOwner.get().lifecycle.removeObserver(observer) }
+        loadMovies()
     }
 
     BackHandler(enabled = selectedMovie != null || tab != Tab.HOME) {
@@ -238,7 +175,7 @@ fun SitulaApp(context: Context) {
                             error = error
                         )
                         Tab.HISTORY -> HistoryScreen(history)
-                        Tab.SETTINGS -> SettingsScreen(api, context)
+                        Tab.SETTINGS -> SettingsScreen(api)
                     }
                 }
             }
@@ -378,7 +315,7 @@ private fun HistoryScreen(history: List<WatchHistoryEntity>) {
 }
 
 @Composable
-private fun SettingsScreen(api: SitulaApi?, context: Context) {
+private fun SettingsScreen(api: SitulaApi?) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Admin session not connected.") }
@@ -441,8 +378,6 @@ private fun SettingsScreen(api: SitulaApi?, context: Context) {
                 networkTest?.let { Text(it, color = Color(0xFFB8C0CC), fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp)) }
             }
         }
-        item { SitulaVpnControls(context) }
-        item { SitulaProtectionControls(context) }
         item {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AdminPanelSettings, null, tint = MaterialTheme.colorScheme.primary); Text(" Admin sign in", fontWeight = FontWeight.Bold) }
