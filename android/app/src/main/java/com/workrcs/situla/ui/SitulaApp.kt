@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.workrcs.situla.BuildConfig
-import com.workrcs.situla.data.AppDatabase
+import com.workrcs.situla.data.SitulaDatabase
 import com.workrcs.situla.data.ImportIdsRequest
 import com.workrcs.situla.data.LoginRequest
 import com.workrcs.situla.data.Movie
@@ -65,7 +65,7 @@ private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HIST
 fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     val api = remember { SitulaApiProvider.create(BuildConfig.API_BASE_URL) }
-    val database = remember { AppDatabase.get(context) }
+    val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var searchResults by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
