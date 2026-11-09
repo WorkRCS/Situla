@@ -52,7 +52,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
-private const val SITULA_WEBSITE_URL = "https://situla.vercel.app/"
+private const val SITULA_WEBSITE_URL = "https://situla-five.vercel.app/"
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
