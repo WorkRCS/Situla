@@ -43,8 +43,10 @@ export function vidlinkTvUrl(imdbId, season, episode) {
 export function hindiMoviePlayerUrl(imdbId) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
-  const url = new URL(HINDI_MOVIE_PLAYER);
-  url.searchParams.set("id", id);
+
+  // This provider resolves IMDb titles from the path segment, not ?id=...
+  // Keep the verified working shape: https://slast430did.com/play/{imdbId}
+  const url = new URL(encodeURIComponent(id), HINDI_MOVIE_PLAYER);
   withMovieTheme(url);
   return url.toString();
 }
