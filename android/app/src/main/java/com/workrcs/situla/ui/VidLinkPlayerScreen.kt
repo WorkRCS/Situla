@@ -46,9 +46,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -312,8 +315,8 @@ fun VidLinkPlayerScreen(
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
           <meta charset="utf-8">
           <style>
-            html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; }
-            iframe { display:block; border:0; width:100%; height:100%; background:#000; }
+            html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
+            iframe { display:block; border:0; width:100%; height:100%; background:transparent; }
           </style>
         </head>
         <body>
@@ -402,12 +405,29 @@ fun VidLinkPlayerScreen(
             if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f)
             else Modifier.weight(1f).fillMaxWidth()
         ) {
+            // This is Situla's local player frame, not remotely supplied by VidLink.
+            // It remains visible while the remote iframe is blank, blocked or unavailable.
+            AsyncImage(
+                model = movie.backdropUrl ?: movie.posterUrl,
+                contentDescription = movie.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                Modifier.fillMaxSize().background(
+                    Brush.verticalGradient(
+                        listOf(Color(0x77000000), Color(0xE6000000))
+                    )
+                )
+            )
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { viewContext ->
                     WebView(viewContext).apply {
                         playerWebViewHolder[0] = this
-                        setBackgroundColor(AndroidColor.BLACK)
+                        // Keep the native movie artwork underneath the WebView until the
+                        // remote VidLink document actually reports its iframe load event.
+                        setBackgroundColor(AndroidColor.TRANSPARENT)
                         // Remote WebView inspection is enabled only for debug APKs.
                         WebView.setWebContentsDebuggingEnabled(
                             (viewContext.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
@@ -707,6 +727,7 @@ fun VidLinkPlayerScreen(
                                 val importantRequest = request.isForMainFrame || isVidLinkHost(uri) ||
                                     destination in listOf("document", "iframe", "video", "audio")
                                 if (code >= 400 && importantRequest) {
+                                    iframeLoaded = false
                                     playerError = "Player network request returned HTTP $code for ${uri.host ?: "unknown host"}/${uri.lastPathSegment ?: "resource"}."
                                     reportPlayerStatus("http_error_$code", uri.toString())
                                     Log.w("SitulaVidLink", "HTTP $code while loading $uri")
@@ -726,6 +747,7 @@ fun VidLinkPlayerScreen(
                                     destination in listOf("document", "iframe", "video", "audio")
                                 if (importantRequest) {
                                     val description = error?.description?.toString() ?: "Network error"
+                                    iframeLoaded = false
                                     playerError = "Cannot load player request: $description (${uri.host ?: "unknown host"})."
                                     reportPlayerStatus("network_error", "$description · $uri")
                                     Log.w("SitulaVidLink", "Load error for $uri: $description")
@@ -781,15 +803,37 @@ fun VidLinkPlayerScreen(
                     webView.destroy()
                 }
             )
-            if (playerError == null && !iframeLoaded) {
+            if (playerError != null || !iframeLoaded) {
                 Column(
                     Modifier.align(Alignment.Center)
-                        .background(Color(0xDD151922))
-                        .padding(12.dp)
+                        .fillMaxWidth()
+                        .background(Color(0xDD10141D))
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Connecting to VidLink iframe…", color = Color.White)
-                    Text("Status: $playerStatus", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 4.dp))
-                    Text("TMDB ID: ${movie.tmdbId}", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 4.dp))
+                    Text(movie.title, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (playerError == null) "Situla player frame is ready · Connecting to VidLink…" else "VidLink could not load the remote player",
+                        color = if (playerError == null) Color(0xFFD7E0EA) else Color(0xFFFFB1C0),
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                    Text(
+                        "TMDB ID: ${movie.tmdbId} · Status: $playerStatus",
+                        color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 5.dp)
+                    )
+                    if (playerError != null) {
+                        Text(playerError.orEmpty(), color = Color(0xFFFFC9A3), modifier = Modifier.padding(top = 6.dp))
+                        Button(
+                            onClick = {
+                                iframeLoaded = false
+                                playerError = null
+                                playerStatus = "Retrying embedded VidLink iframe…"
+                                playerDetail = playerUrl
+                                playerWebViewHolder[0]?.reload()
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                        ) { Text("Retry VidLink") }
+                    }
                 }
             }
             playerError?.let { message ->
