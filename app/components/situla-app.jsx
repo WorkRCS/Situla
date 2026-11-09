@@ -495,7 +495,7 @@ export default function SitulaApp() {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
-              <span>{tvShows.length} SHOWS</span>
+              <span>{tvShows.length} / {tvTotal || tvShows.length} SHOWS</span>
             </div>
             {loading ? (
               <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading TV series…</p></div>
@@ -508,6 +508,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Import TV TMDB IDs in Admin, then approve the series.</p></div>
             )}
+            {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <ArrowRight size={16} /></button></div>}
           </section>
         )}
 
@@ -515,7 +516,7 @@ export default function SitulaApp() {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
-              <span>{animeShows.length} SERIES</span>
+              <span>{animeShows.length} / {animeTotal || animeShows.length} SERIES</span>
             </div>
             {loading ? (
               <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading anime…</p></div>
@@ -528,6 +529,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Import MAL IDs in Admin, then approve the anime series.</p></div>
             )}
+            {hasMoreAnime && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more anime"} <ArrowRight size={16} /></button></div>}
           </section>
         )}
 
@@ -535,7 +537,7 @@ export default function SitulaApp() {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>FIND YOUR NEXT MOVIE</span><h1 className="mt-1 text-2xl font-black">Search</h1></div>
-              <span>{movies.length} RESULTS</span>
+              <span>{movies.length} / {moviesTotal || movies.length} RESULTS</span>
             </div>
             {loading ? (
               <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Searching the catalog…</p></div>
@@ -548,6 +550,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No movies found" : "Search the catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Type a movie title, keyword or year above."}</p></div>
             )}
+            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more results"} <ArrowRight size={16} /></button></div>}
           </section>
         )}
 
@@ -568,6 +571,27 @@ export default function SitulaApp() {
           <section className="max-w-2xl pb-8">
             <div className="section-heading"><div><span>YOUR APP</span><h1 className="mt-1 text-2xl font-black">Settings</h1></div></div>
             <div className="space-y-3">
+              <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div><h2 className="font-bold">Watch history</h2><p className="mt-1 text-xs text-[#9297a7]">Saved only on this device · {sortedHistory.length} entries</p></div>
+                  {sortedHistory.length > 0 && <button type="button" className="history-clear" onClick={clearWatchHistory}><Trash2 size={15} /> Clear all</button>}
+                </div>
+                {sortedHistory.length ? (
+                  <div className="mt-4 space-y-2">
+                    {sortedHistory.map((item) => (
+                      <div key={item.key} className="history-row">
+                        {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><Clapperboard size={18} /></div>}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
+                          <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
+                          <p className="mt-1 text-xs text-[#9297a7]">{formatClock(item.watched)} / {formatClock(item.duration)}</p>
+                        </div>
+                        <button type="button" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><X size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="mt-4 text-sm text-[#9297a7]">Nothing watched yet. Playback progress will appear here.</p>}
+              </div>
               <a href="/index.html" className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#11131b] p-5 transition hover:bg-[#181b25]">
                 <div><h2 className="font-bold">Admin console</h2><p className="mt-1 text-xs text-[#9297a7]">Manage the catalog and import movie IDs.</p></div><Icon name="external" />
               </a>
