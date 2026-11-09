@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Maximize, Minimize } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 async function lockLandscape() {
   try {
@@ -13,9 +13,7 @@ async function lockLandscape() {
 export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [fullscreen, setFullscreen] = useState(false);
   const [startAt, setStartAt] = useState(0);
-  const screenRef = useRef(null);
   const router = useRouter();
   const lastProgressWrite = useRef(0);
 
@@ -141,39 +139,6 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  useEffect(() => {
-    const onFullscreenChange = async () => {
-      const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-      setFullscreen(active);
-      if (active) await lockLandscape();
-      else {
-        try { screen.orientation?.unlock?.(); } catch {}
-      }
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-      try { screen.orientation?.unlock?.(); } catch {}
-    };
-  }, []);
-
-  const toggleFullscreen = useCallback(async () => {
-    const target = screenRef.current;
-    if (!target) return;
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        if (document.exitFullscreen) await document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-      } else {
-        if (target.requestFullscreen) await target.requestFullscreen();
-        else if (target.webkitRequestFullscreen) await target.webkitRequestFullscreen();
-        await lockLandscape();
-      }
-    } catch {}
-  }, []);
-
   const vidlinkId = Number(movie?.vidlinkId);
   const playerParams = new URLSearchParams({
     primaryColor: "e8b65b",
@@ -192,14 +157,14 @@ export default function PlayerExperience({ imdbId }) {
     : null;
 
   return (
-    <main ref={screenRef} className="watch-screen" onDoubleClick={toggleFullscreen}>
+    <main className="watch-screen">
       {playerUrl ? (
         <iframe
           key={playerUrl}
           className="watch-frame"
           src={playerUrl}
           title={(movie?.title || "Situla movie") + " player"}
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
         />
       ) : (
@@ -213,7 +178,6 @@ export default function PlayerExperience({ imdbId }) {
         </div>
       )}
       <header className="watch-topbar">
-        <a className="provider-open-control" href={playerUrl || undefined} target="_blank" rel="noopener noreferrer" aria-label="Open VidLink player" title="Open VidLink player">Open player</a>
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
           else router.replace("/");
@@ -222,9 +186,6 @@ export default function PlayerExperience({ imdbId }) {
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · IMDb</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
         </div>
-        <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
-          {fullscreen ? <Minimize size={19} strokeWidth={1.9} /> : <Maximize size={19} strokeWidth={1.9} />}
-        </button>
       </header>
     </main>
   );
