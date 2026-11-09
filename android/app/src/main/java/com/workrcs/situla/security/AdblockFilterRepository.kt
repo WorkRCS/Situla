@@ -2,6 +2,8 @@ package com.workrcs.situla.security
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
@@ -13,6 +15,7 @@ import java.net.URL
  */
 object AdblockFilterRepository {
     private const val MAX_LIST_BYTES = 18 * 1024 * 1024
+    private val refreshMutex = Mutex()
     private const val MAX_AGE_MS = 3L * 24L * 60L * 60L * 1000L
 
     private data class ListSource(val name: String, val url: String, val hosts: Boolean)
@@ -23,14 +26,16 @@ object AdblockFilterRepository {
         ListSource("urlhaus-hosts.txt", "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts.txt", true)
     )
 
-    suspend fun refreshAndInitialize(context: Context): Boolean = withContext(Dispatchers.IO) {
+    suspend fun refreshAndInitialize(context: Context, forceRefresh: Boolean = false): Boolean = withContext(Dispatchers.IO) {
+        refreshMutex.withLock {
+            if (BraveAdblock.ready && !forceRefresh) return@withLock true
         val directory = File(context.noBackupFilesDir, "adblock").apply { mkdirs() }
         val standard = StringBuilder()
         val hosts = StringBuilder()
 
         sources.forEach { source ->
             val file = File(directory, source.name)
-            if (!file.exists() || System.currentTimeMillis() - file.lastModified() > MAX_AGE_MS) {
+            if (forceRefresh || !file.exists() || System.currentTimeMillis() - file.lastModified() > MAX_AGE_MS) {
                 runCatching { download(source.url, file) }
             }
             val contents = runCatching { file.takeIf { it.exists() }?.readText(Charsets.UTF_8).orEmpty() }
@@ -54,6 +59,7 @@ object AdblockFilterRepository {
         }
 
         BraveAdblock.loadFilters(standard.toString(), hosts.toString())
+        }
     }
 
     private fun download(address: String, destination: File) {
