@@ -12,7 +12,7 @@ function getTmdbBase() {
   if (!['https:', 'http:'].includes(parsed.protocol)) {
     throw new Error('TMDB_API_BASE_URL must use HTTPS (HTTP is permitted only for local testing).');
   }
-  return configured.replace(/\\/+$/, '');
+  return configured.replace(/\/+$/, '');
 }
 
 function getCauseDetails(error) {
