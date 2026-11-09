@@ -1,0 +1,12 @@
+[package]
+name = "situla-adblock"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "situla_adblock"
+crate-type = ["cdylib"]
+
+[dependencies]
+adblock = { version = "0.13.5", default-features = true }
+jni = "0.21.1"
