@@ -125,6 +125,7 @@ fun VidLinkPlayerScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
                 WebView(viewContext).apply {
+                    tag = movie.tmdbId
                     setBackgroundColor(AndroidColor.BLACK)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
