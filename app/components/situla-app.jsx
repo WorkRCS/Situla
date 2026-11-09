@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home, Search, Bookmark, Settings, Play, Check, Star, ArrowRight,
-  Clapperboard, Download, ExternalLink, Sparkles, X, CircleHelp
+  Clapperboard, Download, ExternalLink, Sparkles, X, CircleHelp,
+  Sun, Moon, Monitor, Trash2
 } from "lucide-react";
 
 const ICONS = {
@@ -17,6 +18,19 @@ const ICONS = {
 function Icon({ name, size = 19, className }) {
   const LucideIcon = ICONS[name] || CircleHelp;
   return <LucideIcon size={size} strokeWidth={1.9} fill={name === "star" ? "currentColor" : "none"} aria-hidden="true" className={className} />;
+}
+
+function formatClock(totalSeconds) {
+  const value = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const seconds = value % 60;
+  return [hours, minutes, seconds].map((part) => String(part).padStart(2, "0")).join(":");
+}
+
+function formatRuntime(minutes) {
+  const seconds = Math.max(0, Math.round(Number(minutes) || 0) * 60);
+  return seconds ? formatClock(seconds) : "";
 }
 
 function MovieCard({ movie, onOpen, onSave, saved }) {
@@ -32,7 +46,7 @@ function MovieCard({ movie, onOpen, onSave, saved }) {
           )}
         </div>
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{movie.title}</h3>
-        <p className="mt-1 text-[11px] text-[#858b9b]">{movie.releaseYear || "Movie"}{movie.runtime ? " · " + movie.runtime + " min" : ""}</p>
+        <p className="mt-1 text-[11px] text-[#858b9b]">{movie.releaseYear || "Movie"}{movie.runtime ? " · " + formatRuntime(movie.runtime) : ""}</p>
       </button>
       <button
         type="button"
@@ -116,6 +130,17 @@ export default function SitulaApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [storageReady, setStorageReady] = useState(false);
+  const [watchHistory, setWatchHistory] = useState([]);
+  const [themeMode, setThemeMode] = useState("system");
+  const [themeReady, setThemeReady] = useState(false);
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [moviesPage, setMoviesPage] = useState(1);
+  const [moviesTotal, setMoviesTotal] = useState(0);
+  const [tvPage, setTvPage] = useState(1);
+  const [tvTotal, setTvTotal] = useState(0);
+  const [animePage, setAnimePage] = useState(1);
+  const [animeTotal, setAnimeTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     try {
@@ -123,15 +148,18 @@ export default function SitulaApp() {
       const saved = JSON.parse(localStorage.getItem("situla:saved:v1") || "[]");
       const recent = JSON.parse(localStorage.getItem("situla:recent:v1") || "[]");
       const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
+      const history = JSON.parse(localStorage.getItem("situla:watch-history:v1") || "[]");
       setSavedMovies(Array.isArray(saved) ? saved.filter(hasValidImdbId) : []);
       setRecentMovies(Array.isArray(recent) ? recent.filter(hasValidImdbId) : []);
       setProgressMovies(Array.isArray(progress) ? progress.filter((item) =>
         hasValidImdbId(item) && Number(item.duration) > 0 && Number(item.watched) / Number(item.duration) < 0.95
       ) : []);
+      setWatchHistory(Array.isArray(history) ? history.filter((item) => item && typeof item.key === "string").slice(0, 500) : []);
     } catch {
       setSavedMovies([]);
       setRecentMovies([]);
       setProgressMovies([]);
+      setWatchHistory([]);
     }
     setStorageReady(true);
   }, []);
@@ -147,6 +175,44 @@ export default function SitulaApp() {
   }, [recentMovies, storageReady]);
 
   useEffect(() => {
+    if (!storageReady) return;
+    try { localStorage.setItem("situla:watch-history:v1", JSON.stringify(watchHistory.slice(0, 500))); } catch {}
+  }, [watchHistory, storageReady]);
+
+  useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem("situla:theme:v1");
+      if (savedMode === "dark" || savedMode === "light" || savedMode === "system") setThemeMode(savedMode);
+    } catch {}
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) return;
+    const root = document.documentElement;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const resolved = themeMode === "system" ? (media.matches ? "dark" : "light") : themeMode;
+      root.dataset.theme = resolved;
+      root.dataset.themeMode = themeMode;
+      root.style.colorScheme = resolved;
+    };
+    apply();
+    try { localStorage.setItem("situla:theme:v1", themeMode); } catch {}
+    if (themeMode !== "system") return;
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [themeMode, themeReady]);
+
+  useEffect(() => {
+    if (tab !== "settings" || !storageReady) return;
+    try {
+      const history = JSON.parse(localStorage.getItem("situla:watch-history:v1") || "[]");
+      setWatchHistory(Array.isArray(history) ? history.filter((item) => item && typeof item.key === "string").slice(0, 500) : []);
+    } catch { setWatchHistory([]); }
+  }, [tab, storageReady]);
+
+  useEffect(() => {
     if (tab !== "home" && tab !== "search") return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -154,7 +220,6 @@ export default function SitulaApp() {
       try {
         const params = new URLSearchParams({ page: "1", limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
-        params.set("random", "true");
         const response = await fetch("/api/movies?" + params.toString(), {
           cache: "no-store",
           signal: controller.signal
@@ -162,6 +227,8 @@ export default function SitulaApp() {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
         setMovies(Array.isArray(payload.items) ? payload.items : []);
+        setMoviesPage(Number(payload.pagination?.page) || 1);
+        setMoviesTotal(Number(payload.pagination?.total) || 0);
         setError("");
       } catch (requestError) {
         if (!controller.signal.aborted) {
@@ -182,7 +249,7 @@ export default function SitulaApp() {
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
     const controller = new AbortController();
-    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40&random=true" : "/api/anime?page=1&limit=40&random=true";
+    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40" : "/api/anime?page=1&limit=40";
     async function loadSeries() {
       setLoading(true);
       try {
@@ -190,8 +257,15 @@ export default function SitulaApp() {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Series catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
-        if (tab === "tv") setTvShows(items);
-        else setAnimeShows(items);
+        if (tab === "tv") {
+          setTvShows(items);
+          setTvPage(Number(payload.pagination?.page) || 1);
+          setTvTotal(Number(payload.pagination?.total) || items.length);
+        } else {
+          setAnimeShows(items);
+          setAnimePage(Number(payload.pagination?.page) || 1);
+          setAnimeTotal(Number(payload.pagination?.total) || items.length);
+        }
         setError("");
       } catch (requestError) {
         if (!controller.signal.aborted) {
@@ -244,6 +318,77 @@ export default function SitulaApp() {
       : [movie, ...current].slice(0, 100));
   }
 
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      if (tab === "home" || tab === "search") {
+        const nextPage = moviesPage + 1;
+        const params = new URLSearchParams({ page: String(nextPage), limit: "40" });
+        if (tab === "search" && query.trim()) params.set("q", query.trim());
+        const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
+        const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        setMovies((current) => {
+          const ids = new Set(current.map((item) => item.imdbId));
+          return [...current, ...nextItems.filter((item) => !ids.has(item.imdbId))];
+        });
+        setMoviesPage(Number(payload.pagination?.page) || nextPage);
+        setMoviesTotal(Number(payload.pagination?.total) || moviesTotal);
+      } else if (tab === "tv") {
+        const nextPage = tvPage + 1;
+        const response = await fetch("/api/tv?page=" + nextPage + "&limit=40", { cache: "no-store" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
+        const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        setTvShows((current) => {
+          const ids = new Set(current.map((item) => item.tmdbId));
+          return [...current, ...nextItems.filter((item) => !ids.has(item.tmdbId))];
+        });
+        setTvPage(Number(payload.pagination?.page) || nextPage);
+        setTvTotal(Number(payload.pagination?.total) || tvTotal);
+      } else if (tab === "anime") {
+        const nextPage = animePage + 1;
+        const response = await fetch("/api/anime?page=" + nextPage + "&limit=40", { cache: "no-store" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Unable to load more anime.");
+        const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        setAnimeShows((current) => {
+          const ids = new Set(current.map((item) => item.malId));
+          return [...current, ...nextItems.filter((item) => !ids.has(item.malId))];
+        });
+        setAnimePage(Number(payload.pagination?.page) || nextPage);
+        setAnimeTotal(Number(payload.pagination?.total) || animeTotal);
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to load the next catalog page.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function removeHistoryItem(key) {
+    const next = watchHistory.filter((item) => item.key !== key);
+    setWatchHistory(next);
+    try { localStorage.setItem("situla:watch-history:v1", JSON.stringify(next)); } catch {}
+  }
+
+  function clearWatchHistory() {
+    const keys = [
+      "situla:watch-history:v1", "situla:progress:v1", "situla:recent:v1",
+      "situla:tv-progress:v1", "situla:anime-progress:v1", "situla:anime-last-episode:v1"
+    ];
+    try { keys.forEach((key) => localStorage.removeItem(key)); } catch {}
+    setWatchHistory([]);
+    setProgressMovies([]);
+    setRecentMovies([]);
+  }
+
+  const sortedHistory = [...watchHistory].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+  const hasMoreMovies = moviesPage * 40 < moviesTotal;
+  const hasMoreTv = tvPage * 40 < tvTotal;
+  const hasMoreAnime = animePage * 40 < animeTotal;
   const featured = movies[0];
 
   return (
