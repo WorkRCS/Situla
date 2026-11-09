@@ -49,7 +49,7 @@ test('Android wrapper keeps request filtering and popup blocking while allowing 
   const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
   const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
 
-  assert.match(wrapper, /NetworkAdBlocker\.shouldBlock\(uri\)/);
+  assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri, sourceUrl, accept, request.isForMainFrame)'));
   assert.match(wrapper, /if \(request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)\) return true/);
   assert.doesNotMatch(wrapper, /isTrustedPlayerFrameNavigation/);
   assert.match(wrapper, /onCreateWindow\([\s\S]*?\): Boolean = false/);
