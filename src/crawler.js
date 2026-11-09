@@ -105,6 +105,7 @@ export async function runManualCrawl(body = {}) {
         'primary_release_date.gte': input.startYear + '-01-01',
         'primary_release_date.lte': input.endYear + '-12-31',
         with_original_language: 'en',
+        with_genres: '878|9648|14|27|28|12',
         region: 'US',
         page
       });
