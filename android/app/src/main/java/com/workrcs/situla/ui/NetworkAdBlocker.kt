@@ -8,8 +8,8 @@ import java.util.Locale
 /**
  * Best-effort request filtering for the Android WebView.
  *
- * The list targets common ad/affiliate/measurement hosts only. It does not
- * proxy or rewrite media traffic for the VidLink movie, TV, and anime player.
+ * The list targets known ad/affiliate/measurement request hosts only. Other
+ * player frame/source hosts are allowed so provider playback can resolve normally.
  */
 object NetworkAdBlocker {
     private val blockedDomains = setOf(
@@ -71,11 +71,6 @@ object NetworkAdBlocker {
     fun shouldBlock(uri: Uri): Boolean {
         val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
         return blockedDomains.any { domain -> host == domain || host.endsWith(".$domain") }
-    }
-
-    fun isTrustedPlayerFrameNavigation(uri: Uri): Boolean {
-        val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
-        return host == "vidlink.pro" || host.endsWith(".vidlink.pro")
     }
 
     fun isTrustedTopLevel(uri: Uri): Boolean {
