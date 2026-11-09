@@ -1,41 +1,43 @@
 # Situla
 
-Situla is a movie metadata catalog with a password-protected admin dashboard. This first milestone delivers the Node.js backend, TMDB manual crawler, and browser-based dashboard. The Android client is a later phase, after local backend testing passes.
+Situla is a mobile-first movie discovery and streaming web app built with Next.js App Router and Tailwind CSS. It is installable as a Progressive Web App and uses the Situla API for approved movie metadata.
 
 ## Stack
 
-- Node.js 22+
-- Hono web framework (same application runs locally and on Vercel)
+- Next.js 16 App Router and React
+- Tailwind CSS 4
+- Hono API handlers mounted under the Next.js `/api/*` route
 - MongoDB Atlas with Mongoose connection reuse and explicit indexes
 - TMDB API for movie metadata
-- Static HTML, Bootstrap 5, Bootstrap Icons and vanilla JavaScript
+- VidLink player page opened from the movie's TMDB ID
 
 ## Local setup
 
 1. Install Node.js 22 or newer.
-2. Copy .env.example to .env.
-3. Add your TMDB API key, MongoDB Atlas URI, database name, admin username, admin password, and a random SESSION_SECRET of at least 32 characters.
-4. Run npm install.
-5. Run npm run dev.
+2. Copy `.env.example` to `.env`.
+3. Add the TMDB API key, MongoDB Atlas URI, database name, admin username, admin password, and a random SESSION_SECRET of at least 32 characters.
+4. Run `npm install`.
+5. Run `npm run dev`.
 6. Open http://localhost:3000.
 7. Check http://localhost:3000/api/health.
 
-Never commit .env. The real credentials are not in this repository.
+Run `npm run build` to verify the production Next.js build and `npm test` for the API/crawler tests.
 
-## Admin workflow
+Never commit `.env`. The real credentials are not in this repository.
 
-1. Sign in with ADMIN_USERNAME and ADMIN_PASSWORD from .env.
-2. Open TMDB crawler.
-3. Choose the release-year range, start page, and pages per run.
-4. Use **Test TMDB connection** to verify that the Node.js process can reach TMDB and that the API key is accepted.
-5. Click Run manual crawl. There are no automatic crawl jobs.
-6. Review the discovered, newly imported, updated, and adult-flag counts.
-7. New records start as pending.
-8. Approve or reject records in Movie catalog. Only approved, English-language, non-adult records are returned by the public movie API.
+## Web app features
 
-The crawler retries transient DNS/connect-reset/connect-timeout failures, allows up to 25 seconds per TMDB request, and reports the underlying network cause where Node.js exposes it. If the dashboard connection check still fails, verify outbound HTTPS access to api.themoviedb.org:443 from the same machine running Node.js. A browser opening TMDB does not prove Node.js can access it. The crawler uses TMDB Discover and Movie Details endpoints. IMDb title IDs can also be resolved with TMDB's Find by ID endpoint; imports enforce the English-language, non-adult, poster, release-date and selected-genre checks and are pending admin review. It does not scrape third-party streaming websites or fetch video files. Adult-flag filtering is not a guarantee that metadata is free of every sensitive theme. Admin review is required for nudity, violence, war, political or other editorial exclusions.
+- Responsive, mobile-first movie catalog with Home, Search, My List, and Settings navigation.
+- Search and movie metadata are loaded from the public Situla API.
+- Saved movies and recently opened titles are stored locally in the browser.
+- Movie playback opens at `/watch/{TMDB_ID}`; the web app constructs `https://vidlink.pro/movie/{TMDB_ID}` directly from the catalog ID.
+- Fullscreen playback requests landscape orientation where the browser and installed PWA support the Screen Orientation API.
+- PWA manifest, install prompt, app icon, and a small offline shell cache.
+- Existing admin dashboard remains available at `/index.html`.
 
-## API endpoints
+## API and backend
+
+The Hono API remains in `src/app.js` and is mounted in Next.js through `app/api/[...route]/route.js`. This keeps the API paths and existing authentication/database logic in one place.
 
 - GET /api/health — service and MongoDB health
 - POST /api/admin/login — admin sign-in with an HttpOnly session cookie
@@ -44,22 +46,24 @@ The crawler retries transient DNS/connect-reset/connect-timeout failures, allows
 - GET /api/admin/dashboard — catalog counts and recent crawl activity
 - GET /api/admin/tmdb-status — verify TMDB outbound HTTPS access and API-key validity (admin only)
 - POST /api/admin/crawl — manually import a bounded TMDB discovery batch
-- POST /api/admin/import-ids — resolve 1–20 IMDb or TMDB movie IDs per request; records enter moderation as pending
+- POST /api/admin/import-ids — resolve IMDb or TMDB movie IDs; records enter moderation as pending
 - GET /api/admin/movies — paginated admin catalog and filters
 - PATCH /api/admin/movies/:id/review — approve, reject, or return a record to pending
 - GET /api/admin/crawl-runs — crawl history
-- GET /api/movies — public approved catalog for the later Android client
+- GET /api/movies — public approved catalog
 - GET /api/movies/:tmdbId — public approved movie details
 
-## Vercel
+The public API returns metadata and TMDB IDs only. The browser builds the VidLink URL; provider/player URLs and iframe markup are never returned by the backend.
 
-The root index.js exports the Hono app for Vercel's Node.js runtime. The public directory contains static dashboard assets. Add the same environment variable names from .env.example in Vercel Project Settings. Place the Vercel Function near the MongoDB Atlas region where possible. Configure Vercel Firewall rate limits for the admin login endpoint in production; the in-process login throttle is only a best-effort local safeguard in a serverless environment.
+## Vercel deployment
+
+Set the Vercel project framework to Next.js (auto-detected when the root package is deployed), use the repository root as the Root Directory, and keep the Node.js runtime at 22.x or newer. Add the same environment variable names from `.env.example` in Vercel Project Settings. The Next.js app and Hono API are deployed together at the same origin.
 
 ## Security and content boundaries
 
 - TMDB credentials, database credentials and admin secrets stay server-side.
 - Admin sessions use signed, HttpOnly, SameSite cookies and same-origin checks.
 - MongoDB indexes protect TMDB ID uniqueness and common catalog filters.
-- Do not place credentials in Android builds or browser JavaScript.
-- This backend stores metadata only. Add only playback media or provider URLs for which you have distribution and embedding rights in a later, separately reviewed integration.
+- Do not place credentials in browser JavaScript.
+- The app embeds the provider page only in its player view; use provider content only where embedding and distribution are authorized.
 - Follow TMDB attribution and API terms. This product uses the TMDB API but is not endorsed or certified by TMDB.
