@@ -19,6 +19,11 @@ The Android application is a native WebView shell for the hosted Situla website.
 
 Room watch history uses IMDb ID as its primary key. The Room 1-to-2 migration clears old local history entries, because numeric provider IDs cannot be reliably converted to IMDb IDs offline.
 
-## Network filtering
+## Network routing and filtering
 
-The WebView uses the app's curated request blocker to filter known advertising and tracking request hosts. Player subframes may navigate to provider/source hosts so media can resolve; unexpected top-level redirects and popup windows remain blocked. Filtering is best-effort and does not guarantee that all ads or media-hosted promotions can be blocked.
+- The Android client includes the open-source WireGuard tunnel library. Six local region profile slots are supported: Singapore, Malaysia, Japan, Germany, Netherlands and Poland.
+- When auto-connect is enabled, app launch selects the available region with the lowest previously measured HTTPS route latency. On a first connection, it falls back to the selected region (Singapore by default), then the first imported region.
+- With two or more provisioned profiles, optional five-hour region rotation is supported. Latency is checked over the active tunnel every 30 seconds.
+- Imported profiles are stored only in the app's private no-backup directory. Situla normalizes each profile to full-tunnel routing (IPv4 + IPv6) and AdGuard DNS. The VPN requires a real provider-issued WireGuard .conf profile for each region. No public VPN gateway, account, or server key is bundled or invented by this repository.
+- The WebView retains its curated ad/tracker request filter, rejects popup/new-window requests, and blocks untrusted top-level redirects. Full-tunnel DNS filtering adds another layer while connected. This is best-effort: ads served from the same host as a video or embedded in the stream cannot always be removed.
+- The WireGuard VPN runs in the Android app only. A normal desktop/mobile browser cannot start an operating-system VPN from a website; use a trusted device VPN or a properly provisioned edge network there.
