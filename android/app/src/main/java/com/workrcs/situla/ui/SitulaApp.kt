@@ -149,6 +149,7 @@ fun SitulaApp(context: Context) {
       AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { viewContext ->
+            NetworkAdBlocker.initialize(appContext, SITULA_WEBSITE_URL)
             WebView(viewContext).apply {
                 webView = this
                 setBackgroundColor(AndroidColor.rgb(8, 9, 14))
@@ -183,7 +184,11 @@ fun SitulaApp(context: Context) {
                         request: android.webkit.WebResourceRequest?
                     ): android.webkit.WebResourceResponse? {
                         val uri = request?.url ?: return null
-                        if (NetworkAdBlocker.shouldBlock(uri)) return NetworkAdBlocker.emptyResponse()
+                        val sourceUrl = request.requestHeaders["Referer"] ?: view?.url
+                        val accept = request.requestHeaders["Accept"]
+                        if (NetworkAdBlocker.shouldBlock(uri, sourceUrl, accept, request.isForMainFrame)) {
+                            return NetworkAdBlocker.emptyResponse()
+                        }
                         return super.shouldInterceptRequest(view, request)
                     }
 
@@ -192,7 +197,7 @@ fun SitulaApp(context: Context) {
                         request: android.webkit.WebResourceRequest?
                     ): Boolean {
                         val uri = request?.url ?: return true
-                        if (NetworkAdBlocker.shouldBlock(uri)) return true
+                        if (NetworkAdBlocker.shouldBlock(uri, view?.url, "document", true)) return true
                         // Keep all player subframes and media-source navigation available.
                         // Known ad/tracker requests are filtered above by shouldInterceptRequest.
                         // Only block untrusted top-level navigations outside Situla/player pages.
@@ -205,6 +210,12 @@ fun SitulaApp(context: Context) {
                             }
                             else -> true
                         }
+                    }
+
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        val script = url?.let(NetworkAdBlocker::cosmeticScriptFor) ?: return
+                        view?.evaluateJavascript(script, null)
                     }
                 }
 
