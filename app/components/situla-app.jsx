@@ -95,7 +95,7 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
       </div>
       <div className="flex gap-4 overflow-x-auto pb-3">
         {movies.map((movie) => (
-          <MovieCard key={movie.imdbId} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
+          <MovieCard key={movie.imdbId || movie.id || (String(movie.title || 'movie') + '-' + String(movie.releaseYear || 'unknown') + '-' + movies.indexOf(movie))} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
         ))}
       </div>
     </section>
@@ -128,10 +128,15 @@ export default function SitulaApp() {
 
   useEffect(() => {
     try {
-      setSavedMovies(JSON.parse(localStorage.getItem("situla:saved:v1") || "[]"));
-      setRecentMovies(JSON.parse(localStorage.getItem("situla:recent:v1") || "[]"));
+      const hasValidImdbId = (item) => /^tt\d{5,12}$/i.test(String(item?.imdbId || ""));
+      const saved = JSON.parse(localStorage.getItem("situla:saved:v1") || "[]");
+      const recent = JSON.parse(localStorage.getItem("situla:recent:v1") || "[]");
       const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
-      setProgressMovies(Array.isArray(progress) ? progress.filter((item) => item.duration > 0 && item.watched / item.duration < 0.95) : []);
+      setSavedMovies(Array.isArray(saved) ? saved.filter(hasValidImdbId) : []);
+      setRecentMovies(Array.isArray(recent) ? recent.filter(hasValidImdbId) : []);
+      setProgressMovies(Array.isArray(progress) ? progress.filter((item) =>
+        hasValidImdbId(item) && Number(item.duration) > 0 && Number(item.watched) / Number(item.duration) < 0.95
+      ) : []);
     } catch {
       setSavedMovies([]);
       setRecentMovies([]);
@@ -223,8 +228,14 @@ export default function SitulaApp() {
   }, [movies, genre]);
 
   function openMovie(movie) {
-    setRecentMovies((current) => [movie, ...current.filter((item) => item.imdbId !== movie.imdbId)].slice(0, 12));
-    router.push("/watch/" + encodeURIComponent(movie.imdbId));
+    const imdbId = String(movie?.imdbId || "").toLowerCase();
+    if (!/^tt\d{5,12}$/.test(imdbId)) {
+      setError("This saved movie has no valid IMDb ID. Refresh the catalog and open it again.");
+      return;
+    }
+    const normalized = { ...movie, imdbId };
+    setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
+    router.push("/watch/" + encodeURIComponent(imdbId));
   }
 
   function openTvSeries(series) {
