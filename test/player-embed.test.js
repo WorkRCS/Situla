@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { hindiMoviePlayerUrl, vidlinkMovieUrl } from '../src/player-urls.js';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
@@ -45,4 +46,45 @@ test('Android wrapper keeps request filtering and popup blocking while allowing 
   assert.doesNotMatch(wrapper, /isTrustedPlayerFrameNavigation/);
   assert.match(wrapper, /onCreateWindow\([\s\S]*?\): Boolean = false/);
   assert.match(blocker, /"doubleclick\.net"/);
+});
+
+
+test('both Movie providers use Situla gold controls without a mute override', () => {
+  const english = new URL(vidlinkMovieUrl('tt0133093'));
+  const hindi = new URL(hindiMoviePlayerUrl('tt0133093'));
+
+  for (const url of [english, hindi]) {
+    assert.equal(url.searchParams.get('primaryColor'), 'e8b65b');
+    assert.equal(url.searchParams.get('secondaryColor'), '171a23');
+    assert.equal(url.searchParams.get('iconColor'), 'ffffff');
+    assert.equal(url.searchParams.get('autoplay'), 'false');
+    assert.equal(url.searchParams.get('muted'), null);
+    assert.equal(url.searchParams.get('mute'), null);
+  }
+  assert.equal(english.pathname, '/movie/tt0133093');
+  assert.equal(hindi.searchParams.get('id'), 'tt0133093');
+});
+
+test('Android WireGuard restores full-tunnel routing and AdGuard DNS for imported region profiles', async () => {
+  const store = await read('../android/app/src/main/java/com/workrcs/situla/vpn/VpnProfileStore.kt');
+  const manager = await read('../android/app/src/main/java/com/workrcs/situla/vpn/WireGuardVpnManager.kt');
+  const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
+  const controls = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaVpnControls.kt');
+
+  assert.match(store, /AllowedIPs = 0\\.0\\.0\\.0\\/0, ::\\/0/);
+  assert.match(store, /DNS = 94\\.140\\.14\\.14, 94\\.140\\.15\\.15/);
+  assert.match(store, /fastestMeasured/);
+  assert.match(manager, /startAutoRotation/);
+  assert.match(wrapper, /VpnService\\.prepare/);
+  assert.match(wrapper, /WireGuardVpnManager\\.connect/);
+  assert.match(controls, /Import WireGuard profile/);
+  assert.match(controls, /Auto-connect on app launch/);
+});
+
+test('Android app retains popup rejection and the existing targeted request filter', async () => {
+  const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
+  const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
+  assert.match(wrapper, /onCreateWindow\\([\\s\\S]*?\\): Boolean = false/);
+  assert.match(wrapper, /NetworkAdBlocker\\.shouldBlock\\(uri\\)/);
+  assert.match(blocker, /"doubleclick\\.net"/);
 });
