@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Situla" parent="android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#E11D48</item>
-        <item name="android:statusBarColor">#080B12</item>
-        <item name="android:navigationBarColor">#080B12</item>
-        <item name="android:windowBackground">#080B12</item>
-        <item name="android:windowSplashScreenBackground">#080B12</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_situla_mark</item>
+    <style name="Theme.Situla" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#080B12</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_situla_mark</item>
         <item name="postSplashScreenTheme">@style/Theme.Situla.App</item>
     </style>
-    <style name="Theme.Situla.App" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Situla.App" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#E11D48</item>
         <item name="android:statusBarColor">#080B12</item>
         <item name="android:navigationBarColor">#080B12</item>
+        <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowBackground">#080B12</item>
     </style>
 </resources>
