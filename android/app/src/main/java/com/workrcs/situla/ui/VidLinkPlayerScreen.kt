@@ -112,6 +112,7 @@ fun VidLinkPlayerScreen(
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
+                NetworkAdBlocker.initialize(viewContext)
                 WebView(viewContext).apply {
                     tag = movie.imdbId
                     setBackgroundColor(AndroidColor.BLACK)
@@ -137,7 +138,11 @@ fun VidLinkPlayerScreen(
                             request: android.webkit.WebResourceRequest?
                         ): android.webkit.WebResourceResponse? {
                             val uri = request?.url ?: return null
-                            if (NetworkAdBlocker.shouldBlock(uri)) return NetworkAdBlocker.emptyResponse()
+                            val sourceUrl = request.requestHeaders["Referer"] ?: view?.url
+                            val accept = request.requestHeaders["Accept"]
+                            if (NetworkAdBlocker.shouldBlock(uri, sourceUrl, accept, request.isForMainFrame)) {
+                                return NetworkAdBlocker.emptyResponse()
+                            }
                             return super.shouldInterceptRequest(view, request)
                         }
 
@@ -146,11 +151,18 @@ fun VidLinkPlayerScreen(
                             request: android.webkit.WebResourceRequest?
                         ): Boolean {
                             val uri = request?.url ?: return true
-                            if (NetworkAdBlocker.shouldBlock(uri)) return true
+                            val requestType = if (request.isForMainFrame) "document" else "subdocument"
+                            if (NetworkAdBlocker.shouldBlock(uri, view?.url, requestType, request.isForMainFrame)) return true
                             // Let the player navigate between its legitimate embed/source hosts.
                             // Known advertising and tracker domains are still blocked above.
                             // Only prevent unexpected top-level navigation away from Situla/VidLink.
                             return request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)
+                        }
+
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            super.onPageFinished(view, url)
+                            val script = url?.let(NetworkAdBlocker::cosmeticScriptFor) ?: return
+                            view?.evaluateJavascript(script, null)
                         }
                     }
                     webChromeClient = object : WebChromeClient() {
