@@ -93,7 +93,7 @@ async function main() {
       },
       $unset: {
         tmdbId: '', posterPath: '', backdropPath: '', genreIds: '', originCountry: '',
-        moderationStatus: '', manualReviewNote: '', lastSyncedAt: ''
+        moderationStatus: '', manualReviewNote: '', lastSyncedAt: '', adult: '', originalLanguage: ''
       }
     });
     migratedTv += 1;
@@ -108,7 +108,7 @@ async function main() {
       }
     },
     {
-      $unset: ['tmdbId', 'tmdbUrl', 'vidlinkId', 'posterPath', 'backdropPath', 'genreIds', 'moderationStatus', 'manualReviewNote', 'lastSyncedAt']
+      $unset: ['tmdbId', 'tmdbUrl', 'vidlinkId', 'posterPath', 'backdropPath', 'genreIds', 'moderationStatus', 'manualReviewNote', 'lastSyncedAt', 'adult', 'originalLanguage']
     }
   ]);
 
@@ -128,15 +128,12 @@ async function main() {
   }
 
   const movieIndexes = await movies.indexes();
-  if (!movieIndexes.some((index) => index.name === 'imdbId_1' && index.unique)) {
-    if (movieIndexes.some((index) => index.name === 'imdbId_1')) await movies.dropIndex('imdbId_1');
-    await movies.createIndex({ imdbId: 1 }, { unique: true, name: 'imdbId_1' });
-  }
+  if (movieIndexes.some((index) => index.name === 'imdbId_1')) await movies.dropIndex('imdbId_1');
+  await movies.createIndex({ imdbId: 1 }, { unique: true, name: 'imdbId_1' });
+
   const tvIndexes = await tvSeries.indexes();
-  if (!tvIndexes.some((index) => index.name === 'imdbId_1' && index.unique)) {
-    if (tvIndexes.some((index) => index.name === 'imdbId_1')) await tvSeries.dropIndex('imdbId_1');
-    await tvSeries.createIndex({ imdbId: 1 }, { unique: true, name: 'imdbId_1' });
-  }
+  if (tvIndexes.some((index) => index.name === 'imdbId_1')) await tvSeries.dropIndex('imdbId_1');
+  await tvSeries.createIndex({ imdbId: 1 }, { unique: true, name: 'imdbId_1' });
 
   if ((await db.listCollections({ name: 'tvseasons' }).toArray()).length) await tvSeasons.drop();
   if ((await db.listCollections({ name: 'crawl_runs' }).toArray()).length) await db.collection('crawl_runs').drop();
