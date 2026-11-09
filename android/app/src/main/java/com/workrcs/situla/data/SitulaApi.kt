@@ -1,5 +1,8 @@
 package com.workrcs.situla.data
 
+import android.content.Context
+import android.content.pm.PackageManager
+
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -11,6 +14,18 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
+
+
+/** Reads the backend URL packaged in AndroidManifest metadata, avoiding generated BuildConfig references. */
+object SitulaApiConfig {
+    fun baseUrl(context: Context): String = runCatching {
+        val appInfo = context.packageManager.getApplicationInfo(
+            context.packageName,
+            PackageManager.GET_META_DATA
+        )
+        appInfo.metaData?.getString("com.workrcs.situla.API_BASE_URL").orEmpty()
+    }.getOrDefault("")
+}
 
 interface SitulaApi {
     @GET("api/movies")
