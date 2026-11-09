@@ -51,6 +51,7 @@ fun VidLinkPlayerScreen(
     val activity = remember(context) { context.findActivity() }
 
     var fullScreenView by remember { mutableStateOf<View?>(null) }
+    var playerWebView by remember(movie.tmdbId) { mutableStateOf<WebView?>(null) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
 
@@ -68,7 +69,16 @@ fun VidLinkPlayerScreen(
         }
     }
 
-    BackHandler(enabled = !embedded && fullScreenView == null, onBack = onBack)
+    // Behave like a browser-wrapped website: navigate within VidLink first,
+    // then return to Situla's catalog when there is no page history left.
+    BackHandler(enabled = !embedded && fullScreenView == null) {
+        val webView = playerWebView
+        if (webView?.canGoBack() == true) {
+            webView.goBack()
+        } else {
+            onBack()
+        }
+    }
     BackHandler(enabled = fullScreenView != null, onBack = { exitFullScreen() })
 
     DisposableEffect(activity) {
@@ -93,6 +103,11 @@ fun VidLinkPlayerScreen(
                     setBackgroundColor(AndroidColor.BLACK)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    settings.useWideViewPort = true
+                    settings.loadWithOverviewMode = false
+                    // Present a regular mobile-browser UA to sites that serve
+                    // a limited layout to embedded Android WebViews.
+                    settings.userAgentString = settings.userAgentString.replace("; wv", "")
                     settings.loadsImagesAutomatically = true
                     settings.mediaPlaybackRequiresUserGesture = false
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
@@ -103,6 +118,7 @@ fun VidLinkPlayerScreen(
                     CookieManager.getInstance().setAcceptCookie(true)
                     CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
+                    playerWebView = this
                     webViewClient = WebViewClient()
                     webChromeClient = object : WebChromeClient() {
                         private fun showPlayerFullScreen(view: View?, callback: CustomViewCallback?) {
@@ -161,6 +177,7 @@ fun VidLinkPlayerScreen(
                 }
             },
             onRelease = { webView ->
+                if (playerWebView === webView) playerWebView = null
                 exitFullScreen()
                 webView.stopLoading()
                 webView.destroy()
