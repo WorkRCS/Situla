@@ -183,7 +183,7 @@ function mapMovie(item, details) {
   const imdbId = source.imdb_id || item.imdb_id || source.external_ids?.imdb_id || item.external_ids?.imdb_id;
   return {
     imdbId: imdbId ? String(imdbId).toLowerCase() : '',
-    tmdbId: Number(source.id || item.id) > 0 ? Number(source.id || item.id) : null,
+    vidlinkId: Number(source.id || item.id) > 0 ? Number(source.id || item.id) : null,
     title: source.title || item.title || 'Untitled',
     originalTitle: source.original_title || item.original_title || '',
     overview: source.overview || item.overview || '',
