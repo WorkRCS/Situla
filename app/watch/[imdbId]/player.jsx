@@ -8,6 +8,7 @@ const VIDLINK_ORIGIN = "https://vidlink.pro";
 export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [catalogVerified, setCatalogVerified] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const router = useRouter();
   const iframeRef = useRef(null);
@@ -38,6 +39,7 @@ export default function PlayerExperience({ imdbId }) {
         if (!response.ok) throw new Error(data.error || "Movie metadata is unavailable.");
         if (!data.item) throw new Error("Movie metadata was empty.");
         setMovie(data.item);
+        setCatalogVerified(true);
       } catch (error) {
         if (!controller.signal.aborted) {
           setMovie((current) => current
@@ -125,11 +127,9 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const playerParams = new URLSearchParams();
-  if (startAt > 0) playerParams.set("startAt", String(startAt));
-  const playerQuery = playerParams.toString();
-  const playerUrl = movie?.playerAvailable
-    ? "/api/player/movie/" + encodeURIComponent(imdbId) + (playerQuery ? "?" + playerQuery : "")
+  const isValidImdbId = /^tt\d{5,12}$/i.test(String(imdbId || ""));
+  const playerUrl = catalogVerified && isValidImdbId
+    ? VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(imdbId)
     : null;
 
   return (
@@ -153,7 +153,7 @@ export default function PlayerExperience({ imdbId }) {
             <h1>{loading ? "Preparing your movie" : "Playback unavailable"}</h1>
             <p>{movie?.playerError || (loading
               ? "Loading saved movie details…"
-              : "Playback is not configured for this title yet. Please try another title or contact support.")}</p>
+              : "This title is not available in the Situla catalog yet.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
         </div>
