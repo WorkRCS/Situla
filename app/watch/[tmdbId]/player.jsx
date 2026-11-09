@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function Icon({ name, size = 20 }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
@@ -23,8 +23,9 @@ export default function PlayerExperience({ tmdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(true);
   const screenRef = useRef(null);
+  const router = useRouter();
+  const lastProgressWrite = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -46,6 +47,55 @@ export default function PlayerExperience({ tmdbId }) {
     loadMovie();
     return () => controller.abort();
   }, [tmdbId]);
+
+  useEffect(() => {
+    const onPlayerMessage = (event) => {
+      if (event.origin !== "https://vidlink.pro") return;
+      const payload = event.data;
+      if (!payload || typeof payload !== "object") return;
+
+      let details = null;
+      if (payload.type === "MEDIA_DATA" && payload.data && typeof payload.data === "object") {
+        details = payload.data;
+      } else if (payload.type === "PLAYER_EVENT" && payload.data && typeof payload.data === "object") {
+        details = payload.data;
+        if (details.event === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
+        if (details.event === "timeupdate") lastProgressWrite.current = Date.now();
+      }
+      if (!details) return;
+
+      const id = Number(details.tmdbId || details.mtmdbId || details.id || tmdbId);
+      if (!Number.isSafeInteger(id) || id <= 0) return;
+      const watched = Number(details.progress?.watched ?? details.currentTime ?? 0);
+      const duration = Number(details.progress?.duration ?? details.duration ?? 0);
+      if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
+
+      try {
+        const key = "situla:progress:v1";
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const posterPath = details.poster_path || details.posterPath;
+        const posterUrl = movie?.posterUrl || (posterPath ? "https://image.tmdb.org/t/p/w342" + posterPath : null);
+        const entry = {
+          tmdbId: id,
+          title: movie?.title || details.title || "Movie",
+          posterUrl,
+          backdropUrl: movie?.backdropUrl || null,
+          releaseYear: movie?.releaseYear || null,
+          voteAverage: movie?.voteAverage || 0,
+          genres: movie?.genres || [],
+          runtime: movie?.runtime || null,
+          watched: Math.max(0, watched),
+          duration: Math.max(0, duration),
+          updatedAt: Date.now()
+        };
+        const next = [entry, ...(Array.isArray(current) ? current.filter((item) => item.tmdbId !== id) : [])].slice(0, 20);
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {}
+    };
+
+    window.addEventListener("message", onPlayerMessage);
+    return () => window.removeEventListener("message", onPlayerMessage);
+  }, [movie, tmdbId]);
 
   useEffect(() => {
     const onFullscreenChange = async () => {
@@ -77,9 +127,7 @@ export default function PlayerExperience({ tmdbId }) {
         else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
         await lockLandscape();
       }
-    } catch {
-      setShowToolbar(true);
-    }
+    } catch {}
   }, []);
 
   const playerUrl = "https://vidlink.pro/movie/" + encodeURIComponent(tmdbId);
@@ -95,7 +143,10 @@ export default function PlayerExperience({ tmdbId }) {
         referrerPolicy="strict-origin-when-cross-origin"
       />
       <header className="watch-topbar">
-        <Link href="/" className="watch-control" aria-label="Back to Situla"><Icon name="back" /></Link>
+        <button type="button" onClick={() => {
+          if (window.history.length > 1) router.back();
+          else router.replace("/");
+        }} className="watch-control" aria-label="Back to Situla"><Icon name="back" /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
