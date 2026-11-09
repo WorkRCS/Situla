@@ -30,13 +30,15 @@ async function main() {
   const movies = db.collection('movies');
   const tv = db.collection('tvseries');
 
-  const [movieTotal, movieValid, movieInvalid, tvTotal, tvValid, tvInvalid, duplicateMovies, duplicateTv] = await Promise.all([
+  const [movieTotal, movieValid, movieInvalid, tvTotal, tvValid, tvInvalid, moviesMissingProvider, tvMissingProvider, duplicateMovies, duplicateTv] = await Promise.all([
     movies.countDocuments({}),
     movies.countDocuments({ imdbId: IMDB_ID }),
     movies.countDocuments(invalidImdbFilter),
     tv.countDocuments({}),
     tv.countDocuments({ imdbId: IMDB_ID }),
     tv.countDocuments(invalidImdbFilter),
+    movies.countDocuments({ imdbId: IMDB_ID, $or: [{ vidlinkId: { $exists: false } }, { vidlinkId: null }, { vidlinkId: { $lte: 0 } }] }),
+    tv.countDocuments({ imdbId: IMDB_ID, $or: [{ vidlinkId: { $exists: false } }, { vidlinkId: null }, { vidlinkId: { $lte: 0 } }] }),
     duplicateIds(movies),
     duplicateIds(tv)
   ]);
@@ -46,6 +48,7 @@ async function main() {
     database: dbName,
     movies: { total: movieTotal, validImdbId: movieValid, missingOrInvalidImdbId: movieInvalid },
     tvSeries: { total: tvTotal, validImdbId: tvValid, missingOrInvalidImdbId: tvInvalid },
+    missingVidLinkProviderMapping: { movies: moviesMissingProvider, tvSeries: tvMissingProvider },
     duplicateMovieImdbIds: duplicateMovies,
     duplicateTvImdbIds: duplicateTv
   }, null, 2));
