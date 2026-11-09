@@ -256,6 +256,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         referrerPolicy="no-referrer"
       />
       <header className="watch-topbar series-watch-topbar">
+        <a className="provider-open-control" href={playerUrl || undefined} target="_blank" rel="noopener noreferrer" aria-label="Open provider player" title="Open provider player">Open player</a>
         <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
