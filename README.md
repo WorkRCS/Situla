@@ -31,16 +31,18 @@ Never commit .env. The real credentials are not in this repository.
 ## Web app features
 
 - Responsive navigation for Movies, TV, Anime, Search, My List, and Settings.
+- Consistent, tree-shakable Lucide React icons (ISC license) across cards, navigation, detail and player controls.
 - Movie cards retain their posters, backdrops, thumbnails, ratings and saved list.
 - TV series pages load seasons and episodes and let the viewer choose the exact episode before playback.
 - Anime series pages let the viewer choose an episode and Sub/Dub audio type.
 - Saved movies and recently opened movies continue to use IMDb IDs.
-- Movie playback uses /watch/{IMDb_ID} and the IMDb-compatible VidSrc movie endpoint.
+- Movie playback uses /watch/{IMDb_ID} and VidLink's movie endpoint; the server resolves the numeric player ID while keeping IMDb as the catalog identity.
 - TV playback uses /watch/tv/{TMDB_TV_ID}/{season}/{episode} and the VidLink TV endpoint.
 - Anime playback uses /watch/anime/{MAL_ID}/{episode}/{subOrDub} and the VidLink Anime endpoint, with fallback enabled.
 - TV episode progress is saved locally and resumed through VidLink startAt.
 - Fullscreen playback requests landscape orientation where the browser supports the Screen Orientation API.
 - The Android package opens the deployed website URL directly inside a native WebView. Fullscreen player requests landscape orientation through Android's WebChromeClient.
+- Player iframes are sandboxed without popup or top-level navigation permissions. Android WebView also blocks requests to a curated list of known advertising/tracker domains and rejects untrusted top-level redirects. This is best-effort filtering, not a guarantee against every ad domain inside a cross-origin provider.
 - Existing admin dashboard remains available at /index.html.
 
 ## Media IDs and player compatibility
@@ -49,11 +51,11 @@ Each media type uses the identifier required by its player:
 
 | Media type | Canonical database ID | Player route |
 | --- | --- | --- |
-| Movie | IMDb title ID, e.g. tt1375666 | VidSrc /embed/movie/{imdbId} |
+| Movie | IMDb title ID, e.g. tt1375666 | VidLink /movie/{providerMovieId} after server-side ID resolution |
 | TV series | TMDB TV ID, e.g. 1399 | VidLink /tv/{tmdbId}/{season}/{episode} |
 | Anime series | MyAnimeList ID, e.g. 5114 | VidLink /anime/{malId}/{episode}/{subOrDub} |
 
-The Movie collection does not store a TMDB numeric ID. TMDB is only used server-side to resolve movie artwork/metadata from an IMDb ID. TV series are a separate collection and retain their TMDB TV ID because VidLink's TV endpoint requires it. Anime series use a separate MAL ID and do not need a TMDB ID.
+The Movie collection remains keyed by IMDb ID and stores an internal VidLink provider ID for playback. VidLink's documented movie endpoint requires a numeric TMDB movie ID; that provider mapping is not used as the public movie identity. TV series retain their TMDB TV ID, and Anime series use MAL IDs. TV series are a separate collection and retain their TMDB TV ID because VidLink's TV endpoint requires it. Anime series use a separate MAL ID and do not need a TMDB ID.
 
 ## Catalog criteria and imports
 
