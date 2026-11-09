@@ -201,8 +201,6 @@ export default function PlayerExperience({ imdbId }) {
           title={(movie?.title || "Situla movie") + " player"}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock"
-          referrerPolicy="no-referrer"
         />
       ) : (
         <div className="player-message">
@@ -215,6 +213,7 @@ export default function PlayerExperience({ imdbId }) {
         </div>
       )}
       <header className="watch-topbar">
+        <a className="provider-open-control" href={playerUrl || undefined} target="_blank" rel="noopener noreferrer" aria-label="Open VidLink player" title="Open VidLink player">Open player</a>
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
           else router.replace("/");
