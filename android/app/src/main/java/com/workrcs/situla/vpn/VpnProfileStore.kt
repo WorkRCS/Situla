@@ -53,7 +53,7 @@ object VpnProfileStore {
                 limit = 1
             )
         } else {
-            peerBody.trimEnd() + "\nAllowedIPs = 0.0.0.0/0, ::/0\\n"
+            peerBody.trimEnd() + "\nAllowedIPs = 0.0.0.0/0, ::/0\n"
         }
 
         val withAutomaticRoutes = rawProfile.substring(0, peerStart) +
