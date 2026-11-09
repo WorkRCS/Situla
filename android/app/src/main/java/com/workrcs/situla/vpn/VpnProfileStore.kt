@@ -22,6 +22,15 @@ object VpnProfileStore {
         }.apply()
     }
 
+    fun autoRotateEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .getBoolean("auto_rotate_enabled", false)
+
+    fun setAutoRotateEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .edit().putBoolean("auto_rotate_enabled", enabled).apply()
+    }
+
     private fun profileFile(context: Context, region: String): File {
         require(region in regions) { "Unknown VPN region." }
         val directory = File(context.noBackupFilesDir, "wireguard-profiles").apply { mkdirs() }
