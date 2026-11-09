@@ -44,15 +44,23 @@ import org.json.JSONObject
 private class VidLinkProgressBridge(
     private val movie: Movie,
     private val dao: WatchHistoryDao,
-    initialPositionMs: Long
+    initialPositionMs: Long,
+    private val bridgeToken: String
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
     private var lastPositionMs = initialPositionMs
     private var lastEventElapsedMs = SystemClock.elapsedRealtime()
 
+    @Synchronized
+    fun resetResumePosition(positionMs: Long) {
+        lastPositionMs = positionMs.coerceAtLeast(0L)
+        lastEventElapsedMs = SystemClock.elapsedRealtime()
+    }
+
     @JavascriptInterface
     @Synchronized
-    fun onProgress(currentTimeSeconds: Double, durationSeconds: Double, event: String) {
+    fun onProgress(token: String, currentTimeSeconds: Double, durationSeconds: Double, event: String) {
+        if (token != bridgeToken) return
         if (!currentTimeSeconds.isFinite() || !durationSeconds.isFinite()) return
         if (currentTimeSeconds < 0.0 || durationSeconds <= 0.0) return
 
@@ -101,14 +109,16 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
     val context = LocalContext.current
     val dao = remember { SitulaDatabase.get(context.applicationContext).watchHistoryDao() }
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
+    val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
     val progressBridge = remember(movie.tmdbId) {
-        VidLinkProgressBridge(movie, dao, 0L)
+        VidLinkProgressBridge(movie, dao, 0L, progressToken)
     }
 
     LaunchedEffect(movie.tmdbId) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
         if (saved != null && !saved.completed) {
             resumePositionMs.longValue = saved.positionMs.coerceAtLeast(0L)
+            progressBridge.resetResumePosition(saved.positionMs)
         }
     }
 
@@ -130,7 +140,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
             .build().toString()
     }
 
-    val wrapperHtml = remember(playerUrl) {
+    val wrapperHtml = remember(playerUrl, progressToken) {
         """
         <!doctype html>
         <html>
@@ -158,6 +168,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                   if (typeof player.currentTime === 'number' &&
                       typeof player.duration === 'number') {
                     SitulaProgress.onProgress(
+                      '${progressToken}',
                       player.currentTime,
                       player.duration,
                       String(player.event || 'timeupdate')
@@ -167,7 +178,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                   var progress = payload.data.progress;
                   if (typeof progress.watched === 'number' &&
                       typeof progress.duration === 'number') {
-                    SitulaProgress.onProgress(progress.watched, progress.duration, 'timeupdate');
+                    SitulaProgress.onProgress('${progressToken}', progress.watched, progress.duration, 'timeupdate');
                   }
                 }
               }, false);
