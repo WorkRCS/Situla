@@ -113,14 +113,14 @@ img { display: block; }
 .save-button.saved { color: #f1c978; background: rgba(85,59,18,.88); }
 .bottom-nav {
   position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
-  display: grid; grid-template-columns: repeat(4,minmax(0,1fr));
+  display: grid; grid-template-columns: repeat(6,minmax(0,1fr));
   padding: 9px 8px max(10px,env(safe-area-inset-bottom));
   background: rgba(12,14,21,.94); border-top: 1px solid var(--line);
   backdrop-filter: blur(20px);
 }
 .nav-button {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-  color: #858b9b; font-size: 10px; font-weight: 700; min-height: 52px;
+  color: #858b9b; font-size: 9px; font-weight: 700; min-height: 52px; min-width: 0;
 }
 .nav-button.active { color: #f0c471; }
 .nav-button.active svg { filter: drop-shadow(0 0 7px rgba(232,182,91,.32)); }
