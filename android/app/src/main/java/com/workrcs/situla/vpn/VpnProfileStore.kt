@@ -7,6 +7,10 @@ object VpnProfileStore {
     val regions = listOf("Singapore", "Malaysia", "Japan", "Germany", "Netherlands", "Poland")
     private const val PREFERENCES = "situla_vpn_preferences"
 
+    fun autoConnectEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .getBoolean("auto_connect_enabled", true)
+
     fun autoConnectRegion(context: Context): String? =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
             .getString("auto_connect_region", regions.first())
@@ -14,9 +18,11 @@ object VpnProfileStore {
 
     fun setAutoConnectRegion(context: Context, region: String?) {
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit().apply {
-            if (region == null) remove("auto_connect_region")
-            else {
+            if (region == null) {
+                putBoolean("auto_connect_enabled", false)
+            } else {
                 require(region in regions)
+                putBoolean("auto_connect_enabled", true)
                 putString("auto_connect_region", region)
             }
         }.apply()
@@ -24,7 +30,16 @@ object VpnProfileStore {
 
     fun preferredAvailableRegion(context: Context): String? {
         val available = availableRegions(context)
-        return autoConnectRegion(context)?.takeIf { it in available } ?: available.firstOrNull()
+        if (available.isEmpty()) return null
+        // Prefer the region with the lowest previously measured live tunnel latency.
+        // On a first run, fall back to the selected default region, then the first profile.
+        val measured = regionLatencies(context)
+        val fastestMeasured = available
+            .filter { measured[it] != null }
+            .minByOrNull { measured[it] ?: Long.MAX_VALUE }
+        return fastestMeasured
+            ?: autoConnectRegion(context)?.takeIf { it in available }
+            ?: available.firstOrNull()
     }
 
     fun regionLatencies(context: Context): Map<String, Long> {
