@@ -163,8 +163,8 @@ export default function SitulaApp() {
       try {
         const params = new URLSearchParams({ page: "1", limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
-        const response = await params.set("random", "true");
-        fetch("/api/movies?" + params.toString(), {
+        params.set("random", "true");
+        const response = await fetch("/api/movies?" + params.toString(), {
           cache: "no-store",
           signal: controller.signal
         });
