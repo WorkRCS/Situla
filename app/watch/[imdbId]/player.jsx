@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { vidlinkMovieUrl } from "../../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
@@ -127,10 +128,7 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const isValidImdbId = /^tt\d{5,12}$/i.test(String(imdbId || ""));
-  const playerUrl = catalogVerified && isValidImdbId
-    ? VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(imdbId)
-    : null;
+  const playerUrl = catalogVerified ? vidlinkMovieUrl(imdbId) : null;
 
   return (
     <main className="watch-screen">
