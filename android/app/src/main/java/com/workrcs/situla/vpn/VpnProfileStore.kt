@@ -31,6 +31,48 @@ object VpnProfileStore {
             .edit().putBoolean("auto_rotate_enabled", enabled).apply()
     }
 
+    fun prepareFullTunnelProfile(rawProfile: String): String {
+        require(rawProfile.isNotBlank()) { "WireGuard profile is empty." }
+        require(Regex("(?im)^\\s*\\[Interface]\\s*$").containsMatchIn(rawProfile)) {
+            "WireGuard profile has no [Interface] section."
+        }
+        require(Regex("(?im)^\\s*\\[Peer]\\s*$").findAll(rawProfile).count() == 1) {
+            "A single-peer WireGuard profile is required for automatic IP routing."
+        }
+
+        val peerHeader = Regex("(?im)^\\s*\\[Peer]\\s*$")
+        val peerStart = peerHeader.find(rawProfile)?.range?.last?.plus(1)
+            ?: error("WireGuard profile has no [Peer] section.")
+        val peerTail = rawProfile.substring(peerStart)
+        val nextSection = Regex("(?im)^\\s*\\[").find(peerTail)?.range?.first ?: peerTail.length
+        val peerBody = peerTail.substring(0, nextSection)
+        val peerBodyWithRoutes = if (Regex("(?im)^AllowedIPs\\s*=.*$").containsMatchIn(peerBody)) {
+            Regex("(?im)^AllowedIPs\\s*=.*$").replace(
+                peerBody,
+                "AllowedIPs = 0.0.0.0/0, ::/0",
+                limit = 1
+            )
+        } else {
+            peerBody.trimEnd() + "\\nAllowedIPs = 0.0.0.0/0, ::/0\\n"
+        }
+
+        val withAutomaticRoutes = rawProfile.substring(0, peerStart) +
+            peerBodyWithRoutes + peerTail.substring(nextSection)
+        val dnsLine = "DNS = 94.140.14.14, 94.140.15.15"
+        val dnsRegex = Regex("(?im)^DNS\\s*=.*$")
+        val withDns = if (dnsRegex.containsMatchIn(withAutomaticRoutes)) {
+            dnsRegex.replace(withAutomaticRoutes, dnsLine, limit = 1)
+        } else {
+            val interfaceHeader = Regex("(?im)^\\s*\\[Interface]\\s*$")
+            interfaceHeader.replaceFirst(withAutomaticRoutes) { "${it.value}\\n$dnsLine" }
+        }
+        val parsed = com.wireguard.config.Config.parse(withDns.byteInputStream(Charsets.UTF_8))
+        require(parsed.peers.size == 1 && parsed.peers.single().endpoint.isPresent) {
+            "WireGuard profile must include one peer with an Endpoint."
+        }
+        return withDns
+    }
+
     private fun profileFile(context: Context, region: String): File {
         require(region in regions) { "Unknown VPN region." }
         val directory = File(context.noBackupFilesDir, "wireguard-profiles").apply { mkdirs() }
