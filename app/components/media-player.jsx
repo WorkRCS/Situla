@@ -4,17 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-async function lockLandscape() {
-  try {
-    if (screen.orientation && typeof screen.orientation.lock === "function") await screen.orientation.lock("landscape");
-  } catch {}
-}
-
 export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
   const router = useRouter();
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
-  const [seriesInfo, setSeriesInfo] = useState(null);
   const [startAt, setStartAt] = useState(0);
   const lastWrite = useRef(0);
 
