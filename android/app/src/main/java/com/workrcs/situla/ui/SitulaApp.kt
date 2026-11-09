@@ -79,7 +79,6 @@ private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HIST
 fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
-    var showPlayer by remember { mutableStateOf(false) }
     val api = remember { SitulaApiProvider.create(SitulaApiConfig.baseUrl(context)) }
     val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
@@ -138,17 +137,9 @@ fun SitulaApp(context: Context) {
             .background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
         Column(contentModifier) {
             when {
-                selectedMovie != null && showPlayer -> MoviePlayerScreen(
+                selectedMovie != null -> MoviePlayerScreen(
                     movie = selectedMovie!!,
-                    onBack = { showPlayer = false }
-                )
-                selectedMovie != null -> MovieDetailScreen(
-                    movie = selectedMovie!!,
-                    onBack = {
-                        showPlayer = false
-                        selectedMovie = null
-                    },
-                    onPlay = { showPlayer = true }
+                    onBack = { selectedMovie = null }
                 )
                 else -> {
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -163,7 +154,7 @@ fun SitulaApp(context: Context) {
                         Tab.HOME -> HomeScreen(
                             movies, loading, error, continueWatching,
                             onRetry = { scope.launch { loadMovies() } },
-                            onOpenMovie = { selectedMovie = it; showPlayer = false }
+                            onOpenMovie = { selectedMovie = it }
                         )
                         Tab.SEARCH -> SearchScreen(
                             query, searchResults, loading,
