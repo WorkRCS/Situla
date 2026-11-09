@@ -42,9 +42,11 @@ async function seedTv() {
   const present = new Set((await TvSeries.find({ tmdbId: { $in: STARTER_TV_IDS } }).select('tmdbId').lean()).map((item) => Number(item.tmdbId)));
   const missing = STARTER_TV_IDS.filter((id) => !present.has(id));
   let starterImported = 0;
-  if (missing.length) {
-    const starter = await importTvSeriesIds({ ids: missing });
-    starterImported = starter.imported;
+  // Save curated records one by one: a single unavailable TMDB ID cannot
+  // discard successful inserts from the rest of the starter list.
+  for (const tmdbId of missing) {
+    const starter = await importTvSeriesIds({ ids: [tmdbId] });
+    starterImported += starter.imported;
   }
   await TvSeries.updateMany(
     { tmdbId: { $in: STARTER_TV_IDS }, moderationStatus: { $ne: 'rejected' } },
