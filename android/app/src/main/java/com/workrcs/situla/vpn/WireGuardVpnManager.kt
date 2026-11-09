@@ -47,8 +47,11 @@ object WireGuardVpnManager {
         withContext(Dispatchers.IO) {
             require(region in VpnProfileStore.regions) { "Select one of the four supported regions." }
             require(sourceProfile.isNotBlank()) { "Import a WireGuard .conf profile for $region first." }
-            require(Regex("(?im)^AllowedIPs\\s*=.*(?:0\\.0\\.0\\.0/0|::/0)").containsMatchIn(sourceProfile)) {
-                "This profile is not a full-tunnel profile. AllowedIPs must include 0.0.0.0/0 or ::/0."
+            require(
+                Regex("(?im)^AllowedIPs\\s*=.*0\\.0\\.0\\.0/0").containsMatchIn(sourceProfile) &&
+                    Regex("(?im)^AllowedIPs\\s*=.*::/0").containsMatchIn(sourceProfile)
+            ) {
+                "This profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0)."
             }
 
             mutableState.value = SitulaVpnState(connecting = true, region = region, message = "Connecting to $region…")
