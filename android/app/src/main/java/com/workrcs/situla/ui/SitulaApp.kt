@@ -126,7 +126,7 @@ fun SitulaApp(context: Context) {
 
     suspend fun loadMovies() {
         if (api == null) {
-            error = "Set situlaApiBaseUrl in android/local.properties to your deployed backend URL."
+            error = "Situla backend URL is unavailable. Reinstall the latest app build or check its configuration."
             return
         }
         loading = true
@@ -293,7 +293,7 @@ private fun HomeScreen(
         item {
             SectionTitle("Discover movies", "TMDB CATALOG")
             if (movies.isEmpty() && !loading) {
-                Text("No approved titles in the catalog yet. Import titles in Admin and approve them first.", color = Color(0xFF8D98A9), fontSize = 12.sp)
+                Text("No approved titles are available yet. Check the catalog status and retry.", color = Color(0xFF8D98A9), fontSize = 12.sp)
             } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(movies, key = { it.tmdbId }) { movie ->
@@ -313,8 +313,19 @@ private fun EmptyCatalog(loading: Boolean, error: String?, onRetry: () -> Unit) 
     ) {
         if (loading) CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) else Icon(Icons.Default.Wifi, null, modifier = Modifier.width(34.dp).height(34.dp))
         Spacer(Modifier.height(14.dp))
-        Text(if (loading) "Connecting to Situla" else "Connect your movie catalog", fontWeight = FontWeight.Bold)
-        Text(error ?: "Real movie metadata will appear here after the backend is configured.", color = Color(0xFF9BA5B4), fontSize = 11.sp)
+        Text(
+            when {
+                loading -> "Connecting to Situla"
+                error != null -> "Backend connection failed"
+                else -> "Catalog connected"
+            },
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            error ?: "The backend is online, but there are no approved movies to show yet. Try again shortly or check the admin catalog.",
+            color = Color(0xFF9BA5B4),
+            fontSize = 11.sp
+        )
         if (!loading) Button(onClick = onRetry, Modifier.padding(top = 12.dp)) { Icon(Icons.Default.Refresh, null); Text(" Retry") }
     }
 }
