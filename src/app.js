@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun, TvSeries, TvSeason, AnimeSeries } from './models.js';
-import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds, importPopularMovies } from './crawler.js';
 import { importTvSeriesIds, importAnimeIds, getTvSeason } from './series.js';
 
 const app = new Hono();
@@ -15,145 +15,6 @@ const attempts = new Map();
 const COOKIE = 'situla_admin';
 
 // Curated IMDb titles selected for the existing Situla catalog filters.
-const STARTER_IMDB_IDS = [
-  'tt1375666',
-  'tt0816692',
-  'tt0482571',
-  'tt0133093',
-  'tt1856101',
-  'tt2543164',
-  'tt1160419',
-  'tt1631867',
-  'tt0945513',
-  'tt1130884',
-  'tt8946378',
-  'tt0167404',
-  'tt6644200',
-  'tt1392190',
-  'tt6710474',
-  'tt3659388',
-  'tt1454468',
-  'tt0470752',
-  'tt0107290',
-  'tt0120737',
-  'tt0468569',
-  'tt0209144',
-  'tt0114369',
-  'tt2267998',
-  'tt1392214',
-  'tt0443706',
-  'tt0181689',
-  'tt1276104',
-  'tt6723592',
-  'tt0499549',
-  'tt1630029',
-  'tt0848228',
-  'tt4154756',
-  'tt4154796',
-  'tt0371746',
-  'tt2015381',
-  'tt1843866',
-  'tt1211837',
-  'tt4633694',
-  'tt9362722',
-  'tt0317705',
-  'tt0910970',
-  'tt2096673',
-  'tt2380307',
-  'tt0892769',
-  'tt3915174',
-  'tt0241527',
-  'tt1201607',
-  'tt0167261',
-  'tt0167260',
-  'tt0903624',
-  'tt0325980',
-  'tt0103064',
-  'tt0088247',
-  'tt0078748',
-  'tt0090605',
-  'tt0084787',
-  'tt5052448',
-  'tt0121766',
-  'tt1457767',
-  'tt1396484',
-  'tt1877830',
-  'tt0172495',
-  'tt2911666',
-  'tt1431045',
-  'tt3315342',
-  'tt1318514',
-  'tt2103281',
-  'tt4912910',
-  'tt1745960',
-  'tt0258463',
-  'tt1392170',
-  'tt0073195',
-  'tt0081505',
-  'tt0076759',
-  'tt0080684',
-  'tt3748528',
-  'tt2488496',
-  'tt0086190',
-  'tt1136608'
-];
-let starterCatalogPromise;
-
-async function ensureStarterCatalog() {
-  let migration;
-  try {
-    migration = await migrateLegacyMovieIds();
-  } catch (error) {
-    console.error('Situla legacy IMDb migration will retry later:', error.message);
-    return 0;
-  }
-  const apiKey = (process.env.TMDB_API_KEY || '').trim();
-  if (migration.requiresApiKey || !apiKey || apiKey.startsWith('replace_')) return 0;
-
-  if (!starterCatalogPromise) {
-    starterCatalogPromise = (async () => {
-      const existing = await Movie.find({ imdbId: { $in: STARTER_IMDB_IDS } }).select('imdbId').lean();
-      const present = new Set(existing.map((movie) => movie.imdbId));
-      const missing = STARTER_IMDB_IDS.filter((id) => !present.has(id));
-
-      for (let index = 0; index < missing.length; index += 20) {
-        try {
-          await importMovieIds({ source: 'imdb', ids: missing.slice(index, index + 20) });
-        } catch (error) {
-          console.error('Situla curated IMDb batch import failed:', error.message);
-        }
-      }
-
-      const eligible = await Movie.find({
-        imdbId: { $in: STARTER_IMDB_IDS },
-        adult: false,
-        originalLanguage: 'en',
-        moderationStatus: { $ne: 'rejected' }
-      }).select('imdbId').lean();
-      const eligibleIds = eligible.map((movie) => movie.imdbId);
-      if (eligibleIds.length) {
-        await Movie.updateMany(
-          { imdbId: { $in: eligibleIds }, moderationStatus: { $ne: 'rejected' } },
-          {
-            $set: {
-              moderationStatus: 'approved',
-              manualReviewNote: 'Curated Situla catalog selection; IMDb ID verified and metadata filtered.'
-            }
-          }
-        );
-      }
-      console.info('Situla curated IMDb catalog ready:', eligibleIds.length, 'titles');
-      return eligibleIds.length;
-    })().catch((error) => {
-      console.error('Situla curated catalog seed failed:', error.message);
-      return 0;
-    });
-  }
-
-  return starterCatalogPromise;
-}
-
-
 const STARTER_TV_IDS = [
   1396, 1399, 87108, 70523, 66732, 76479, 100088, 95396, 94605, 63639,
   19885, 82856, 83867, 93740, 125988, 95557, 84958, 61889, 62560, 42009
@@ -543,6 +404,22 @@ app.get('/api/admin/tmdb-status', requireAdmin, async (c) => {
 });
 
 
+
+app.post('/api/admin/seed-top-movies', requireSameOrigin, requireAdmin, async (c) => {
+  let body = {};
+  try { body = await c.req.json(); } catch {}
+  try {
+    const result = await importPopularMovies({
+      targetCount: body.targetCount ?? 60,
+      maxPages: body.maxPages ?? 20
+    });
+    return c.json({ result });
+  } catch (error) {
+    console.error('Top movie seed failed:', error.message);
+    return c.json({ error: error.message || 'Unable to add popular movies.' }, 502);
+  }
+});
+
 app.post('/api/admin/import-ids', requireSameOrigin, requireAdmin, async (c) => {
   let body;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
@@ -687,9 +564,6 @@ app.post('/api/admin/crawl', requireSameOrigin, requireAdmin, async (c) => {
 app.get('/api/movies', async (c) => {
   try {
     await connectDatabase();
-    // On a brand-new/empty public catalog, seed a small curated set automatically.
-    // A seed failure must not take down the read-only public catalog endpoint.
-    await ensureStarterCatalog();
     const requestedPage = Number(c.req.query('page') || 1);
     const requestedLimit = Number(c.req.query('limit') || 20);
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
@@ -700,10 +574,10 @@ app.get('/api/movies', async (c) => {
       moderationStatus: 'approved',
       adult: false,
       originalLanguage: 'en',
-      imdbId: /^tt\\d{5,12}$/
+      imdbId: /^tt\d{5,12}$/
     };
     if (year >= 1870 && year <= new Date().getFullYear()) filter.releaseYear = year;
-    const imdbQuery = /^tt\\d{5,12}$/i.test(query);
+    const imdbQuery = /^tt\d{5,12}$/i.test(query);
     if (imdbQuery) filter.imdbId = query.toLowerCase();
     else if (query) filter.$text = { $search: query };
     const sort = query && !imdbQuery
