@@ -1,0 +1,22 @@
+# IMDb title IDs for the Situla Movie-first import smoke test.
+# IDs only; all display metadata is fetched from TMDB after admin login.
+tt1375666
+tt0816692
+tt0482571
+tt0133093
+tt1856101
+tt2543164
+tt1160419
+tt1631867
+tt0945513
+tt1130884
+tt8946378
+tt0167404
+tt6644200
+tt1392190
+tt6710474
+tt3659388
+tt1454468
+tt0470752
+tt0107290
+tt0120737
