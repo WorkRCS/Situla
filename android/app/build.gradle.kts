@@ -72,7 +72,7 @@ val nativeAbis = (findProperty("situlaAndroidAbis") as String?)
     ?.split(",")
     ?.map { it.trim() }
     ?.filter { it.isNotEmpty() }
-    ?: listOf("x86_64") // Fast default for the standard Windows Android Emulator.
+    ?: listOf("arm64-v8a", "armeabi-v7a", "x86_64") // Phone + standard Android Emulator ABIs for distributable APKs.
 
 val cargoHomeDirectory = File(
     System.getenv("CARGO_HOME") ?: File(System.getProperty("user.home"), ".cargo").absolutePath
