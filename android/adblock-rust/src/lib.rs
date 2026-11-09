@@ -59,7 +59,7 @@ fn worker_sender() -> Option<Sender<Command>> {
                             let blocked = engine.as_ref().and_then(|engine| {
                                 Request::new(&url, &source, &request_type, "GET").ok().map(|request| {
                                     let result = engine.check_network_request(&request);
-                                    result.important || (result.matched && result.exception.is_none())
+                                    result.should_block()
                                 })
                             }).unwrap_or(false);
                             let _ = reply.send(blocked);
