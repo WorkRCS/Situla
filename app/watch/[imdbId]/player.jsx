@@ -71,14 +71,38 @@ export default function PlayerExperience({ imdbId }) {
 
       const key = "situla:progress:v1";
       try {
+        const watchedValue = Number(details.currentTime);
+        const durationValue = Number(details.duration);
+        const duration = Number.isFinite(durationValue) && durationValue > 0
+          ? durationValue
+          : Math.max(0, Number(movie?.runtime) * 60);
+        const watched = eventName === "ended" && duration > 0
+          ? duration
+          : watchedValue;
+        if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
+
+        const updatedAt = Date.now();
+        const historyKey = "movie:" + imdbId;
+        const historyEntry = {
+          key: historyKey,
+          mediaType: "movie",
+          mediaId: imdbId,
+          imdbId,
+          title: movie?.title || "Movie",
+          posterUrl: movie?.posterUrl || null,
+          watched: Math.max(0, watched),
+          duration,
+          updatedAt
+        };
+        const currentHistory = JSON.parse(localStorage.getItem("situla:watch-history:v1") || "[]");
+        const nextHistory = [historyEntry, ...(Array.isArray(currentHistory) ? currentHistory.filter((item) => item.key !== historyKey) : [])].slice(0, 500);
+        localStorage.setItem("situla:watch-history:v1", JSON.stringify(nextHistory));
+
         const current = JSON.parse(localStorage.getItem(key) || "[]");
         if (eventName === "ended") {
           localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
           return;
         }
-        const watched = Number(details.currentTime);
-        const duration = Number(details.duration);
-        if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
         const entry = {
           imdbId,
           title: movie?.title || "Movie",
@@ -89,8 +113,8 @@ export default function PlayerExperience({ imdbId }) {
           genres: movie?.genres || [],
           runtime: movie?.runtime || null,
           watched: Math.max(0, watched),
-          duration: Math.max(0, duration),
-          updatedAt: Date.now()
+          duration,
+          updatedAt
         };
         const next = [entry, ...(Array.isArray(current) ? current.filter((item) => item.imdbId !== imdbId) : [])].slice(0, 20);
         localStorage.setItem(key, JSON.stringify(next));
