@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,8 +62,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import org.json.JSONObject
+
+private const val ENABLE_BRAVE_FILTER_FOR_VIDLINK = false
 
 private class VidLinkProgressBridge(
     private val movie: Movie,
@@ -168,19 +168,17 @@ fun VidLinkPlayerScreen(
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
     var playerError by remember(movie.tmdbId) { mutableStateOf<String?>(null) }
-    var playerStatus by remember(movie.tmdbId) { mutableStateOf("Preparing VidLink player…") }
+    var playerStatus by remember(movie.tmdbId) { mutableStateOf("Loading embedded VidLink iframe · Brave filter OFF for diagnostics") }
     var playerDetail by remember(movie.tmdbId) { mutableStateOf("") }
     var iframeLoaded by remember(movie.tmdbId) { mutableStateOf(false) }
-    var directPlayerMode by remember(movie.tmdbId) { mutableStateOf(false) }
-    val directPlayerModeHolder = remember(movie.tmdbId) { booleanArrayOf(false) }
-    directPlayerModeHolder[0] = directPlayerMode
     val mainThreadHandler = remember { Handler(Looper.getMainLooper()) }
     val reportPlayerStatus: (String, String) -> Unit = { status, detail ->
         mainThreadHandler.post {
             playerStatus = status
             if (detail.isNotBlank()) playerDetail = detail
-            if (status == "iframe_loaded") iframeLoaded = true
-            if (status == "iframe_error") playerError = "VidLink iframe failed to load. $detail"
+            if (status == "iframe_load_event") iframeLoaded = true
+            if (status == "iframe_error") playerError = "VidLink iframe reported a load error. $detail"
+            if (status == "iframe_load_timeout") playerError = "VidLink iframe did not emit a load event within 12 seconds. See the diagnostic detail below."
         }
     }
     val playerWebViewHolder = remember(movie.tmdbId) { arrayOfNulls<WebView>(1) }
@@ -208,34 +206,6 @@ fun VidLinkPlayerScreen(
 
     DisposableEffect(activity) {
         onDispose { exitFullScreen() }
-    }
-
-    val protectionReady = produceState(initialValue = BraveAdblock.ready) {
-        value = if (BraveAdblock.ready) true else
-            com.workrcs.situla.security.AdblockFilterRepository.refreshAndInitialize(context.applicationContext)
-    }
-
-    if (!protectionReady.value) {
-        Column(
-            (if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f) else Modifier.fillMaxSize())
-                .background(Color.Black).padding(20.dp)
-        ) {
-            Text(
-                "Situla protection could not initialize. The player is blocked until the request filter is ready.",
-                color = Color.White
-            )
-            Text(
-                BraveAdblock.lastError ?: "Filter lists could not be loaded or the native engine returned false.",
-                color = Color(0xFFFFB1C0),
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            if (!embedded) {
-                Button(onClick = onBack, modifier = Modifier.padding(top = 14.dp)) {
-                    Text("Back to movie details")
-                }
-            }
-        }
-        return
     }
 
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
@@ -280,17 +250,7 @@ fun VidLinkPlayerScreen(
             .build().toString()
     }
 
-    LaunchedEffect(playerUrl, directPlayerMode) {
-        if (directPlayerMode) return@LaunchedEffect
-        delay(12_000)
-        if (!iframeLoaded && !directPlayerMode) {
-            playerStatus = "Iframe did not report a load within 12 seconds; switching to direct player page."
-            playerDetail = playerUrl
-            directPlayerMode = true
-        }
-    }
-
-    val playerLoadKey = "$playerUrl|${if (directPlayerMode) "direct" else "iframe"}"
+    val playerLoadKey = playerUrl
 
     val wrapperHtml = remember(playerUrl, progressToken) {
         """
@@ -323,17 +283,24 @@ fun VidLinkPlayerScreen(
                 catch (ignored) {}
               }
               report('wrapper_ready', window.location.href);
+              report('iframe_request_started', frame.src);
               frame.addEventListener('load', function() {
                 iframeSignaled = true;
-                report('iframe_loaded', frame.src);
+                report('iframe_load_event', frame.src);
               });
               frame.addEventListener('error', function() {
                 iframeSignaled = true;
                 report('iframe_error', frame.src);
               });
               setTimeout(function() {
-                if (!iframeSignaled) report('iframe_wait_timeout', frame.src);
-              }, 11000);
+                if (!iframeSignaled) report('iframe_load_timeout', frame.src);
+              }, 12000);
+              window.addEventListener('error', function(event) {
+                report('wrapper_javascript_error', event.message || 'Unknown wrapper script error');
+              });
+              window.addEventListener('unhandledrejection', function(event) {
+                report('wrapper_promise_error', String(event.reason || 'Unhandled promise rejection'));
+              });
               window.addEventListener('message', function(event) {
                 if (event.origin !== 'https://vidlink.pro') return;
                 var payload = event.data || {};
@@ -510,31 +477,28 @@ fun VidLinkPlayerScreen(
                             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                                 super.onPageStarted(view, url, favicon)
                                 val pageUrl = url.orEmpty()
-                                val isDirectVidLink = directPlayerModeHolder[0] &&
-                                    runCatching { isVidLinkHost(Uri.parse(pageUrl)) }.getOrDefault(false)
-                                reportPlayerStatus(if (isDirectVidLink) "direct_page_loading" else "wrapper_loading", pageUrl)
+                                reportPlayerStatus("wrapper_loading", pageUrl)
                             }
 
                             override fun onPageFinished(view: WebView?, url: String?) {
                                 super.onPageFinished(view, url)
                                 val pageUrl = url.orEmpty()
-                                val isDirectVidLink = directPlayerModeHolder[0] &&
-                                    runCatching { isVidLinkHost(Uri.parse(pageUrl)) }.getOrDefault(false)
-                                reportPlayerStatus(if (isDirectVidLink) "direct_page_loaded" else "wrapper_ready", pageUrl)
+                                if (playerStatus == "wrapper_loading") reportPlayerStatus("wrapper_ready", pageUrl)
                             }
 
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
                                 if (!uri.scheme.equals("https", ignoreCase = true)) return true
 
-                                // Permit VidLink as an iframe, or as the explicit direct-page
-                                // fallback. Other top-level destinations remain blocked.
-                                if (!request.isForMainFrame && isVidLinkHost(uri)) return false
-                                if (request.isForMainFrame && directPlayerModeHolder[0] && isVidLinkHost(uri)) return false
+                                // Diagnostic phase: allow HTTPS iframe/subframe navigations without
+                                // running Brave rules. Keep top-level navigation inside Situla only.
+                                if (!request.isForMainFrame && !ENABLE_BRAVE_FILTER_FOR_VIDLINK) return false
 
-                                val source = view?.url ?: "https://situla.vercel.app/"
-                                val type = if (request.isForMainFrame) "document" else "subdocument"
-                                if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
+                                if (ENABLE_BRAVE_FILTER_FOR_VIDLINK) {
+                                    val source = view?.url ?: "https://situla.vercel.app/"
+                                    val type = if (request.isForMainFrame) "document" else "subdocument"
+                                    if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
+                                }
                                 if (request.isForMainFrame &&
                                     !uri.host.equals("situla.vercel.app", ignoreCase = true)
                                 ) return true
@@ -547,9 +511,9 @@ fun VidLinkPlayerScreen(
                                     return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
                                 }
 
-                                // Do not let EasyList/EasyPrivacy accidentally block VidLink's
-                                // own app shell, player scripts, or player API endpoints. All
-                                // cross-site ad/tracker/media hosts continue through Brave.
+                                // Temporary diagnostic mode: pass every HTTPS resource directly
+                                // to WebView. This isolates the iframe/player from Brave rule matches.
+                                if (!ENABLE_BRAVE_FILTER_FOR_VIDLINK) return null
                                 if (isVidLinkHost(requestedUri)) return null
 
                                 val address = requestedUri.toString()
@@ -581,7 +545,7 @@ fun VidLinkPlayerScreen(
                                     accept.contains("text/html") -> "subdocument"
                                     else -> "other"
                                 }
-                                if (BraveAdblock.shouldBlock(address, referer, requestType)) {
+                                if (ENABLE_BRAVE_FILTER_FOR_VIDLINK && BraveAdblock.shouldBlock(address, referer, requestType)) {
                                     Log.w("SitulaVidLink", "Brave blocked $requestType request: $address")
                                     reportPlayerStatus("blocked_by_brave", "$requestType · ${requestedUri.host ?: address}")
                                     return WebResourceResponse(
@@ -600,8 +564,13 @@ fun VidLinkPlayerScreen(
                             ) {
                                 val uri = request?.url ?: return
                                 val code = errorResponse?.statusCode ?: 0
-                                if (code >= 400 && (request.isForMainFrame || isVidLinkHost(uri))) {
-                                    playerError = "Player request returned HTTP $code for ${uri.host ?: "unknown host"}/${uri.lastPathSegment ?: "resource"}."
+                                val destination = request.requestHeaders.entries.firstOrNull {
+                                    it.key.equals("sec-fetch-dest", ignoreCase = true)
+                                }?.value?.lowercase()
+                                val importantRequest = request.isForMainFrame || isVidLinkHost(uri) ||
+                                    destination in listOf("document", "iframe", "video", "audio")
+                                if (code >= 400 && importantRequest) {
+                                    playerError = "Player network request returned HTTP $code for ${uri.host ?: "unknown host"}/${uri.lastPathSegment ?: "resource"}."
                                     reportPlayerStatus("http_error_$code", uri.toString())
                                     Log.w("SitulaVidLink", "HTTP $code while loading $uri")
                                 }
@@ -613,9 +582,14 @@ fun VidLinkPlayerScreen(
                                 error: android.webkit.WebResourceError?
                             ) {
                                 val uri = request?.url ?: return
-                                if (request.isForMainFrame || isVidLinkHost(uri)) {
+                                val destination = request.requestHeaders.entries.firstOrNull {
+                                    it.key.equals("sec-fetch-dest", ignoreCase = true)
+                                }?.value?.lowercase()
+                                val importantRequest = request.isForMainFrame || isVidLinkHost(uri) ||
+                                    destination in listOf("document", "iframe", "video", "audio")
+                                if (importantRequest) {
                                     val description = error?.description?.toString() ?: "Network error"
-                                    playerError = "Cannot load player page: $description"
+                                    playerError = "Cannot load player request: $description (${uri.host ?: "unknown host"})."
                                     reportPlayerStatus("network_error", "$description · $uri")
                                     Log.w("SitulaVidLink", "Load error for $uri: $description")
                                 }
@@ -652,16 +626,14 @@ fun VidLinkPlayerScreen(
                         }
 
                         tag = playerLoadKey
-                        if (directPlayerMode) loadUrl(playerUrl)
-                        else loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
+                        loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 update = { webView ->
                     if (webView.tag != playerLoadKey) {
                         webView.tag = playerLoadKey
                         playerError = null
-                        if (directPlayerMode) webView.loadUrl(playerUrl)
-                        else webView.loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
+                        webView.loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 onRelease = { webView ->
@@ -672,19 +644,37 @@ fun VidLinkPlayerScreen(
                     webView.destroy()
                 }
             )
+            if (playerError == null && !iframeLoaded) {
+                Column(
+                    Modifier.align(Alignment.Center)
+                        .background(Color(0xDD151922))
+                        .padding(12.dp)
+                ) {
+                    Text("Connecting to VidLink iframe…", color = Color.White)
+                    Text("Status: $playerStatus", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 4.dp))
+                    Text("TMDB ID: ${movie.tmdbId}", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 4.dp))
+                }
+            }
             playerError?.let { message ->
                 Column(
-                    Modifier.fillMaxWidth().background(Color(0xEE151922)).padding(10.dp)
+                    Modifier.align(Alignment.Center)
+                        .fillMaxWidth()
+                        .background(Color(0xEE151922))
+                        .padding(12.dp)
                 ) {
-                    Text(message, color = Color.White)
+                    Text("PLAYER LOAD ERROR", color = Color(0xFFFFB1C0))
+                    Text(message, color = Color.White, modifier = Modifier.padding(top = 4.dp))
                     Button(
                         onClick = {
+                            iframeLoaded = false
                             playerError = null
+                            playerStatus = "Retrying embedded iframe…"
+                            playerDetail = playerUrl
                             playerWebViewHolder[0]?.reload()
                         },
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
                     ) {
-                        Text("Reload player")
+                        Text("Retry iframe")
                     }
                 }
             }
@@ -695,9 +685,10 @@ fun VidLinkPlayerScreen(
             Text("VidLink diagnostics", color = Color.White)
             Text("Status: $playerStatus", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp))
             Text(
-                "TMDB ID: ${movie.tmdbId} · Mode: ${if (directPlayerMode) "Direct page" else "Iframe"}",
+                "TMDB ID: ${movie.tmdbId} · Mode: Embedded iframe · Brave filter: ${if (ENABLE_BRAVE_FILTER_FOR_VIDLINK) "ON" else "OFF (diagnostic)"}",
                 color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp)
             )
+            Text("Iframe URL: $playerUrl", color = Color(0xFF8F9BAA), modifier = Modifier.padding(top = 3.dp))
             if (playerDetail.isNotBlank()) {
                 Text("Detail: $playerDetail", color = Color(0xFF8F9BAA), modifier = Modifier.padding(top = 3.dp))
             }
@@ -705,22 +696,12 @@ fun VidLinkPlayerScreen(
                 Button(
                     onClick = {
                         iframeLoaded = false
-                        directPlayerMode = true
                         playerError = null
                         playerDetail = playerUrl
-                        playerStatus = "Opening VidLink directly inside the app…"
-                    },
-                    modifier = Modifier.weight(1f).padding(end = 4.dp)
-                ) { Text("Direct player") }
-                Button(
-                    onClick = {
-                        iframeLoaded = false
-                        directPlayerMode = false
-                        playerError = null
-                        playerDetail = ""
                         playerStatus = "Retrying embedded iframe…"
+                        playerWebViewHolder[0]?.reload()
                     },
-                    modifier = Modifier.weight(1f).padding(start = 4.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) { Text("Retry iframe") }
             }
         }
