@@ -35,7 +35,8 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
   assert.ok(blocker.includes("12L * 60L * 60L * 1000L"));
   assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri, sourceUrl, accept, request\.isForMainFrame\)/);
   assert.ok(player.includes("settings.setSupportMultipleWindows(true)"));
-  assert.match(player, /onCreateWindow\([\s\S]*?\): Boolean = false/);
+  assert.ok(player.includes("override fun onCreateWindow("));
+  assert.ok(player.includes("): Boolean = false"));
   assert.doesNotMatch(player, /isTrustedPlayerFrameNavigation/);
   assert.match(player, /return request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)/);
 });
