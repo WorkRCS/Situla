@@ -57,10 +57,16 @@ async function main() {
       duplicateTvIds.map((item) => item._id + ' (' + item.count + ')').join(', '));
   }
 
+  const [moviesMissingProvider, tvMissingProvider] = await Promise.all([
+    movies.countDocuments({ imdbId: IMDB_ID, $or: [{ vidlinkId: { $exists: false } }, { vidlinkId: null }, { vidlinkId: { $lte: 0 } }] }),
+    tvSeries.countDocuments({ imdbId: IMDB_ID, $or: [{ vidlinkId: { $exists: false } }, { vidlinkId: null }, { vidlinkId: { $lte: 0 } }] })
+  ]);
   console.log('Legacy cleanup preview:');
   console.log('  Movie records without a valid IMDb ID to delete: ' + invalidMovieCount);
   console.log('  TV records without a valid IMDb ID to delete: ' + invalidTvCount);
-  console.log('  TV records to migrate to IMDb identity: ' + (await tvSeries.countDocuments({ imdbId: IMDB_ID })));
+  console.log('  TV series to migrate to IMDb identity: ' + (await tvSeries.countDocuments({ imdbId: IMDB_ID })));
+  console.log('  Movies missing a VidLink provider mapping: ' + moviesMissingProvider);
+  console.log('  TV series missing a VidLink provider mapping: ' + tvMissingProvider);
 
   const cursor = tvSeries.find({ imdbId: IMDB_ID });
   let migratedTv = 0;
