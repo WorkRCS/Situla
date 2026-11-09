@@ -6,8 +6,7 @@ import com.workrcs.situla.data.Movie
 /**
  * Backward-compatible route entry point.
  *
- * The selected movie opens directly in the in-app VidLink WebView. Movie metadata APIs
- * provide the TMDB ID; VidLinkPlayerScreen builds and opens the provider URL.
+ * The selected movie opens directly in the in-app IMDb-compatible VidSrc WebView. Movie metadata APIs provide the IMDb ID; the player builds the IMDb-based iframe URL.
  */
 @Composable
 fun MoviePlayerScreen(movie: Movie, onBack: () -> Unit) {
