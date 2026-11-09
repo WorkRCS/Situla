@@ -169,7 +169,7 @@ fun SitulaVpnControls(context: Context) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
                 Text("Automatic region rotation", fontSize = 12.sp)
-                Text("Rotate every 4 hours while Situla remains active. Requires all four profiles.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+                Text("Rotate every 5 hours while Situla remains active. Requires all four profiles.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
             }
             Switch(
                 checked = autoRotate,
