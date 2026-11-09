@@ -69,8 +69,6 @@ export default function PlayerExperience({ imdbId }) {
       if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" || !payload.data) return;
       const data = payload.data;
       if (String(data.mediaType || "").toLowerCase() !== "movie") return;
-      if (Number(data.mtmdbId) !== Number(movie?.vidlinkId)) return;
-
       const eventName = String(data.event || "");
       if (!["play", "pause", "seeked", "ended", "timeupdate"].includes(eventName)) return;
       if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
@@ -127,21 +125,11 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const vidlinkId = Number(movie?.vidlinkId);
-  const playerParams = new URLSearchParams({
-    primaryColor: "e8b65b",
-    secondaryColor: "171a23",
-    iconColor: "ffffff",
-    icons: "default",
-    player: "default",
-    title: "false",
-    poster: "true",
-    autoplay: "false",
-    nextbutton: "false"
-  });
+  const playerParams = new URLSearchParams();
   if (startAt > 0) playerParams.set("startAt", String(startAt));
-  const playerUrl = Number.isSafeInteger(vidlinkId) && vidlinkId > 0
-    ? VIDLINK_ORIGIN + "/movie/" + vidlinkId + "?" + playerParams.toString()
+  const playerQuery = playerParams.toString();
+  const playerUrl = movie?.playerAvailable
+    ? "/api/player/movie/" + encodeURIComponent(imdbId) + (playerQuery ? "?" + playerQuery : "")
     : null;
 
   return (
