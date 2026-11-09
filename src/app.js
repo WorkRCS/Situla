@@ -99,7 +99,7 @@ export function movieDto(movie) {
   return {
     id: String(movie._id),
     imdbId,
-    tmdbId: Number(movie.tmdbId) || null,
+    vidlinkId: Number(movie.vidlinkId) || null,
     imdbUrl: /^tt\d{5,12}$/.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
     title: movie.title,
     originalTitle: movie.originalTitle,
@@ -532,15 +532,15 @@ app.get('/api/movies/:imdbId', async (c) => {
     // Keep IMDb as the catalog/player route identity. VidLink's official movie
     // endpoint requires a TMDB numeric ID, so resolve and cache that provider ID
     // once when older movie records do not have it yet.
-    if (!Number(movie.tmdbId)) {
+    if (!Number(movie.vidlinkId)) {
       const found = await tmdbRequest('/find/' + encodeURIComponent(imdbId), {
         external_source: 'imdb_id',
         language: 'en-US'
       });
-      const tmdbId = Number(found.movie_results?.[0]?.id) || null;
-      if (!tmdbId) return c.json({ error: 'This IMDb title has no matching VidLink movie ID.' }, 404);
-      await Movie.updateOne({ imdbId }, { $set: { tmdbId } });
-      movie = { ...movie, tmdbId };
+      const vidlinkId = Number(found.movie_results?.[0]?.id) || null;
+      if (!vidlinkId) return c.json({ error: 'This IMDb title has no matching VidLink movie ID.' }, 404);
+      await Movie.updateOne({ imdbId }, { $set: { vidlinkId } });
+      movie = { ...movie, vidlinkId };
     }
     return c.json({ item: movieDto(movie) });
   } catch (error) {
