@@ -540,7 +540,7 @@ app.get('/api/movies/discover', async (c) => {
       moderationStatus: 'approved',
       adult: false,
       originalLanguage: 'en',
-      imdbId: /^tt\\d{5,12}$/
+      imdbId: /^tt\d{5,12}$/
     };
     const facets = {
       featured: [{ $sample: { size: 1 } }],
