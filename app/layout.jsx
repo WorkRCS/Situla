@@ -1,5 +1,4 @@
 import "./globals.css";
-import PwaRegister from "./components/pwa-register";
 
 export const metadata = {
   title: {
@@ -7,13 +6,6 @@ export const metadata = {
     template: "%s | Situla"
   },
   description: "Discover movies and watch them in Situla.",
-  applicationName: "Situla",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Situla"
-  },
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
@@ -34,7 +26,6 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {children}
-        <PwaRegister />
       </body>
     </html>
   );
