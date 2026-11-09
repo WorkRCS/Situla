@@ -494,6 +494,11 @@ app.get('/api/movies', async (c) => {
       imdbId: /^tt\d{5,12}$/
     };
     if (year >= 1870 && year <= new Date().getFullYear()) filter.releaseYear = year;
+    const genreIds = [...new Set((c.req.query('genreIds') || '')
+      .split(',')
+      .map((value) => Number(value.trim()))
+      .filter((value) => Number.isSafeInteger(value) && value > 0 && value < 1000))].slice(0, 10);
+    if (genreIds.length) filter.genreIds = { $in: genreIds };
     const imdbQuery = /^tt\d{5,12}$/i.test(query);
     if (imdbQuery) filter.imdbId = query.toLowerCase();
     else if (query) filter.$text = { $search: query };
@@ -516,6 +521,56 @@ app.get('/api/movies', async (c) => {
   } catch (error) {
     console.error('Public movie list failed:', error.message);
     return c.json({ error: 'Movie catalog is temporarily unavailable.' }, 503);
+  }
+});
+
+const MOVIE_DISCOVERY_CATEGORIES = [
+  { key: 'action', name: 'Action', ids: [28] },
+  { key: 'adventure', name: 'Adventure', ids: [12] },
+  { key: 'science-fiction', name: 'Sci-Fi', ids: [878] },
+  { key: 'fantasy', name: 'Fantasy', ids: [14] },
+  { key: 'mystery', name: 'Mystery', ids: [9648] },
+  { key: 'horror', name: 'Horror', ids: [27] }
+];
+
+app.get('/api/movies/discover', async (c) => {
+  try {
+    await connectDatabase();
+    const filter = {
+      moderationStatus: 'approved',
+      adult: false,
+      originalLanguage: 'en',
+      imdbId: /^tt\\d{5,12}$/
+    };
+    const facets = {
+      featured: [{ $sample: { size: 1 } }],
+      items: [{ $sort: { popularity: -1, releaseDate: -1 } }, { $limit: 40 }],
+      total: [{ $count: 'value' }]
+    };
+    for (const category of MOVIE_DISCOVERY_CATEGORIES) {
+      facets[category.key] = [
+        { $match: { genreIds: { $in: category.ids } } },
+        { $sort: { popularity: -1, releaseDate: -1 } },
+        { $limit: 18 }
+      ];
+    }
+    const [result] = await Movie.aggregate([{ $match: filter }, { $facet: facets }]);
+    const categories = MOVIE_DISCOVERY_CATEGORIES.map((category) => ({
+      key: category.key,
+      name: category.name,
+      genreIds: category.ids,
+      items: (result?.[category.key] || []).map(movieDto)
+    })).filter((category) => category.items.length > 0);
+    const total = Number(result?.total?.[0]?.value || 0);
+    return c.json({
+      featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
+      items: (result?.items || []).map(movieDto),
+      categories,
+      pagination: { page: 1, limit: 40, total, totalPages: Math.ceil(total / 40) }
+    });
+  } catch (error) {
+    console.error('Movie discovery feed failed:', error.message);
+    return c.json({ error: 'Movie discovery is temporarily unavailable.' }, 503);
   }
 });
 
