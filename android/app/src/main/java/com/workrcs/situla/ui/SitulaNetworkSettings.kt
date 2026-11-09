@@ -88,7 +88,11 @@ fun SitulaVpnControls(context: Context) {
                         ) {
                             "The profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0) to avoid IP leaks."
                         }
-                        Config.parse(raw.byteInputStream(Charsets.UTF_8))
+                        val parsed = Config.parse(raw.byteInputStream(Charsets.UTF_8))
+                        require(parsed.peers.isNotEmpty()) { "The profile has no [Peer] section." }
+                        require(parsed.peers.any { it.endpoint.isPresent }) {
+                            "At least one WireGuard peer must include an Endpoint host and port."
+                        }
                         VpnProfileStore.save(context, selectedRegion, raw)
                         "Saved a valid WireGuard profile for $selectedRegion."
                     }
