@@ -107,7 +107,7 @@ object NetworkAdBlocker {
     private val engineLock = Any()
 
     @Volatile private var activeEngine: AdblockEngine? = null
-    @Volatile private var situlaWebsiteHost: String = "situla.vercel.app"
+    @Volatile private var situlaWebsiteHost: String = "situla-five.vercel.app"
 
     /**
      * Start adblock initialization without delaying WebView creation.
