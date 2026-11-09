@@ -68,7 +68,7 @@ export default function PlayerExperience({ imdbId }) {
 
       if (payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
       const details = payload.data;
-      if (details.mediaType !== "movie" || Number(details.mtmdbId) !== Number(movie?.tmdbId)) return;
+      if (details.mediaType !== "movie" || Number(details.mtmdbId) !== Number(movie?.vidlinkId)) return;
 
       const eventName = String(details.event || "");
       if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
@@ -138,7 +138,7 @@ export default function PlayerExperience({ imdbId }) {
     } catch {}
   }, []);
 
-  const tmdbId = Number(movie?.tmdbId);
+  const vidlinkId = Number(movie?.vidlinkId);
   const playerParams = new URLSearchParams({
     primaryColor: "e8b65b",
     secondaryColor: "171a23",
@@ -151,8 +151,8 @@ export default function PlayerExperience({ imdbId }) {
     nextbutton: "false"
   });
   if (startAt > 0) playerParams.set("startAt", String(startAt));
-  const playerUrl = Number.isSafeInteger(tmdbId) && tmdbId > 0
-    ? "https://vidlink.pro/movie/" + tmdbId + "?" + playerParams.toString()
+  const playerUrl = Number.isSafeInteger(vidlinkId) && vidlinkId > 0
+    ? "https://vidlink.pro/movie/" + vidlinkId + "?" + playerParams.toString()
     : null;
 
   return (
