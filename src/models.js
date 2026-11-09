@@ -24,7 +24,6 @@ const movieSchema = new mongoose.Schema({
   tmdbUrl: { type: String, default: '' },
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
-movieSchema.index({ tmdbId: 1 }, { unique: true });
 movieSchema.index({ moderationStatus: 1, releaseYear: -1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ originalLanguage: 1, adult: 1, releaseYear: -1 });
