@@ -9,7 +9,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
   const router = useRouter();
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
-  const [playerAvailable, setPlayerAvailable] = useState(false);
+  const [catalogVerified, setCatalogVerified] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef(null);
@@ -24,7 +24,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
         if (!response.ok || !payload.item) throw new Error(payload.error || "Series metadata is unavailable.");
         setTitle(payload.item.titleEnglish || payload.item.title);
         setPosterUrl(payload.item.posterUrl || null);
-        setPlayerAvailable(kind !== "tv" || Boolean(payload.item.playerAvailable));
+        setCatalogVerified(true);
       })
       .catch(() => {})
       .finally(() => {
@@ -142,12 +142,9 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
 
   const playerUrl = (() => {
     if (kind === "tv") {
-      if (!playerAvailable) return null;
-      const params = new URLSearchParams();
-      if (startAt > 0) params.set("startAt", String(startAt));
-      const query = params.toString();
-      return "/api/player/tv/" + encodeURIComponent(imdbId) + "/" +
-        encodeURIComponent(season) + "/" + encodeURIComponent(episode) + (query ? "?" + query : "");
+      if (!catalogVerified || !/^tt\d{5,12}$/i.test(String(imdbId || ""))) return null;
+      return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(imdbId) + "/" +
+        encodeURIComponent(season) + "/" + encodeURIComponent(episode);
     }
     const params = new URLSearchParams({
       primaryColor: "e8b65b",
@@ -185,7 +182,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
             <div className="player-message-mark">S</div>
             <h1>{loading ? "Preparing playback" : "Playback unavailable"}</h1>
             <p>{kind === "tv" && !loading
-              ? "Playback is not configured for this series yet. Please try another title or contact support."
+              ? "This series is not available in the Situla catalog yet."
               : loading ? "Loading saved media details…" : "This episode could not be loaded."}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
