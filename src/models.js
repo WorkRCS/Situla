@@ -29,6 +29,8 @@ const movieSchema = new mongoose.Schema({
 movieSchema.index({ imdbId: 1 }, { unique: true, partialFilterExpression: { imdbId: { $type: 'string' } } });
 movieSchema.index({ vidlinkId: 1 }, { sparse: true });
 movieSchema.index({ moderationStatus: 1, releaseYear: -1, popularity: -1 });
+movieSchema.index({ moderationStatus: 1, adult: 1, originalLanguage: 1, popularity: -1, releaseDate: -1 });
+movieSchema.index({ moderationStatus: 1, adult: 1, originalLanguage: 1, releaseYear: 1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ originalLanguage: 1, adult: 1, releaseYear: -1 });
 
@@ -92,6 +94,7 @@ const tvSeriesSchema = new mongoose.Schema({
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
 tvSeriesSchema.index({ moderationStatus: 1, popularity: -1, firstAirDate: -1 });
+tvSeriesSchema.index({ moderationStatus: 1, adult: 1, originalLanguage: 1, popularity: -1, firstAirDate: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
 const tvEpisodeSchema = new mongoose.Schema({
@@ -149,6 +152,7 @@ const animeSeriesSchema = new mongoose.Schema({
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
 animeSeriesSchema.index({ moderationStatus: 1, popularity: 1, score: -1 });
+animeSeriesSchema.index({ moderationStatus: 1, type: 1, rank: 1, score: -1, popularity: 1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
 export const TvSeries = mongoose.models.TvSeries || mongoose.model('TvSeries', tvSeriesSchema);
