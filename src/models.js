@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 const movieSchema = new mongoose.Schema({
   tmdbId: { type: Number, required: true, unique: true },
   imdbId: { type: String, trim: true },
-  playbackUrl: { type: String, trim: true, maxlength: 2048, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
