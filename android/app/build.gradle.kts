@@ -1,5 +1,7 @@
 import java.util.Properties
 
+val adblockJniLibs = layout.buildDirectory.dir("generated/adblock-jni")
+
 plugins {
     id("com.android.application")
     id("com.android.legacy-kapt")
@@ -26,7 +28,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
+    sourceSets.getByName("main").jniLibs.srcDir(adblockJniLibs)
     packaging { resources { excludes += setOf("/META-INF/AL2.0", "/META-INF/LGPL2.1") } }
 }
 kotlin {
@@ -40,7 +44,10 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("com.wireguard.android:tunnel:1.0.20260102")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-process:2.9.4")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
@@ -58,4 +65,25 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.9.0")
     implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
     implementation("androidx.media3:media3-ui:1.9.0")
+}
+
+
+val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
+    group = "build"
+    description = "Compile Brave adblock-rust JNI library for Android ABIs."
+    workingDir(rootProject.file("adblock-rust"))
+    inputs.dir(rootProject.file("adblock-rust"))
+    outputs.dir(adblockJniLibs)
+    commandLine(
+        "cargo", "ndk",
+        "-t", "arm64-v8a",
+        "-t", "armeabi-v7a",
+        "-t", "x86_64",
+        "-o", adblockJniLibs.get().asFile.absolutePath,
+        "build", "--release"
+    )
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(buildBraveAdblock)
 }
