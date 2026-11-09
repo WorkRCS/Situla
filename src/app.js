@@ -45,14 +45,16 @@ function sessionKey() {
 async function requireAdmin(c, next) {
   const token = getCookie(c, COOKIE);
   if (!token) return c.json({ error: 'Authentication required.' }, 401);
+  let payload;
   try {
     const result = await jwtVerify(token, sessionKey(), { algorithms: ['HS256'] });
-    if (result.payload.role !== 'admin') return c.json({ error: 'Authentication required.' }, 401);
-    c.set('admin', result.payload);
-    await next();
+    payload = result.payload;
   } catch {
     return c.json({ error: 'Session expired. Please sign in again.' }, 401);
   }
+  if (payload.role !== 'admin') return c.json({ error: 'Authentication required.' }, 401);
+  c.set('admin', payload);
+  await next();
 }
 
 function sameOrigin(c) {
@@ -183,8 +185,10 @@ app.get('/api/admin/dashboard', requireAdmin, async (c) => {
 app.get('/api/admin/movies', requireAdmin, async (c) => {
   try {
     await connectDatabase();
-    const page = Math.max(1, Number(c.req.query('page') || 1));
-    const limit = Math.max(1, Math.min(50, Number(c.req.query('limit') || 20)));
+    const requestedPage = Number(c.req.query('page') || 1);
+    const requestedLimit = Number(c.req.query('limit') || 20);
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
+    const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 50) : 20;
     const status = c.req.query('status') || 'all';
     const query = (c.req.query('q') || '').trim().slice(0, 80);
     const filter = {};
@@ -255,8 +259,10 @@ app.post('/api/admin/crawl', requireSameOrigin, requireAdmin, async (c) => {
 app.get('/api/movies', async (c) => {
   try {
     await connectDatabase();
-    const page = Math.max(1, Number(c.req.query('page') || 1));
-    const limit = Math.max(1, Math.min(40, Number(c.req.query('limit') || 20)));
+    const requestedPage = Number(c.req.query('page') || 1);
+    const requestedLimit = Number(c.req.query('limit') || 20);
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
+    const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 40) : 20;
     const year = Number(c.req.query('year') || 0);
     const query = (c.req.query('q') || '').trim().slice(0, 80);
     const filter = { moderationStatus: 'approved', adult: false, originalLanguage: 'en' };
