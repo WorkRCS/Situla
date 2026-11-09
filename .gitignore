@@ -6,3 +6,10 @@ node_modules/
 coverage/
 .DS_Store
 npm-debug.log*
+
+# Android Studio / Gradle outputs
+android/local.properties
+android/.gradle/
+android/**/build/
+android/.idea/
+*.iml
