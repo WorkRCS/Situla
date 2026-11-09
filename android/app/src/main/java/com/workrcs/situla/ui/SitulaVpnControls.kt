@@ -120,7 +120,10 @@ fun SitulaVpnControls(context: Context, onClose: () -> Unit) {
                     val latency = savedLatencies[region]?.let { "$it ms" } ?: "—"
                     FilterChip(
                         selected = selectedRegion == region,
-                        onClick = { selectedRegion = region },
+                        onClick = {
+                            selectedRegion = region
+                            if (autoConnect) VpnProfileStore.setAutoConnectRegion(context, region)
+                        },
                         label = {
                             Text(
                                 (if (vpn.connected && vpn.region == region) "● " else "") + "$region · $latency",
