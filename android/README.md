@@ -4,7 +4,7 @@ Movie-first Android MVP built with Kotlin and Jetpack Compose. The app reads onl
 
 ## Build locally
 
-Open the `android/` folder in Android Studio with JDK 17, Android SDK platform 37, AGP 9.2.1 and Gradle 9.4.1. The GitHub Actions Android workflow also builds the debug APK.\n\n## Configure backend URL
+Open the `android/` folder in Android Studio with JDK 17, Android SDK platform 36, AGP 9.2.1 and Gradle 9.4.1. The GitHub Actions Android workflow also builds the debug APK.\n\n## Configure backend URL
 
 Create or edit `android/local.properties` (do not commit it) and add:
 
