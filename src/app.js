@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun } from './models.js';
-import { runManualCrawl } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection } from './crawler.js';
 
 const app = new Hono();
 const attempts = new Map();
@@ -240,6 +240,19 @@ app.get('/api/admin/crawl-runs', requireAdmin, async (c) => {
   } catch (error) {
     console.error('Crawl history read failed:', error.message);
     return c.json({ error: 'Unable to load crawler history.' }, 503);
+  }
+});
+
+app.get('/api/admin/tmdb-status', requireAdmin, async (c) => {
+  try {
+    const result = await checkTmdbConnection();
+    return c.json({ status: 'connected', ...result });
+  } catch (error) {
+    console.error('TMDB connectivity check failed:', error.message);
+    return c.json({
+      status: 'unavailable',
+      error: error.message || 'TMDB connectivity check failed.'
+    }, 502);
   }
 });
 
