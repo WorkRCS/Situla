@@ -157,3 +157,21 @@ img { display: block; }
 @media (orientation: landscape) and (max-height: 600px) {
   .watch-topbar { padding-top: 8px; }
 }
+
+
+.series-control {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: #171a23;
+  color: #f7f7fa;
+  padding: 10px 13px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.series-control:focus { border-color: rgba(232,182,91,.7); box-shadow: 0 0 0 3px rgba(232,182,91,.12); }
+.series-input { color-scheme: dark; }
+.series-control:disabled { opacity: .55; cursor: not-allowed; }
