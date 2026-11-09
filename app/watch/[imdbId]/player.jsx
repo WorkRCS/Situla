@@ -22,16 +22,32 @@ export default function PlayerExperience({ imdbId }) {
   useEffect(() => {
     const controller = new AbortController();
     async function loadMovie() {
+      let requestedVidlinkId = "";
       try {
-        const response = await fetch("/api/movies/" + encodeURIComponent(imdbId), {
+        requestedVidlinkId = new URLSearchParams(window.location.search).get("vidlinkId") || "";
+        const cached = JSON.parse(localStorage.getItem("situla:movie:" + imdbId) || "null");
+        if (cached && cached.imdbId === imdbId) setMovie(cached);
+      } catch {}
+
+      try {
+        const query = requestedVidlinkId ? "?vidlinkId=" + encodeURIComponent(requestedVidlinkId) : "";
+        const response = await fetch("/api/movies/" + encodeURIComponent(imdbId) + query, {
           cache: "no-store",
           signal: controller.signal
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Movie metadata is unavailable.");
-        setMovie(data.item || null);
+        if (data.item) {
+          setMovie((current) => current?.vidlinkId ? { ...data.item, ...current, vidlinkId: current.vidlinkId } : data.item);
+        } else {
+          throw new Error("Movie metadata was empty.");
+        }
       } catch (error) {
-        if (!controller.signal.aborted) setMovie({ playerError: error.message || "Unable to load this movie." });
+        if (!controller.signal.aborted) {
+          setMovie((current) => current?.vidlinkId
+            ? current
+            : { ...(current || {}), imdbId, playerError: error.message || "Unable to load this movie." });
+        }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -88,6 +104,7 @@ export default function PlayerExperience({ imdbId }) {
           mediaType: "movie",
           mediaId: imdbId,
           imdbId,
+          vidlinkId: Number(movie?.vidlinkId) || null,
           title: movie?.title || "Movie",
           posterUrl: movie?.posterUrl || null,
           watched: Math.max(0, watched),
@@ -192,7 +209,7 @@ export default function PlayerExperience({ imdbId }) {
           <div className="player-message-card">
             <div className="player-message-mark">S</div>
             <h1>{loading ? "Preparing your movie" : "Player unavailable"}</h1>
-            <p>{movie?.playerError || (loading ? "Loading verified movie details…" : "VidLink needs a matching movie ID before playback can start.")}</p>
+            <p>{movie?.playerError || (loading ? "Loading saved movie details…" : "This catalog record has no saved VidLink ID. Return to the movie catalog and open it from its card to retry with its stored provider ID.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
         </div>
