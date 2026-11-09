@@ -23,7 +23,7 @@ interface SitulaApi {
     suspend fun adminDashboard(): AdminDashboardResponse
 
     @POST("api/admin/import-ids")
-    suspend fun importIds(@Body request: ImportIdsRequest): ImportIdsResponse
+    suspend fun importIds(@Body request: ImportIdsRequest): ImportIdsEnvelope
 
     @GET("api/admin/tmdb-status")
     suspend fun tmdbStatus(): Map<String, Any>
