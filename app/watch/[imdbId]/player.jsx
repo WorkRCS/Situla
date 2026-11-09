@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { vidlinkMovieUrl } from "../../../src/player-urls.js";
+import { hindiMoviePlayerUrl, vidlinkMovieUrl } from "../../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
@@ -10,6 +10,8 @@ export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [catalogVerified, setCatalogVerified] = useState(false);
+  const [playerLanguage, setPlayerLanguage] = useState("en");
+  const [languageReady, setLanguageReady] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const router = useRouter();
   const iframeRef = useRef(null);
