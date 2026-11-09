@@ -11,7 +11,8 @@
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "test": "node --test",
-    "migrate:imdb-only": "node scripts/migrate-imdb-only.js"
+    "migrate:imdb-only": "node scripts/migrate-imdb-only.js",
+    "audit:imdb-only": "node scripts/audit-imdb-only.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
