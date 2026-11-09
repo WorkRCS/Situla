@@ -49,9 +49,9 @@ The existing poster files may still be hosted on their previous image CDN; this 
 
 Use MongoDB Compass, Atlas Data Explorer, or a controlled database script to insert/update catalog documents.
 
-Movie document minimum fields: `imdbId`, `title`, optional `posterUrl`, `releaseYear`, `voteAverage`, and `genres`.
+Movie document minimum fields: `imdbId`, `title`, and `vidlinkId` (the numeric provider mapping required by VidLink), plus optional `posterUrl`, `releaseYear`, `voteAverage`, and `genres`.
 
-TV document minimum fields: `imdbId`, `title`, optional `posterUrl`, and an embedded `seasons` array containing `seasonNumber` and `episodes`.
+TV document minimum fields: `imdbId`, `title`, `vidlinkId`, and an embedded `seasons` array containing `seasonNumber` and `episodes`. `vidlinkId` is never part of the Situla browser route; it is used only to construct the provider iframe URL.
 
 The public API is read-only for catalog data. There are no write routes or privileged admin endpoints exposed by the application.
 
