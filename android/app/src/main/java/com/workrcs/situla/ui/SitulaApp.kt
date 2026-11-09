@@ -110,9 +110,9 @@ fun SitulaApp(context: Context) {
                     userAgentString = userAgentString.replace("; wv", "")
                 }
 
-                CookieManager.getInstance().apply {
-                    setAcceptCookie(true)
-                    setAcceptThirdPartyCookies(this@apply, true)
+                CookieManager.getInstance().also { cookies ->
+                    cookies.setAcceptCookie(true)
+                    cookies.setAcceptThirdPartyCookies(this, true)
                 }
 
                 webViewClient = object : WebViewClient() {
