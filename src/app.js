@@ -146,10 +146,12 @@ const imageUrl = (path, size = 'w342') => path
   ? (process.env.TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p').replace(/\/+$/, '') + '/' + size + path
   : null;
 
-function movieDto(movie) {
+export function movieDto(movie) {
   return {
+    // Public/admin API returns movie metadata only. Playback is resolved inside
+    // the Android app from tmdbId; never return a provider URL or iframe markup.
     id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
-    originalTitle: movie.originalTitle, overview: movie.overview, playbackUrl: movie.playbackUrl || null,
+    originalTitle: movie.originalTitle, overview: movie.overview,
     posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
     releaseDate: movie.releaseDate, releaseYear: movie.releaseYear, runtime: movie.runtime,
     voteAverage: movie.voteAverage, voteCount: movie.voteCount, popularity: movie.popularity,
