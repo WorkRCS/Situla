@@ -47,14 +47,7 @@ object WireGuardVpnManager {
         withContext(Dispatchers.IO) {
             require(region in VpnProfileStore.regions) { "Select one of the four supported regions." }
             require(sourceProfile.isNotBlank()) { "Import a WireGuard .conf profile for $region first." }
-            require(
-                Regex("(?im)^AllowedIPs\\s*=.*0\\.0\\.0\\.0/0").containsMatchIn(sourceProfile) &&
-                    Regex("(?im)^AllowedIPs\\s*=.*::/0").containsMatchIn(sourceProfile)
-            ) {
-                "This profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0)."
-            }
-
-            val filteredProfile = enforceAdGuardDns(sourceProfile)
+            val filteredProfile = VpnProfileStore.prepareFullTunnelProfile(sourceProfile)
             val config = Config.parse(filteredProfile.byteInputStream(Charsets.UTF_8))
             require(config.peers.isNotEmpty()) { "The WireGuard profile has no [Peer] section." }
             require(config.peers.any { it.endpoint.isPresent }) {
@@ -150,15 +143,4 @@ object WireGuardVpnManager {
         rotationJob = null
     }
 
-    private fun enforceAdGuardDns(profile: String): String {
-        val dnsLine = "DNS = 94.140.14.14, 94.140.15.15"
-        val dnsRegex = Regex("(?im)^DNS\\s*=.*$")
-        return if (dnsRegex.containsMatchIn(profile)) {
-            dnsRegex.replace(profile, dnsLine)
-        } else {
-            val interfaceHeader = Regex("(?im)^\\s*\\[Interface]\\s*$")
-            require(interfaceHeader.containsMatchIn(profile)) { "Invalid WireGuard profile: [Interface] section is missing." }
-            interfaceHeader.replaceFirst(profile) { "${it.value}\n$dnsLine" }
-        }
-    }
 }
