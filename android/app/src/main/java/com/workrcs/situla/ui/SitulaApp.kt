@@ -118,9 +118,9 @@ fun SitulaApp(context: Context) {
                     ): Boolean {
                         val uri = request?.url ?: return true
                         if (NetworkAdBlocker.shouldBlock(uri)) return true
-                        // A player-frame click must not navigate to an unrelated ad/redirect site.
-                        // Actual media fetches are not frame navigations and remain unaffected.
-                        if (!request.isForMainFrame && request.hasGesture() && !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)) return true
+                        // Keep all player subframes and media-source navigation available.
+                        // Known ad/tracker requests are filtered above by shouldInterceptRequest.
+                        // Only block untrusted top-level navigations outside Situla/player pages.
                         if (request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)) return true
                         return when (uri.scheme?.lowercase()) {
                             "http", "https", "about", "javascript", "blob" -> false
