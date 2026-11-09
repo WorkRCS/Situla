@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Refresh
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -104,11 +105,19 @@ fun SitulaApp(context: Context) {
     }
     LaunchedEffect(Unit) { loadMovies() }
 
+    BackHandler(enabled = playingMovie != null || selectedMovie != null || tab != Tab.HOME) {
+        when {
+            playingMovie != null -> playingMovie = null
+            selectedMovie != null -> selectedMovie = null
+            tab != Tab.HOME -> tab = Tab.HOME
+        }
+    }
+
     Scaffold(
-        containerColor = Color(0xFF080B12),
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (selectedMovie == null && playingMovie == null) {
-                NavigationBar(containerColor = Color(0xFF101722)) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     Tab.entries.forEach { target ->
                         val icon = when (target) {
                             Tab.HOME -> Icons.Default.Home
@@ -127,7 +136,7 @@ fun SitulaApp(context: Context) {
             }
         }
     ) { insets ->
-        Column(Modifier.fillMaxSize().padding(insets).background(Color(0xFF080B12)).padding(horizontal = 16.dp)) {
+        Column(Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)) {
             when {
                 playingMovie != null -> MoviePlayerScreen(
                     movie = playingMovie!!,
@@ -143,7 +152,7 @@ fun SitulaApp(context: Context) {
                         BrandMark()
                         Column(Modifier.weight(1f).padding(start = 10.dp)) {
                             Text("SITULA", fontSize = 17.sp, fontWeight = FontWeight.Black, letterSpacing = 2.1.sp)
-                            Text("MOVIES · DISCOVER MORE", fontSize = 8.sp, color = Color(0xFF8D98A9), letterSpacing = 1.2.sp)
+                            Text("MOVIES · DISCOVER MORE", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.2.sp)
                         }
                         if (tab != Tab.SEARCH) IconButton(onClick = { tab = Tab.SEARCH }) { Icon(Icons.Default.Search, "Search movies") }
                     }
@@ -194,14 +203,14 @@ private fun HomeScreen(
         item {
             SectionTitle("Continue watching", if (continueWatching.isNotEmpty()) "ON THIS DEVICE" else null)
             if (continueWatching.isEmpty()) {
-                Text("Your watch progress will appear here after playback is connected.", color = Color(0xFF8D98A9), fontSize = 12.sp)
+                Text("Your watch progress will appear here after playback is connected.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(continueWatching.take(10), key = { it.tmdbId }) { item ->
                         Column(Modifier.size(width = 122.dp, height = 148.dp)) {
                             AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.weight(1f).fillMaxWidth())
                             Text(item.title, fontSize = 11.sp, maxLines = 1)
-                            Text(formatDuration(item.positionMs) + " / " + formatDuration(item.durationMs), fontSize = 9.sp, color = Color(0xFF9BA5B4))
+                            Text(formatDuration(item.positionMs) + " / " + formatDuration(item.durationMs), fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -225,7 +234,7 @@ private fun HomeScreen(
 @Composable
 private fun EmptyCatalog(loading: Boolean, error: String?, onRetry: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().height(300.dp).background(Color(0xFF111722), RoundedCornerShape(18.dp)).padding(20.dp),
+        Modifier.fillMaxWidth().height(300.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp)).padding(20.dp),
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (loading) CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) else Icon(Icons.Default.Wifi, null, modifier = Modifier.size(34.dp))
@@ -256,7 +265,7 @@ private fun SearchScreen(
         Button(onClick = onSearch, enabled = !busy && query.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
             Text(if (busy) "Searching…" else "Search")
         }
-        if (error != null) Text(error, color = Color(0xFFFF9DAE), fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
+        if (error != null) Text(error, color = MaterialTheme.colorScheme.error, fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp))
         LazyColumn(contentPadding = PaddingValues(vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(results, key = { it.tmdbId }) { movie ->
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -283,7 +292,7 @@ private fun HistoryScreen(history: List<WatchHistoryEntity>) {
                     AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.size(width = 68.dp, height = 94.dp))
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text(item.title, fontWeight = FontWeight.Bold)
-                        Text(if (item.completed) "Completed" else "Continue watching", color = Color(0xFFB8C0CC), fontSize = 11.sp)
+                        Text(if (item.completed) "Completed" else "Continue watching", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
                         Text("Position " + formatDuration(item.positionMs) + " / " + formatDuration(item.durationMs), color = Color(0xFF9BA5B4), fontSize = 10.sp)
                         Text("Watched " + formatDuration(item.watchedMs) + " in total", color = Color(0xFF9BA5B4), fontSize = 10.sp)
                     }
@@ -365,7 +374,7 @@ private fun SettingsScreen(api: SitulaApi?) {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Wifi, null, tint = MaterialTheme.colorScheme.primary); Text(" VPN regions", fontWeight = FontWeight.Bold) }
                 Text("Malaysia and Singapore are reserved in the design. Real connection and automatic failover remain disabled until four server profiles and client keys are supplied.", color = Color(0xFF9BA5B4), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
-                Text("No fake Connected status is shown.", color = Color(0xFFFFB1C0), fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp))
+                Text("No fake Connected status is shown.", color = MaterialTheme.colorScheme.error, fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp))
             }
         }
         item {
