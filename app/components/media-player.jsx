@@ -15,6 +15,8 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const screenRef = useRef(null);
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
+  const [seriesInfo, setSeriesInfo] = useState(null);
+  const [episodeOptions, setEpisodeOptions] = useState([]);
   const [fullscreen, setFullscreen] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const lastWrite = useRef(0);
@@ -26,6 +28,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (response.ok && payload.item) {
+          setSeriesInfo(payload.item);
           setTitle(payload.item.titleEnglish || payload.item.title);
           setPosterUrl(payload.item.posterUrl || null);
         }
@@ -36,18 +39,32 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     if (kind !== "tv") return;
+    const controller = new AbortController();
+    fetch("/api/tv/" + encodeURIComponent(tmdbId) + "/seasons/" + encodeURIComponent(season), {
+      cache: "no-store",
+      signal: controller.signal
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && Array.isArray(payload.item?.episodes)) setEpisodeOptions(payload.item.episodes);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [kind, tmdbId, season]);
+
+  useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
-      const entry = Array.isArray(saved) ? saved.find((item) =>
-        Number(item.tmdbId) === Number(tmdbId) &&
-        Number(item.season) === Number(season) &&
-        Number(item.episode) === Number(episode)
+      const key = kind === "tv" ? "situla:tv-progress:v1" : "situla:anime-progress:v1";
+      const saved = JSON.parse(localStorage.getItem(key) || "[]");
+      const entry = Array.isArray(saved) ? saved.find((item) => kind === "tv"
+        ? Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
+        : Number(item.malId) === Number(malId) && Number(item.episode) === Number(episode) && item.audio === (audio || "sub")
       ) : null;
       setStartAt(entry && Number.isFinite(Number(entry.watched)) ? Math.max(0, Math.floor(Number(entry.watched))) : 0);
     } catch {
       setStartAt(0);
     }
-  }, [kind, tmdbId, season, episode]);
+  }, [kind, tmdbId, malId, season, episode, audio]);
 
   useEffect(() => {
     const onVidLinkMessage = (event) => {
@@ -192,11 +209,45 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?" + playerParams.toString()
     : "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" + encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?" + playerParams.toString();
 
+  const totalEpisodes = kind === "tv"
+    ? Number(seriesInfo?.seasons?.find((item) => Number(item.seasonNumber) === Number(season))?.episodeCount || episodeOptions.length || 0)
+    : Number(seriesInfo?.episodes || 0);
+  let nextTarget = null;
+  if (kind === "tv" && Number(episode) < totalEpisodes) {
+    nextTarget = { season: Number(season), episode: Number(episode) + 1 };
+  } else if (kind === "tv") {
+    const nextSeason = [...(seriesInfo?.seasons || [])]
+      .filter((item) => Number(item.seasonNumber) > Number(season) && Number(item.episodeCount) > 0)
+      .sort((left, right) => Number(left.seasonNumber) - Number(right.seasonNumber))[0];
+    if (nextSeason) nextTarget = { season: Number(nextSeason.seasonNumber), episode: 1 };
+  } else if (Number(episode) < totalEpisodes) {
+    nextTarget = { episode: Number(episode) + 1 };
+  }
+
+  function chooseEpisode(targetEpisode, targetSeason = season) {
+    const number = Number(targetEpisode);
+    const seasonValue = Number(targetSeason);
+    if (!Number.isSafeInteger(number) || number < 1) return;
+    if (kind === "tv") {
+      if (!Number.isSafeInteger(seasonValue) || seasonValue < 0) return;
+      router.push("/watch/tv/" + encodeURIComponent(tmdbId) + "/" + seasonValue + "/" + number);
+    } else {
+      router.push("/watch/anime/" + encodeURIComponent(malId) + "/" + number + "/" + encodeURIComponent(audio || "sub"));
+    }
+  }
+
+  const visibleEpisodeChoices = kind === "tv"
+    ? episodeOptions.slice(Math.max(0, Number(episode) - 3), Math.min(episodeOptions.length, Number(episode) + 3))
+    : Array.from({ length: Math.min(7, totalEpisodes) }, (_, index) => {
+        const first = Math.max(1, Math.min(Number(episode) - 3, totalEpisodes - 6));
+        return first + index;
+      });
+
   return (
-    <main ref={screenRef} className="watch-screen" onDoubleClick={toggleFullscreen}>
+    <main ref={screenRef} className="watch-screen series-watch-screen" onDoubleClick={toggleFullscreen}>
       <iframe
         key={playerUrl}
-        className="watch-frame"
+        className="watch-frame series-watch-frame"
         src={playerUrl}
         title={title + (kind === "tv" ? " · S" + season + " E" + episode : " · Episode " + episode)}
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -204,7 +255,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock"
         referrerPolicy="no-referrer"
       />
-      <header className="watch-topbar">
+      <header className="watch-topbar series-watch-topbar">
         <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
@@ -212,6 +263,36 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         </div>
         <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>{fullscreen ? <Minimize size={19} strokeWidth={1.9} /> : <Maximize size={19} strokeWidth={1.9} />}</button>
       </header>
+      <section className="episode-dock" aria-label="Episode navigation">
+        <div className="episode-dock-heading">
+          <span>{nextTarget ? "UP NEXT" : "EPISODE LIST"}</span>
+          <strong>{kind === "tv" ? "S" + season + " · E" + episode : "Episode " + episode}</strong>
+        </div>
+        <div className="episode-dock-options">
+          {visibleEpisodeChoices.map((option) => {
+            const number = kind === "tv" ? Number(option.episodeNumber) : Number(option);
+            return (
+              <button
+                key={number}
+                type="button"
+                className={"episode-choice" + (number === Number(episode) ? " active" : "")}
+                onClick={() => chooseEpisode(number)}
+              >
+                {kind === "tv" ? "E" + number : number}
+              </button>
+            );
+          })}
+        </div>
+        {nextTarget ? (
+          <button type="button" className="episode-next" onClick={() => chooseEpisode(nextTarget.episode, nextTarget.season || season)}>
+            <span>Next episode</span>
+            <strong>{kind === "tv" ? "S" + nextTarget.season + " · E" + nextTarget.episode : "Episode " + nextTarget.episode}</strong>
+            <Play size={17} fill="currentColor" />
+          </button>
+        ) : (
+          <span className="episode-end-label">You reached the latest episode</span>
+        )}
+      </section>
     </main>
   );
 }
