@@ -437,7 +437,7 @@ export default function SitulaApp() {
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
           const selected = categoryShelves.find((item) => item.name === genre);
-          if (selected?.genreIds?.length) params.set("genreIds", selected.genreIds.join(","));
+          if (selected?.genre) params.set("genre", selected.genre);
         }
         const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store" });
         const payload = await response.json().catch(() => ({}));
