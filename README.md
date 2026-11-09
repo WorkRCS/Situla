@@ -44,9 +44,9 @@ Never commit .env. The real credentials are not in this repository.
 - Anime playback uses /watch/anime/{MAL_ID}/{episode}/{subOrDub} and the VidLink Anime endpoint, with fallback enabled.
 - Movie, TV and Anime playback progress is saved locally as watch history with HH:MM:SS timing; users can remove individual entries or clear all local history from Settings.
 - TV episode progress is saved locally and resumed through VidLink startAt.
-- Fullscreen playback requests landscape orientation where the browser supports the Screen Orientation API.
+- Playback uses the provider's native fullscreen controls; Android WebView handles fullscreen orientation through WebChromeClient.
 - The Android package opens the deployed website URL directly inside a native WebView. Fullscreen player requests landscape orientation through Android's WebChromeClient.
-- Player iframes are sandboxed without popup or top-level navigation permissions. Android WebView also blocks requests to a curated list of known advertising/tracker domains and rejects untrusted top-level redirects. This is best-effort filtering, not a guarantee against every ad domain inside a cross-origin provider.
+- VidLink player frames are left unsandboxed for provider compatibility. Situla does not grant the iframe Picture-in-Picture permission, removes its own duplicate fullscreen and external-player controls, and enables VidLink's built-in Next Episode control for TV episodes.
 - Existing admin dashboard remains available at /index.html.
 
 ## Media IDs and player compatibility
@@ -117,8 +117,8 @@ Set the Vercel project framework to Next.js, use the repository root as the Root
 - Admin sessions use signed, HttpOnly, SameSite cookies and same-origin checks.
 - MongoDB enforces unique IDs separately in each media collection.
 - Do not place credentials in browser JavaScript.
-- VidLink's documented iframe examples do not use the HTML `sandbox` attribute. Situla therefore leaves the cross-origin VidLink frame unsandboxed so the provider player can initialize; adding sandbox restrictions can stop its verification/player flow.
-- The Android WebView blocks known ad/tracker request domains and rejects new popup windows. A normal desktop/mobile browser cannot reliably inspect or cancel arbitrary navigation inside a cross-origin VidLink frame; do not describe this best-effort list as complete ad removal.
+- VidLink's documented iframe examples do not use the HTML `sandbox` attribute. Situla therefore leaves the cross-origin VidLink frame unsandboxed so the provider player can initialize; adding sandbox restrictions can stop its verification/player flow. The iframe is not granted the `picture-in-picture` capability.
+- The Android WebView blocks known ad/tracker request domains, rejects popup windows, blocks user-gesture subframe navigation to non-VidLink domains, and enables Android Safe Browsing. Normal desktop/mobile browsers cannot reliably inspect or cancel arbitrary navigation inside a cross-origin VidLink iframe, so browser-only ad blocking remains best-effort. VidLink's documented customization parameters do not include a captions/CC-off option; Situla cannot remove a control from the provider's cross-origin player UI.
 - Playback streams are fetched directly by the user's browser from VidLink and its media providers. The Situla server API does not proxy video streams. A server-side TMDB/Jikan API proxy would not bypass ISP restrictions on the browser's direct VidLink/media requests.
 - Do not deploy a public or automatically rotating VPN/proxy exit service from the website. Any outbound proxy must be a private, operator-managed service with explicit hosting, privacy, access-control, capacity, and provider-policy review.
 - Use third-party player embeds only where their terms and content rights permit.
