@@ -197,7 +197,8 @@ fun SitulaApp(context: Context) {
                         request: android.webkit.WebResourceRequest?
                     ): Boolean {
                         val uri = request?.url ?: return true
-                        if (NetworkAdBlocker.shouldBlock(uri, view?.url, "document", true)) return true
+                        val requestType = if (request.isForMainFrame) "document" else "subdocument"
+                        if (NetworkAdBlocker.shouldBlock(uri, view?.url, requestType, request.isForMainFrame)) return true
                         // Keep all player subframes and media-source navigation available.
                         // Known ad/tracker requests are filtered above by shouldInterceptRequest.
                         // Only block untrusted top-level navigations outside Situla/player pages.
