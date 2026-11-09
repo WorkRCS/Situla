@@ -1,0 +1,14 @@
+# Curated MyAnimeList TV/ONA series IDs used by the Situla admin import form.
+# Jikan validates type, score, vote count, artwork, episodes and blocked genres.
+5114
+16498
+1535
+11061
+9253
+38000
+40748
+30276
+32182
+37521
+52991
+44511

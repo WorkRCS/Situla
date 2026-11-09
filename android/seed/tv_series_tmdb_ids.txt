@@ -1,0 +1,22 @@
+# Curated TV series TMDB IDs used by the Situla admin import form.
+# English-language, non-adult, artwork/date, quality and genre filters still apply.
+1396
+1399
+87108
+70523
+66732
+76479
+100088
+95396
+94605
+63639
+19885
+82856
+83867
+93740
+125988
+95557
+84958
+61889
+62560
+42009
