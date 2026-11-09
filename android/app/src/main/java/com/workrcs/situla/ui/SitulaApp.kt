@@ -1,6 +1,8 @@
 package com.workrcs.situla.ui
 
 import android.content.Context
+import android.net.VpnService
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,8 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Refresh
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -43,6 +47,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.workrcs.situla.security.AdblockFilterRepository
 import com.workrcs.situla.vpn.WireGuardVpnManager
+import com.workrcs.situla.vpn.VpnProfileStore
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,6 +103,18 @@ fun SitulaApp(context: Context) {
     val history by historyDao.observeRecent().collectAsState(initial = emptyList())
     val continueWatching by historyDao.observeContinueWatching().collectAsState(initial = emptyList())
 
+    val vpnAutoConnectPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val region = VpnProfileStore.autoConnectRegion(context)
+            val profile = region?.let { VpnProfileStore.load(context, it) }
+            if (region != null && profile != null) {
+                scope.launch { runCatching { WireGuardVpnManager.connect(context, region, profile) } }
+            }
+        }
+    }
+
     suspend fun loadMovies() {
         if (api == null) {
             error = "Set situlaApiBaseUrl in android/local.properties to your deployed backend URL."
@@ -112,6 +129,17 @@ fun SitulaApp(context: Context) {
     LaunchedEffect(Unit) {
         launch { loadMovies() }
         launch { AdblockFilterRepository.refreshAndInitialize(context.applicationContext) }
+
+        val autoRegion = VpnProfileStore.autoConnectRegion(context)
+        val autoProfile = autoRegion?.let { VpnProfileStore.load(context, it) }
+        if (autoRegion != null && autoProfile != null) {
+            val permissionIntent = VpnService.prepare(context)
+            if (permissionIntent == null) {
+                launch { runCatching { WireGuardVpnManager.connect(context, autoRegion, autoProfile) } }
+            } else {
+                vpnAutoConnectPermission.launch(permissionIntent)
+            }
+        }
     }
 
     DisposableEffect(context) {
