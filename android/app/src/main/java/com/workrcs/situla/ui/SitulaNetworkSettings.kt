@@ -34,7 +34,6 @@ import com.workrcs.situla.security.AdblockFilterRepository
 import com.workrcs.situla.security.BraveAdblock
 import com.workrcs.situla.vpn.VpnProfileStore
 import com.workrcs.situla.vpn.WireGuardVpnManager
-import com.wireguard.config.Config
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,6 +42,7 @@ import kotlinx.coroutines.withContext
 fun SitulaVpnControls(context: Context) {
     val vpn by WireGuardVpnManager.state.collectAsState()
     val scope = rememberCoroutineScope()
+    val knownLatencies = vpn.regionLatencies.ifEmpty { VpnProfileStore.regionLatencies(context) }
     var selectedRegion by remember { mutableStateOf(VpnProfileStore.autoConnectRegion(context) ?: VpnProfileStore.regions.first()) }
     var autoConnectRegion by remember(selectedRegion) {
         mutableStateOf(VpnProfileStore.autoConnectRegion(context) == selectedRegion)
@@ -102,10 +102,10 @@ fun SitulaVpnControls(context: Context) {
             "Import one provider-issued .conf file for each region. Profiles and private keys are stored in this app's private, non-backed-up storage.",
             color = Color(0xFF9BA5B4), fontSize = 10.sp
         )
-        VpnProfileStore.regions.chunked(3).forEach { regionRow ->
+        VpnProfileStore.regions.chunked(2).forEach { regionRow ->
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 regionRow.forEach { region ->
-                    val measuredLatency = vpn.regionLatencies[region]?.let { "$it ms" } ?: "— ms"
+                    val measuredLatency = knownLatencies[region]?.let { "$it ms" } ?: "— ms"
                     FilterChip(
                         selected = selectedRegion == region,
                         onClick = { selectedRegion = region },
