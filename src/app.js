@@ -13,6 +13,59 @@ const app = new Hono();
 const attempts = new Map();
 const COOKIE = 'situla_admin';
 
+// Curated first-run titles. These are real TMDB metadata records, not fake playback assets.
+const STARTER_IMDB_IDS = [
+  'tt1375666', 'tt0816692', 'tt0482571', 'tt0133093', 'tt1856101',
+  'tt2543164', 'tt1160419', 'tt1631867', 'tt0945513', 'tt1130884',
+  'tt8946378', 'tt0167404', 'tt6644200', 'tt1392190', 'tt6710474',
+  'tt3659388', 'tt1454468', 'tt0470752', 'tt0107290', 'tt0120737'
+];
+let starterCatalogPromise;
+
+async function ensureStarterCatalog() {
+  const apiKey = (process.env.TMDB_API_KEY || '').trim();
+  if (!apiKey || apiKey.startsWith('replace_')) return 0;
+
+  const approvedCount = await Movie.countDocuments({
+    moderationStatus: 'approved',
+    adult: false,
+    originalLanguage: 'en'
+  });
+  if (approvedCount > 0) return approvedCount;
+
+  if (!starterCatalogPromise) {
+    starterCatalogPromise = (async () => {
+      await importMovieIds({ source: 'imdb', ids: STARTER_IMDB_IDS });
+      const candidates = await Movie.find({
+        imdbId: { $in: STARTER_IMDB_IDS },
+        adult: false,
+        originalLanguage: 'en',
+        moderationStatus: { $ne: 'rejected' }
+      }).select('tmdbId').lean();
+
+      const ids = candidates.map((movie) => movie.tmdbId);
+      if (ids.length) {
+        await Movie.updateMany(
+          { tmdbId: { $in: ids }, moderationStatus: { $ne: 'rejected' } },
+          {
+            $set: {
+              moderationStatus: 'approved',
+              manualReviewNote: 'Curated Situla starter catalog, automatically seeded from TMDB metadata.'
+            }
+          }
+        );
+      }
+      console.info('Situla starter catalog seeded:', ids.length, 'titles');
+      return ids.length;
+    })().catch((error) => {
+      console.error('Situla starter catalog seed failed:', error.message);
+      return 0;
+    });
+  }
+
+  return starterCatalogPromise;
+}
+
 app.use('*', logger());
 app.use('/api/*', bodyLimit({ maxSize: 64 * 1024 }));
 app.use('*', async (c, next) => {
@@ -286,6 +339,9 @@ app.post('/api/admin/crawl', requireSameOrigin, requireAdmin, async (c) => {
 app.get('/api/movies', async (c) => {
   try {
     await connectDatabase();
+    // On a brand-new/empty public catalog, seed a small curated set automatically.
+    // A seed failure must not take down the read-only public catalog endpoint.
+    await ensureStarterCatalog();
     const requestedPage = Number(c.req.query('page') || 1);
     const requestedLimit = Number(c.req.query('limit') || 20);
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
