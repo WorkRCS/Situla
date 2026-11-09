@@ -1,6 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
-const state = { authenticated: false, view: 'overview', page: 1, pages: 1, status: 'pending', query: '' };
-const viewTitles = { overview: 'Overview', catalog: 'Movie catalog', crawler: 'Movie discovery', history: 'Crawl history' };
+const state = { authenticated: false, view: 'overview', page: 1, pages: 1, status: 'pending', query: '', tvStatus: 'pending', animeStatus: 'pending' };
+const viewTitles = { overview: 'Overview', catalog: 'Movie catalog', tv: 'TV series', anime: 'Anime series', crawler: 'Movie discovery', history: 'Crawl history' };
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -54,6 +54,8 @@ function openView(name) {
   document.querySelectorAll('.nav-item').forEach((node) => node.classList.toggle('active', node.dataset.view === name));
   $('#crumb-current').textContent = viewTitles[name];
   if (name === 'catalog') loadMovies();
+  if (name === 'tv') loadTvSeries();
+  if (name === 'anime') loadAnimeSeries();
   if (name === 'history') loadHistory();
   if (name === 'overview') loadDashboard();
   $('#sidebar').classList.remove('sidebar-open');
@@ -139,6 +141,88 @@ async function reviewMovie(id, moderationStatus) {
     toast('Movie marked as ' + moderationStatus + '.');
     loadMovies();
     loadDashboard();
+  } catch (error) { toast(error.message); }
+}
+
+
+function mediaActions(item, kind) {
+  const route = kind === 'tv' ? 'tv-series' : 'anime-series';
+  const id = item.id;
+  const buttons = item.moderationStatus === 'pending'
+    ? '<button class="row-action accept" data-media-review="approved" data-kind="' + kind + '" data-id="' + escapeHtml(id) + '" aria-label="Approve"><i class="bi bi-check-lg"></i></button><button class="row-action decline" data-media-review="rejected" data-kind="' + kind + '" data-id="' + escapeHtml(id) + '" aria-label="Reject"><i class="bi bi-x-lg"></i></button>'
+    : '<button class="row-action" data-media-review="pending" data-kind="' + kind + '" data-id="' + escapeHtml(id) + '" aria-label="Return to pending"><i class="bi bi-arrow-counterclockwise"></i></button>';
+  return '<div class="row-actions" data-route="' + route + '">' + buttons + '</div>';
+}
+
+function mediaMarkup(item, kind) {
+  const title = kind === 'tv' ? item.title : (item.titleEnglish || item.title);
+  const image = item.posterUrl
+    ? '<img class="poster" loading="lazy" src="' + escapeHtml(item.posterUrl) + '" alt="">'
+    : '<div class="poster poster-empty"><i class="bi bi-film"></i></div>';
+  const idText = kind === 'tv' ? 'TMDB TV ' + item.tmdbId : 'MAL ' + item.malId;
+  const date = kind === 'tv' ? (item.firstAirDate || '—') : (item.releaseYear || '—');
+  const rating = kind === 'tv' ? Number(item.voteAverage || 0) : Number(item.score || 0);
+  const count = kind === 'tv' ? (Number(item.numberOfSeasons || 0) + ' seasons') : (Number(item.episodes || 0) + ' episodes');
+  return '<tr><td><div class="movie-cell">' + image + '<div><b>' + escapeHtml(title) +
+    '</b><small>' + escapeHtml(idText) + (item.genres?.length ? ' · ' + escapeHtml(item.genres.slice(0, 2).join(', ')) : '') +
+    '</small></div></div></td><td>' + escapeHtml(date) + '</td><td><span class="rating"><i class="bi bi-star-fill"></i> ' +
+    rating.toFixed(1) + '</span></td><td>' + escapeHtml(count) + '</td><td>' + statusPill(item.moderationStatus) +
+    '</td><td><div class="row-actions">' + mediaActions(item, kind) + '</div></td></tr>';
+}
+
+async function loadMediaCatalog(kind) {
+  const isTv = kind === 'tv';
+  const status = isTv ? state.tvStatus : state.animeStatus;
+  const endpoint = isTv ? '/api/admin/tv-series' : '/api/admin/anime-series';
+  const rows = isTv ? $('#tv-rows') : $('#anime-rows');
+  rows.innerHTML = '<tr><td colspan="6"><div class="loading">Loading ' + (isTv ? 'TV series' : 'anime') + '…</div></td></tr>';
+  try {
+    const data = await api(endpoint + '?page=1&limit=50&status=' + encodeURIComponent(status));
+    rows.innerHTML = data.items.length
+      ? data.items.map((item) => mediaMarkup(item, kind)).join('')
+      : '<tr><td colspan="6"><div class="empty-state">No records found for this filter.</div></td></tr>';
+  } catch (error) {
+    rows.innerHTML = '<tr><td colspan="6"><div class="empty-state">' + escapeHtml(error.message) + '</div></td></tr>';
+  }
+}
+
+function loadTvSeries() { return loadMediaCatalog('tv'); }
+function loadAnimeSeries() { return loadMediaCatalog('anime'); }
+
+async function importSeries(kind) {
+  const isTv = kind === 'tv';
+  const field = isTv ? $('#tv-import-ids') : $('#anime-import-ids');
+  const message = isTv ? $('#tv-import-message') : $('#anime-import-message');
+  const button = isTv ? $('#tv-import-btn') : $('#anime-import-btn');
+  const ids = field.value.split(/[,\s]+/).map((value) => value.trim()).filter(Boolean);
+  if (!ids.length) { message.classList.remove('d-none'); message.classList.add('error'); message.textContent = 'Enter at least one ID.'; return; }
+  button.disabled = true;
+  message.classList.remove('d-none', 'error');
+  message.textContent = 'Resolving IDs and fetching series metadata…';
+  try {
+    const endpoint = isTv ? '/api/admin/import-tv-series' : '/api/admin/import-anime-series';
+    const response = await api(endpoint, { method: 'POST', body: JSON.stringify({ ids }) });
+    const result = response.result;
+    message.textContent = result.imported + ' new · ' + result.updated + ' updated · ' + result.skipped + ' skipped. New records need review.';
+    if (isTv) { state.tvStatus = 'pending'; $('#tv-status-filter').value = 'pending'; loadTvSeries(); }
+    else { state.animeStatus = 'pending'; $('#anime-status-filter').value = 'pending'; loadAnimeSeries(); }
+    loadDashboard();
+  } catch (error) {
+    message.classList.add('error');
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function reviewSeries(kind, id, moderationStatus) {
+  const route = kind === 'tv' ? 'tv-series' : 'anime-series';
+  try {
+    await api('/api/admin/' + route + '/' + encodeURIComponent(id) + '/review', {
+      method: 'PATCH', body: JSON.stringify({ moderationStatus })
+    });
+    toast((kind === 'tv' ? 'TV series' : 'Anime') + ' marked as ' + moderationStatus + '.');
+    if (kind === 'tv') loadTvSeries(); else loadAnimeSeries();
   } catch (error) { toast(error.message); }
 }
 
@@ -281,6 +365,18 @@ $('#prev-page').addEventListener('click', () => { state.page = Math.max(1, state
 $('#next-page').addEventListener('click', () => { state.page = Math.min(state.pages, state.page + 1); loadMovies(); });
 $('#refresh-catalog').addEventListener('click', loadMovies);
 $('#refresh-history').addEventListener('click', loadHistory);
+$('#tv-import-form').addEventListener('submit', (event) => { event.preventDefault(); importSeries('tv'); });
+$('#anime-import-form').addEventListener('submit', (event) => { event.preventDefault(); importSeries('anime'); });
+$('#tv-status-filter').addEventListener('change', (event) => { state.tvStatus = event.target.value; loadTvSeries(); });
+$('#anime-status-filter').addEventListener('change', (event) => { state.animeStatus = event.target.value; loadAnimeSeries(); });
+$('#tv-rows').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-media-review]');
+  if (button) reviewSeries('tv', button.dataset.id, button.dataset.mediaReview);
+});
+$('#anime-rows').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-media-review]');
+  if (button) reviewSeries('anime', button.dataset.id, button.dataset.mediaReview);
+});
 
 document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.view)));
 document.querySelectorAll('[data-open-view]').forEach((button) => button.addEventListener('click', () => openView(button.dataset.openView)));
