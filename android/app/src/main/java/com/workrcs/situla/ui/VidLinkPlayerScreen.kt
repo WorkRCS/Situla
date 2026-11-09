@@ -443,7 +443,10 @@ fun VidLinkPlayerScreen(
                         settings.allowContentAccess = false
                         settings.allowFileAccessFromFileURLs = false
                         settings.allowUniversalAccessFromFileURLs = false
-                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                        // This WebView only hosts the third-party streaming embed. Compatibility
+                        // mode allows browser-like mixed-content handling for legacy provider
+                        // stream redirects without enabling unrestricted HTTP content everywhere.
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                         settings.safeBrowsingEnabled = true
                         settings.setGeolocationEnabled(false)
                         // VidLink preloads its player shell/poster before Play. The Brave
@@ -574,36 +577,31 @@ fun VidLinkPlayerScreen(
 
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
-                                if (!uri.scheme.equals("https", ignoreCase = true)) return true
+                                val scheme = uri.scheme?.lowercase().orEmpty()
 
-                                // Keep top-level navigation inside Situla. Before Play, let the
-                                // provider iframe bootstrap normally; after Play, filter subframe
-                                // document navigations as well.
-                                if (!request.isForMainFrame && !braveFilterActive.get()) return false
+                                // VidLink can redirect its embedded player to HTTP or HTTPS
+                                // provider pages. Keep those navigations inside the iframe.
+                                // Only block non-web schemes and top-level navigation away
+                                // from Situla; do not block provider subframes.
+                                if (scheme != "https" && scheme != "http") return true
+                                if (!request.isForMainFrame) return false
 
-                                if (braveFilterActive.get()) {
-                                    val source = view?.url ?: "https://situla.vercel.app/"
-                                    val type = if (request.isForMainFrame) "document" else "subdocument"
-                                    if (BraveAdblock.shouldBlock(uri.toString(), source, type)) {
-                                        reportPlayerStatus("blocked_by_brave_navigation", uri.toString())
-                                        return true
-                                    }
-                                }
-                                if (request.isForMainFrame &&
-                                    !uri.host.equals("situla.vercel.app", ignoreCase = true)
-                                ) return true
-                                return false
+                                // The top-level WebView is Situla's local HTML iframe shell.
+                                // Any attempted top-level external navigation remains blocked.
+                                return !uri.host.equals("situla.vercel.app", ignoreCase = true)
                             }
 
                             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                                 val requestedUri = request?.url ?: return null
-                                if (!requestedUri.scheme.equals("https", ignoreCase = true)) {
-                                    return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
-                                }
+                                val scheme = requestedUri.scheme?.lowercase().orEmpty()
 
-                                // Before Play, allow the iframe bootstrap and poster normally.
-                                // After Play, inspect all HTTPS resources, including VidLink-hosted
-                                // ad paths and third-party player/media requests.
+                                // WebView calls this callback for non-network schemes too.
+                                // Let Chromium handle data/blob/local resources itself.
+                                if (scheme != "https" && scheme != "http") return null
+
+                                // Before any optional filtering, pass provider traffic through.
+                                // VidLink's source selection and media manifests can use generic
+                                // fetch/XHR endpoints or HTTP redirects, not only .m3u8/.mp4 URLs.
                                 if (!braveFilterActive.get()) return null
 
                                 val address = requestedUri.toString()
