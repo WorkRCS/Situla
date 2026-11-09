@@ -48,5 +48,6 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.5")
     kapt("androidx.room:room-compiler:2.8.5")
     implementation("androidx.media3:media3-exoplayer:1.9.0")
+    implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
     implementation("androidx.media3:media3-ui:1.9.0")
 }
