@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Movie, CrawlRun, TvSeries, TvSeason, AnimeSeries } from './models.js';
+import { Movie, TvSeries, AnimeSeries } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
@@ -27,8 +27,14 @@ export async function connectDatabase() {
   }
 
   if (!indexesPromise) {
-    indexesPromise = Promise.all([Movie.createIndexes(), CrawlRun.createIndexes(), TvSeries.createIndexes(), TvSeason.createIndexes(), AnimeSeries.createIndexes()])
-      .catch((error) => { indexesPromise = undefined; throw error; });
+    indexesPromise = Promise.all([
+      Movie.createIndexes(),
+      TvSeries.createIndexes(),
+      AnimeSeries.createIndexes()
+    ]).catch((error) => {
+      indexesPromise = undefined;
+      throw error;
+    });
   }
   await indexesPromise;
   return mongoose.connection;
