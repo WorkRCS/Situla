@@ -9,7 +9,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
   const router = useRouter();
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
-  const [vidlinkId, setVidlinkId] = useState(null);
+  const [playerAvailable, setPlayerAvailable] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef(null);
@@ -24,7 +24,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
         if (!response.ok || !payload.item) throw new Error(payload.error || "Series metadata is unavailable.");
         setTitle(payload.item.titleEnglish || payload.item.title);
         setPosterUrl(payload.item.posterUrl || null);
-        setVidlinkId(Number(payload.item.vidlinkId) > 0 ? Number(payload.item.vidlinkId) : null);
+        setPlayerAvailable(kind !== "tv" || Boolean(payload.item.playerAvailable));
       })
       .catch(() => {})
       .finally(() => {
@@ -59,7 +59,6 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
       let durationValue;
       if (kind === "tv") {
         if (String(data.mediaType || "").toLowerCase() !== "tv") return;
-        if (Number(data.mtmdbId) !== Number(vidlinkId)) return;
         if (Number(data.season) !== Number(season) || Number(data.episode) !== Number(episode)) return;
         eventName = String(data.event || "");
         watchedValue = Number(data.currentTime);
@@ -139,25 +138,16 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
     };
     window.addEventListener("message", onPlayerMessage);
     return () => window.removeEventListener("message", onPlayerMessage);
-  }, [kind, imdbId, malId, season, episode, audio, title, posterUrl, vidlinkId]);
+  }, [kind, imdbId, malId, season, episode, audio, title, posterUrl]);
 
   const playerUrl = (() => {
     if (kind === "tv") {
-      if (!Number.isSafeInteger(Number(vidlinkId)) || Number(vidlinkId) <= 0) return null;
-      const params = new URLSearchParams({
-        primaryColor: "e8b65b",
-        secondaryColor: "171a23",
-        iconColor: "ffffff",
-        icons: "default",
-        player: "default",
-        title: "false",
-        poster: "true",
-        autoplay: "false",
-        nextbutton: "true"
-      });
+      if (!playerAvailable) return null;
+      const params = new URLSearchParams();
       if (startAt > 0) params.set("startAt", String(startAt));
-      return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(vidlinkId) + "/" +
-        encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?" + params.toString();
+      const query = params.toString();
+      return "/api/player/tv/" + encodeURIComponent(imdbId) + "/" +
+        encodeURIComponent(season) + "/" + encodeURIComponent(episode) + (query ? "?" + query : "");
     }
     const params = new URLSearchParams({
       primaryColor: "e8b65b",
