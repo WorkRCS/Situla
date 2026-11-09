@@ -5,13 +5,14 @@ import { hindiMoviePlayerUrl, vidlinkMovieUrl } from '../src/player-urls.js';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('movie, TV and anime player iframes are not sandboxed', async () => {
+test('Hindi movie iframe blocks popups and top-level redirects while retaining playback scripts', async () => {
   const moviePlayer = await read('../app/watch/[imdbId]/player.jsx');
   const seriesPlayer = await read('../app/components/media-player.jsx');
 
   assert.match(moviePlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
+  assert.match(moviePlayer, /sandbox=\{playerLanguage === "hi" \? "allow-scripts allow-same-origin allow-forms allow-presentation" : undefined\}/);
+  assert.doesNotMatch(moviePlayer, /allow-popups|allow-top-navigation/i);
   assert.match(seriesPlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
-  assert.doesNotMatch(moviePlayer, /\bsandbox\s*=/i);
   assert.doesNotMatch(seriesPlayer, /\bsandbox\s*=/i);
 });
 
@@ -90,5 +91,7 @@ test('Android app retains popup rejection and the existing targeted request filt
   const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
   assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri)'));
   assert.ok(wrapper.includes('): Boolean = false'));
+  assert.ok(wrapper.includes('javaScriptCanOpenWindowsAutomatically = false'));
+  assert.ok(wrapper.includes('setSupportMultipleWindows(false)'));
   assert.ok(blocker.includes('"doubleclick.net"'));
 });
