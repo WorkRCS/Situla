@@ -23,5 +23,7 @@ jobs:
           node --check index.js
           node --check server.js
           find src public test -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Build the Next.js web app
+        run: npm run build
       - name: Run tests
         run: npm test
