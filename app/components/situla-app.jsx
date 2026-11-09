@@ -625,7 +625,13 @@ export default function SitulaApp() {
             {recentMovies.length > 0 && (
               <MovieShelf title="Recently opened" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             )}
-            <MovieShelf title={genre === "All" ? "Picked for you" : genre + " movies"} eyebrow="RANDOMIZED DISCOVERY" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+            <MovieShelf title={genre === "All" ? "Popular on Situla" : genre + " movies"} eyebrow="CURATED FOR YOU" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+            {genre === "All" && allGenres.slice(1, 5).map((category) => {
+              const categoryMovies = movies.filter((movie) => (movie.genres || []).includes(category));
+              return categoryMovies.length
+                ? <MovieShelf key={category} title={category} eyebrow="EXPLORE BY CATEGORY" movies={categoryMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+                : null;
+            })}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <ArrowRight size={16} /></button></div>}
