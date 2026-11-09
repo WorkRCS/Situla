@@ -197,6 +197,11 @@ fun VidLinkPlayerScreen(
                 "Situla protection could not initialize. The player is blocked until the request filter is ready.",
                 color = Color.White
             )
+            Text(
+                BraveAdblock.lastError ?: "Filter lists could not be loaded or the native engine returned false.",
+                color = Color(0xFFFFB1C0),
+                modifier = Modifier.padding(top = 8.dp)
+            )
             if (!embedded) {
                 Button(onClick = onBack, modifier = Modifier.padding(top = 14.dp)) {
                     Text("Back to movie details")
