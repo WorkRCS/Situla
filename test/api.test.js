@@ -26,3 +26,12 @@ test('health route reports missing server configuration without attempting a dat
   assert.equal(body.status, 'needs_configuration');
   assert.deepEqual(new Set(body.missing), new Set(names));
 });
+
+test('IMDb import route rejects requests without an admin session', async () => {
+  const response = await app.request('/api/admin/import-ids', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source: 'imdb', ids: ['tt1375666'] })
+  });
+  assert.equal(response.status, 401);
+});
