@@ -17,7 +17,6 @@ import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,18 +68,6 @@ fun SitulaApp(context: Context) {
             fullScreenView != null -> exitFullScreen()
             webView?.canGoBack() == true -> webView?.goBack()
             else -> activity?.finish()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            exitFullScreen()
-            webView?.let { view ->
-                view.stopLoading()
-                view.webChromeClient = null
-                view.destroy()
-            }
-            webView = null
         }
     }
 
