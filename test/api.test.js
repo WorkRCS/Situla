@@ -14,6 +14,7 @@ test('series admin routes are protected by the same admin session', async () => 
   const requests = [
     ['/api/admin/import-tv-series', 'POST'],
     ['/api/admin/import-anime-series', 'POST'],
+    ['/api/admin/seed-top-movies', 'POST'],
     ['/api/admin/tv-series', 'GET'],
     ['/api/admin/anime-series', 'GET']
   ];
