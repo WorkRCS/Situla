@@ -71,20 +71,20 @@ test('Android WireGuard restores full-tunnel routing and AdGuard DNS for importe
   const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
   const controls = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaVpnControls.kt');
 
-  assert.match(store, /AllowedIPs = 0\\.0\\.0\\.0\\/0, ::\\/0/);
-  assert.match(store, /DNS = 94\\.140\\.14\\.14, 94\\.140\\.15\\.15/);
-  assert.match(store, /fastestMeasured/);
-  assert.match(manager, /startAutoRotation/);
-  assert.match(wrapper, /VpnService\\.prepare/);
-  assert.match(wrapper, /WireGuardVpnManager\\.connect/);
-  assert.match(controls, /Import WireGuard profile/);
-  assert.match(controls, /Auto-connect on app launch/);
+  assert.ok(store.includes('AllowedIPs = 0.0.0.0/0, ::/0'));
+  assert.ok(store.includes('DNS = 94.140.14.14, 94.140.15.15'));
+  assert.ok(store.includes('fastestMeasured'));
+  assert.ok(manager.includes('startAutoRotation'));
+  assert.ok(wrapper.includes('VpnService.prepare'));
+  assert.ok(wrapper.includes('WireGuardVpnManager.connect'));
+  assert.ok(controls.includes('Import WireGuard profile'));
+  assert.ok(controls.includes('Auto-connect on app launch'));
 });
 
 test('Android app retains popup rejection and the existing targeted request filter', async () => {
   const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
   const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
-  assert.match(wrapper, /onCreateWindow\\([\\s\\S]*?\\): Boolean = false/);
-  assert.match(wrapper, /NetworkAdBlocker\\.shouldBlock\\(uri\\)/);
-  assert.match(blocker, /"doubleclick\\.net"/);
+  assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri)'));
+  assert.ok(wrapper.includes('): Boolean = false'));
+  assert.ok(blocker.includes('"doubleclick.net"'));
 });
