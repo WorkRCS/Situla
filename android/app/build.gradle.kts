@@ -74,7 +74,6 @@ val nativeAbis = (findProperty("situlaAndroidAbis") as String?)
     ?.filter { it.isNotEmpty() }
     ?: listOf("x86_64") // Fast default for the standard Windows Android Emulator.
 
-val isWindowsHost = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
 val cargoHomeDirectory = File(
     System.getenv("CARGO_HOME") ?: File(System.getProperty("user.home"), ".cargo").absolutePath
 )
@@ -98,14 +97,21 @@ val configuredNdkDirectory = sequenceOf(
 
 fun runNativeSetupCommand(
     command: List<String>,
-    extraEnvironment: Map<String, String>
+    extraEnvironment: Map<String, String>,
+    showOutput: Boolean = false
 ): Pair<Int, String> {
     val process = ProcessBuilder(command)
         .redirectErrorStream(true)
         .apply { environment().putAll(extraEnvironment) }
         .start()
-    val output = process.inputStream.bufferedReader().use { it.readText() }
-    return process.waitFor() to output
+    val output = StringBuilder()
+    process.inputStream.bufferedReader().useLines { lines ->
+        lines.forEach { line ->
+            output.appendLine(line)
+            if (showOutput) println(line)
+        }
+    }
+    return process.waitFor() to output.toString()
 }
 
 val nativeRustTargets = mapOf(
@@ -152,7 +158,8 @@ val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
             logger.lifecycle("Situla: cargo-ndk is missing from this Gradle environment; installing it automatically.")
             val install = runNativeSetupCommand(
                 listOf("cargo", "install", "cargo-ndk", "--locked"),
-                nativeEnvironment
+                nativeEnvironment,
+                showOutput = true
             )
             if (install.first != 0) {
                 throw GradleException(
@@ -179,7 +186,8 @@ val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
             logger.lifecycle("Situla: installing missing Rust Android targets: ${missingTargets.joinToString()}")
             val targetInstall = runNativeSetupCommand(
                 listOf("rustup", "target", "add") + missingTargets,
-                nativeEnvironment
+                nativeEnvironment,
+                showOutput = true
             )
             if (targetInstall.first != 0) {
                 throw GradleException(
