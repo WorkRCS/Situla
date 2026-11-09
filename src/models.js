@@ -88,7 +88,6 @@ const tvSeriesSchema = new mongoose.Schema({
   manualReviewNote: { type: String, default: '' },
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
-tvSeriesSchema.index({ tmdbId: 1 }, { unique: true });
 tvSeriesSchema.index({ moderationStatus: 1, popularity: -1, firstAirDate: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
@@ -146,7 +145,6 @@ const animeSeriesSchema = new mongoose.Schema({
   manualReviewNote: { type: String, default: '' },
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
-animeSeriesSchema.index({ malId: 1 }, { unique: true });
 animeSeriesSchema.index({ moderationStatus: 1, popularity: 1, score: -1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
