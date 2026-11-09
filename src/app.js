@@ -161,7 +161,7 @@ app.use('*', async (c, next) => {
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://image.tmdb.org; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://image.tmdb.org https://cdn.myanimelist.net; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
 });
 app.use('/api/*', async (c, next) => { c.header('Cache-Control', 'no-store'); await next(); });
 
