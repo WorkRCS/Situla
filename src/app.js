@@ -10,11 +10,12 @@ const IMDB_ID = /^tt\d{5,12}$/i;
 app.use('*', logger());
 app.use('*', async (c, next) => {
   await next();
+  const isPlayerRedirect = c.req.path.startsWith('/api/player/');
   c.header('X-Content-Type-Options', 'nosniff');
-  c.header('X-Frame-Options', 'DENY');
+  c.header('X-Frame-Options', isPlayerRedirect ? 'SAMEORIGIN' : 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors " + (isPlayerRedirect ? "'self'" : "'none'"));
 });
 app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
