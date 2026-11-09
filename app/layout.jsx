@@ -21,10 +21,10 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  // Browser extensions may inject attributes (for example bis_skin_checked
+  // or __processed_*) before React hydrates. Limit suppression to the two
+  // document roots; mismatches inside the Situla app remain visible.
   return (
-    // Browser extensions may inject attributes (for example bis_skin_checked
-    // or __processed_*) before React hydrates. Limit suppression to the two
-    // document roots; mismatches inside the Situla app remain visible.
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
