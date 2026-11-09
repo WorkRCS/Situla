@@ -28,7 +28,7 @@ Back up the MongoDB database before migrating. The migration performs these oper
 - Converts existing Movie and TV artwork paths to stored absolute artwork URLs.
 - Changes TV series identity to IMDb IDs, moves cached season/episode data into each TV document, and removes the obsolete per-season cache collection.
 - Deletes TV series that do not have a valid IMDb ID, because they cannot participate in the IMDb-only TV catalog.
-- Removes legacy TMDB-named fields and obsolete crawler history while retaining the required numeric VidLink mapping as `vidlinkId`.
+- Removes legacy TMDB-named fields, old provider IDs, and obsolete crawler history.
 - Retains anime records under MAL IDs.
 
 First run the read-only audit to see the exact record counts. It also reports case-insensitive duplicate IMDb IDs and makes no database changes:
