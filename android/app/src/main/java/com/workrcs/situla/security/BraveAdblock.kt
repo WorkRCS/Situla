@@ -37,11 +37,19 @@ object BraveAdblock {
     }
 
     fun shouldBlock(url: String, sourceUrl: String, requestType: String): Boolean {
-        if (!ready || url.isBlank()) return false
+        if (url.isBlank()) return true
+        // The player is only opened after the filter engine is ready. If native
+        // filtering unexpectedly becomes unavailable mid-session, fail closed
+        // rather than silently allowing every request through.
+        if (!ready) {
+            lastError = "Brave adblock-rust is not initialized."
+            return true
+        }
         return try {
             nativeShouldBlock(url, sourceUrl, requestType)
-        } catch (_: Throwable) {
-            false
+        } catch (error: Throwable) {
+            lastError = error.message ?: "Brave adblock-rust request check failed."
+            true
         }
     }
 }
