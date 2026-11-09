@@ -82,18 +82,8 @@ fun SitulaVpnControls(context: Context) {
                     runCatching {
                         val raw = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                             ?: error("Could not read the selected file.")
-                        require(
-                            Regex("(?im)^AllowedIPs\\s*=.*0\\.0\\.0\\.0/0").containsMatchIn(raw) &&
-                                Regex("(?im)^AllowedIPs\\s*=.*::/0").containsMatchIn(raw)
-                        ) {
-                            "The profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0) to avoid IP leaks."
-                        }
-                        val parsed = Config.parse(raw.byteInputStream(Charsets.UTF_8))
-                        require(parsed.peers.isNotEmpty()) { "The profile has no [Peer] section." }
-                        require(parsed.peers.any { it.endpoint.isPresent }) {
-                            "At least one WireGuard peer must include an Endpoint host and port."
-                        }
-                        VpnProfileStore.save(context, selectedRegion, raw)
+                        val preparedProfile = VpnProfileStore.prepareFullTunnelProfile(raw)
+                        VpnProfileStore.save(context, selectedRegion, preparedProfile)
                         "Saved a valid WireGuard profile for $selectedRegion."
                     }
                 }
