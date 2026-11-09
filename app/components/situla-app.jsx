@@ -93,8 +93,6 @@ export default function SitulaApp() {
   const [progressMovies, setProgressMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [installState, setInstallState] = useState("");
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -109,21 +107,6 @@ export default function SitulaApp() {
       setProgressMovies([]);
     }
     setStorageReady(true);
-    const onInstall = (event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
-    const onInstalled = () => {
-      setInstallPrompt(null);
-      setInstallState("Situla is installed on this device.");
-    };
-    window.addEventListener("beforeinstallprompt", onInstall);
-    window.addEventListener("appinstalled", onInstalled);
-    if (window.matchMedia("(display-mode: standalone)").matches) setInstallState("Situla is installed on this device.");
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
   }, []);
 
   useEffect(() => {
@@ -188,17 +171,6 @@ export default function SitulaApp() {
     setSavedMovies((current) => current.some((item) => item.tmdbId === movie.tmdbId)
       ? current.filter((item) => item.tmdbId !== movie.tmdbId)
       : [movie, ...current].slice(0, 100));
-  }
-
-  async function installApp() {
-    if (!installPrompt) {
-      setInstallState("Open your browser menu and choose Add to Home screen or Install app.");
-      return;
-    }
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    setInstallState(choice?.outcome === "accepted" ? "Situla is being installed." : "You can install Situla from the browser menu any time.");
-    setInstallPrompt(null);
   }
 
   const featured = movies[0];
@@ -330,11 +302,6 @@ export default function SitulaApp() {
           <section className="max-w-2xl pb-8">
             <div className="section-heading"><div><span>YOUR APP</span><h1 className="mt-1 text-2xl font-black">Settings</h1></div></div>
             <div className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
-                <div className="flex items-center gap-3"><div className="brand-mark"><Icon name="download" size={18} /></div><div><h2 className="font-bold">Install Situla</h2><p className="mt-1 text-xs text-[#9297a7]">Add Situla to your home screen and open it like an app.</p></div></div>
-                <button className="gold-button mt-5 w-full" onClick={installApp}><Icon name="download" size={16} /> Install app</button>
-                {installState && <p className="mt-3 text-xs text-[#aeb4c2]">{installState}</p>}
-              </div>
               <a href="/index.html" className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#11131b] p-5 transition hover:bg-[#181b25]">
                 <div><h2 className="font-bold">Admin console</h2><p className="mt-1 text-xs text-[#9297a7]">Manage the catalog and import movie IDs.</p></div><Icon name="external" />
               </a>
