@@ -519,6 +519,35 @@ app.get('/api/movies', async (c) => {
   }
 });
 
+app.get('/api/movies/suggestions', async (c) => {
+  try {
+    await connectDatabase();
+    const query = (c.req.query('q') || '').trim().slice(0, 80);
+    if (query.length < 2) return c.json({ items: [] });
+    const tokens = [...new Set(query.toLowerCase().split(/\s+/).filter((token) => token.length >= 2))].slice(0, 6);
+    if (!tokens.length) return c.json({ items: [] });
+    const escaped = (value) => value.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&');
+    const patterns = tokens.map((token) => new RegExp(escaped(token), 'i'));
+    const candidates = await Movie.find({
+      moderationStatus: 'approved',
+      adult: false,
+      originalLanguage: 'en',
+      imdbId: /^tt\d{5,12}$/,
+      title: { $in: patterns }
+    }).sort({ popularity: -1, releaseDate: -1 }).limit(40).lean();
+    const normalizedQuery = query.toLowerCase();
+    const ranked = candidates.map((item) => {
+      const title = String(item.title || '').toLowerCase();
+      const matched = tokens.reduce((count, token) => count + (title.includes(token) ? 1 : 0), 0);
+      return { item, score: matched * 10 + (title.includes(normalizedQuery) ? 20 : 0) + Math.min(9, Number(item.popularity || 0) / 100) };
+    }).sort((left, right) => right.score - left.score);
+    return c.json({ items: ranked.slice(0, 8).map(({ item }) => movieDto(item)) });
+  } catch (error) {
+    console.error('Movie title suggestions failed:', error.message);
+    return c.json({ items: [], warning: 'Suggestions are temporarily unavailable.' });
+  }
+});
+
 app.get('/api/movies/:imdbId', async (c) => {
   const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
   if (!/^tt\d{5,12}$/.test(imdbId)) return c.json({ error: 'Invalid IMDb title ID.' }, 400);
@@ -529,23 +558,32 @@ app.get('/api/movies/:imdbId', async (c) => {
     }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
 
-    // Keep IMDb as the catalog/player route identity. VidLink's official movie
-    // endpoint requires a TMDB numeric ID, so resolve and cache that provider ID
-    // once when older movie records do not have it yet.
-    if (!Number(movie.vidlinkId)) {
-      const found = await tmdbRequest('/find/' + encodeURIComponent(imdbId), {
-        external_source: 'imdb_id',
-        language: 'en-US'
-      });
-      const vidlinkId = Number(found.movie_results?.[0]?.id) || null;
-      if (!vidlinkId) return c.json({ error: 'This IMDb title has no matching VidLink movie ID.' }, 404);
-      await Movie.updateOne({ imdbId }, { $set: { vidlinkId } });
-      movie = { ...movie, vidlinkId };
+    // Player startup is deliberately database-only. Never make playback depend
+    // on TMDB being reachable: imported records already carry VidLink's numeric
+    // provider ID. Accept the ID supplied by the selected catalog card only as
+    // a one-time repair for older records that missed this field.
+    let vidlinkId = Number(movie.vidlinkId) || 0;
+    if (!vidlinkId) {
+      const requestedId = Number(c.req.query('vidlinkId') || 0);
+      const legacy = await Movie.collection.findOne(
+        { imdbId },
+        { projection: { tmdbId: 1, vidlinkId: 1 } }
+      );
+      vidlinkId = Number(legacy?.vidlinkId || legacy?.tmdbId || requestedId) || 0;
+      if (Number.isSafeInteger(vidlinkId) && vidlinkId > 0) {
+        await Movie.updateOne({ imdbId }, { $set: { vidlinkId } });
+        movie = { ...movie, vidlinkId };
+      } else {
+        movie = { ...movie, vidlinkId: null };
+      }
     }
-    return c.json({ item: movieDto(movie) });
+    return c.json({
+      item: movieDto(movie),
+      playerAvailable: Number.isSafeInteger(vidlinkId) && vidlinkId > 0
+    });
   } catch (error) {
-    console.error('Public IMDb movie detail failed:', error.message);
-    return c.json({ error: 'Movie detail is temporarily unavailable.' }, 503);
+    console.error('Public IMDb movie detail read failed:', error.message);
+    return c.json({ error: 'Movie details are temporarily unavailable.' }, 503);
   }
 });
 
