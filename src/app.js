@@ -263,7 +263,7 @@ export function movieDto(movie) {
 }
 
 
-function tvSeriesDto(series) {
+export function tvSeriesDto(series) {
   return {
     id: String(series._id), tmdbId: series.tmdbId, imdbId: series.imdbId || null,
     title: series.title, originalTitle: series.originalTitle, overview: series.overview,
@@ -281,7 +281,7 @@ function tvSeriesDto(series) {
   };
 }
 
-function tvSeasonDto(season) {
+export function tvSeasonDto(season) {
   return {
     seasonNumber: season.seasonNumber, name: season.name, overview: season.overview,
     airDate: season.airDate, episodeCount: season.episodeCount,
@@ -294,7 +294,7 @@ function tvSeasonDto(season) {
   };
 }
 
-function animeSeriesDto(anime) {
+export function animeSeriesDto(anime) {
   return {
     id: String(anime._id), malId: anime.malId,
     malUrl: 'https://myanimelist.net/anime/' + anime.malId,
