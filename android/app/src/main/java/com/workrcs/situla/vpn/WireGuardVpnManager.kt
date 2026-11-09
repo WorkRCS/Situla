@@ -52,7 +52,7 @@ object WireGuardVpnManager {
 
     suspend fun connect(context: Context, region: String, sourceProfile: String): String =
         withContext(Dispatchers.IO) {
-            require(region in VpnProfileStore.regions) { "Select one of the four supported regions." }
+            require(region in VpnProfileStore.regions) { "Select one of the six supported regions." }
             require(sourceProfile.isNotBlank()) { "Import a WireGuard .conf profile for $region first." }
             val filteredProfile = VpnProfileStore.prepareFullTunnelProfile(sourceProfile)
             val config = Config.parse(filteredProfile.byteInputStream(Charsets.UTF_8))
