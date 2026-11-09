@@ -28,6 +28,7 @@ body {
 }
 button, input { font: inherit; }
 button { cursor: pointer; }
+svg.lucide { display: inline-block; flex: none; vertical-align: middle; }
 img { display: block; }
 ::selection { background: transparent; color: inherit; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
