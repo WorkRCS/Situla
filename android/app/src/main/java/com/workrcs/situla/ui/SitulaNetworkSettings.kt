@@ -16,7 +16,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +53,7 @@ fun SitulaVpnControls(context: Context) {
     var autoRotate by remember { mutableStateOf(VpnProfileStore.autoRotateEnabled(context)) }
     var message by remember { mutableStateOf<String?>(null) }
     var pendingConnect by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var showManualImport by remember { mutableStateOf(false) }
 
     fun connect(profile: Pair<String, String>) {
         scope.launch {
@@ -99,8 +102,16 @@ fun SitulaVpnControls(context: Context) {
     ) {
         Text("Situla VPN · WireGuard", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
         Text(
-            "Import one provider-issued .conf file for each region. Profiles and private keys are stored in this app's private, non-backed-up storage.",
-            color = Color(0xFF9BA5B4), fontSize = 10.sp
+            "Automatic VPN provisioning is not connected yet. Situla needs real WireGuard gateways and a secure provisioning service for each region; the app cannot create public VPN servers by itself.",
+            color = Color(0xFFFFD28A), fontSize = 10.sp
+        )
+        Text(
+            if (available.isEmpty()) {
+                "No VPN gateway profiles are available on this device. Automatic connection will start after the gateway service is deployed."
+            } else {
+                "Local developer test profiles: " + available.joinToString()
+            },
+            color = Color(0xFF9BA5B4), fontSize = 9.sp
         )
         VpnProfileStore.regions.chunked(2).forEach { regionRow ->
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -126,10 +137,21 @@ fun SitulaVpnControls(context: Context) {
             color = if (selectedHasProfile) Color(0xFF9DD6A6) else Color(0xFFFFB1C0),
             fontSize = 10.sp
         )
-        Button(
-            onClick = { profilePicker.launch(arrayOf("*/*")) },
+        TextButton(
+            onClick = { showManualImport = !showManualImport },
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Import $selectedRegion WireGuard .conf") }
+        ) {
+            Text(
+                if (showManualImport) "Hide developer-only manual setup"
+                else "Advanced · manual profile import (developer testing)"
+            )
+        }
+        if (showManualImport) {
+            Button(
+                onClick = { profilePicker.launch(arrayOf("*/*")) },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Import $selectedRegion test profile") }
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(
@@ -175,7 +197,7 @@ fun SitulaVpnControls(context: Context) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
                 Text("Auto-connect on app launch", fontSize = 12.sp)
-                Text("Connect automatically to $selectedRegion after Android permission is granted.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+                Text("Auto-connect to $selectedRegion when a valid profile is available and Android permission is granted.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
             }
             Switch(
                 checked = autoConnectRegion,
@@ -207,7 +229,7 @@ fun SitulaVpnControls(context: Context) {
                 }
             )
         }
-        Text("Region profiles ready: ${available.size}/${VpnProfileStore.regions.size}", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+        Text("Local test profiles ready: ${available.size}/${VpnProfileStore.regions.size}", color = Color(0xFF9BA5B4), fontSize = 9.sp)
         message?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp) }
         Text(
             "Latency is measured over the active VPN route. The app can show real region IPs only when a working provider gateway is provisioned.",
@@ -222,6 +244,19 @@ fun SitulaProtectionControls(context: Context) {
     var ready by remember { mutableStateOf(BraveAdblock.ready) }
     var refreshing by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        if (!BraveAdblock.ready) {
+            ready = withContext(Dispatchers.IO) {
+                AdblockFilterRepository.refreshAndInitialize(context)
+            }
+            if (!ready) {
+                message = "Filter engine failed: ${BraveAdblock.lastError ?: "native library unavailable"}"
+            }
+        } else {
+            ready = true
+        }
+    }
 
     Column(
         Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp),
