@@ -13,7 +13,7 @@ if (localPropertiesFile.exists()) {
 }
 android {
     namespace = "com.workrcs.situla"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.workrcs.situla"
         minSdk = 26
