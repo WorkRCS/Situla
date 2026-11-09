@@ -494,3 +494,11 @@ html[data-theme="light"] .watch-screen { color:#fff; }
   .skeleton-poster,.skeleton-line,.skeleton-label,.suggestion-spinner { animation:none; }
   .movie-poster { transition:none; }
 }
+
+.skeleton-grid .skeleton-card { flex:initial; }
+@media(max-width:620px) {
+  .header-search-wrap { flex:1 1 0; }
+  .suggestion-panel { left:auto; right:-44px; width:min(88vw,420px); }
+  .netflix-shelf { margin-top:25px; }
+  .shelf-heading h2 { font-size:17px; }
+}
