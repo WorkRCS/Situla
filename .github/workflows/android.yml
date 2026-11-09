@@ -27,10 +27,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.4.1"
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
-      - name: Install Android SDK platform and build tools
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install Android SDK platform, build tools and NDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018"
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
       - name: Assemble debug APK
         working-directory: android
         run: gradle --no-daemon :app:assembleDebug
