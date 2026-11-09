@@ -33,7 +33,7 @@ Never commit .env. The real credentials are not in this repository.
 7. New records start as pending.
 8. Approve or reject records in Movie catalog. Only approved, English-language, non-adult records are returned by the public movie API.
 
-The crawler retries transient DNS/connect-reset/connect-timeout failures, allows up to 25 seconds per TMDB request, and reports the underlying network cause where Node.js exposes it. If the dashboard connection check still fails, verify outbound HTTPS access to api.themoviedb.org:443 from the same machine running Node.js. A browser opening TMDB does not prove Node.js can access it. The crawler uses TMDB Discover and Movie Details endpoints. It does not scrape third-party streaming websites or fetch video files. Adult-flag filtering is not a guarantee that metadata is free of every sensitive theme. Admin review is required for nudity, violence, war, political or other editorial exclusions.
+The crawler retries transient DNS/connect-reset/connect-timeout failures, allows up to 25 seconds per TMDB request, and reports the underlying network cause where Node.js exposes it. If the dashboard connection check still fails, verify outbound HTTPS access to api.themoviedb.org:443 from the same machine running Node.js. A browser opening TMDB does not prove Node.js can access it. The crawler uses TMDB Discover and Movie Details endpoints. IMDb title IDs can also be resolved with TMDB's Find by ID endpoint; imports enforce the English-language, non-adult, poster, release-date and selected-genre checks and are pending admin review. It does not scrape third-party streaming websites or fetch video files. Adult-flag filtering is not a guarantee that metadata is free of every sensitive theme. Admin review is required for nudity, violence, war, political or other editorial exclusions.
 
 ## API endpoints
 
@@ -43,7 +43,8 @@ The crawler retries transient DNS/connect-reset/connect-timeout failures, allows
 - POST /api/admin/logout — sign out
 - GET /api/admin/dashboard — catalog counts and recent crawl activity
 - GET /api/admin/tmdb-status — verify TMDB outbound HTTPS access and API-key validity (admin only)
-- POST /api/admin/crawl — manually import a bounded TMDB batch
+- POST /api/admin/crawl — manually import a bounded TMDB discovery batch
+- POST /api/admin/import-ids — resolve 1–20 IMDb or TMDB movie IDs per request; records enter moderation as pending
 - GET /api/admin/movies — paginated admin catalog and filters
 - PATCH /api/admin/movies/:id/review — approve, reject, or return a record to pending
 - GET /api/admin/crawl-runs — crawl history

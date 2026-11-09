@@ -7,7 +7,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun } from './models.js';
-import { runManualCrawl, checkTmdbConnection } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection, importMovieIds } from './crawler.js';
 
 const app = new Hono();
 const attempts = new Map();
@@ -95,8 +95,8 @@ const imageUrl = (path, size = 'w342') => path
 
 function movieDto(movie) {
   return {
-    id: String(movie._id), tmdbId: movie.tmdbId, title: movie.title,
-    originalTitle: movie.originalTitle, overview: movie.overview,
+    id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
+    originalTitle: movie.originalTitle, overview: movie.overview, playbackUrl: movie.playbackUrl || null,
     posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
     releaseDate: movie.releaseDate, releaseYear: movie.releaseYear, runtime: movie.runtime,
     voteAverage: movie.voteAverage, voteCount: movie.voteCount, popularity: movie.popularity,
@@ -256,6 +256,20 @@ app.get('/api/admin/tmdb-status', requireAdmin, async (c) => {
   }
 });
 
+
+app.post('/api/admin/import-ids', requireSameOrigin, requireAdmin, async (c) => {
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  try {
+    const result = await importMovieIds(body);
+    return c.json({ result });
+  } catch (error) {
+    const invalid = /Import source|between 1 and 20|at least one|IMDb IDs|TMDB IDs/.test(error.message || '');
+    console.error('Manual IMDb/TMDB import failed:', error.message);
+    return c.json({ error: error.message || 'Movie ID import failed.' }, invalid ? 400 : 502);
+  }
+});
+
 app.post('/api/admin/crawl', requireSameOrigin, requireAdmin, async (c) => {
   let body;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
@@ -280,9 +294,12 @@ app.get('/api/movies', async (c) => {
     const query = (c.req.query('q') || '').trim().slice(0, 80);
     const filter = { moderationStatus: 'approved', adult: false, originalLanguage: 'en' };
     if (year >= 1870 && year <= new Date().getFullYear()) filter.releaseYear = year;
-    if (query) filter.title = new RegExp(query.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&'), 'i');
+    if (query) filter.$text = { $search: query };
+    const sort = query
+      ? { score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }
+      : { popularity: -1, releaseDate: -1 };
     const [items, total] = await Promise.all([
-      Movie.find(filter).sort({ popularity: -1, releaseDate: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       Movie.countDocuments(filter)
     ]);
     return c.json({ items: items.map(movieDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });

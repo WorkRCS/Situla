@@ -55,6 +55,29 @@ export function describeTmdbNetworkError(error) {
   return 'Node.js could not connect to TMDB. Check outbound HTTPS access to api.themoviedb.org:443 and any required proxy configuration.';
 }
 
+const ALLOWED_IMPORT_GENRES = new Set([878, 9648, 14, 27, 28, 12]);
+const GENRE_NAMES = new Map([
+  [878, 'Science Fiction'], [9648, 'Mystery'], [14, 'Fantasy'],
+  [27, 'Horror'], [28, 'Action'], [12, 'Adventure']
+]);
+
+export function normalizeImportIds(body = {}) {
+  const source = String(body.source || 'imdb').trim().toLowerCase();
+  if (!['imdb', 'tmdb'].includes(source)) throw new Error('Import source must be imdb or tmdb.');
+  if (!Array.isArray(body.ids) || body.ids.length < 1 || body.ids.length > 20) {
+    throw new Error('Submit between 1 and 20 IDs per import request.');
+  }
+  const ids = [...new Set(body.ids.map((value) => String(value).trim()).filter(Boolean))];
+  if (!ids.length) throw new Error('Add at least one movie ID.');
+  if (source === 'imdb' && ids.some((id) => !/^tt\d{5,12}$/i.test(id))) {
+    throw new Error('IMDb IDs must use the tt followed by digits format.');
+  }
+  if (source === 'tmdb' && ids.some((id) => !/^\d{1,12}$/.test(id) || Number(id) <= 0)) {
+    throw new Error('TMDB IDs must be positive numeric IDs.');
+  }
+  return { source, ids: ids.map((id) => source === 'imdb' ? id.toLowerCase() : id) };
+}
+
 export function normalizeInput(body = {}) {
   const currentYear = new Date().getFullYear();
   const startYear = Number(body.startYear ?? process.env.CRAWL_DEFAULT_START_YEAR ?? 2010);
@@ -157,8 +180,12 @@ function mapMovie(item, details) {
   const certification = us?.release_dates?.find((entry) => entry.certification)?.certification || '';
   const keywordSource = details?.keywords || {};
   const keywords = (keywordSource.keywords || keywordSource.results || []).map((entry) => entry.name).filter(Boolean).slice(0, 40);
+  const genreIds = item.genre_ids || source.genre_ids || (source.genres || []).map((genre) => Number(genre.id)).filter(Number.isFinite);
+  const genreNames = (source.genres || []).map((genre) => genre.name).filter(Boolean);
+  const imdbId = source.imdb_id || item.imdb_id || source.external_ids?.imdb_id || item.external_ids?.imdb_id;
   return {
     tmdbId: Number(item.id),
+    ...(imdbId ? { imdbId: String(imdbId).toLowerCase() } : {}),
     title: source.title || item.title || 'Untitled',
     originalTitle: source.original_title || item.original_title || '',
     overview: source.overview || item.overview || '',
@@ -171,8 +198,8 @@ function mapMovie(item, details) {
     voteCount: Number(item.vote_count || 0),
     popularity: Number(item.popularity || 0),
     originalLanguage: item.original_language || 'en',
-    genreIds: item.genre_ids || [],
-    genres: (source.genres || []).map((genre) => genre.name).filter(Boolean),
+    genreIds,
+    genres: genreNames.length ? genreNames : genreIds.map((id) => GENRE_NAMES.get(Number(id))).filter(Boolean),
     keywords,
     certification,
     adult: Boolean(item.adult),
@@ -227,7 +254,7 @@ export async function runManualCrawl(body = {}) {
       try {
         details = await tmdbRequest('/movie/' + encodeURIComponent(movie.id), {
           language: 'en-US',
-          append_to_response: 'release_dates,keywords'
+          append_to_response: 'release_dates,keywords,external_ids'
         });
       } catch { /* Keep discovery metadata if optional details are unavailable. */ }
       return mapMovie(movie, details);
@@ -267,4 +294,75 @@ export async function runManualCrawl(body = {}) {
     await run.save();
     throw error;
   }
+}
+
+export async function importMovieIds(body = {}) {
+  const input = normalizeImportIds(body);
+  await connectDatabase();
+
+  const resolved = await mapLimit(input.ids, 3, async (externalId) => {
+    try {
+      let item;
+      if (input.source === 'imdb') {
+        const found = await tmdbRequest('/find/' + encodeURIComponent(externalId), {
+          external_source: 'imdb_id',
+          language: 'en-US'
+        });
+        item = (found.movie_results || [])[0] || null;
+        if (item) item.imdb_id = externalId;
+      } else {
+        item = await tmdbRequest('/movie/' + encodeURIComponent(externalId), {
+          language: 'en-US',
+          append_to_response: 'external_ids'
+        });
+        item.imdb_id = item.imdb_id || item.external_ids?.imdb_id || null;
+      }
+
+      if (!item) return { externalId, reason: 'not_found' };
+      const genreIds = item.genre_ids || (item.genres || []).map((genre) => Number(genre.id));
+      const valid = !item.adult &&
+        item.original_language === 'en' &&
+        Boolean(item.release_date) &&
+        Boolean(item.poster_path) &&
+        genreIds.some((id) => ALLOWED_IMPORT_GENRES.has(Number(id)));
+      if (!valid) return { externalId, reason: 'filtered' };
+      return { externalId, record: mapMovie(item, item) };
+    } catch (error) {
+      return { externalId, error };
+    }
+  });
+
+  const failed = resolved.find((entry) => entry?.error);
+  if (failed) throw failed.error;
+
+  const records = resolved.filter((entry) => entry?.record).map((entry) => entry.record);
+  const unmatched = resolved.filter((entry) => !entry?.record).map((entry) => entry.externalId);
+  const tmdbIds = records.map((record) => record.tmdbId);
+  const existing = tmdbIds.length
+    ? await Movie.find({ tmdbId: { $in: tmdbIds } }).select('tmdbId').lean()
+    : [];
+  const existingIds = new Set(existing.map((movie) => movie.tmdbId));
+
+  if (records.length) {
+    await Movie.bulkWrite(records.map((record) => ({
+      updateOne: {
+        filter: { tmdbId: record.tmdbId },
+        update: {
+          $set: record,
+          $setOnInsert: { moderationStatus: 'pending', manualReviewNote: '' }
+        },
+        upsert: true
+      }
+    })), { ordered: false });
+  }
+
+  const imported = records.filter((record) => !existingIds.has(record.tmdbId)).length;
+  return {
+    requested: input.ids.length,
+    matched: records.length,
+    imported,
+    updated: records.length - imported,
+    skipped: unmatched.length,
+    unmatched
+  };
 }
