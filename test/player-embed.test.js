@@ -45,6 +45,18 @@ test('Hindi/English player switch is restricted to the Movie watch page', async 
   assert.doesNotMatch(seriesPlayer, /slast430did|hindiMoviePlayerUrl/);
 });
 
+test('Android app and Brave adblock use the new hosted Situla domain', async () => {
+  const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
+  const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
+  const gradle = await read('../android/app/build.gradle.kts');
+
+  assert.ok(wrapper.includes('https://situla-five.vercel.app/'));
+  assert.ok(blocker.includes('situlaWebsiteHost: String = "situla-five.vercel.app"'));
+  assert.ok(gradle.includes('"https://situla-five.vercel.app/"'));
+  assert.doesNotMatch(wrapper, /https:\/\/situla\.vercel\.app/);
+  assert.doesNotMatch(blocker, /situlaWebsiteHost: String = "situla\.vercel\.app"/);
+});
+
 test('Android wrapper keeps request filtering and popup blocking while allowing player frames', async () => {
   const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
   const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
