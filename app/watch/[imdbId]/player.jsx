@@ -26,6 +26,22 @@ export default function PlayerExperience({ imdbId }) {
   }, [imdbId]);
 
   useEffect(() => {
+    try {
+      const savedLanguage = localStorage.getItem("situla:movie-player-language:v1");
+      if (savedLanguage === "hi") setPlayerLanguage("hi");
+    } catch {}
+    setLanguageReady(true);
+  }, []);
+
+  function togglePlayerLanguage() {
+    const nextLanguage = playerLanguage === "hi" ? "en" : "hi";
+    setPlayerLanguage(nextLanguage);
+    try {
+      localStorage.setItem("situla:movie-player-language:v1", nextLanguage);
+    } catch {}
+  }
+
+  useEffect(() => {
     const controller = new AbortController();
     async function loadMovie() {
       try {
