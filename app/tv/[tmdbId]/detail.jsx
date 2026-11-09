@@ -67,7 +67,7 @@ export default function TvSeriesExperience({ tmdbId }) {
       if (!controller.signal.aborted) setSeasonLoading(false);
     });
     return () => controller.abort();
-  }, [tmdbId, seasonNumber, resumeEpisode]);
+  }, [tmdbId, seasonNumber]);
 
   const episodes = season?.episodes || [];
   const selectedEpisode = episodes.find((item) => item.episodeNumber === Number(episodeNumber));
