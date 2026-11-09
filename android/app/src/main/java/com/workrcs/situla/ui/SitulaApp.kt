@@ -79,6 +79,7 @@ private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HIST
 fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
+    var showPlayer by remember { mutableStateOf(false) }
     val api = remember { SitulaApiProvider.create(SitulaApiConfig.baseUrl(context)) }
     val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
@@ -106,11 +107,8 @@ fun SitulaApp(context: Context) {
         loadMovies()
     }
 
-    BackHandler(enabled = selectedMovie != null || tab != Tab.HOME) {
-        when {
-            selectedMovie != null -> selectedMovie = null
-            tab != Tab.HOME -> tab = Tab.HOME
-        }
+    BackHandler(enabled = selectedMovie == null && tab != Tab.HOME) {
+        tab = Tab.HOME
     }
 
     Scaffold(
@@ -140,9 +138,17 @@ fun SitulaApp(context: Context) {
             .background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
         Column(contentModifier) {
             when {
+                selectedMovie != null && showPlayer -> MoviePlayerScreen(
+                    movie = selectedMovie!!,
+                    onBack = { showPlayer = false }
+                )
                 selectedMovie != null -> MovieDetailScreen(
                     movie = selectedMovie!!,
-                    onBack = { selectedMovie = null }
+                    onBack = {
+                        showPlayer = false
+                        selectedMovie = null
+                    },
+                    onPlay = { showPlayer = true }
                 )
                 else -> {
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -157,7 +163,7 @@ fun SitulaApp(context: Context) {
                         Tab.HOME -> HomeScreen(
                             movies, loading, error, continueWatching,
                             onRetry = { scope.launch { loadMovies() } },
-                            onOpenMovie = { selectedMovie = it }
+                            onOpenMovie = { selectedMovie = it; showPlayer = false }
                         )
                         Tab.SEARCH -> SearchScreen(
                             query, searchResults, loading,
