@@ -293,7 +293,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                     !uri.host.equals("situla.invalid", ignoreCase = true) &&
                                     !uri.host.equals("vidlink.pro", ignoreCase = true)
                                 ) return true
-                                false
+                                return false
                             }
 
                             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
