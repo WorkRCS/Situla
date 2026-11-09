@@ -155,8 +155,11 @@ test('public movie and TV routes reject non-IMDb identifiers before database acc
 });
 
 
-test('VidLink movie and TV URLs use direct IMDb IDs only', () => {
-  assert.equal(vidlinkMovieUrl('tt0848228'), 'https://vidlink.pro/movie/tt0848228');
+test('VidLink movie and TV URLs use direct IMDb IDs and Situla gold theme', () => {
+  const movieUrl = new URL(vidlinkMovieUrl('tt0848228'));
+  assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
+  assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
+  assert.equal(movieUrl.searchParams.get('secondaryColor'), '171a23');
   assert.equal(vidlinkTvUrl('tt0944947', 1, 1), 'https://vidlink.pro/tv/tt0944947/1/1');
   assert.equal(vidlinkMovieUrl('24428'), null);
   assert.equal(vidlinkTvUrl('1399', 1, 1), null);
@@ -164,11 +167,12 @@ test('VidLink movie and TV URLs use direct IMDb IDs only', () => {
   assert.equal(vidlinkTvUrl('tt0944947', 1, 0), null);
 });
 
-test('Hindi movie player URL receives the same validated IMDb title ID', () => {
-  assert.equal(
-    hindiMoviePlayerUrl('tt0848228'),
-    'https://slast430did.com/play/?id=tt0848228'
-  );
+test('Hindi movie player URL receives the same validated IMDb ID and gold theme', () => {
+  const hindiUrl = new URL(hindiMoviePlayerUrl('tt0848228'));
+  assert.equal(hindiUrl.origin + hindiUrl.pathname, 'https://slast430did.com/play/');
+  assert.equal(hindiUrl.searchParams.get('id'), 'tt0848228');
+  assert.equal(hindiUrl.searchParams.get('primaryColor'), 'e8b65b');
+  assert.equal(hindiUrl.searchParams.get('secondaryColor'), '171a23');
   assert.equal(hindiMoviePlayerUrl('24428'), null);
   assert.equal(hindiMoviePlayerUrl('javascript:alert(1)'), null);
 });
