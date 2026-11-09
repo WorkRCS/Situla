@@ -171,12 +171,18 @@ export default function SitulaApp() {
 
   useEffect(() => {
     if (!storageReady) return;
-    try { localStorage.setItem("situla:recent:v1", JSON.stringify(recentMovies.slice(0, 12))); } catch {}
+    try {
+      if (recentMovies.length) localStorage.setItem("situla:recent:v1", JSON.stringify(recentMovies.slice(0, 12)));
+      else localStorage.removeItem("situla:recent:v1");
+    } catch {}
   }, [recentMovies, storageReady]);
 
   useEffect(() => {
     if (!storageReady) return;
-    try { localStorage.setItem("situla:watch-history:v1", JSON.stringify(watchHistory.slice(0, 500))); } catch {}
+    try {
+      if (watchHistory.length) localStorage.setItem("situla:watch-history:v1", JSON.stringify(watchHistory.slice(0, 500)));
+      else localStorage.removeItem("situla:watch-history:v1");
+    } catch {}
   }, [watchHistory, storageReady]);
 
   useEffect(() => {
