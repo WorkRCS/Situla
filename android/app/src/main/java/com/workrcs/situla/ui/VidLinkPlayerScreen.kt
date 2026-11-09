@@ -198,6 +198,12 @@ fun VidLinkPlayerScreen(
                     // Blocked ad/tracker fetches commonly produce a harmless "Failed to fetch".
                     playerDetail = "VidLink page console (may be non-fatal): $detail"
                 }
+                status == "third_party_ssl_blocked" -> {
+                    // Analytics/ad providers can use certificate authorities that are
+                    // not trusted by Android. Cancel that request, but do not cover or
+                    // stop VidLink's actual player because an unrelated resource failed.
+                    playerDetail = "A third-party analytics/ad request was canceled due to an untrusted certificate: $detail"
+                }
                 status.startsWith("blocked_by_brave") -> {
                     // A blocked ad/tracker is a protection event, not a player-load failure.
                     // Keep the iframe's actual lifecycle status visible.
@@ -679,9 +685,24 @@ fun VidLinkPlayerScreen(
                                 handler: SslErrorHandler?,
                                 error: android.net.http.SslError?
                             ) {
-                                playerError = "VidLink HTTPS certificate validation failed."
-                                reportPlayerStatus("ssl_error", error?.toString().orEmpty())
+                                val failingUrl = error?.url.orEmpty()
+                                val failingUri = runCatching { Uri.parse(failingUrl) }.getOrNull()
+                                val failingHost = failingUri?.host?.lowercase().orEmpty()
+
+                                // Never bypass certificate validation. A failed Yandex
+                                // Metrika/ad/analytics certificate is a non-fatal third-party
+                                // resource failure and must not be presented as VidLink failing.
                                 handler?.cancel()
+
+                                if (failingUri != null && isVidLinkHost(failingUri)) {
+                                    playerError = "VidLink's own HTTPS certificate validation failed for $failingHost."
+                                    reportPlayerStatus("ssl_error", "$failingUrl · ${error}")
+                                    Log.e("SitulaVidLink", "VidLink certificate error: $failingUrl · ${error}")
+                                } else {
+                                    val detail = "$failingUrl · ${error}"
+                                    reportPlayerStatus("third_party_ssl_blocked", detail)
+                                    Log.w("SitulaVidLink", "Canceled third-party SSL resource: $detail")
+                                }
                             }
 
                             override fun onSafeBrowsingHit(
