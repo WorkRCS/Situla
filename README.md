@@ -43,7 +43,7 @@ After reviewing the counts and resolving any duplicate IMDb IDs, run the migrati
 npm run migrate:imdb-only
 ```
 
-The existing poster files may still be hosted on the old TMDB image CDN; this migration stores them as direct URLs but does not re-host the image bytes. To remove that CDN host too, manually replace poster/backdrop URLs with images hosted on your own storage. If an earlier migration already removed both `tmdbId` and `vidlinkId`, the audit will report missing provider mappings; those numeric VidLink mappings must be restored manually before the affected Movie/TV titles can play.
+The existing poster files may still be hosted on the old image CDN; this migration stores them as direct URLs but does not re-host the image bytes. To remove that CDN host too, manually replace poster/backdrop URLs with images hosted on your own storage.
 
 ## Manual catalog maintenance
 
