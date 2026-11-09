@@ -50,7 +50,7 @@ interface WatchHistoryDao {
     suspend fun clear()
 }
 
-@Database(entities = [WatchHistoryEntity::class], version = 1, exportSchema = true)
+@Database(entities = [WatchHistoryEntity::class], version = 1, exportSchema = false)
 abstract class SitulaDatabase : RoomDatabase() {
     abstract fun watchHistoryDao(): WatchHistoryDao
     companion object {
