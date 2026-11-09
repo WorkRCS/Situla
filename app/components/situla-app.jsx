@@ -196,6 +196,7 @@ export default function SitulaApp() {
       root.dataset.theme = resolved;
       root.dataset.themeMode = themeMode;
       root.style.colorScheme = resolved;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolved === "dark" ? "#08090e" : "#f3f5f8");
     };
     apply();
     try { localStorage.setItem("situla:theme:v1", themeMode); } catch {}
