@@ -92,7 +92,7 @@ private class VidLinkProgressBridge(
     }
 
     @JavascriptInterface
-    fun onPlayerPlay(token: String) {
+    fun activateFiltering(token: String) {
         if (token != bridgeToken) return
         onPlayerPlay()
     }
@@ -361,7 +361,7 @@ fun VidLinkPlayerScreen(
                   var playerEvent = String(player.event || '');
                   report('vidlink_player_event', playerEvent || 'player event');
                   if (playerEvent === 'play') {
-                    try { SitulaProgress.onPlayerPlay('${progressToken}'); }
+                    try { SitulaProgress.activateFiltering('${progressToken}'); }
                     catch (ignored) {}
                   }
                   if (typeof player.currentTime === 'number' &&
@@ -435,6 +435,21 @@ fun VidLinkPlayerScreen(
                               'use strict';
                               var token = '__SITULA_TOKEN__';
                               var attempts = 0;
+                              var interactionActivated = false;
+                              function activateOnFirstInteraction() {
+                                if (interactionActivated || !window.SitulaProgress ||
+                                    typeof window.SitulaProgress.activateFiltering !== 'function') return;
+                                interactionActivated = true;
+                                window.SitulaProgress.activateFiltering(token);
+                                window.SitulaProgress.onPlayerStatus(
+                                  token,
+                                  'player_interaction_detected',
+                                  'First touch/click inside VidLink iframe: Brave request filtering activated.'
+                                );
+                              }
+                              document.addEventListener('pointerdown', activateOnFirstInteraction, true);
+                              document.addEventListener('touchstart', activateOnFirstInteraction, { capture: true, passive: true });
+                              document.addEventListener('click', activateOnFirstInteraction, true);
                               var timer = setInterval(function() {
                                 attempts += 1;
                                 try {
