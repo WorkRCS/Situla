@@ -90,7 +90,6 @@ private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HIST
 fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
-    var playingMovie by remember { mutableStateOf<Movie?>(null) }
     val api = remember { SitulaApiProvider.create(SitulaApiConfig.baseUrl(context)) }
     val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
@@ -170,9 +169,8 @@ fun SitulaApp(context: Context) {
         onDispose { ProcessLifecycleOwner.get().lifecycle.removeObserver(observer) }
     }
 
-    BackHandler(enabled = playingMovie != null || selectedMovie != null || tab != Tab.HOME) {
+    BackHandler(enabled = selectedMovie != null || tab != Tab.HOME) {
         when {
-            playingMovie != null -> playingMovie = null
             selectedMovie != null -> selectedMovie = null
             tab != Tab.HOME -> tab = Tab.HOME
         }
@@ -181,7 +179,7 @@ fun SitulaApp(context: Context) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (selectedMovie == null && playingMovie == null) {
+            if (selectedMovie == null) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     Tab.entries.forEach { target ->
                         val icon = when (target) {
@@ -201,25 +199,13 @@ fun SitulaApp(context: Context) {
             }
         }
     ) { insets ->
-        val contentModifier = if (playingMovie != null) {
-            Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background)
-        } else {
-            Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
-        }
+        val contentModifier = Modifier.fillMaxSize().padding(insets)
+            .background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
         Column(contentModifier) {
             when {
-                playingMovie != null -> {
-                    val movie = playingMovie!!
-                    if (movie.playbackUrl.isNullOrBlank()) {
-                        VidLinkPlayerScreen(movie = movie, onBack = { playingMovie = null })
-                    } else {
-                        MoviePlayerScreen(movie = movie, onBack = { playingMovie = null })
-                    }
-                }
                 selectedMovie != null -> MovieDetailScreen(
                     movie = selectedMovie!!,
-                    onBack = { selectedMovie = null },
-                    onPlay = { selectedMovie?.let { if (it.tmdbId > 0) playingMovie = it } }
+                    onBack = { selectedMovie = null }
                 )
                 else -> {
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
