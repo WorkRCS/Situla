@@ -6,7 +6,7 @@ The Android application is a native WebView shell for the hosted Situla website.
 
 - Android Gradle Plugin and Gradle configuration are in this directory.
 - CI builds a debug APK with `gradle --no-daemon :app:assembleDebug`. The Android workflow uses JDK 21 for the Brave adblock JNI bridge.
-- The WebView loads the hosted Situla website configured in `SitulaApp.kt`.
+- The WebView loads the hosted Situla website configured in `SitulaApp.kt`. The current Android URL is `https://situla-five.vercel.app/`; `SitulaApp.kt` and the adblocker's default first-party host are kept in sync.
 
 ## Catalog IDs and playback
 
