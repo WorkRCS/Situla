@@ -70,10 +70,9 @@ object VpnProfileStore {
         val nextSection = Regex("(?im)^\\s*\\[").find(peerTail)?.range?.first ?: peerTail.length
         val peerBody = peerTail.substring(0, nextSection)
         val peerBodyWithRoutes = if (Regex("(?im)^AllowedIPs\\s*=.*$").containsMatchIn(peerBody)) {
-            Regex("(?im)^AllowedIPs\\s*=.*$").replace(
+            Regex("(?im)^AllowedIPs\\s*=.*$").replaceFirst(
                 peerBody,
-                "AllowedIPs = 0.0.0.0/0, ::/0",
-                limit = 1
+                "AllowedIPs = 0.0.0.0/0, ::/0"
             )
         } else {
             peerBody.trimEnd() + "\nAllowedIPs = 0.0.0.0/0, ::/0\n"
