@@ -24,7 +24,7 @@ Situla is a mobile-first media discovery and streaming website built with Next.j
 6. Open http://localhost:3000.
 7. Check http://localhost:3000/api/health.
 
-Run npm run build to verify the production Next.js build and npm test for the API/crawler/schema tests.
+Run npm run build to verify the production Next.js build and npm test for the API/crawler/schema tests. To add 60 new eligible popular movies to the connected MongoDB database, run npm run seed:movies from the project root. The command prints the actual number inserted and never counts existing IMDb IDs as new records.
 
 Never commit .env. The real credentials are not in this repository.
 
@@ -81,6 +81,7 @@ The Hono API remains in src/app.js and is mounted in Next.js through app/api/[..
 - Movie endpoints: GET /api/movies and GET /api/movies/:imdbId
 - TV endpoints: GET /api/tv, GET /api/tv/:tmdbId, GET /api/tv/:tmdbId/seasons/:seasonNumber
 - Anime endpoints: GET /api/anime and GET /api/anime/:malId
+- POST /api/admin/seed-top-movies — add 60 new popular eligible movie records
 - POST /api/admin/import-ids — import IMDb movie IDs
 - POST /api/admin/import-tv-series — import TMDB TV IDs
 - POST /api/admin/import-anime-series — import MAL IDs
