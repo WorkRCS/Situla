@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import app, { movieDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
-import { vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
+import { hindiMoviePlayerUrl, vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
 
 test('admin and crawler API routes are removed', async () => {
   const paths = [
@@ -162,4 +162,13 @@ test('VidLink movie and TV URLs use direct IMDb IDs only', () => {
   assert.equal(vidlinkTvUrl('1399', 1, 1), null);
   assert.equal(vidlinkTvUrl('tt0944947', -1, 1), null);
   assert.equal(vidlinkTvUrl('tt0944947', 1, 0), null);
+});
+
+test('Hindi movie player URL receives the same validated IMDb title ID', () => {
+  assert.equal(
+    hindiMoviePlayerUrl('tt0848228'),
+    'https://slast430did.com/play/?id=tt0848228'
+  );
+  assert.equal(hindiMoviePlayerUrl('24428'), null);
+  assert.equal(hindiMoviePlayerUrl('javascript:alert(1)'), null);
 });
