@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 fun SitulaVpnControls(context: Context) {
     val vpn by WireGuardVpnManager.state.collectAsState()
     val scope = rememberCoroutineScope()
-    var selectedRegion by remember { mutableStateOf(VpnProfileStore.regions.first()) }
+    var selectedRegion by remember { mutableStateOf(VpnProfileStore.autoConnectRegion(context) ?: VpnProfileStore.regions.first()) }
     var autoConnectRegion by remember(selectedRegion) {
         mutableStateOf(VpnProfileStore.autoConnectRegion(context) == selectedRegion)
     }
@@ -58,7 +58,7 @@ fun SitulaVpnControls(context: Context) {
             runCatching { WireGuardVpnManager.connect(context, profile.first, profile.second) }
                 .onSuccess {
                     message = it
-                    if (autoRotate && available.size == VpnProfileStore.regions.size) {
+                    if (autoRotate && available.size >= 2) {
                         runCatching { WireGuardVpnManager.startAutoRotation(context) }
                             .onFailure { message = it.message ?: "Could not start automatic rotation." }
                     }
@@ -102,13 +102,22 @@ fun SitulaVpnControls(context: Context) {
             "Import one provider-issued .conf file for each region. Profiles and private keys are stored in this app's private, non-backed-up storage.",
             color = Color(0xFF9BA5B4), fontSize = 10.sp
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            VpnProfileStore.regions.forEach { region ->
-                FilterChip(
-                    selected = selectedRegion == region,
-                    onClick = { selectedRegion = region },
-                    label = { Text(region, fontSize = 9.sp) }
-                )
+        VpnProfileStore.regions.chunked(3).forEach { regionRow ->
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                regionRow.forEach { region ->
+                    val measuredLatency = vpn.regionLatencies[region]?.let { "$it ms" } ?: "— ms"
+                    FilterChip(
+                        selected = selectedRegion == region,
+                        onClick = { selectedRegion = region },
+                        label = {
+                            Text(
+                                (if (vpn.connected && vpn.region == region) "● " else "") +
+                                    "$region · $measuredLatency",
+                                fontSize = 9.sp
+                            )
+                        }
+                    )
+                }
             }
         }
         val selectedHasProfile = selectedRegion in available
@@ -146,8 +155,20 @@ fun SitulaVpnControls(context: Context) {
         }
 
         Text(
-            vpn.message,
+            if (vpn.connected) "Connected region: ${vpn.region ?: "Unknown"}"
+            else if (vpn.connecting) "Connecting to ${vpn.region ?: "region"}…"
+            else "Connected region: None",
             color = if (vpn.connected) Color(0xFF9DD6A6) else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 11.sp
+        )
+        Text(
+            if (vpn.connected) {
+                "Route latency: " + (vpn.latencyMs?.let { "$it ms" } ?: (vpn.latencyError ?: "Measuring…")) +
+                    " · HTTPS probe, updates every 30 seconds"
+            } else {
+                vpn.message
+            },
+            color = if (vpn.connected) Color(0xFFB8C0CC) else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp
         )
 
@@ -169,11 +190,11 @@ fun SitulaVpnControls(context: Context) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
                 Text("Automatic region rotation", fontSize = 12.sp)
-                Text("Rotate every 5 hours while Situla remains active. Requires all four profiles.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+                Text("Rotate every 5 hours while Situla remains active. Requires at least two working region profiles.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
             }
             Switch(
                 checked = autoRotate,
-                enabled = vpn.connected && available.size == VpnProfileStore.regions.size,
+                enabled = vpn.connected && available.size >= 2,
                 onCheckedChange = { enabled ->
                     autoRotate = enabled
                     VpnProfileStore.setAutoRotateEnabled(context, enabled)
@@ -186,10 +207,10 @@ fun SitulaVpnControls(context: Context) {
                 }
             )
         }
-        Text("Profiles imported: ${available.size}/4", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+        Text("Region profiles ready: ${available.size}/${VpnProfileStore.regions.size}", color = Color(0xFF9BA5B4), fontSize = 9.sp)
         message?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp) }
         Text(
-            "The VPN uses the provider's WireGuard endpoint and key. The app cannot create a working exit server or region IP without those profiles.",
+            "Latency is measured over the active VPN route. The app can show real region IPs only when a working provider gateway is provisioned.",
             color = Color(0xFFFFD28A), fontSize = 9.sp
         )
     }
