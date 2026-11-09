@@ -6,6 +6,12 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val braveAdblockAar = configurations.create("braveAdblockAar") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -29,13 +35,38 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
     packaging { resources { excludes += setOf("/META-INF/AL2.0", "/META-INF/LGPL2.1") } }
+    sourceSets.getByName("main") {
+        val braveAdblockOutput = layout.buildDirectory.dir("generated/braveAdblock")
+        jniLibs.srcDir(braveAdblockOutput.map { it.dir("jniLibs") })
+        assets.srcDir(braveAdblockOutput.map { it.dir("assets") })
+    }
 }
+val braveAdblockOutput = layout.buildDirectory.dir("generated/braveAdblock")
+val extractBraveAdblockAar = tasks.register<Copy>("extractBraveAdblockAar") {
+    from({ braveAdblockAar.files.map { zipTree(it) } }) {
+        include("jni/**/*.so")
+        eachFile { path = path.removePrefix("jni/") }
+        into(braveAdblockOutput.map { it.dir("jniLibs") })
+    }
+    from({ braveAdblockAar.files.map { zipTree(it) } }) {
+        include("assets/adblock/resources.json")
+        eachFile { path = path.removePrefix("assets/") }
+        into(braveAdblockOutput.map { it.dir("assets") })
+    }
+    includeEmptyDirs = false
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(extractBraveAdblockAar)
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 dependencies {
+    add(braveAdblockAar.name, "io.github.mlm-games:adblock:0.1.3@aar")
     val composeBom = platform("androidx.compose:compose-bom:2025.10.00")
     implementation(composeBom)
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -45,7 +76,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     implementation("androidx.lifecycle:lifecycle-process:2.9.4")
     implementation("com.wireguard.android:tunnel:1.0.20260102")
-    implementation("io.github.mlm-games:adblock:0.1.3")
+    // The AAR is resolved only as a file below to consume its JNI binaries/assets.
+    // Kotlin bridge sources are vendored under src/main/java so compileSdk 36 is supported.
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
