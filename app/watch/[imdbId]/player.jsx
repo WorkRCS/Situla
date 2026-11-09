@@ -160,6 +160,7 @@ export default function PlayerExperience({ imdbId }) {
           className="watch-frame"
           src={playerUrl}
           title={(movie?.title || "Situla movie") + (playerLanguage === "hi" ? " Hindi player" : " English player")}
+          sandbox={playerLanguage === "hi" ? "allow-scripts allow-same-origin allow-forms allow-presentation" : undefined}
           allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
