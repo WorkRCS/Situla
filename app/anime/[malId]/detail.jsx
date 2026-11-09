@@ -79,7 +79,7 @@ export default function AnimeSeriesExperience({ malId }) {
                   <button type="button" className={audio === "sub" ? "gold-button" : "ghost-button"} onClick={() => setAudio("sub")}>Japanese · Sub</button>
                   <button type="button" className={audio === "dub" ? "gold-button" : "ghost-button"} onClick={() => setAudio("dub")}>English · Dub</button>
                 </div>
-                <p className="mt-3 text-xs leading-5 text-[#858b9b]">VidLink uses this MyAnimeList ID and falls back to the other audio type if the selected version is unavailable.</p>
+                <p className="mt-3 text-xs leading-5 text-[#858b9b]">This title uses its MyAnimeList identifier and can switch audio versions when the selected version is unavailable.</p>
                 <button className="gold-button mt-5" disabled={!episode || Number(episode) < 1 || (anime.episodes && Number(episode) > anime.episodes)} onClick={playAnime}><Play size={16} fill="currentColor" strokeWidth={1.8} /> Play anime</button>
               </div>
             </section>
