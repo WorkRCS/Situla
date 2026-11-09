@@ -10,11 +10,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Situla"
-        android:usesCleartextTraffic="false">
-        <meta-data
-            android:name="com.workrcs.situla.API_BASE_URL"
-            android:value="${situlaApiBaseUrl}" />
-        <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize|screenLayout">
+        android:usesCleartextTraffic="false"
+        android:hardwareAccelerated="true">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
