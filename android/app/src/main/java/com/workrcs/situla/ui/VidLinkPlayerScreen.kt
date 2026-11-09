@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -98,7 +97,7 @@ fun VidLinkPlayerScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
                 WebView(viewContext).apply {
-                    tag = movie.imdbId
+                    tag = movie.imdbId + ":" + vidlinkId
                     setBackgroundColor(AndroidColor.BLACK)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -107,7 +106,7 @@ fun VidLinkPlayerScreen(
                     settings.userAgentString = settings.userAgentString.replace("; wv", "")
                     settings.loadsImagesAutomatically = true
                     settings.mediaPlaybackRequiresUserGesture = false
-                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                     settings.javaScriptCanOpenWindowsAutomatically = false
                     settings.setSupportMultipleWindows(false)
                     settings.allowFileAccess = false
@@ -186,9 +185,10 @@ fun VidLinkPlayerScreen(
                 }
             },
             update = { webView ->
+                val nextId = movie.imdbId + ":" + vidlinkId
                 val currentId = webView.tag as? String
-                if (currentId != movie.imdbId) {
-                    webView.tag = movie.imdbId
+                if (currentId != nextId) {
+                    webView.tag = nextId
                     webView.loadUrl(playerUrl)
                 }
             },
