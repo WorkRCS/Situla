@@ -9,6 +9,7 @@ export default function TvSeriesExperience({ tmdbId }) {
   const [seasonNumber, setSeasonNumber] = useState("");
   const [season, setSeason] = useState(null);
   const [episodeNumber, setEpisodeNumber] = useState("1");
+  const [resumeEpisode, setResumeEpisode] = useState("");
   const [loading, setLoading] = useState(true);
   const [seasonLoading, setSeasonLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,9 +21,21 @@ export default function TvSeriesExperience({ tmdbId }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "TV series not found.");
         setSeries(payload.item);
-        const first = (payload.item?.seasons || []).find((item) => item.seasonNumber > 0 && item.episodeCount > 0)
-          || (payload.item?.seasons || []).find((item) => item.episodeCount > 0);
-        if (first) setSeasonNumber(String(first.seasonNumber));
+        let progress = null;
+        try {
+          const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
+          progress = Array.isArray(saved) ? saved.find((item) => Number(item.tmdbId) === Number(tmdbId)) : null;
+        } catch {}
+        const seasons = payload.item?.seasons || [];
+        const resumedSeason = progress && seasons.find((item) => item.seasonNumber === Number(progress.season) && item.episodeCount > 0);
+        const first = seasons.find((item) => item.seasonNumber > 0 && item.episodeCount > 0)
+          || seasons.find((item) => item.episodeCount > 0);
+        if (resumedSeason) {
+          setSeasonNumber(String(resumedSeason.seasonNumber));
+          setResumeEpisode(String(progress.episode));
+        } else if (first) {
+          setSeasonNumber(String(first.seasonNumber));
+        }
       })
       .catch((requestError) => {
         if (!controller.signal.aborted) setError(requestError.message);
@@ -45,14 +58,16 @@ export default function TvSeriesExperience({ tmdbId }) {
       if (!response.ok) throw new Error(payload.error || "Season episodes unavailable.");
       setSeason(payload.item);
       const firstEpisode = payload.item?.episodes?.[0]?.episodeNumber || 1;
-      setEpisodeNumber(String(firstEpisode));
+      const resume = payload.item?.episodes?.find((item) => item.episodeNumber === Number(resumeEpisode));
+      setEpisodeNumber(String(resume?.episodeNumber || firstEpisode));
+      if (resume) setResumeEpisode("");
     }).catch((requestError) => {
       if (!controller.signal.aborted) setError(requestError.message);
     }).finally(() => {
       if (!controller.signal.aborted) setSeasonLoading(false);
     });
     return () => controller.abort();
-  }, [tmdbId, seasonNumber]);
+  }, [tmdbId, seasonNumber, resumeEpisode]);
 
   const episodes = season?.episodes || [];
   const selectedEpisode = episodes.find((item) => item.episodeNumber === Number(episodeNumber));
@@ -107,7 +122,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                 {seasonLoading && <p className="mt-3 text-xs text-[#9297a7]">Loading episode list…</p>}
                 {selectedEpisode && <p className="mt-3 text-xs leading-5 text-[#858b9b]">{selectedEpisode.overview}</p>}
                 {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
-                <button className="gold-button mt-5" disabled={!seasonNumber || !episodeNumber || seasonLoading} onClick={playEpisode}>▶ Play episode</button>
+                <button className="gold-button mt-5" disabled={!seasonNumber || !episodeNumber || seasonLoading} onClick={playEpisode}>{resumeEpisode ? "▶ Resume episode" : "▶ Play episode"}</button>
               </div>
             </section>
           </div>
