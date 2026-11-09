@@ -1,34 +1,51 @@
 package com.workrcs.situla.ui
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
 import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.os.SystemClock
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
+import android.webkit.SafeBrowsingResponse
+import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.workrcs.situla.data.Movie
 import com.workrcs.situla.data.SitulaDatabase
 import com.workrcs.situla.data.WatchHistoryDao
@@ -111,25 +128,74 @@ private fun htmlAttribute(value: String): String =
         .replace("<", "&lt;")
         .replace(">", "&gt;")
 
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
 @Composable
-fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
-    BackHandler(onBack = onBack)
+fun VidLinkPlayerScreen(
+    movie: Movie,
+    onBack: () -> Unit,
+    embedded: Boolean = false
+) {
     val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
     val dao = remember { SitulaDatabase.get(context.applicationContext).watchHistoryDao() }
+
+    var fullScreenView by remember { mutableStateOf<View?>(null) }
+    var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
+    var previousOrientation by remember { mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
+
+    val exitFullScreen = remember(activity) {
+        {
+            val view = fullScreenView
+            if (view != null) {
+                (view.parent as? ViewGroup)?.removeView(view)
+                fullScreenView = null
+                fullScreenCallback?.onCustomViewHidden()
+                fullScreenCallback = null
+                activity?.let { host ->
+                    host.requestedOrientation = previousOrientation
+                    WindowCompat.setDecorFitsSystemWindows(host.window, true)
+                    WindowInsetsControllerCompat(host.window, host.window.decorView)
+                        .show(WindowInsetsCompat.Type.systemBars())
+                }
+            }
+        }
+    }
+
+    BackHandler(enabled = !embedded, onBack = onBack)
+    BackHandler(enabled = fullScreenView != null, onBack = exitFullScreen)
+
+    DisposableEffect(activity) {
+        onDispose { exitFullScreen() }
+    }
+
     val protectionReady = produceState(initialValue = BraveAdblock.ready) {
         value = if (BraveAdblock.ready) true else
             com.workrcs.situla.security.AdblockFilterRepository.refreshAndInitialize(context.applicationContext)
     }
 
     if (!protectionReady.value) {
-        Column(Modifier.fillMaxSize().background(Color.Black).padding(20.dp)) {
-            Text("Situla protection is not ready. The player is paused so video loads are not sent without the ad/malware filter.")
-            Button(onClick = onBack, modifier = Modifier.padding(top = 14.dp)) {
-                Text("Back to movie details")
+        Column(
+            (if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f) else Modifier.fillMaxSize())
+                .background(Color.Black).padding(20.dp)
+        ) {
+            Text(
+                "Situla protection could not initialize. The player is blocked until the request filter is ready.",
+                color = Color.White
+            )
+            if (!embedded) {
+                Button(onClick = onBack, modifier = Modifier.padding(top = 14.dp)) {
+                    Text("Back to movie details")
+                }
             }
         }
         return
     }
+
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
     val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
     val progressBridge = remember(movie.tmdbId) {
@@ -145,8 +211,11 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
     }
 
     if (!historyLoaded.value) {
-        Column(Modifier.fillMaxSize().background(Color.Black).padding(20.dp)) {
-            Text("Preparing your resume position…")
+        Column(
+            (if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f) else Modifier.fillMaxSize())
+                .background(Color.Black).padding(20.dp)
+        ) {
+            Text("Preparing your resume position…", color = Color.White)
         }
         return
     }
@@ -220,11 +289,19 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
         """.trimIndent()
     }
 
-    Column(Modifier.fillMaxSize().background(Color.Black)) {
-        Button(onClick = onBack, modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-            Text("Back to movie details")
+    Column(
+        (if (embedded) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
+            .background(Color.Black)
+    ) {
+        if (!embedded) {
+            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                Text("Back to movie details")
+            }
         }
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+            else Modifier.weight(1f).fillMaxWidth()
+        ) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { viewContext ->
@@ -237,12 +314,62 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                         settings.setSupportMultipleWindows(false)
                         settings.allowFileAccess = false
                         settings.allowContentAccess = false
+                        settings.allowFileAccessFromFileURLs = false
+                        settings.allowUniversalAccessFromFileURLs = false
                         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                         settings.safeBrowsingEnabled = true
+                        settings.setGeolocationEnabled(false)
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
                         addJavascriptInterface(progressBridge, "SitulaProgress")
 
                         webChromeClient = object : WebChromeClient() {
+                            private fun showCustomView(view: View?, callback: CustomViewCallback?) {
+                                if (view == null || activity == null || fullScreenView != null) {
+                                    callback?.onCustomViewHidden()
+                                    return
+                                }
+                                val decor = activity.window.decorView as? ViewGroup
+                                if (decor == null) {
+                                    callback?.onCustomViewHidden()
+                                    return
+                                }
+
+                                previousOrientation = activity.requestedOrientation
+                                (view.parent as? ViewGroup)?.removeView(view)
+                                decor.addView(
+                                    view,
+                                    FrameLayout.LayoutParams(
+                                        ViewGroup.LayoutParams.MATCH_PARENT,
+                                        ViewGroup.LayoutParams.MATCH_PARENT
+                                    )
+                                )
+                                fullScreenView = view
+                                fullScreenCallback = callback
+                                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                WindowCompat.setDecorFitsSystemWindows(activity.window, false)
+                                WindowInsetsControllerCompat(activity.window, decor).apply {
+                                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                                    hide(WindowInsetsCompat.Type.systemBars())
+                                }
+                            }
+
+                            override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                                showCustomView(view, callback)
+                            }
+
+                            @Suppress("DEPRECATION")
+                            override fun onShowCustomView(
+                                view: View?,
+                                requestedOrientation: Int,
+                                callback: CustomViewCallback?
+                            ) {
+                                showCustomView(view, callback)
+                            }
+
+                            override fun onHideCustomView() {
+                                exitFullScreen()
+                            }
+
                             override fun onCreateWindow(
                                 view: WebView?,
                                 isDialog: Boolean,
@@ -301,16 +428,20 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                 val referer = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("referer", ignoreCase = true)
                                 }?.value ?: "https://vidlink.pro/"
-                                val cleanUrl = address.substringBefore("?")
+                                val cleanUrl = address.substringBefore("?").substringBefore("#")
                                 val fetchDestination = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("sec-fetch-dest", ignoreCase = true)
                                 }?.value?.lowercase()
+                                val accept = request.requestHeaders.entries.firstOrNull {
+                                    it.key.equals("accept", ignoreCase = true)
+                                }?.value.orEmpty().lowercase()
                                 val requestType = when {
                                     request.isForMainFrame -> "document"
                                     fetchDestination == "iframe" || fetchDestination == "frame" -> "subdocument"
                                     cleanUrl.endsWith(".js", true) -> "script"
                                     cleanUrl.endsWith(".css", true) -> "stylesheet"
-                                    cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm)$")) -> "media"
+                                    cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm|m4s|ts)$")) ||
+                                        accept.contains("video/") || accept.contains("audio/") -> "media"
                                     cleanUrl.matches(Regex("(?i).*\\.(png|jpg|jpeg|gif|webp|svg|avif)$")) -> "image"
                                     cleanUrl.matches(Regex("(?i).*\\.(woff2?|ttf|otf)$")) -> "font"
                                     else -> "other"
@@ -324,6 +455,28 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                 }
                                 return null
                             }
+
+                            override fun onReceivedSslError(
+                                view: WebView?,
+                                handler: SslErrorHandler?,
+                                error: android.net.http.SslError?
+                            ) {
+                                handler?.cancel()
+                            }
+
+                            override fun onSafeBrowsingHit(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                                threatType: Int,
+                                callback: SafeBrowsingResponse?
+                            ) {
+                                callback?.backToSafety(true)
+                            }
+
+                            override fun onRenderProcessGone(
+                                view: WebView?,
+                                detail: android.webkit.RenderProcessGoneDetail?
+                            ): Boolean = true
                         }
 
                         tag = playerUrl
@@ -337,6 +490,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                     }
                 },
                 onRelease = { webView ->
+                    exitFullScreen()
                     webView.stopLoading()
                     webView.removeJavascriptInterface("SitulaProgress")
                     webView.destroy()
