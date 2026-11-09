@@ -122,7 +122,7 @@ img { display: block; }
 .save-button.saved { color: #f1c978; background: rgba(85,59,18,.88); }
 .bottom-nav {
   position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
-  display: grid; grid-template-columns: repeat(6,minmax(0,1fr));
+  display: grid; grid-template-columns: repeat(7,minmax(0,1fr));
   padding: 9px 8px max(10px,env(safe-area-inset-bottom));
   background: rgba(12,14,21,.94); border-top: 1px solid var(--line);
   backdrop-filter: blur(20px);
@@ -607,4 +607,19 @@ body { overflow-x:clip; }
   .watch-screen { height:100dvh; min-height:100dvh; }
   .watch-frame { inset:0; height:100%; }
   .watch-topbar { top:0; padding-top:max(8px,env(safe-area-inset-top)); }
+}
+
+
+/* Seven dedicated catalog routes share a compact, stable navigation bar. */
+.bottom-nav { grid-template-columns:repeat(7,minmax(0,1fr)); }
+.bottom-nav .nav-button { text-decoration:none; padding-inline:2px; }
+.bottom-nav .nav-button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+@media (min-width:768px) {
+  .bottom-nav { width:min(760px,calc(100% - 40px)); }
+  .bottom-nav .nav-button { min-height:54px; }
+}
+@media (max-width:380px) {
+  .bottom-nav { padding-left:3px; padding-right:3px; }
+  .bottom-nav .nav-button { gap:3px; font-size:8px; }
+  .bottom-nav .nav-button i { font-size:17px !important; }
 }
