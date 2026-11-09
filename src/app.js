@@ -6,8 +6,9 @@ import { bodyLimit } from 'hono/body-limit';
 import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
-import { Movie, CrawlRun } from './models.js';
+import { Movie, CrawlRun, TvSeries, TvSeason, AnimeSeries } from './models.js';
 import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds } from './crawler.js';
+import { importTvSeriesIds, importAnimeIds, getTvSeason } from './series.js';
 
 const app = new Hono();
 const attempts = new Map();
@@ -261,6 +262,53 @@ export function movieDto(movie) {
   };
 }
 
+
+function tvSeriesDto(series) {
+  return {
+    id: String(series._id), tmdbId: series.tmdbId, imdbId: series.imdbId || null,
+    title: series.title, originalTitle: series.originalTitle, overview: series.overview,
+    posterUrl: imageUrl(series.posterPath), backdropUrl: imageUrl(series.backdropPath, 'w780'),
+    firstAirDate: series.firstAirDate, releaseYear: series.releaseYear,
+    voteAverage: series.voteAverage, voteCount: series.voteCount, popularity: series.popularity,
+    genres: series.genres, numberOfSeasons: series.numberOfSeasons,
+    numberOfEpisodes: series.numberOfEpisodes,
+    seasons: (series.seasons || []).map((season) => ({
+      seasonNumber: season.seasonNumber, name: season.name, airDate: season.airDate,
+      episodeCount: season.episodeCount, posterUrl: imageUrl(season.posterPath)
+    })),
+    status: series.status, certification: series.certification,
+    moderationStatus: series.moderationStatus
+  };
+}
+
+function tvSeasonDto(season) {
+  return {
+    seasonNumber: season.seasonNumber, name: season.name, overview: season.overview,
+    airDate: season.airDate, episodeCount: season.episodeCount,
+    posterUrl: imageUrl(season.posterPath),
+    episodes: (season.episodes || []).map((episode) => ({
+      episodeNumber: episode.episodeNumber, name: episode.name, overview: episode.overview,
+      airDate: episode.airDate, runtime: episode.runtime,
+      stillUrl: imageUrl(episode.stillPath, 'w342'), voteAverage: episode.voteAverage
+    }))
+  };
+}
+
+function animeSeriesDto(anime) {
+  return {
+    id: String(anime._id), malId: anime.malId,
+    malUrl: 'https://myanimelist.net/anime/' + anime.malId,
+    title: anime.title, titleEnglish: anime.titleEnglish, titleJapanese: anime.titleJapanese,
+    synopsis: anime.synopsis, posterUrl: anime.posterUrl, trailerUrl: anime.trailerUrl,
+    airedFrom: anime.airedFrom, releaseYear: anime.releaseYear,
+    episodes: anime.episodes, duration: anime.duration, score: anime.score,
+    scoredBy: anime.scoredBy, rank: anime.rank, popularity: anime.popularity,
+    status: anime.status, season: anime.season, type: anime.type, source: anime.source,
+    genres: anime.genres, themes: anime.themes, demographics: anime.demographics,
+    rating: anime.rating, moderationStatus: anime.moderationStatus
+  };
+}
+
 app.get('/api/health', async (c) => {
   const required = ['MONGODB_URI', 'MONGODB_DB_NAME', 'ADMIN_USERNAME', 'ADMIN_PASSWORD', 'SESSION_SECRET'];
   const missing = required.filter((name) => !process.env[name]);
@@ -424,6 +472,121 @@ app.post('/api/admin/import-ids', requireSameOrigin, requireAdmin, async (c) => 
   }
 });
 
+
+app.post('/api/admin/import-tv-series', requireSameOrigin, requireAdmin, async (c) => {
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  try {
+    return c.json({ result: await importTvSeriesIds(body) });
+  } catch (error) {
+    const invalid = /TMDB TV IDs|between 1 and 20/.test(error.message || '');
+    console.error('TV series import failed:', error.message);
+    return c.json({ error: error.message || 'TV series import failed.' }, invalid ? 400 : 502);
+  }
+});
+
+app.post('/api/admin/import-anime-series', requireSameOrigin, requireAdmin, async (c) => {
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  try {
+    return c.json({ result: await importAnimeIds(body) });
+  } catch (error) {
+    const invalid = /MyAnimeList IDs|between 1 and 12/.test(error.message || '');
+    console.error('Anime series import failed:', error.message);
+    return c.json({ error: error.message || 'Anime series import failed.' }, invalid ? 400 : 502);
+  }
+});
+
+app.get('/api/admin/tv-series', requireAdmin, async (c) => {
+  try {
+    await connectDatabase();
+    const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
+    const limit = Math.max(1, Math.min(50, Number(c.req.query('limit') || 20) || 20));
+    const status = c.req.query('status') || 'all';
+    const query = (c.req.query('q') || '').trim().slice(0, 80);
+    const filter = {};
+    if (['pending', 'approved', 'rejected'].includes(status)) filter.moderationStatus = status;
+    if (query) {
+      const safe = query.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&');
+      filter.$or = [{ title: new RegExp(safe, 'i') }, { originalTitle: new RegExp(safe, 'i') }];
+      if (/^\d+$/.test(query)) filter.$or.push({ tmdbId: Number(query) });
+    }
+    const [items, total] = await Promise.all([
+      TvSeries.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      TvSeries.countDocuments(filter)
+    ]);
+    return c.json({ items: items.map(tvSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Admin TV catalog read failed:', error.message);
+    return c.json({ error: 'Unable to load TV series catalog.' }, 503);
+  }
+});
+
+app.patch('/api/admin/tv-series/:id/review', requireSameOrigin, requireAdmin, async (c) => {
+  const id = c.req.param('id');
+  if (!/^[a-f\d]{24}$/i.test(id)) return c.json({ error: 'Invalid TV series record ID.' }, 400);
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  if (!['pending', 'approved', 'rejected'].includes(body.moderationStatus)) return c.json({ error: 'Choose pending, approved, or rejected.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await TvSeries.findByIdAndUpdate(id, {
+      moderationStatus: body.moderationStatus,
+      manualReviewNote: typeof body.manualReviewNote === 'string' ? body.manualReviewNote.slice(0, 1000) : ''
+    }, { new: true, runValidators: true }).lean();
+    if (!item) return c.json({ error: 'TV series not found.' }, 404);
+    return c.json({ item: tvSeriesDto(item) });
+  } catch (error) {
+    console.error('TV series review update failed:', error.message);
+    return c.json({ error: 'Unable to update TV series review.' }, 503);
+  }
+});
+
+app.get('/api/admin/anime-series', requireAdmin, async (c) => {
+  try {
+    await connectDatabase();
+    const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
+    const limit = Math.max(1, Math.min(50, Number(c.req.query('limit') || 20) || 20));
+    const status = c.req.query('status') || 'all';
+    const query = (c.req.query('q') || '').trim().slice(0, 80);
+    const filter = {};
+    if (['pending', 'approved', 'rejected'].includes(status)) filter.moderationStatus = status;
+    if (query) {
+      const safe = query.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&');
+      filter.$or = [{ title: new RegExp(safe, 'i') }, { titleEnglish: new RegExp(safe, 'i') }];
+      if (/^\d+$/.test(query)) filter.$or.push({ malId: Number(query) });
+    }
+    const [items, total] = await Promise.all([
+      AnimeSeries.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      AnimeSeries.countDocuments(filter)
+    ]);
+    return c.json({ items: items.map(animeSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Admin anime catalog read failed:', error.message);
+    return c.json({ error: 'Unable to load anime series catalog.' }, 503);
+  }
+});
+
+app.patch('/api/admin/anime-series/:id/review', requireSameOrigin, requireAdmin, async (c) => {
+  const id = c.req.param('id');
+  if (!/^[a-f\d]{24}$/i.test(id)) return c.json({ error: 'Invalid anime record ID.' }, 400);
+  let body;
+  try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
+  if (!['pending', 'approved', 'rejected'].includes(body.moderationStatus)) return c.json({ error: 'Choose pending, approved, or rejected.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await AnimeSeries.findByIdAndUpdate(id, {
+      moderationStatus: body.moderationStatus,
+      manualReviewNote: typeof body.manualReviewNote === 'string' ? body.manualReviewNote.slice(0, 1000) : ''
+    }, { new: true, runValidators: true }).lean();
+    if (!item) return c.json({ error: 'Anime series not found.' }, 404);
+    return c.json({ item: animeSeriesDto(item) });
+  } catch (error) {
+    console.error('Anime series review update failed:', error.message);
+    return c.json({ error: 'Unable to update anime series review.' }, 503);
+  }
+});
+
 app.post('/api/admin/crawl', requireSameOrigin, requireAdmin, async (c) => {
   let body;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON body.' }, 400); }
@@ -486,6 +649,105 @@ app.get('/api/movies/:imdbId', async (c) => {
   } catch (error) {
     console.error('Public IMDb movie detail failed:', error.message);
     return c.json({ error: 'Movie detail is temporarily unavailable.' }, 503);
+  }
+});
+
+
+app.get('/api/tv', async (c) => {
+  try {
+    await connectDatabase();
+    const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
+    const limit = Math.max(1, Math.min(40, Number(c.req.query('limit') || 20) || 20));
+    const query = (c.req.query('q') || '').trim().slice(0, 80);
+    const filter = { moderationStatus: 'approved', adult: false, originalLanguage: 'en' };
+    if (query) {
+      if (/^\d+$/.test(query)) filter.tmdbId = Number(query);
+      else filter.$text = { $search: query };
+    }
+    const sort = query && !/^\d+$/.test(query)
+      ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
+      : { popularity: -1, firstAirDate: -1 };
+    const [items, total] = await Promise.all([
+      TvSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      TvSeries.countDocuments(filter)
+    ]);
+    return c.json({ items: items.map(tvSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Public TV series list failed:', error.message);
+    return c.json({ error: 'TV series catalog is temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/tv/:tmdbId/seasons/:seasonNumber', async (c) => {
+  const tmdbId = Number(c.req.param('tmdbId'));
+  const seasonNumber = Number(c.req.param('seasonNumber'));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0 || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) {
+    return c.json({ error: 'Invalid TV series or season ID.' }, 400);
+  }
+  try {
+    await connectDatabase();
+    const series = await TvSeries.findOne({ tmdbId, moderationStatus: 'approved', adult: false }).select('tmdbId').lean();
+    if (!series) return c.json({ error: 'TV series not found.' }, 404);
+    const season = await getTvSeason(tmdbId, seasonNumber);
+    return c.json({ item: tvSeasonDto(season) });
+  } catch (error) {
+    console.error('TV season read failed:', error.message);
+    return c.json({ error: 'TV season episodes are temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/tv/:tmdbId', async (c) => {
+  const tmdbId = Number(c.req.param('tmdbId'));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return c.json({ error: 'Invalid TMDB TV ID.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await TvSeries.findOne({
+      tmdbId, moderationStatus: 'approved', adult: false, originalLanguage: 'en'
+    }).lean();
+    if (!item) return c.json({ error: 'TV series not found.' }, 404);
+    return c.json({ item: tvSeriesDto(item) });
+  } catch (error) {
+    console.error('TV series detail read failed:', error.message);
+    return c.json({ error: 'TV series detail is temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/anime', async (c) => {
+  try {
+    await connectDatabase();
+    const page = Math.max(1, Math.min(100000, Number(c.req.query('page') || 1) || 1));
+    const limit = Math.max(1, Math.min(40, Number(c.req.query('limit') || 20) || 20));
+    const query = (c.req.query('q') || '').trim().slice(0, 80);
+    const filter = { moderationStatus: 'approved', type: { $in: ['TV', 'ONA'] } };
+    if (query) {
+      if (/^\d+$/.test(query)) filter.malId = Number(query);
+      else filter.$text = { $search: query };
+    }
+    const sort = query && !/^\d+$/.test(query)
+      ? { score: { $meta: 'textScore' }, rank: 1, popularity: 1 }
+      : { rank: 1, score: -1, popularity: 1 };
+    const [items, total] = await Promise.all([
+      AnimeSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      AnimeSeries.countDocuments(filter)
+    ]);
+    return c.json({ items: items.map(animeSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Public anime series list failed:', error.message);
+    return c.json({ error: 'Anime series catalog is temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/anime/:malId', async (c) => {
+  const malId = Number(c.req.param('malId'));
+  if (!Number.isSafeInteger(malId) || malId <= 0) return c.json({ error: 'Invalid MyAnimeList ID.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await AnimeSeries.findOne({ malId, moderationStatus: 'approved', type: { $in: ['TV', 'ONA'] } }).lean();
+    if (!item) return c.json({ error: 'Anime series not found.' }, 404);
+    return c.json({ item: animeSeriesDto(item) });
+  } catch (error) {
+    console.error('Anime series detail read failed:', error.message);
+    return c.json({ error: 'Anime series detail is temporarily unavailable.' }, 503);
   }
 });
 
