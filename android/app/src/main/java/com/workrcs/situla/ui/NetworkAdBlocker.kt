@@ -123,6 +123,10 @@ object NetworkAdBlocker {
         if (!initializationStarted.compareAndSet(false, true)) return
 
         val appContext = context.applicationContext
+        // Install the small built-in rule set before WebView starts loading pages,
+        // so the first requests do not race the asynchronous filter-list download.
+        if (activeEngine == null) installEngine(appContext, fallbackRules)
+
         initializationExecutor.execute {
             try {
                 initializeOnWorker(appContext)
@@ -139,7 +143,12 @@ object NetworkAdBlocker {
             cacheFile.takeIf { it.isFile && it.length() in 1..(32L * 1024L * 1024L) }?.readText()
         }.getOrNull()
 
-        installEngine(context, cachedRules?.takeIf { it.length > 1_000 } ?: fallbackRules)
+        val initialRules = cachedRules?.takeIf { it.length > 1_000 }
+        if (initialRules != null) {
+            installEngine(context, initialRules)
+        } else if (activeEngine == null) {
+            installEngine(context, fallbackRules)
+        }
 
         val cacheIsFresh = cacheFile.isFile &&
             System.currentTimeMillis() - cacheFile.lastModified() < FILTER_REFRESH_INTERVAL_MS
