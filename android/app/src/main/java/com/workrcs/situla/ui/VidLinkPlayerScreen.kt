@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
@@ -136,13 +135,20 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
     val progressBridge = remember(movie.tmdbId) {
         VidLinkProgressBridge(movie, dao, 0L, progressToken)
     }
-
-    LaunchedEffect(movie.tmdbId) {
+    val historyLoaded = produceState(initialValue = false, movie.tmdbId) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
         if (saved != null && !saved.completed) {
             resumePositionMs.longValue = saved.positionMs.coerceAtLeast(0L)
             progressBridge.resetResumePosition(saved.positionMs, saved.watchedMs)
         }
+        value = true
+    }
+
+    if (!historyLoaded.value) {
+        Column(Modifier.fillMaxSize().background(Color.Black).padding(20.dp)) {
+            Text("Preparing your resume position…")
+        }
+        return
     }
 
     val playerUrl = remember(movie.tmdbId, resumePositionMs.longValue) {
