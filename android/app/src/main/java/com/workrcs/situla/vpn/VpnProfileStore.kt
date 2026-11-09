@@ -5,6 +5,22 @@ import java.io.File
 
 object VpnProfileStore {
     val regions = listOf("Malaysia", "Singapore", "Japan", "Germany")
+    private const val PREFERENCES = "situla_vpn_preferences"
+
+    fun autoConnectRegion(context: Context): String? =
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .getString("auto_connect_region", null)
+            ?.takeIf { it in regions }
+
+    fun setAutoConnectRegion(context: Context, region: String?) {
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit().apply {
+            if (region == null) remove("auto_connect_region")
+            else {
+                require(region in regions)
+                putString("auto_connect_region", region)
+            }
+        }.apply()
+    }
 
     private fun profileFile(context: Context, region: String): File {
         require(region in regions) { "Unknown VPN region." }
