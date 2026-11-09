@@ -269,8 +269,9 @@ fun VidLinkPlayerScreen(
           <iframe id="situla-vidlink-player"
                   src="${htmlAttribute(playerUrl)}"
                   title="VidLink movie player"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock allow-popups"
+                  width="100%" height="100%"
+                  frameborder="0"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                   allowfullscreen
                   webkitallowfullscreen></iframe>
           <script>
