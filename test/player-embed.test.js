@@ -62,7 +62,11 @@ test('both Movie providers use Situla gold controls without a mute override', ()
     assert.equal(url.searchParams.get('mute'), null);
   }
   assert.equal(english.pathname, '/movie/tt0133093');
-  assert.equal(hindi.searchParams.get('id'), 'tt0133093');
+  assert.equal(hindi.pathname, '/play/tt0133093');
+  assert.equal(hindi.searchParams.get('id'), null);
+  assert.equal(hindi.searchParams.get('muted'), null);
+  assert.equal(hindi.searchParams.get('mute'), null);
+  assert.equal(hindi.searchParams.get('audio'), null);
 });
 
 test('Android WireGuard restores full-tunnel routing and AdGuard DNS for imported region profiles', async () => {
