@@ -2,22 +2,29 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Home, Search, Bookmark, Settings, Play, Check, Star, ArrowRight,
-  Clapperboard, Download, ExternalLink, Sparkles, X, CircleHelp,
-  Sun, Moon, Monitor, Trash2
-} from "lucide-react";
-
-const ICONS = {
-  home: Home, search: Search, saved: Bookmark, settings: Settings, play: Play,
-  bookmark: Bookmark, check: Check, star: Star, arrow: ArrowRight,
-  film: Clapperboard, download: Download, external: ExternalLink,
-  spark: Sparkles, close: X
+const BOOTSTRAP_ICONS = {
+  home: "house-door-fill",
+  search: "search",
+  saved: "bookmark",
+  settings: "gear",
+  play: "play-fill",
+  bookmark: "bookmark",
+  check: "check-lg",
+  star: "star-fill",
+  arrow: "arrow-right",
+  film: "film",
+  download: "download",
+  external: "box-arrow-up-right",
+  spark: "stars",
+  close: "x-lg"
 };
 
+function BootstrapIcon({ icon, size = 19, className, ...props }) {
+  return <i className={("bi bi-" + icon + (className ? " " + className : "")).trim()} style={{ fontSize: size }} aria-hidden="true" {...props} />;
+}
+
 function Icon({ name, size = 19, className }) {
-  const LucideIcon = ICONS[name] || CircleHelp;
-  return <LucideIcon size={size} strokeWidth={1.9} fill={name === "star" ? "currentColor" : "none"} aria-hidden="true" className={className} />;
+  return <BootstrapIcon icon={BOOTSTRAP_ICONS[name] || "question-circle"} size={size} className={className} />;
 }
 
 function formatClock(totalSeconds) {
@@ -537,9 +544,9 @@ export default function SitulaApp() {
           </div>
           <div className="header-search-wrap">
             <label className="header-search search-box" aria-label="Search catalog">
-              <Search size={18} strokeWidth={1.9} aria-hidden="true" />
+              <BootstrapIcon icon="search" size={18} />
               <input value={query} onFocus={() => { setTab("search"); setSearchOpen(true); }} onChange={(event) => { setTab("search"); setQuery(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter") { setTab("search"); setSearchOpen(false); } if (event.key === "Escape") setSearchOpen(false); }} placeholder="Search by movie title…" aria-label="Search movie titles" />
-              {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><X size={16} /></button>}
+              {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
             </label>
             {searchOpen && query.trim().length >= 2 && (
               <div className="suggestion-panel" role="listbox" aria-label="Matching movie titles">
@@ -547,9 +554,9 @@ export default function SitulaApp() {
                   <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
                 ) : suggestions.length ? suggestions.map((movie) => (
                   <button key={movie.imdbId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openMovie(movie)}>
-                    {movie.posterUrl ? <img src={movie.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><Clapperboard size={17} /></div>}
+                    {movie.posterUrl ? <img src={movie.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
                     <span className="suggestion-title"><strong>{movie.title}</strong><small>{movie.releaseYear || "Movie"} · {movie.originalTitle && movie.originalTitle !== movie.title ? movie.originalTitle : "Play movie"}</small></span>
-                    <Play size={16} />
+                    <BootstrapIcon icon="play-fill" size={16} />
                   </button>
                 )) : <div className="suggestion-empty">No matching movie titles found.</div>}
               </div>
@@ -557,12 +564,12 @@ export default function SitulaApp() {
           </div>
           <div className="theme-switcher">
             <button type="button" className="theme-trigger watch-control" onClick={() => setThemeMenuOpen((open) => !open)} aria-label="Choose appearance" aria-expanded={themeMenuOpen} title="Appearance">
-              {themeMode === "dark" ? <Moon size={19} /> : themeMode === "light" ? <Sun size={19} /> : <Monitor size={19} />}
+              {themeMode === "dark" ? <BootstrapIcon icon="moon" size={19} /> : themeMode === "light" ? <BootstrapIcon icon="sun" size={19} /> : <BootstrapIcon icon="display" size={19} />}
             </button>
             {themeMenuOpen && <div className="theme-menu" role="group" aria-label="Choose theme">
-              <button type="button" className={themeMode === "system" ? "selected" : ""} onClick={() => { setThemeMode("system"); setThemeMenuOpen(false); }}><Monitor size={16} /> System</button>
-              <button type="button" className={themeMode === "light" ? "selected" : ""} onClick={() => { setThemeMode("light"); setThemeMenuOpen(false); }}><Sun size={16} /> Light</button>
-              <button type="button" className={themeMode === "dark" ? "selected" : ""} onClick={() => { setThemeMode("dark"); setThemeMenuOpen(false); }}><Moon size={16} /> Dark</button>
+              <button type="button" className={themeMode === "system" ? "selected" : ""} onClick={() => { setThemeMode("system"); setThemeMenuOpen(false); }}><BootstrapIcon icon="display" size={16} /> System</button>
+              <button type="button" className={themeMode === "light" ? "selected" : ""} onClick={() => { setThemeMode("light"); setThemeMenuOpen(false); }}><BootstrapIcon icon="sun" size={16} /> Light</button>
+              <button type="button" className={themeMode === "dark" ? "selected" : ""} onClick={() => { setThemeMode("dark"); setThemeMenuOpen(false); }}><BootstrapIcon icon="moon" size={16} /> Dark</button>
             </div>}
           </div>
         </div>
@@ -633,7 +640,7 @@ export default function SitulaApp() {
             )}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
-            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <ArrowRight size={16} /></button></div>}
+            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
             {moviesTotal > 0 && <p className="mt-3 text-center text-xs text-[#858b9b]">Showing {movies.length} of {moviesTotal} movies</p>}
           </>
         )}
@@ -656,7 +663,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with IMDb IDs to the database.</p></div>
             )}
-            {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <ArrowRight size={16} /></button></div>}
+            {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </section>
         )}
 
@@ -677,7 +684,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Add curated anime records to the database.</p></div>
             )}
-            {hasMoreAnime && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more anime"} <ArrowRight size={16} /></button></div>}
+            {hasMoreAnime && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more anime"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </section>
         )}
 
@@ -698,7 +705,7 @@ export default function SitulaApp() {
             ) : (
               <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No movies found" : "Search the catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Type a movie title, keyword or year above."}</p></div>
             )}
-            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more results"} <ArrowRight size={16} /></button></div>}
+            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more results"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </section>
         )}
 
@@ -722,19 +729,19 @@ export default function SitulaApp() {
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div><h2 className="font-bold">Watch history</h2><p className="mt-1 text-xs text-[#9297a7]">Saved only on this device · {sortedHistory.length} entries</p></div>
-                  {sortedHistory.length > 0 && <button type="button" className="history-clear" onClick={clearWatchHistory}><Trash2 size={15} /> Clear all</button>}
+                  {sortedHistory.length > 0 && <button type="button" className="history-clear" onClick={clearWatchHistory}><BootstrapIcon icon="trash3" size={15} /> Clear all</button>}
                 </div>
                 {sortedHistory.length ? (
                   <div className="mt-4 space-y-2">
                     {sortedHistory.map((item) => (
                       <div key={item.key} className="history-row">
-                        {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><Clapperboard size={18} /></div>}
+                        {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
                           <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
                           <p className="mt-1 text-xs text-[#9297a7]">{formatClock(item.watched)} / {formatClock(item.duration)}</p>
                         </div>
-                        <button type="button" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><X size={16} /></button>
+                        <button type="button" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><BootstrapIcon icon="x-lg" size={16} /></button>
                       </div>
                     ))}
                   </div>
