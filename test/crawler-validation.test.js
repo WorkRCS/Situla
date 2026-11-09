@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeInput, normalizeImportIds, describeTmdbNetworkError, tmdbRequest, importPopularMovies } from '../src/crawler.js';
-import { normalizeNumericIds } from '../src/series.js';
+import { normalizeNumericIds, normalizePopularSeriesOptions, importPopularTvSeries, importPopularAnimeSeries } from '../src/series.js';
 
 test('uses the requested release years and safe page defaults', () => {
   const result = normalizeInput({ startYear: 2010, endYear: 2026 });
@@ -78,4 +78,19 @@ test('popular movie seeding validates its target before opening the database', a
   await assert.rejects(() => importPopularMovies({ targetCount: 0 }), /targetCount must be/);
   await assert.rejects(() => importPopularMovies({ targetCount: 201 }), /targetCount must be/);
   await assert.rejects(() => importPopularMovies({ maxPages: 0 }), /maxPages must be/);
+});
+
+
+test('popular TV and anime discovery share safe target and page limits', async () => {
+  assert.deepEqual(normalizePopularSeriesOptions({}), { targetCount: 50, maxPages: 20 });
+  assert.deepEqual(normalizePopularSeriesOptions({ targetCount: 40, maxPages: 10 }), { targetCount: 40, maxPages: 10 });
+  assert.throws(() => normalizePopularSeriesOptions({ targetCount: 0 }), /targetCount must be/);
+  assert.throws(() => normalizePopularSeriesOptions({ targetCount: 201 }), /targetCount must be/);
+  assert.throws(() => normalizePopularSeriesOptions({ maxPages: 0 }), /maxPages must be/);
+  assert.throws(() => normalizePopularSeriesOptions({ maxPages: 51 }), /maxPages must be/);
+});
+
+test('popular TV and anime seeders validate before opening the database', async () => {
+  await assert.rejects(() => importPopularTvSeries({ targetCount: 0 }), /targetCount must be/);
+  await assert.rejects(() => importPopularAnimeSeries({ targetCount: 201 }), /targetCount must be/);
 });
