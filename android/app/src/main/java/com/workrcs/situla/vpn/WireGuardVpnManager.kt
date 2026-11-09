@@ -62,11 +62,7 @@ object WireGuardVpnManager {
             }
 
             mutableState.value = SitulaVpnState(connecting = true, region = region, message = "Connecting to $region…")
-            val currentBackend = backend ?: GoBackend(context.applicationContext).also { backend = it }
-            activeTunnel?.let { old ->
-                runCatching { currentBackend.setState(old, Tunnel.State.DOWN, null) }
-            }
-
+            val previousTunnel = activeTunnel
             val tunnel = SitulaTunnel("situla-${region.lowercase()}") { newState ->
                 when (newState) {
                     Tunnel.State.UP -> mutableState.value = SitulaVpnState(
@@ -82,10 +78,11 @@ object WireGuardVpnManager {
                     )
                 }
             }
-            activeTunnel = tunnel
             try {
+                val currentBackend = backend ?: GoBackend(context.applicationContext).also { backend = it }
                 val state = currentBackend.setState(tunnel, Tunnel.State.UP, config)
                 if (state != Tunnel.State.UP) error("WireGuard did not reach the UP state.")
+                activeTunnel = tunnel
                 mutableState.value = SitulaVpnState(
                     connected = true,
                     region = region,
@@ -93,8 +90,17 @@ object WireGuardVpnManager {
                 )
                 "Connected to $region. Verify the peer handshake and public IP before relying on the tunnel."
             } catch (error: Exception) {
-                activeTunnel = null
-                mutableState.value = SitulaVpnState(message = "VPN connection failed: ${error.message ?: "unknown error"}")
+                activeTunnel = previousTunnel
+                val oldRegion = previousTunnel?.getName()?.removePrefix("situla-")?.replaceFirstChar { it.uppercase() }
+                mutableState.value = if (previousTunnel == null) {
+                    SitulaVpnState(message = "VPN connection failed: " + (error.message ?: "unknown error"))
+                } else {
+                    SitulaVpnState(
+                        connected = true,
+                        region = oldRegion,
+                        message = "Could not connect to " + region + "; previous VPN tunnel restored: " + (error.message ?: "connection failed")
+                    )
+                }
                 throw error
             }
         }
