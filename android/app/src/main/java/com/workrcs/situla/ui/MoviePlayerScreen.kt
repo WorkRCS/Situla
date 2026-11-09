@@ -10,5 +10,5 @@ import com.workrcs.situla.data.Movie
  */
 @Composable
 fun MoviePlayerScreen(movie: Movie, onBack: () -> Unit) {
-    VidLinkPlayerScreen(movie = movie, onBack = onBack, embedded = false)
+    VidSrcPlayerScreen(movie = movie, onBack = onBack, embedded = false)
 }
