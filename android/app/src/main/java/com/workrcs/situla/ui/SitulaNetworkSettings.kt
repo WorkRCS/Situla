@@ -44,6 +44,9 @@ fun SitulaVpnControls(context: Context) {
     val vpn by WireGuardVpnManager.state.collectAsState()
     val scope = rememberCoroutineScope()
     var selectedRegion by remember { mutableStateOf(VpnProfileStore.regions.first()) }
+    var autoConnectRegion by remember(selectedRegion) {
+        mutableStateOf(VpnProfileStore.autoConnectRegion(context) == selectedRegion)
+    }
     var available by remember { mutableStateOf(VpnProfileStore.availableRegions(context)) }
     var autoRotate by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -147,6 +150,21 @@ fun SitulaVpnControls(context: Context) {
             color = if (vpn.connected) Color(0xFF9DD6A6) else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp
         )
+
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text("Auto-connect on app launch", fontSize = 12.sp)
+                Text("Connect automatically to $selectedRegion after Android permission is granted.", color = Color(0xFF9BA5B4), fontSize = 9.sp)
+            }
+            Switch(
+                checked = autoConnectRegion,
+                enabled = selectedHasProfile,
+                onCheckedChange = { enabled ->
+                    autoConnectRegion = enabled
+                    VpnProfileStore.setAutoConnectRegion(context, if (enabled) selectedRegion else null)
+                }
+            )
+        }
 
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
