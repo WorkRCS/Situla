@@ -61,13 +61,13 @@ fun MovieDetailScreen(movie: Movie, onBack: () -> Unit, onPlay: () -> Unit) {
             Text(movie.genres.joinToString("  ·  "), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
         }
         item {
-            Button(onClick = onPlay, enabled = !movie.playbackUrl.isNullOrBlank(), modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = onPlay, enabled = movie.tmdbId > 0, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Text(" Play movie")
             }
             if (movie.playbackUrl.isNullOrBlank()) {
                 Text(
-                    "A licensed playback source has not been configured for this title yet. Movie metadata is ready; the player will activate when a direct HTTPS stream URL is connected.",
+                    "Playing through VidLink using this movie's TMDB ID. Availability depends on the provider.",
                     color = Color(0xFFFFB1C0), fontSize = 11.sp, modifier = Modifier.padding(top = 8.dp)
                 )
             }
