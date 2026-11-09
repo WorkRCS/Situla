@@ -46,14 +46,10 @@ sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "emulato
 $env:ANDROID_NDK_HOME = "$env:ANDROID_HOME\ndk\27.2.12479018"
 $env:ANDROID_NDK_ROOT = $env:ANDROID_NDK_HOME
 
-# Rust compiler + emulator target + cargo-ndk (Brave adblock-rust)
+# Rust compiler (Gradle installs cargo-ndk and any missing ABI targets automatically)
 rustup toolchain install stable
 rustup default stable
-rustup target add x86_64-linux-android
-cargo install cargo-ndk --locked
-
-# To build for physical ARM phones as well, install these extra targets:
-# rustup target add aarch64-linux-android armv7-linux-androideabi
+# No manual `cargo install cargo-ndk` or `rustup target add` is needed for the default emulator build.
 
 # Create an emulator once (skip if you already have an AVD)
 avdmanager create avd -n Situla_API_36 -k "system-images;android-36;google_apis;x86_64" -d pixel_7
@@ -80,7 +76,7 @@ The debug APK output is:
 
 `android/app/build/outputs/apk/debug/app-debug.apk`
 
-Use Android Studio's normal Run button after syncing Gradle; the commands above are only for diagnostics. The default Debug build compiles only the x86_64 Rust library used by the standard Windows Emulator, which avoids compiling unused ARM variants on every first emulator build. For a physical ARM device, build with `-PsitulaAndroidAbis=arm64-v8a,armeabi-v7a,x86_64`. The repository has Gradle wrapper properties but does not include generated `gradlew` scripts or `gradle-wrapper.jar`; use the installed `gradle` command shown above.
+Use Android Studio's normal Run button after syncing Gradle; the Gradle task automatically adds the Cargo bin folder to its PATH, installs `cargo-ndk` if that subcommand is missing, and installs the Rust Android target(s) needed for the selected ABI. This fixes Android Studio launches where `cargo` is available but `cargo ndk` is not. The default Debug build compiles only the x86_64 Rust library used by the standard Windows Emulator, which avoids compiling unused ARM variants on every first emulator build. For a physical ARM device, build with `-PsitulaAndroidAbis=arm64-v8a,armeabi-v7a,x86_64`. The repository has Gradle wrapper properties but does not include generated `gradlew` scripts or `gradle-wrapper.jar`; use the installed `gradle` command shown above.
 
 ## First-run configuration inside Situla
 
