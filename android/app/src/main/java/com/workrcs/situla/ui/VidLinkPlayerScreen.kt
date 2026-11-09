@@ -152,6 +152,11 @@ private fun isVidLinkHost(uri: Uri): Boolean {
     return host == "vidlink.pro" || host.endsWith(".vidlink.pro")
 }
 
+private fun isVidLinkPlayerDocument(uri: Uri): Boolean {
+    if (!isVidLinkHost(uri)) return false
+    return uri.path.orEmpty().matches(Regex("^/(movie|tv)/\\d+(?:/.*)?$"))
+}
+
 private fun htmlAttribute(value: String): String =
     value.replace("&", "&amp;")
         .replace("\"", "&quot;")
@@ -212,20 +217,15 @@ fun VidLinkPlayerScreen(
         }
     }
     val enableBraveAfterPlay: () -> Unit = {
+        // VidLink obtains its playback manifest/source through provider APIs that may
+        // look like generic fetch/XHR requests to WebView. Do not run a broad
+        // adblock-rust decision over those requests: it can stop playback after Play.
+        // Keep the engine initialized, but leave this player WebView's network path
+        // untouched until a provider-safe, media-aware filter is implemented.
         playEventReceived.set(true)
-        if (BraveAdblock.ready) {
-            if (braveFilterActive.compareAndSet(false, true)) {
-                mainThreadHandler.post {
-                    braveUiActive = true
-                    playerStatus = "VidLink play event received · Brave filtering is now ON"
-                    playerDetail = "Filtering subsequent iframe, script, tracker and ad requests. Existing requests already started are not retroactively cancelled."
-                }
-            }
-        } else {
-            mainThreadHandler.post {
-                playerStatus = "Play detected · waiting for Brave filter engine to finish initializing"
-                playerDetail = BraveAdblock.lastError ?: "Filter engine is still preparing. Playback is not blocked while it initializes."
-            }
+        mainThreadHandler.post {
+            playerStatus = "VidLink Play event received · playback requests are allowed"
+            playerDetail = "Brave engine is ready, but request interception is kept off inside this player so provider APIs and video sources are not blocked."
         }
     }
     val filterInitialization = produceState(initialValue = BraveAdblock.ready) {
@@ -661,8 +661,7 @@ fun VidLinkPlayerScreen(
                                 val destination = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("sec-fetch-dest", ignoreCase = true)
                                 }?.value?.lowercase()
-                                val importantRequest = request.isForMainFrame || isVidLinkHost(uri) ||
-                                    destination in listOf("document", "iframe", "video", "audio")
+                                val importantRequest = request.isForMainFrame || isVidLinkPlayerDocument(uri)
                                 if (code >= 400 && importantRequest) {
                                     iframeLoaded = false
                                     playerError = "Player network request returned HTTP $code for ${uri.host ?: "unknown host"}/${uri.lastPathSegment ?: "resource"}."
@@ -680,8 +679,7 @@ fun VidLinkPlayerScreen(
                                 val destination = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("sec-fetch-dest", ignoreCase = true)
                                 }?.value?.lowercase()
-                                val importantRequest = request.isForMainFrame || isVidLinkHost(uri) ||
-                                    destination in listOf("document", "iframe", "video", "audio")
+                                val importantRequest = request.isForMainFrame || isVidLinkPlayerDocument(uri)
                                 if (importantRequest) {
                                     val description = error?.description?.toString() ?: "Network error"
                                     iframeLoaded = false
@@ -745,39 +743,6 @@ fun VidLinkPlayerScreen(
                     webView.destroy()
                 }
             )
-            if (playerError != null || !iframeLoaded) {
-                Column(
-                    Modifier.align(Alignment.Center)
-                        .fillMaxWidth()
-                        .background(Color(0xDD10141D))
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(movie.title, color = Color.White, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-                    Text(
-                        if (playerError == null) "Situla player frame is ready · Connecting to VidLink…" else "VidLink could not load the remote player",
-                        color = if (playerError == null) Color(0xFFD7E0EA) else Color(0xFFFFB1C0),
-                        modifier = Modifier.padding(top = 6.dp)
-                    )
-                    Text(
-                        "TMDB ID: ${movie.tmdbId} · Status: $playerStatus",
-                        color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 5.dp)
-                    )
-                    if (playerError != null) {
-                        Text(playerError.orEmpty(), color = Color(0xFFFFC9A3), modifier = Modifier.padding(top = 6.dp))
-                        Button(
-                            onClick = {
-                                iframeLoaded = false
-                                playerError = null
-                                playerStatus = "Retrying embedded VidLink iframe…"
-                                playerDetail = playerUrl
-                                playerWebViewHolder[0]?.reload()
-                            },
-                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
-                        ) { Text("Retry VidLink") }
-                    }
-                }
-            }
             playerError?.let { message ->
                 Column(
                     Modifier.align(Alignment.Center)
@@ -812,7 +777,7 @@ fun VidLinkPlayerScreen(
                 color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp)
             )
             Text(
-                "Brave request filter: ${if (braveUiActive) "ACTIVE (after Play)" else "STANDBY (player preload allowed)"}",
+                "Brave request filter: ${if (braveUiActive) "ACTIVE" else "STANDBY (VidLink playback traffic allowed)"}",
                 color = if (braveUiActive) Color(0xFF9FE3B0) else Color(0xFFB8C3D1),
                 modifier = Modifier.padding(top = 3.dp)
             )
