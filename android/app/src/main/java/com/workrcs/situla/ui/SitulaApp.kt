@@ -87,7 +87,9 @@ fun SitulaApp(context: Context) {
     var query by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val history by database.watchHistoryDao().observeRecent().collectAsState(initial = emptyList())
+    val historyDao = database.watchHistoryDao()
+    val history by historyDao.observeRecent().collectAsState(initial = emptyList())
+    val continueWatching by historyDao.observeContinueWatching().collectAsState(initial = emptyList())
 
     suspend fun loadMovies() {
         if (api == null) {
@@ -147,7 +149,7 @@ fun SitulaApp(context: Context) {
                     }
                     when (tab) {
                         Tab.HOME -> HomeScreen(
-                            movies, loading, error, history,
+                            movies, loading, error, continueWatching,
                             onRetry = { scope.launch { loadMovies() } },
                             onOpenMovie = { selectedMovie = it }
                         )
@@ -180,7 +182,7 @@ private fun HomeScreen(
     movies: List<Movie>,
     loading: Boolean,
     error: String?,
-    history: List<WatchHistoryEntity>,
+    continueWatching: List<WatchHistoryEntity>,
     onRetry: () -> Unit,
     onOpenMovie: (Movie) -> Unit
 ) {
@@ -190,12 +192,12 @@ private fun HomeScreen(
             else EmptyCatalog(loading, error, onRetry)
         }
         item {
-            SectionTitle("Continue watching", if (history.isNotEmpty()) "ON THIS DEVICE" else null)
-            if (history.isEmpty()) {
+            SectionTitle("Continue watching", if (continueWatching.isNotEmpty()) "ON THIS DEVICE" else null)
+            if (continueWatching.isEmpty()) {
                 Text("Your watch progress will appear here after playback is connected.", color = Color(0xFF8D98A9), fontSize = 12.sp)
             } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(history.take(10), key = { it.tmdbId }) { item ->
+                    items(continueWatching.take(10), key = { it.tmdbId }) { item ->
                         Column(Modifier.size(width = 122.dp, height = 148.dp)) {
                             AsyncImage(model = item.posterUrl, contentDescription = item.title, modifier = Modifier.weight(1f).fillMaxWidth())
                             Text(item.title, fontSize = 11.sp, maxLines = 1)
@@ -387,7 +389,7 @@ private fun SettingsScreen(api: SitulaApi?) {
                 Text("Import real IMDb IDs", fontWeight = FontWeight.Bold)
                 Text("One IMDb ID per line (maximum 200). The backend resolves IDs through TMDB and applies the movie filters.", color = Color(0xFF9BA5B4), fontSize = 10.sp, modifier = Modifier.padding(vertical = 6.dp))
                 Button(onClick = { idText = IMDbTestIds.joinToString("\n") }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Load 20 verified IMDb test IDs")
+                    Text("Load 20 IMDb test IDs")
                 }
                 OutlinedTextField(idText, { idText = it }, label = { Text("IMDb IDs (tt…; max 200)") }, minLines = 3, modifier = Modifier.fillMaxWidth())
                 Button(onClick = {
