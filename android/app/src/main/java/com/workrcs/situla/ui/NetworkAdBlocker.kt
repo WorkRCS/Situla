@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 object NetworkAdBlocker {
     private const val TAG = "SitulaAdBlock"
     private const val FILTER_CACHE_FILE = "situla-brave-filter-lists.txt"
-    private const val FILTER_REFRESH_INTERVAL_MS = 7L * 24L * 60L * 60L * 1000L
+    private const val FILTER_REFRESH_INTERVAL_MS = 12L * 60L * 60L * 1000L
     private const val CONNECT_TIMEOUT_MS = 12_000
     private const val READ_TIMEOUT_MS = 24_000
     private const val MAX_FILTER_LIST_CHARS = 8 * 1024 * 1024
@@ -96,6 +96,9 @@ object NetworkAdBlocker {
         "https://easylist.to/easylist/easyprivacy.txt",
         "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
         "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+        "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt",
+        "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt",
+        "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-regional.txt",
         "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt"
     )
 
