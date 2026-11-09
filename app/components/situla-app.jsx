@@ -371,7 +371,29 @@ export default function SitulaApp() {
   function removeHistoryItem(key) {
     const next = watchHistory.filter((item) => item.key !== key);
     setWatchHistory(next);
-    try { localStorage.setItem("situla:watch-history:v1", JSON.stringify(next)); } catch {}
+    try {
+      localStorage.setItem("situla:watch-history:v1", JSON.stringify(next));
+      if (key.startsWith("movie:")) {
+        const imdbId = key.slice(6);
+        const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
+        localStorage.setItem("situla:progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) => item.imdbId !== imdbId) : []));
+      } else if (key.startsWith("tv:")) {
+        const [, tmdbId, seasonPart, episodePart] = key.split(":");
+        const season = Number(seasonPart?.replace(/^s/, ""));
+        const episode = Number(episodePart?.replace(/^e/, ""));
+        const progress = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
+        localStorage.setItem("situla:tv-progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) =>
+          !(Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === season && Number(item.episode) === episode)
+        ) : []));
+      } else if (key.startsWith("anime:")) {
+        const [, malId, episodePart, audio] = key.split(":");
+        const episode = Number(episodePart?.replace(/^e/, ""));
+        const progress = JSON.parse(localStorage.getItem("situla:anime-progress:v1") || "[]");
+        localStorage.setItem("situla:anime-progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) =>
+          !(Number(item.malId) === Number(malId) && Number(item.episode) === episode && item.audio === audio)
+        ) : []));
+      }
+    } catch {}
   }
 
   function clearWatchHistory() {
