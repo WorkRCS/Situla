@@ -153,7 +153,7 @@ export default function PlayerExperience({ imdbId }) {
             <h1>{loading ? "Preparing your movie" : "Playback unavailable"}</h1>
             <p>{movie?.playerError || (loading
               ? "Loading saved movie details…"
-              : "This IMDb title has no saved VidLink provider mapping yet. Add its numeric provider mapping to the database to enable playback.")}</p>
+              : "Playback is not configured for this title yet. Please try another title or contact support.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
         </div>
