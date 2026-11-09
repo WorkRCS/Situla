@@ -280,11 +280,13 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                             }
                         }
 
+                        tag = playerUrl
                         loadDataWithBaseURL("https://situla.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 update = { webView ->
-                    if (webView.url == null) {
+                    if (webView.tag != playerUrl) {
+                        webView.tag = playerUrl
                         webView.loadDataWithBaseURL("https://situla.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
