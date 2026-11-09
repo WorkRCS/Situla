@@ -13,8 +13,8 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidsrc.sh https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
 });
 app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
@@ -40,6 +40,8 @@ export function movieDto(movie) {
     id: String(movie._id),
     imdbId,
     imdbUrl: IMDB_ID.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
+    // Numeric key is only for VidLink's current provider endpoint; never a URL route.
+    vidlinkId: Number(movie.vidlinkId) > 0 ? Number(movie.vidlinkId) : null,
     title: movie.title,
     originalTitle: movie.originalTitle || '',
     overview: movie.overview || '',
@@ -65,6 +67,8 @@ export function tvSeriesDto(series) {
     id: String(series._id),
     imdbId,
     imdbUrl: IMDB_ID.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
+    // Numeric key is only for VidLink's current provider endpoint; never a URL route.
+    vidlinkId: Number(series.vidlinkId) > 0 ? Number(series.vidlinkId) : null,
     title: series.title,
     originalTitle: series.originalTitle || '',
     overview: series.overview || '',
