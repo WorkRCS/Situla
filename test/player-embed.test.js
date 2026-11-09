@@ -21,7 +21,14 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
   const player = await read('../android/app/src/main/java/com/workrcs/situla/ui/VidLinkPlayerScreen.kt');
 
   assert.match(blocker, /private val blockedDomains = setOf/);
-  assert.match(blocker, /fun shouldBlock\(uri: Uri\)/);
+  assert.match(blocker, /fun shouldBlock\(/);
+  assert.match(blocker, /org\\.mlm\\.adblock\\.AdblockEngine/);
+  assert.match(blocker, /AdblockEngine\\.create\(\)/);
+  assert.match(blocker, /checkNetworkRequest\(/);
+  assert.match(blocker, /cosmeticResources\(/);
+  assert.match(blocker, /easylist\\.to\\/easylist\\/easylist\\.txt/);
+  assert.match(blocker, /easylist\\.to\\/easylist\\/easyprivacy\\.txt/);
+  assert.match(blocker, /brave\\/adblock-lists\\/master\\/brave-unbreak\\.txt/);
   assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri\)/);
   assert.doesNotMatch(player, /isTrustedPlayerFrameNavigation/);
   assert.match(player, /return request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)/);
