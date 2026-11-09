@@ -163,8 +163,7 @@ fun SitulaApp(context: Context) {
     DisposableEffect(context) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
-                WireGuardVpnManager.stopAutoRotation()
-                scope.launch { runCatching { WireGuardVpnManager.disconnect() } }
+                WireGuardVpnManager.disconnectOnBackground()
             }
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
