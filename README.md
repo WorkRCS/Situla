@@ -4,9 +4,9 @@ Situla is a mobile-first movie, TV and anime catalog with a Next.js web app and 
 
 ## Identifiers and playback
 
-- Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Playback uses VidLink.
-- TV series: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Season and episode metadata is embedded in the TV document; playback uses VidLink.
-- VidLink's official embed documentation currently requires a numeric TMDB provider key for movie/TV playback. Situla stores that value internally as `vidlinkId`; it is not a route key and is never added to the browser address bar. The public Situla URL remains `/watch/{imdbId}` and `/tv/{imdbId}`.
+- Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. After the Movie record is found in MongoDB, the player is requested directly at `https://vidlink.pro/movie/{imdbId}`.
+- TV series: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. After the TV record is found in MongoDB, each episode is requested directly at `https://vidlink.pro/tv/{imdbId}/{season}/{episode}`.
+- No numeric provider/source ID is stored in the current schema or required by Situla's player code. The public routes remain `/watch/{imdbId}` and `/tv/{imdbId}`.
 - Anime: MAL ID remains the anime key because VidLink's anime endpoint requires a MyAnimeList ID.
 
 The iframe provider is VidLink Pro for movies, TV and anime. Its published customization parameters do not document a way to hide the built-in CC/subtitle control. Situla disables browser Picture-in-Picture permission, and sandboxes the player iframe to block popup windows and top-level navigation. Android additionally denies user-triggered iframe navigation to non-player hosts and filters a curated ad/tracker host list. A cross-origin embed may still navigate within its own frame, so absolute provider-side ad removal cannot be guaranteed by the parent site.
