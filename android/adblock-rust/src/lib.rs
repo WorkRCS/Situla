@@ -95,11 +95,11 @@ fn java_string<'local>(env: &mut JNIEnv<'local>, value: &JString<'local>) -> Str
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeLoadFilters(
-    mut env: JNIEnv,
-    _class: JClass,
-    standard_rules: JString,
-    hosts_rules: JString,
+pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeLoadFilters<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    standard_rules: JString<'local>,
+    hosts_rules: JString<'local>,
 ) -> jboolean {
     let standard = java_string(&mut env, &standard_rules);
     let hosts = java_string(&mut env, &hosts_rules);
@@ -116,12 +116,12 @@ pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeLoadF
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeShouldBlock(
-    mut env: JNIEnv,
-    _class: JClass,
-    url: JString,
-    source_url: JString,
-    request_type: JString,
+pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeShouldBlock<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    url: JString<'local>,
+    source_url: JString<'local>,
+    request_type: JString<'local>,
 ) -> jboolean {
     let url = java_string(&mut env, &url);
     let source = java_string(&mut env, &source_url);
@@ -144,10 +144,10 @@ pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeShoul
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeCosmeticPayload(
-    mut env: JNIEnv,
-    _class: JClass,
-    url: JString,
+pub extern "system" fn Java_com_workrcs_situla_security_BraveAdblock_nativeCosmeticPayload<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    url: JString<'local>,
 ) -> jni::sys::jstring {
     let url = java_string(&mut env, &url);
     let (reply_sender, reply_receiver) = mpsc::channel();
