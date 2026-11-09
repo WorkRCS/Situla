@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeInput, normalizeImportIds, describeTmdbNetworkError, tmdbRequest } from '../src/crawler.js';
+import { normalizeInput, normalizeImportIds, describeTmdbNetworkError, tmdbRequest, importPopularMovies } from '../src/crawler.js';
 import { normalizeNumericIds } from '../src/series.js';
 
 test('uses the requested release years and safe page defaults', () => {
@@ -71,4 +71,11 @@ test('validates MyAnimeList IDs and limits imports to 12 per batch', () => {
   assert.deepEqual(normalizeNumericIds(['5114', 16498], 'MyAnimeList IDs', 12), [5114, 16498]);
   assert.throws(() => normalizeNumericIds(['bad-id'], 'MyAnimeList IDs', 12), /positive numeric IDs/);
   assert.throws(() => normalizeNumericIds(Array.from({ length: 13 }, (_, index) => index + 1), 'MyAnimeList IDs', 12), /between 1 and 12/);
+});
+
+
+test('popular movie seeding validates its target before opening the database', async () => {
+  await assert.rejects(() => importPopularMovies({ targetCount: 0 }), /targetCount must be/);
+  await assert.rejects(() => importPopularMovies({ targetCount: 201 }), /targetCount must be/);
+  await assert.rejects(() => importPopularMovies({ maxPages: 0 }), /maxPages must be/);
 });
