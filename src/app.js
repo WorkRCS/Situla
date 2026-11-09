@@ -273,7 +273,7 @@ app.get('/api/movies/:imdbId', async (c) => {
     await connectDatabase();
     const movie = await Movie.findOne({ imdbId }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
-    return c.json({ item: movieDto(movie), playerAvailable: true });
+    return c.json({ item: movieDto(movie), playerAvailable: Number(movie.vidlinkId) > 0 });
   } catch (error) {
     console.error('IMDb movie detail read failed:', error.message);
     return c.json({ error: 'Movie details are temporarily unavailable.' }, 503);
