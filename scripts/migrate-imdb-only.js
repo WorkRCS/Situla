@@ -97,12 +97,15 @@ async function main() {
     await tvSeries.updateOne({ _id: series._id }, {
       $set: {
         imdbId: String(series.imdbId).toLowerCase(),
+        // Preserve the old numeric provider key for VidLink playback. The
+        // public TV URL and catalog identity remain IMDb-based.
+        vidlinkId: Number(series.vidlinkId || series.tmdbId) > 0 ? Number(series.vidlinkId || series.tmdbId) : null,
         posterUrl: series.posterUrl || imageUrl(series.posterPath, 'w342'),
         backdropUrl: series.backdropUrl || imageUrl(series.backdropPath, 'w780'),
         seasons
       },
       $unset: {
-        tmdbId: '', posterPath: '', backdropPath: '', genreIds: '', originCountry: '',
+        tmdbId: '', tmdbUrl: '', posterPath: '', backdropPath: '', genreIds: '', originCountry: '',
         moderationStatus: '', manualReviewNote: '', lastSyncedAt: '', adult: '', originalLanguage: ''
       }
     });
@@ -113,12 +116,14 @@ async function main() {
     {
       $set: {
         imdbId: { $toLower: '$imdbId' },
+        // Keep VidLink's internal provider key while removing legacy field names.
+        vidlinkId: { $ifNull: ['$vidlinkId', '$tmdbId'] },
         posterUrl: { $ifNull: ['$posterUrl', { $cond: [{ $gt: [{ $strLenCP: { $ifNull: ['$posterPath', ''] } }, 0] }, { $concat: ['https://image.tmdb.org/t/p/w342', '$posterPath'] }, null] }] },
         backdropUrl: { $ifNull: ['$backdropUrl', { $cond: [{ $gt: [{ $strLenCP: { $ifNull: ['$backdropPath', ''] } }, 0] }, { $concat: ['https://image.tmdb.org/t/p/w780', '$backdropPath'] }, null] }] }
       }
     },
     {
-      $unset: ['tmdbId', 'tmdbUrl', 'vidlinkId', 'posterPath', 'backdropPath', 'genreIds', 'moderationStatus', 'manualReviewNote', 'lastSyncedAt', 'adult', 'originalLanguage']
+      $unset: ['tmdbId', 'tmdbUrl', 'posterPath', 'backdropPath', 'genreIds', 'moderationStatus', 'manualReviewNote', 'lastSyncedAt', 'adult', 'originalLanguage']
     }
   ]);
 
@@ -131,7 +136,7 @@ async function main() {
       if (index.name === '_id_') continue;
       const keys = Object.keys(index.key || {});
       const obsolete = keys.some((key) =>
-        /tmdb|vidlink|genreIds|posterPath|backdropPath|moderationStatus|adult|originCountry|lastSyncedAt/i.test(key)
+        /tmdb|genreIds|posterPath|backdropPath|moderationStatus|adult|originCountry|lastSyncedAt/i.test(key)
       );
       if (obsolete) await collection.dropIndex(index.name);
     }
