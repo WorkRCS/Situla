@@ -202,8 +202,14 @@ fun VidLinkPlayerScreen(
     val mainThreadHandler = remember { Handler(Looper.getMainLooper()) }
     val reportPlayerStatus: (String, String) -> Unit = { status, detail ->
         mainThreadHandler.post {
-            playerStatus = status
-            if (detail.isNotBlank()) playerDetail = detail
+            // WebView forwards console errors from cross-origin iframe scripts too.
+            // Keep those as diagnostics instead of replacing a successful iframe load status.
+            if (status == "javascript_console_error") {
+                playerDetail = "Console error (may be non-fatal): $detail"
+            } else {
+                playerStatus = status
+                if (detail.isNotBlank()) playerDetail = detail
+            }
             if (status == "iframe_load_event") iframeLoaded = true
             if (status == "iframe_error") playerError = "VidLink iframe reported a load error. $detail"
             if (status == "iframe_load_timeout") playerError = "VidLink iframe did not emit a load event within 12 seconds. See the diagnostic detail below."
@@ -581,7 +587,10 @@ fun VidLinkPlayerScreen(
                                         "${it.message()} (line ${it.lineNumber()}, source ${it.sourceId()})"
                                     )
                                     if (it.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
-                                        reportPlayerStatus("javascript_error", it.message())
+                                        val source = it.sourceId().take(260)
+                                        val detail = it.message().take(360) + " · source=" + source + " · line=" + it.lineNumber()
+                                        Log.w("SitulaVidLink", "JavaScript console error: " + detail)
+                                        reportPlayerStatus("javascript_console_error", detail)
                                     }
                                 }
                                 return true
