@@ -7,9 +7,11 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.os.SystemClock
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.SafeBrowsingResponse
 import android.webkit.SslErrorHandler
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -118,8 +121,29 @@ private class VidLinkProgressBridge(
                     lastWatchedAtMs = System.currentTimeMillis()
                 )
             )
+            playerError?.let { message ->
+                Column(
+                    Modifier.fillMaxWidth().background(Color(0xEE151922)).padding(10.dp)
+                ) {
+                    Text(message, color = Color.White)
+                    Button(
+                        onClick = {
+                            playerError = null
+                            playerWebViewHolder[0]?.reload()
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                    ) {
+                        Text("Reload VidLink player")
+                    }
+                }
+            }
         }
     }
+}
+
+private fun isVidLinkHost(uri: Uri): Boolean {
+    val host = uri.host?.lowercase() ?: return false
+    return host == "vidlink.pro" || host.endsWith(".vidlink.pro")
 }
 
 private fun htmlAttribute(value: String): String =
@@ -147,6 +171,8 @@ fun VidLinkPlayerScreen(
     var fullScreenView by remember { mutableStateOf<View?>(null) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
+    var playerError by remember(movie.tmdbId) { mutableStateOf<String?>(null) }
+    val playerWebViewHolder = remember(movie.tmdbId) { arrayOfNulls<WebView>(1) }
 
     val exitFullScreen = remember(activity) {
         {
@@ -253,10 +279,11 @@ fun VidLinkPlayerScreen(
         <body>
           <iframe id="situla-vidlink-player"
                   src="${htmlAttribute(playerUrl)}"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                  referrerpolicy="strict-origin-when-cross-origin"
-                  sandbox="allow-scripts allow-same-origin allow-presentation"
-                  allowfullscreen></iframe>
+                  title="VidLink movie player"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock"
+                  allowfullscreen
+                  webkitallowfullscreen></iframe>
           <script>
             (function() {
               'use strict';
@@ -306,6 +333,7 @@ fun VidLinkPlayerScreen(
                 modifier = Modifier.fillMaxSize(),
                 factory = { viewContext ->
                     WebView(viewContext).apply {
+                        playerWebViewHolder[0] = this
                         setBackgroundColor(AndroidColor.BLACK)
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
@@ -319,7 +347,10 @@ fun VidLinkPlayerScreen(
                         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                         settings.safeBrowsingEnabled = true
                         settings.setGeolocationEnabled(false)
-                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, false)
+                        // VidLink is intentionally loaded as a third-party iframe. Some
+                        // providers require third-party cookies/storage for player bootstrap.
+                        // Brave filtering still applies to third-party network requests.
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                         addJavascriptInterface(progressBridge, "SitulaProgress")
 
                         webChromeClient = object : WebChromeClient() {
@@ -370,6 +401,16 @@ fun VidLinkPlayerScreen(
                                 exitFullScreen()
                             }
 
+                            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                                consoleMessage?.let {
+                                    Log.d(
+                                        "SitulaVidLink",
+                                        "${it.message()} (line ${it.lineNumber()}, source ${it.sourceId()})"
+                                    )
+                                }
+                                return true
+                            }
+
                             override fun onCreateWindow(
                                 view: WebView?,
                                 isDialog: Boolean,
@@ -413,18 +454,33 @@ fun VidLinkPlayerScreen(
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
                                 if (!uri.scheme.equals("https", ignoreCase = true)) return true
+
+                                // Allow only VidLink's player iframe navigation. Other third-party
+                                // documents remain subject to Brave rules, and top-level redirects
+                                // are still blocked by the main-frame policy below.
+                                if (!request.isForMainFrame && isVidLinkHost(uri)) return false
+
                                 val source = view?.url ?: "https://situla.invalid/"
                                 val type = if (request.isForMainFrame) "document" else "subdocument"
                                 if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
                                 if (request.isForMainFrame &&
-                                    !uri.host.equals("situla.invalid", ignoreCase = true) &&
-                                    !uri.host.equals("vidlink.pro", ignoreCase = true)
+                                    !uri.host.equals("situla.invalid", ignoreCase = true)
                                 ) return true
                                 return false
                             }
 
                             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                                val address = request?.url?.toString() ?: return null
+                                val requestedUri = request?.url ?: return null
+                                if (!requestedUri.scheme.equals("https", ignoreCase = true)) {
+                                    return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
+                                }
+
+                                // Do not let EasyList/EasyPrivacy accidentally block VidLink's
+                                // own app shell, player scripts, or player API endpoints. All
+                                // cross-site ad/tracker/media hosts continue through Brave.
+                                if (isVidLinkHost(requestedUri)) return null
+
+                                val address = requestedUri.toString()
                                 val referer = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("referer", ignoreCase = true)
                                 }?.value ?: "https://vidlink.pro/"
@@ -453,10 +509,6 @@ fun VidLinkPlayerScreen(
                                     accept.contains("text/html") -> "subdocument"
                                     else -> "other"
                                 }
-                                val scheme = request.url.scheme.orEmpty()
-                                if (!scheme.equals("https", ignoreCase = true)) {
-                                    return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
-                                }
                                 if (BraveAdblock.shouldBlock(address, referer, requestType)) {
                                     return WebResourceResponse(
                                         "text/plain",
@@ -467,11 +519,38 @@ fun VidLinkPlayerScreen(
                                 return null
                             }
 
+                            override fun onReceivedHttpError(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                                errorResponse: android.webkit.WebResourceResponse?
+                            ) {
+                                val uri = request?.url ?: return
+                                if (isVidLinkHost(uri) && (errorResponse?.statusCode ?: 0) >= 400) {
+                                    val code = errorResponse?.statusCode ?: 0
+                                    playerError = "VidLink returned HTTP $code for ${uri.lastPathSegment ?: "player resource"}."
+                                    Log.w("SitulaVidLink", "HTTP $code while loading $uri")
+                                }
+                            }
+
+                            override fun onReceivedError(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                                error: android.webkit.WebResourceError?
+                            ) {
+                                val uri = request?.url ?: return
+                                if (isVidLinkHost(uri)) {
+                                    val description = error?.description?.toString() ?: "Network error"
+                                    playerError = "Cannot load VidLink: $description"
+                                    Log.w("SitulaVidLink", "Load error for $uri: $description")
+                                }
+                            }
+
                             override fun onReceivedSslError(
                                 view: WebView?,
                                 handler: SslErrorHandler?,
                                 error: android.net.http.SslError?
                             ) {
+                                playerError = "VidLink HTTPS certificate validation failed."
                                 handler?.cancel()
                             }
 
@@ -487,7 +566,11 @@ fun VidLinkPlayerScreen(
                             override fun onRenderProcessGone(
                                 view: WebView?,
                                 detail: android.webkit.RenderProcessGoneDetail?
-                            ): Boolean = true
+                            ): Boolean {
+                                playerError = "Android WebView player process stopped. Reload the movie page."
+                                Log.e("SitulaVidLink", "WebView render process exited")
+                                return true
+                            }
                         }
 
                         tag = playerUrl
@@ -502,6 +585,7 @@ fun VidLinkPlayerScreen(
                 },
                 onRelease = { webView ->
                     exitFullScreen()
+                    if (playerWebViewHolder[0] === webView) playerWebViewHolder[0] = null
                     webView.stopLoading()
                     webView.removeJavascriptInterface("SitulaProgress")
                     webView.destroy()
