@@ -30,7 +30,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
-    sourceSets.getByName("main").jniLibs.srcDir(adblockJniLibs)
+    sourceSets.getByName("main").jniLibs.srcDir(adblockJniLibs.get().asFile)
     packaging { resources { excludes += setOf("/META-INF/AL2.0", "/META-INF/LGPL2.1") } }
 }
 kotlin {
@@ -68,21 +68,27 @@ dependencies {
 }
 
 
+val nativeAbis = (findProperty("situlaAndroidAbis") as String?)
+    ?.split(",")
+    ?.map { it.trim() }
+    ?.filter { it.isNotEmpty() }
+    ?: listOf("x86_64") // Fast default for the standard Windows Android Emulator.
+
 val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
     group = "build"
-    description = "Compile Brave adblock-rust JNI library for Android ABIs."
+    description = "Compile Brave adblock-rust JNI library for the selected Android ABI(s)."
     workingDir(rootProject.file("adblock-rust"))
     inputs.dir(rootProject.file("adblock-rust"))
+    inputs.property("situlaAndroidAbis", nativeAbis.joinToString(","))
     outputs.dir(adblockJniLibs)
     environment("CARGO_TARGET_DIR", layout.buildDirectory.dir("rust-target").get().asFile.absolutePath)
-    commandLine(
-        "cargo", "ndk",
-        "-t", "arm64-v8a",
-        "-t", "armeabi-v7a",
-        "-t", "x86_64",
-        "-o", adblockJniLibs.get().asFile.absolutePath,
-        "build", "--release"
-    )
+    val arguments = mutableListOf("cargo", "ndk")
+    nativeAbis.forEach { abi ->
+        arguments.add("-t")
+        arguments.add(abi)
+    }
+    arguments.addAll(listOf("-o", adblockJniLibs.get().asFile.absolutePath, "build", "--release"))
+    commandLine(arguments)
 }
 
 tasks.named("preBuild").configure {
