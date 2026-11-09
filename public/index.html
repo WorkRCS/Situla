@@ -79,7 +79,8 @@
         <div class="page-head"><div><div class="overline">METADATA IMPORT</div><h1>TMDB crawler</h1><p class="muted">Start a manual discovery batch. There are no automatic crawl jobs.</p></div></div>
         <div class="crawler-grid">
           <div class="panel crawler-panel">
-            <div class="panel-head"><div><h2><i class="bi bi-search me-2"></i>Discover movies</h2><p>English-language movie metadata from TMDB.</p></div><span class="manual-label"><i class="bi bi-hand-index-thumb"></i> Manual only</span></div>
+            <div class="panel-head"><div><h2><i class="bi bi-search me-2"></i>Discover movies</h2><p>English-language movie metadata from TMDB.</p></div><div class="crawler-head-actions"><button class="secondary-btn" type="button" id="tmdb-check-btn"><i class="bi bi-wifi"></i> Test TMDB connection</button><span class="manual-label"><i class="bi bi-hand-index-thumb"></i> Manual only</span></div></div>
+            <div class="tmdb-check-message d-none" id="tmdb-check-message" role="status"></div>
             <form id="crawl-form">
               <div class="form-grid">
                 <div><label for="year-from">Release year from</label><select class="form-select" id="year-from"></select></div>
