@@ -75,43 +75,10 @@ fun VidLinkPlayerScreen(
         onDispose { exitFullScreen() }
     }
 
-    // The server returns movie metadata and TMDB ID only.
-    // The iframe HTML lives in the Android app and receives that ID here.
-    val playerHtml = remember(movie.tmdbId) {
-        """
-        <!doctype html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-          <style>
-            html, body {
-              margin: 0;
-              padding: 0;
-              width: 100%;
-              height: 100%;
-              overflow: hidden;
-              background: #000;
-            }
-            iframe {
-              display: block;
-              width: 100%;
-              height: 100%;
-              border: 0;
-              background: #000;
-            }
-          </style>
-        </head>
-        <body>
-          <iframe
-            src="https://vidlink.pro/movie/${movie.tmdbId}"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          ></iframe>
-        </body>
-        </html>
-        """.trimIndent()
+    // Movie API supplies only the TMDB ID. Open the provider movie page
+    // directly in Android WebView, like opening it in a normal mobile browser.
+    val playerUrl = remember(movie.tmdbId) {
+        "https://vidlink.pro/movie/${movie.tmdbId}"
     }
 
     Box(
@@ -186,28 +153,14 @@ fun VidLinkPlayerScreen(
                         }
                     }
 
-                    // Give the iframe a VidLink-based document origin, just like a normal
-                    // webpage embedding the provider's official iframe snippet.
-                    loadDataWithBaseURL(
-                        "https://vidlink.pro/",
-                        playerHtml,
-                        "text/html",
-                        "UTF-8",
-                        null
-                    )
+                    loadUrl(playerUrl)
                 }
             },
             update = { webView ->
                 val currentId = webView.tag as? Int
                 if (currentId != movie.tmdbId) {
                     webView.tag = movie.tmdbId
-                    webView.loadDataWithBaseURL(
-                        "https://vidlink.pro/",
-                        playerHtml,
-                        "text/html",
-                        "UTF-8",
-                        null
-                    )
+                    webView.loadUrl(playerUrl)
                 }
             },
             onRelease = { webView ->
