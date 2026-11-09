@@ -74,6 +74,11 @@ object NetworkAdBlocker {
         return blockedDomains.any { domain -> host == domain || host.endsWith(".$domain") }
     }
 
+    fun isTrustedPlayerFrameNavigation(uri: Uri): Boolean {
+        val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
+        return host == "vidlink.pro" || host.endsWith(".vidlink.pro")
+    }
+
     fun isTrustedTopLevel(uri: Uri): Boolean {
         val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
         return host == "situla.vercel.app" ||
