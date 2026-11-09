@@ -46,12 +46,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -313,8 +310,8 @@ fun VidLinkPlayerScreen(
           <meta charset="utf-8">
           <meta name="referrer" content="strict-origin-when-cross-origin">
           <style>
-            html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
-            iframe { display:block; border:0; width:100%; height:100%; background:transparent; }
+            html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; }
+            iframe { display:block; position:absolute; inset:0; border:0; width:100%; height:100%; background:#000; }
           </style>
         </head>
         <body>
@@ -323,7 +320,7 @@ fun VidLinkPlayerScreen(
                   title="VidLink movie player"
                   width="100%" height="100%"
                   frameborder="0"
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen; web-share; accelerometer; gyroscope"
                   allowfullscreen
                   webkitallowfullscreen
                   loading="eager"
@@ -405,35 +402,25 @@ fun VidLinkPlayerScreen(
             if (embedded) Modifier.fillMaxWidth().aspectRatio(16f / 9f)
             else Modifier.weight(1f).fillMaxWidth()
         ) {
-            // This is Situla's local player frame, not remotely supplied by VidLink.
-            // It remains visible while the remote iframe is blank, blocked or unavailable.
-            AsyncImage(
-                model = movie.backdropUrl ?: movie.posterUrl,
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        listOf(Color(0x77000000), Color(0xE6000000))
-                    )
-                )
-            )
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { viewContext ->
                     WebView(viewContext).apply {
                         playerWebViewHolder[0] = this
-                        // Keep the native movie artwork underneath the WebView until the
-                        // remote VidLink document actually reports its iframe load event.
-                        setBackgroundColor(AndroidColor.TRANSPARENT)
+                        // Use an opaque video surface. Transparent WebViews can composite
+                        // embedded HTML5 video poorly on some Android GPU/WebView builds.
+                        setBackgroundColor(AndroidColor.BLACK)
                         // Remote WebView inspection is enabled only for debug APKs.
                         WebView.setWebContentsDebuggingEnabled(
                             (viewContext.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
                         )
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
+                        // Remove the explicit WebView marker from the UA so VidLink treats
+                        // this as a normal mobile Chromium browser where possible.
+                        settings.userAgentString = WebSettings.getDefaultUserAgent(viewContext)
+                            .replace("; wv", "")
+                            .replace(" Version/4.0", "")
                         // The provider embed keeps autoplay=false. This permits playback
                         // only after the user presses VidLink's own Play control.
                         settings.mediaPlaybackRequiresUserGesture = false
