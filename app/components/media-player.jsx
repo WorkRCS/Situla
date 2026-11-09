@@ -14,6 +14,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const screenRef = useRef(null);
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [fullscreen, setFullscreen] = useState(false);
+  const [startAt, setStartAt] = useState(0);
   const lastWrite = useRef(0);
 
   useEffect(() => {
@@ -27,6 +28,21 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       .catch(() => {});
     return () => controller.abort();
   }, [kind, tmdbId, malId]);
+
+  useEffect(() => {
+    if (kind !== "tv") return;
+    try {
+      const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
+      const entry = Array.isArray(saved) ? saved.find((item) =>
+        Number(item.tmdbId) === Number(tmdbId) &&
+        Number(item.season) === Number(season) &&
+        Number(item.episode) === Number(episode)
+      ) : null;
+      setStartAt(entry && Number.isFinite(Number(entry.watched)) ? Math.max(0, Math.floor(Number(entry.watched))) : 0);
+    } catch {
+      setStartAt(0);
+    }
+  }, [kind, tmdbId, season, episode]);
 
   useEffect(() => {
     if (kind !== "tv") return;
@@ -112,7 +128,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   }, []);
 
   const playerUrl = kind === "tv"
-    ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?nextbutton=true"
+    ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?nextbutton=true" + (startAt > 0 ? "&startAt=" + encodeURIComponent(String(startAt)) : "")
     : "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" + encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?fallback=true";
 
   return (
