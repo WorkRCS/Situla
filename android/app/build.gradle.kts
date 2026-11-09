@@ -43,15 +43,16 @@ android {
     }
 }
 val extractBraveAdblockAar = tasks.register<Copy>("extractBraveAdblockAar") {
+    into(braveAdblockOutput.get().asFile)
     from({ braveAdblockAar.files.map { zipTree(it) } }) {
         include("jni/**/*.so")
         eachFile { path = path.removePrefix("jni/") }
-        into(braveAdblockOutput.get().dir("jniLibs").asFile)
+        into("jniLibs")
     }
     from({ braveAdblockAar.files.map { zipTree(it) } }) {
         include("assets/adblock/resources.json")
         eachFile { path = path.removePrefix("assets/") }
-        into(braveAdblockOutput.get().dir("assets").asFile)
+        into("assets")
     }
     includeEmptyDirs = false
 }
