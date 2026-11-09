@@ -14,31 +14,25 @@ export default function PlayerExperience({ imdbId }) {
   useEffect(() => {
     const controller = new AbortController();
     async function loadMovie() {
-      let requestedVidlinkId = "";
       try {
-        requestedVidlinkId = new URLSearchParams(window.location.search).get("vidlinkId") || "";
         const cached = JSON.parse(localStorage.getItem("situla:movie:" + imdbId) || "null");
         if (cached && cached.imdbId === imdbId) setMovie(cached);
       } catch {}
 
       try {
-        const query = requestedVidlinkId ? "?vidlinkId=" + encodeURIComponent(requestedVidlinkId) : "";
-        const response = await fetch("/api/movies/" + encodeURIComponent(imdbId) + query, {
+        const response = await fetch("/api/movies/" + encodeURIComponent(imdbId), {
           cache: "no-store",
           signal: controller.signal
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Movie metadata is unavailable.");
-        if (data.item) {
-          setMovie((current) => current?.vidlinkId ? { ...data.item, ...current, vidlinkId: current.vidlinkId } : data.item);
-        } else {
-          throw new Error("Movie metadata was empty.");
-        }
+        if (!data.item) throw new Error("Movie metadata was empty.");
+        setMovie(data.item);
       } catch (error) {
         if (!controller.signal.aborted) {
-          setMovie((current) => current?.vidlinkId
-            ? current
-            : { ...(current || {}), imdbId, playerError: error.message || "Unable to load this movie." });
+          setMovie((current) => current
+            ? { ...current, playerError: error.message || "Unable to load this movie." }
+            : { imdbId, playerError: error.message || "Unable to load this movie." });
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -60,34 +54,23 @@ export default function PlayerExperience({ imdbId }) {
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== "https://vidlink.pro") return;
+      if (event.origin !== "https://vidsrc.sh") return;
       const payload = event.data;
-      if (!payload || typeof payload !== "object") return;
-
-      if (payload.type === "MEDIA_DATA" && payload.data && typeof payload.data === "object") {
-        try { localStorage.setItem("situla:vidlink-media:v1", JSON.stringify(payload.data)); } catch {}
-        return;
-      }
-
-      if (payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
+      if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" || !payload.data) return;
       const details = payload.data;
-      if (details.mediaType !== "movie" || Number(details.mtmdbId) !== Number(movie?.vidlinkId)) return;
+      const info = details.player_info || {};
+      if (String(info.imdb || "").toLowerCase() !== imdbId.toLowerCase() || info.mediaType !== "movie") return;
 
-      const eventName = String(details.event || "");
-      if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
-      if (["timeupdate", "pause", "seeked"].includes(eventName)) lastProgressWrite.current = Date.now();
+      const eventName = String(details.player_status || "");
+      if (eventName === "playing" && Date.now() - lastProgressWrite.current < 5000) return;
+      if (["playing", "paused", "seeked", "completed"].includes(eventName)) lastProgressWrite.current = Date.now();
 
-      const key = "situla:progress:v1";
       try {
-        const watchedValue = Number(details.currentTime);
-        const durationValue = Number(details.duration);
-        const duration = Number.isFinite(durationValue) && durationValue > 0
-          ? durationValue
-          : Math.max(0, Number(movie?.runtime) * 60);
-        const watched = eventName === "ended" && duration > 0
-          ? duration
-          : watchedValue;
-        if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
+        const watchedValue = Number(details.player_progress);
+        const duration = Number(details.player_duration);
+        if (!Number.isFinite(duration) || duration <= 0) return;
+        const watched = eventName === "completed" ? duration : watchedValue;
+        if (!Number.isFinite(watched) || watched < 0) return;
 
         const updatedAt = Date.now();
         const historyKey = "movie:" + imdbId;
@@ -96,7 +79,6 @@ export default function PlayerExperience({ imdbId }) {
           mediaType: "movie",
           mediaId: imdbId,
           imdbId,
-          vidlinkId: Number(movie?.vidlinkId) || null,
           title: movie?.title || "Movie",
           posterUrl: movie?.posterUrl || null,
           watched: Math.max(0, watched),
@@ -107,8 +89,9 @@ export default function PlayerExperience({ imdbId }) {
         const nextHistory = [historyEntry, ...(Array.isArray(currentHistory) ? currentHistory.filter((item) => item.key !== historyKey) : [])].slice(0, 500);
         localStorage.setItem("situla:watch-history:v1", JSON.stringify(nextHistory));
 
+        const key = "situla:progress:v1";
         const current = JSON.parse(localStorage.getItem(key) || "[]");
-        if (eventName === "ended") {
+        if (eventName === "completed") {
           localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
           return;
         }
@@ -133,44 +116,21 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const vidlinkId = Number(movie?.vidlinkId);
-  const playerParams = new URLSearchParams({
-    primaryColor: "e8b65b",
-    secondaryColor: "171a23",
-    iconColor: "ffffff",
-    icons: "default",
-    player: "default",
-    title: "false",
-    poster: "true",
-    autoplay: "false",
-    nextbutton: "false"
-  });
+  const playerParams = new URLSearchParams();
   if (startAt > 0) playerParams.set("startAt", String(startAt));
-  const playerUrl = Number.isSafeInteger(vidlinkId) && vidlinkId > 0
-    ? "https://vidlink.pro/movie/" + vidlinkId + "?" + playerParams.toString()
-    : null;
+  const query = playerParams.toString();
+  const playerUrl = "https://vidsrc.sh/embed/movie/" + encodeURIComponent(imdbId) + (query ? "?" + query : "");
 
   return (
     <main className="watch-screen">
-      {playerUrl ? (
-        <iframe
-          key={playerUrl}
-          className="watch-frame"
-          src={playerUrl}
-          title={(movie?.title || "Situla movie") + " player"}
-          allow="autoplay; encrypted-media; fullscreen"
-          allowFullScreen
-        />
-      ) : (
-        <div className="player-message">
-          <div className="player-message-card">
-            <div className="player-message-mark">S</div>
-            <h1>{loading ? "Preparing your movie" : "Player unavailable"}</h1>
-            <p>{movie?.playerError || (loading ? "Loading saved movie details…" : "This catalog record has no saved VidLink ID. Return to the movie catalog and open it from its card to retry with its stored provider ID.")}</p>
-            <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
-          </div>
-        </div>
-      )}
+      <iframe
+        key={playerUrl}
+        className="watch-frame"
+        src={playerUrl}
+        title={(movie?.title || "Situla movie") + " player"}
+        allow="autoplay; encrypted-media; fullscreen"
+        allowFullScreen
+      />
       <header className="watch-topbar">
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
