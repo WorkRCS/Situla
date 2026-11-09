@@ -36,7 +36,7 @@ test('health route requires only MongoDB settings and does not connect if absent
   assert.match(response.headers.get('permissions-policy') || '', /picture-in-picture=\(\)/);
 });
 
-test('movie DTO keeps IMDb route identity and provides internal VidLink mapping', () => {
+test('movie DTO exposes only IMDb catalog identity, not a fixed provider mapping', () => {
   const dto = movieDto({
     _id: '507f1f77bcf86cd799439011',
     imdbId: 'TT1375666',
@@ -67,14 +67,14 @@ test('movie DTO keeps IMDb route identity and provides internal VidLink mapping'
   assert.equal(dto.title, 'Inception');
   assert.equal(dto.posterUrl, 'https://images.example/inception.jpg');
   assert.equal(dto.backdropUrl, 'https://images.example/inception-backdrop.jpg');
-  assert.equal(dto.playerAvailable, true);
+  assert.equal(dto.playerAvailable, undefined);
   assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   for (const forbidden of ['tmdbId', 'tmdbUrl', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
     assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must never be returned');
   }
 });
 
-test('TV DTO is keyed by IMDb and embeds seasons and episode metadata', () => {
+test('TV DTO is keyed by IMDb and embeds seasons without a fixed provider mapping', () => {
   const dto = tvSeriesDto({
     _id: '507f1f77bcf86cd799439012',
     imdbId: 'tt0944947',
@@ -92,7 +92,7 @@ test('TV DTO is keyed by IMDb and embeds seasons and episode metadata', () => {
     tmdbId: 1399
   });
   assert.equal(dto.imdbId, 'tt0944947');
-  assert.equal(dto.playerAvailable, true);
+  assert.equal(dto.playerAvailable, undefined);
   assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   assert.equal(dto.seasons[0].seasonNumber, 1);
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
@@ -135,9 +135,9 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
   assert.ok(tvError.errors.imdbId);
   assert.ok(animeError.errors.malId);
   assert.equal(Movie.schema.path('tmdbId'), undefined);
-  assert.equal(Movie.schema.path('vidlinkId').instance, 'Number');
+  assert.equal(Movie.schema.path('vidlinkId'), undefined);
   assert.equal(TvSeries.schema.path('tmdbId'), undefined);
-  assert.equal(TvSeries.schema.path('vidlinkId').instance, 'Number');
+  assert.equal(TvSeries.schema.path('vidlinkId'), undefined);
   assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
   assert.ok(Movie.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
 });
@@ -145,10 +145,10 @@ test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remai
 test('public movie and TV routes reject non-IMDb identifiers before database access', async () => {
   const movie = await app.request('/api/movies/27205');
   const tv = await app.request('/api/tv/1399');
-  const moviePlayer = await app.request('/api/player/movie/27205');
-  const tvPlayer = await app.request('/api/player/tv/1399/1/1');
+  const moviePlayer = await app.request('/api/player/movie/tt1375666');
+  const tvPlayer = await app.request('/api/player/tv/tt0944947/1/1');
   assert.equal(movie.status, 400);
   assert.equal(tv.status, 400);
-  assert.equal(moviePlayer.status, 400);
-  assert.equal(tvPlayer.status, 400);
+  assert.equal(moviePlayer.status, 404);
+  assert.equal(tvPlayer.status, 404);
 });
