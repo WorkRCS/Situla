@@ -87,7 +87,6 @@ fun SitulaApp(context: Context) {
                     loadsImagesAutomatically = true
                     mediaPlaybackRequiresUserGesture = false
                     mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                    safeBrowsingEnabled = true
                     // Do not let player scripts spawn ad tabs/windows.
                     javaScriptCanOpenWindowsAutomatically = false
                     setSupportMultipleWindows(false)
@@ -121,7 +120,7 @@ fun SitulaApp(context: Context) {
                         if (NetworkAdBlocker.shouldBlock(uri)) return true
                         // A player-frame click must not navigate to an unrelated ad/redirect site.
                         // Actual media fetches are not frame navigations and remain unaffected.
-                        if (!request.isForMainFrame && request.hasGesture && !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)) return true
+                        if (!request.isForMainFrame && request.hasGesture() && !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)) return true
                         if (request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)) return true
                         return when (uri.scheme?.lowercase()) {
                             "http", "https", "about", "javascript", "blob" -> false
