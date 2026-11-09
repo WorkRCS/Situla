@@ -146,17 +146,19 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const playerUrl = catalogVerified ? vidlinkMovieUrl(imdbId) : null;
+  const playerUrl = catalogVerified && languageReady
+    ? playerLanguage === "hi" ? hindiMoviePlayerUrl(imdbId) : vidlinkMovieUrl(imdbId)
+    : null;
 
   return (
     <main className="watch-screen">
       {playerUrl ? (
         <iframe
           ref={iframeRef}
-          key={playerUrl}
+          key={playerLanguage + ":" + playerUrl}
           className="watch-frame"
           src={playerUrl}
-          title={(movie?.title || "Situla movie") + " player"}
+          title={(movie?.title || "Situla movie") + (playerLanguage === "hi" ? " Hindi player" : " English player")}
           allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
@@ -182,6 +184,18 @@ export default function PlayerExperience({ imdbId }) {
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · IMDb</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
         </div>
+        <button
+          type="button"
+          className="watch-language-switch"
+          onClick={togglePlayerLanguage}
+          disabled={!catalogVerified || !languageReady}
+          aria-label={"Switch to " + (playerLanguage === "hi" ? "English" : "Hindi") + " player"}
+          title={"Switch to " + (playerLanguage === "hi" ? "English" : "Hindi") + " player"}
+        >
+          <i className="bi bi-translate" aria-hidden="true" />
+          <span>{playerLanguage === "hi" ? "English" : "Hindi"}</span>
+          <i className="bi bi-chevron-down" aria-hidden="true" />
+        </button>
       </header>
     </main>
   );
