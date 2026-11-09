@@ -1,12 +1,12 @@
 import java.util.Properties
 
-val adblockJniLibs = layout.buildDirectory.dir("generated/adblock-jni")
-
 plugins {
     id("com.android.application")
     id("com.android.legacy-kapt")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val adblockJniLibs = layout.buildDirectory.dir("generated/adblock-jni")
 
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
