@@ -536,7 +536,7 @@ export default function SitulaApp() {
   return (
     <main className="app-shell">
       <header className="app-header safe-top">
-        <div className="header-inner container-fluid mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 md:px-8">
+        <div className="header-inner container-fluid mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
           <div className="brand-mark" aria-hidden="true">S</div>
           <div className="brand-copy min-w-0">
             <p className="text-[17px] font-black tracking-[.18em]">SITULA</p>
@@ -575,7 +575,7 @@ export default function SitulaApp() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1320px] px-4 pt-5 md:px-8 md:pt-8">
+      <div className="mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8">
 
 
         {tab === "home" && (
