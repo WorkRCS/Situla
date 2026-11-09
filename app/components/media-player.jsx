@@ -252,8 +252,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         title={title + (kind === "tv" ? " · S" + season + " E" + episode : " · Episode " + episode)}
         allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
-        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock"
-        referrerPolicy="no-referrer"
       />
       <header className="watch-topbar series-watch-topbar">
         <a className="provider-open-control" href={playerUrl || undefined} target="_blank" rel="noopener noreferrer" aria-label="Open provider player" title="Open provider player">Open player</a>
