@@ -168,8 +168,8 @@ test('VidLink movie and TV URLs use direct IMDb IDs and Situla gold theme', () =
 });
 
 test('Hindi movie player URL receives the same validated IMDb ID and gold theme', () => {
-  const hindiUrl = new URL(hindiMoviePlayerUrl('tt0848228'));
-  assert.equal(hindiUrl.origin + hindiUrl.pathname, 'https://slast430did.com/play/tt0848228');
+  const hindiUrl = new URL(hindiMoviePlayerUrl('tt4154796'));
+  assert.equal(hindiUrl.origin + hindiUrl.pathname, 'https://slast430did.com/play/tt4154796');
   assert.equal(hindiUrl.searchParams.get('id'), null);
   assert.equal(hindiUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(hindiUrl.searchParams.get('secondaryColor'), '171a23');
