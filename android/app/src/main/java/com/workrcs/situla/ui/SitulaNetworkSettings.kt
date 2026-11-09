@@ -48,7 +48,7 @@ fun SitulaVpnControls(context: Context) {
         mutableStateOf(VpnProfileStore.autoConnectRegion(context) == selectedRegion)
     }
     var available by remember { mutableStateOf(VpnProfileStore.availableRegions(context)) }
-    var autoRotate by remember { mutableStateOf(false) }
+    var autoRotate by remember { mutableStateOf(VpnProfileStore.autoRotateEnabled(context)) }
     var message by remember { mutableStateOf<String?>(null) }
     var pendingConnect by remember { mutableStateOf<Pair<String, String>?>(null) }
 
@@ -176,6 +176,7 @@ fun SitulaVpnControls(context: Context) {
                 enabled = vpn.connected && available.size == VpnProfileStore.regions.size,
                 onCheckedChange = { enabled ->
                     autoRotate = enabled
+                    VpnProfileStore.setAutoRotateEnabled(context, enabled)
                     if (enabled) {
                         runCatching { WireGuardVpnManager.startAutoRotation(context) }
                             .onFailure { autoRotate = false; message = it.message }
