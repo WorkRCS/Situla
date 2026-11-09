@@ -3,7 +3,6 @@ package com.workrcs.situla.ui
 import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.webkit.CookieManager
-import android.webkit.SafeBrowsingResponse
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -18,25 +17,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.workrcs.situla.data.Movie
 import com.workrcs.situla.data.SitulaDatabase
 import com.workrcs.situla.security.BraveAdblock
 import java.io.ByteArrayInputStream
+import org.json.JSONObject
 
 @Composable
 fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
@@ -102,7 +97,17 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                 val referer = request.requestHeaders.entries.firstOrNull {
                                     it.key.equals("referer", ignoreCase = true)
                                 }?.value ?: "https://vidlink.pro/"
-                                if (BraveAdblock.shouldBlock(address, referer)) {
+                                val cleanUrl = address.substringBefore("?")
+                                val requestType = when {
+                                    request.isForMainFrame -> "document"
+                                    cleanUrl.endsWith(".js", true) -> "script"
+                                    cleanUrl.endsWith(".css", true) -> "stylesheet"
+                                    cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm)$")) -> "media"
+                                    cleanUrl.matches(Regex("(?i).*\\.(png|jpg|jpeg|gif|webp|svg|avif)$")) -> "image"
+                                    cleanUrl.matches(Regex("(?i).*\\.(woff2?|ttf|otf)$")) -> "font"
+                                    else -> "other"
+                                }
+                                if (BraveAdblock.shouldBlock(address, referer, requestType)) {
                                     return WebResourceResponse(
                                         "text/plain",
                                         "UTF-8",
@@ -110,6 +115,30 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                     )
                                 }
                                 return null
+                            }
+
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                val pageUrl = url ?: return
+                                if (!pageUrl.startsWith("https://vidlink.pro/")) return
+                                val payload = runCatching { JSONObject(BraveAdblock.cosmeticPayload(pageUrl)) }.getOrNull() ?: return
+                                val css = payload.optString("css")
+                                val script = payload.optString("script")
+                                val js = """
+                                    (function() {
+                                      try {
+                                        var style = document.getElementById('__situla_adblock_css');
+                                        if (!style) {
+                                          style = document.createElement('style');
+                                          style.id = '__situla_adblock_css';
+                                          (document.head || document.documentElement).appendChild(style);
+                                        }
+                                        style.textContent = ${JSONObject.quote(css)};
+                                        ${script}
+                                      } catch (_) {}
+                                    })();
+                                """.trimIndent()
+                                view?.evaluateJavascript(js, null)
                             }
                         }
                         loadUrl(playerUrl)
