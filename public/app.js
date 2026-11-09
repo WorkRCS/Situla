@@ -305,6 +305,36 @@ $('#tmdb-check-btn').addEventListener('click', async () => {
   }
 });
 
+
+$('#seed-movies-btn').addEventListener('click', async () => {
+  const button = $('#seed-movies-btn');
+  const message = $('#seed-movies-message');
+  button.disabled = true;
+  message.classList.remove('d-none', 'error');
+  message.textContent = 'Discovering eligible movies and saving each successful record to MongoDB…';
+  try {
+    const response = await api('/api/admin/seed-top-movies', {
+      method: 'POST',
+      body: JSON.stringify({ targetCount: 60, maxPages: 20 })
+    });
+    const result = response.result;
+    message.textContent = 'Added ' + result.imported + ' new movies. ' +
+      result.remaining + ' still missing. Checked ' + result.candidatesChecked +
+      ' candidates across ' + result.pagesProcessed + ' pages; ' +
+      result.filtered + ' filtered, ' + result.duplicates + ' already existed, ' +
+      result.failed + ' failed lookups.' +
+      (result.failures?.length ? ' First error: ' + result.failures[0].message : '');
+    if (result.remaining > 0) message.classList.add('error');
+    loadDashboard();
+    if (state.view === 'catalog') loadMovies();
+  } catch (error) {
+    message.classList.add('error');
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $('#crawl-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = $('#crawl-btn');
