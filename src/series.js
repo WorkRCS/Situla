@@ -1,5 +1,5 @@
 import { connectDatabase } from './db.js';
-import { AnimeSeries, TvEpisode, TvSeason, TvSeries } from './models.js';
+import { AnimeSeries, TvSeason, TvSeries } from './models.js';
 import { tmdbRequest } from './crawler.js';
 
 const ALLOWED_TV_GENRES = new Set([10759, 10765, 9648, 80, 18, 10768]);
