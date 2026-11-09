@@ -54,7 +54,6 @@ object WireGuardVpnManager {
                 "This profile must route both IPv4 and IPv6 through WireGuard (AllowedIPs = 0.0.0.0/0, ::/0)."
             }
 
-            mutableState.value = SitulaVpnState(connecting = true, region = region, message = "Connecting to $region…")
             val filteredProfile = enforceAdGuardDns(sourceProfile)
             val config = Config.parse(filteredProfile.byteInputStream(Charsets.UTF_8))
             require(config.peers.isNotEmpty()) { "The WireGuard profile has no [Peer] section." }
@@ -62,6 +61,7 @@ object WireGuardVpnManager {
                 "At least one WireGuard peer must include an Endpoint host and port."
             }
 
+            mutableState.value = SitulaVpnState(connecting = true, region = region, message = "Connecting to $region…")
             val currentBackend = backend ?: GoBackend(context.applicationContext).also { backend = it }
             activeTunnel?.let { old ->
                 runCatching { currentBackend.setState(old, Tunnel.State.DOWN, null) }
