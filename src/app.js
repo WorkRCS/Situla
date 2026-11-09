@@ -10,12 +10,11 @@ const IMDB_ID = /^tt\d{5,12}$/i;
 app.use('*', logger());
 app.use('*', async (c, next) => {
   await next();
-  const isPlayerRedirect = c.req.path.startsWith('/api/player/');
   c.header('X-Content-Type-Options', 'nosniff');
-  c.header('X-Frame-Options', isPlayerRedirect ? 'SAMEORIGIN' : 'DENY');
+  c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors " + (isPlayerRedirect ? "'self'" : "'none'"));
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
 });
 app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
@@ -41,7 +40,6 @@ export function movieDto(movie) {
     id: String(movie._id),
     imdbId,
     imdbUrl: IMDB_ID.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
-    playerAvailable: Number(movie.vidlinkId) > 0,
     title: movie.title,
     originalTitle: movie.originalTitle || '',
     overview: movie.overview || '',
@@ -67,7 +65,6 @@ export function tvSeriesDto(series) {
     id: String(series._id),
     imdbId,
     imdbUrl: IMDB_ID.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
-    playerAvailable: Number(series.vidlinkId) > 0,
     title: series.title,
     originalTitle: series.originalTitle || '',
     overview: series.overview || '',
@@ -273,76 +270,10 @@ app.get('/api/movies/:imdbId', async (c) => {
     await connectDatabase();
     const movie = await Movie.findOne({ imdbId }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
-    return c.json({ item: movieDto(movie), playerAvailable: Number(movie.vidlinkId) > 0 });
+    return c.json({ item: movieDto(movie) });
   } catch (error) {
     console.error('IMDb movie detail read failed:', error.message);
     return c.json({ error: 'Movie details are temporarily unavailable.' }, 503);
-  }
-});
-
-app.get('/api/player/movie/:imdbId', async (c) => {
-  const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
-  if (!IMDB_ID.test(imdbId)) return c.json({ error: 'Invalid IMDb title ID.' }, 400);
-  try {
-    await connectDatabase();
-    const movie = await Movie.findOne({ imdbId }).select('vidlinkId').lean();
-    const vidlinkId = Number(movie?.vidlinkId) || 0;
-    if (!Number.isSafeInteger(vidlinkId) || vidlinkId <= 0) {
-      return c.json({ error: 'No VidLink provider mapping is saved for this IMDb title.' }, 404);
-    }
-    const params = new URLSearchParams({
-      primaryColor: 'e8b65b',
-      secondaryColor: '171a23',
-      iconColor: 'ffffff',
-      icons: 'default',
-      player: 'default',
-      title: 'false',
-      poster: 'true',
-      autoplay: 'false',
-      nextbutton: 'false'
-    });
-    const startAt = Number(c.req.query('startAt') || 0);
-    if (Number.isFinite(startAt) && startAt > 0) params.set('startAt', String(Math.min(86400, Math.floor(startAt))));
-    return c.redirect('https://vidlink.pro/movie/' + vidlinkId + '?' + params.toString(), 302);
-  } catch (error) {
-    console.error('IMDb movie player redirect failed:', error.message);
-    return c.json({ error: 'Movie playback is temporarily unavailable.' }, 503);
-  }
-});
-
-app.get('/api/player/tv/:imdbId/:seasonNumber/:episodeNumber', async (c) => {
-  const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
-  const seasonNumber = Number(c.req.param('seasonNumber'));
-  const episodeNumber = Number(c.req.param('episodeNumber'));
-  if (!IMDB_ID.test(imdbId) || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0 ||
-      !Number.isSafeInteger(episodeNumber) || episodeNumber < 1) {
-    return c.json({ error: 'Invalid IMDb series, season, or episode.' }, 400);
-  }
-  try {
-    await connectDatabase();
-    const series = await TvSeries.findOne({ imdbId }).select('vidlinkId').lean();
-    const vidlinkId = Number(series?.vidlinkId) || 0;
-    if (!Number.isSafeInteger(vidlinkId) || vidlinkId <= 0) {
-      return c.json({ error: 'No VidLink provider mapping is saved for this IMDb series.' }, 404);
-    }
-    const params = new URLSearchParams({
-      primaryColor: 'e8b65b',
-      secondaryColor: '171a23',
-      iconColor: 'ffffff',
-      icons: 'default',
-      player: 'default',
-      title: 'false',
-      poster: 'true',
-      autoplay: 'false',
-      nextbutton: 'true'
-    });
-    const startAt = Number(c.req.query('startAt') || 0);
-    if (Number.isFinite(startAt) && startAt > 0) params.set('startAt', String(Math.min(86400, Math.floor(startAt))));
-    const target = 'https://vidlink.pro/tv/' + vidlinkId + '/' + seasonNumber + '/' + episodeNumber + '?' + params.toString();
-    return c.redirect(target, 302);
-  } catch (error) {
-    console.error('IMDb TV player redirect failed:', error.message);
-    return c.json({ error: 'TV playback is temporarily unavailable.' }, 503);
   }
 });
 
