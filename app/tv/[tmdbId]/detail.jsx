@@ -92,14 +92,14 @@ export default function TvSeriesExperience({ tmdbId }) {
                 <h2 className="font-bold text-white">Choose season and episode</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <label className="block text-xs text-[#9297a7]">Season
-                    <select className="form-select mt-2 w-full" value={seasonNumber} onChange={(event) => setSeasonNumber(event.target.value)}>
+                    <select className="series-control mt-2" value={seasonNumber} onChange={(event) => setSeasonNumber(event.target.value)}>
                       {(series.seasons || []).filter((item) => item.episodeCount > 0).map((item) => (
                         <option key={item.seasonNumber} value={item.seasonNumber}>{item.name || "Season " + item.seasonNumber}</option>
                       ))}
                     </select>
                   </label>
                   <label className="block text-xs text-[#9297a7]">Episode
-                    <select className="form-select mt-2 w-full" value={episodeNumber} onChange={(event) => setEpisodeNumber(event.target.value)} disabled={seasonLoading || !episodes.length}>
+                    <select className="series-control mt-2" value={episodeNumber} onChange={(event) => setEpisodeNumber(event.target.value)} disabled={seasonLoading || !episodes.length}>
                       {episodes.map((item) => <option key={item.episodeNumber} value={item.episodeNumber}>E{item.episodeNumber} · {item.name || "Episode " + item.episodeNumber}</option>)}
                     </select>
                   </label>
