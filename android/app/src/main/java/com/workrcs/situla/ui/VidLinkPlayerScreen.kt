@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,6 +64,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val ENABLE_BRAVE_FILTER_FOR_VIDLINK = false
 
@@ -71,7 +73,8 @@ private class VidLinkProgressBridge(
     private val dao: WatchHistoryDao,
     initialPositionMs: Long,
     private val bridgeToken: String,
-    private val reportStatus: (String, String) -> Unit
+    private val reportStatus: (String, String) -> Unit,
+    private val onPlayerPlay: () -> Unit
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
     private var lastPositionMs = initialPositionMs
@@ -85,6 +88,12 @@ private class VidLinkProgressBridge(
         totalWatchedMs = watchedMs.coerceAtLeast(0L)
         lastEventElapsedMs = SystemClock.elapsedRealtime()
         lastPersistElapsedMs = lastEventElapsedMs
+    }
+
+    @JavascriptInterface
+    fun onPlayerPlay(token: String) {
+        if (token != bridgeToken) return
+        onPlayerPlay()
     }
 
     @JavascriptInterface
@@ -171,6 +180,10 @@ fun VidLinkPlayerScreen(
     var playerStatus by remember(movie.tmdbId) { mutableStateOf("Loading embedded VidLink iframe · Brave filter OFF for diagnostics") }
     var playerDetail by remember(movie.tmdbId) { mutableStateOf("") }
     var iframeLoaded by remember(movie.tmdbId) { mutableStateOf(false) }
+    var braveUiActive by remember(movie.tmdbId) { mutableStateOf(false) }
+    var braveUiReady by remember(movie.tmdbId) { mutableStateOf(BraveAdblock.ready) }
+    val braveFilterActive = remember(movie.tmdbId) { AtomicBoolean(false) }
+    val playEventReceived = remember(movie.tmdbId) { AtomicBoolean(false) }
     val mainThreadHandler = remember { Handler(Looper.getMainLooper()) }
     val reportPlayerStatus: (String, String) -> Unit = { status, detail ->
         mainThreadHandler.post {
@@ -180,6 +193,33 @@ fun VidLinkPlayerScreen(
             if (status == "iframe_error") playerError = "VidLink iframe reported a load error. $detail"
             if (status == "iframe_load_timeout") playerError = "VidLink iframe did not emit a load event within 12 seconds. See the diagnostic detail below."
         }
+    }
+    val enableBraveAfterPlay: () -> Unit = {
+        playEventReceived.set(true)
+        if (BraveAdblock.ready) {
+            if (braveFilterActive.compareAndSet(false, true)) {
+                mainThreadHandler.post {
+                    braveUiActive = true
+                    playerStatus = "VidLink play event received · Brave filtering is now ON"
+                    playerDetail = "Filtering subsequent iframe, script, tracker and ad requests. Existing requests already started are not retroactively cancelled."
+                }
+            }
+        } else {
+            mainThreadHandler.post {
+                playerStatus = "Play detected · waiting for Brave filter engine to finish initializing"
+                playerDetail = BraveAdblock.lastError ?: "Filter engine is still preparing. Playback is not blocked while it initializes."
+            }
+        }
+    }
+    val filterInitialization = produceState(initialValue = BraveAdblock.ready) {
+        value = if (BraveAdblock.ready) true else
+            runCatching {
+                com.workrcs.situla.security.AdblockFilterRepository.refreshAndInitialize(context.applicationContext)
+            }.getOrDefault(false)
+    }
+    LaunchedEffect(filterInitialization.value) {
+        braveUiReady = filterInitialization.value
+        if (filterInitialization.value && playEventReceived.get()) enableBraveAfterPlay()
     }
     val playerWebViewHolder = remember(movie.tmdbId) { arrayOfNulls<WebView>(1) }
 
@@ -211,7 +251,7 @@ fun VidLinkPlayerScreen(
     val resumePositionMs = remember(movie.tmdbId) { androidx.compose.runtime.mutableLongStateOf(0L) }
     val progressToken = remember(movie.tmdbId) { java.util.UUID.randomUUID().toString() }
     val progressBridge = remember(movie.tmdbId, progressToken) {
-        VidLinkProgressBridge(movie, dao, 0L, progressToken, reportPlayerStatus)
+        VidLinkProgressBridge(movie, dao, 0L, progressToken, reportPlayerStatus, enableBraveAfterPlay)
     }
     val historyLoaded = produceState(initialValue = false, movie.tmdbId) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
@@ -306,7 +346,12 @@ fun VidLinkPlayerScreen(
                 var payload = event.data || {};
                 if (payload.type === 'PLAYER_EVENT' && payload.data) {
                   var player = payload.data;
-                  report('vidlink_player_event', String(player.event || 'player event'));
+                  var playerEvent = String(player.event || '');
+                  report('vidlink_player_event', playerEvent || 'player event');
+                  if (playerEvent === 'play') {
+                    try { SitulaProgress.onPlayerPlay('${progressToken}'); }
+                    catch (ignored) {}
+                  }
                   if (typeof player.currentTime === 'number' &&
                       typeof player.duration === 'number') {
                     SitulaProgress.onProgress(
@@ -367,9 +412,9 @@ fun VidLinkPlayerScreen(
                         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
                         settings.safeBrowsingEnabled = true
                         settings.setGeolocationEnabled(false)
-                        // VidLink is intentionally loaded as a third-party iframe. Some
-                        // providers require third-party cookies/storage for player bootstrap.
-                        // Brave filtering still applies to third-party network requests.
+                        // VidLink preloads its player shell/poster before Play. The Brave
+                        // engine initializes in the background and only filters network requests
+                        // after VidLink sends PLAYER_EVENT: play.
                         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                         addJavascriptInterface(progressBridge, "SitulaProgress")
 
@@ -490,14 +535,19 @@ fun VidLinkPlayerScreen(
                                 val uri = request?.url ?: return true
                                 if (!uri.scheme.equals("https", ignoreCase = true)) return true
 
-                                // Diagnostic phase: allow HTTPS iframe/subframe navigations without
-                                // running Brave rules. Keep top-level navigation inside Situla only.
-                                if (!request.isForMainFrame && !ENABLE_BRAVE_FILTER_FOR_VIDLINK) return false
+                                // Keep top-level navigation inside Situla. Before Play, let the
+                                // provider iframe bootstrap normally; after Play, filter subframe
+                                // document navigations as well.
+                                if (!request.isForMainFrame && !braveFilterActive.get()) return false
+                                if (!request.isForMainFrame && isVidLinkHost(uri)) return false
 
-                                if (ENABLE_BRAVE_FILTER_FOR_VIDLINK) {
+                                if (braveFilterActive.get()) {
                                     val source = view?.url ?: "https://situla.vercel.app/"
                                     val type = if (request.isForMainFrame) "document" else "subdocument"
-                                    if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
+                                    if (BraveAdblock.shouldBlock(uri.toString(), source, type)) {
+                                        reportPlayerStatus("blocked_by_brave_navigation", uri.toString())
+                                        return true
+                                    }
                                 }
                                 if (request.isForMainFrame &&
                                     !uri.host.equals("situla.vercel.app", ignoreCase = true)
@@ -511,10 +561,11 @@ fun VidLinkPlayerScreen(
                                     return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
                                 }
 
-                                // Temporary diagnostic mode: pass every HTTPS resource directly
-                                // to WebView. This isolates the iframe/player from Brave rule matches.
-                                if (!ENABLE_BRAVE_FILTER_FOR_VIDLINK) return null
+                                // VidLink's own player document/API is allowed to operate. All
+                                // other HTTPS resources pass through until Play, then Brave filters
+                                // requests by destination type (including ad/media endpoints).
                                 if (isVidLinkHost(requestedUri)) return null
+                                if (!braveFilterActive.get()) return null
 
                                 val address = requestedUri.toString()
                                 val referer = request.requestHeaders.entries.firstOrNull {
@@ -545,7 +596,7 @@ fun VidLinkPlayerScreen(
                                     accept.contains("text/html") -> "subdocument"
                                     else -> "other"
                                 }
-                                if (ENABLE_BRAVE_FILTER_FOR_VIDLINK && BraveAdblock.shouldBlock(address, referer, requestType)) {
+                                if (braveFilterActive.get() && BraveAdblock.shouldBlock(address, referer, requestType)) {
                                     Log.w("SitulaVidLink", "Brave blocked $requestType request: $address")
                                     reportPlayerStatus("blocked_by_brave", "$requestType · ${requestedUri.host ?: address}")
                                     return WebResourceResponse(
@@ -685,10 +736,21 @@ fun VidLinkPlayerScreen(
             Text("VidLink diagnostics", color = Color.White)
             Text("Status: $playerStatus", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp))
             Text(
-                "TMDB ID: ${movie.tmdbId} · Mode: Embedded iframe · Brave filter: ${if (ENABLE_BRAVE_FILTER_FOR_VIDLINK) "ON" else "OFF (diagnostic)"}",
+                "TMDB ID: ${movie.tmdbId} · Mode: Embedded iframe · Brave engine: ${if (braveUiReady) "READY" else "PREPARING / UNAVAILABLE"}",
                 color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp)
             )
+            Text(
+                "Brave request filter: ${if (braveUiActive) "ACTIVE (after Play)" else "STANDBY (player preload allowed)"}",
+                color = if (braveUiActive) Color(0xFF9FE3B0) else Color(0xFFB8C3D1),
+                modifier = Modifier.padding(top = 3.dp)
+            )
             Text("Iframe URL: $playerUrl", color = Color(0xFF8F9BAA), modifier = Modifier.padding(top = 3.dp))
+            if (!braveUiReady) {
+                Text(
+                    "Brave status: ${BraveAdblock.lastError ?: "Filter lists are initializing in background."}",
+                    color = Color(0xFFFFC9A3), modifier = Modifier.padding(top = 3.dp)
+                )
+            }
             if (playerDetail.isNotBlank()) {
                 Text("Detail: $playerDetail", color = Color(0xFF8F9BAA), modifier = Modifier.padding(top = 3.dp))
             }
