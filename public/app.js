@@ -199,6 +199,28 @@ $('#logout-btn').addEventListener('click', async () => {
   showLogin();
 });
 
+$('#tmdb-check-btn').addEventListener('click', async () => {
+  const button = $('#tmdb-check-btn');
+  const message = $('#tmdb-check-message');
+  button.disabled = true;
+  button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Checking…';
+  message.classList.remove('d-none', 'error', 'success');
+  message.textContent = 'Checking outbound connection to TMDB and validating the API key…';
+  try {
+    const result = await api('/api/admin/tmdb-status');
+    message.classList.add('success');
+    message.textContent = result.message + ' Host: ' + result.host;
+    toast('TMDB connection is working.');
+  } catch (error) {
+    message.classList.add('error');
+    message.textContent = error.message;
+    toast('TMDB connection test failed.');
+  } finally {
+    button.disabled = false;
+    button.innerHTML = '<i class="bi bi-wifi"></i> Test TMDB connection';
+  }
+});
+
 $('#crawl-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = $('#crawl-btn');
