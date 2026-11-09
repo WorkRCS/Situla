@@ -81,6 +81,8 @@ object NetworkAdBlocker {
     fun isTrustedTopLevel(uri: Uri): Boolean {
         val host = uri.host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return false
         return host == "situla.vercel.app" ||
+            host == "vidlink.pro" ||
+            host.endsWith(".vidlink.pro") ||
             host == "localhost" ||
             host == "10.0.2.2"
     }
