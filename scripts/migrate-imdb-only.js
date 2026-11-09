@@ -131,7 +131,7 @@ async function main() {
       if (index.name === '_id_') continue;
       const keys = Object.keys(index.key || {});
       const obsolete = keys.some((key) =>
-        /tmdb|genreIds|posterPath|backdropPath|moderationStatus|adult|originCountry|lastSyncedAt/i.test(key)
+        /tmdb|vidlink|genreIds|posterPath|backdropPath|moderationStatus|adult|originCountry|lastSyncedAt/i.test(key)
       );
       if (obsolete) await collection.dropIndex(index.name);
     }
@@ -147,7 +147,7 @@ async function main() {
 
   if ((await db.listCollections({ name: 'tvseasons' }).toArray()).length) await tvSeasons.drop();
   if ((await db.listCollections({ name: 'crawl_runs' }).toArray()).length) await db.collection('crawl_runs').drop();
-  await anime.updateMany({}, { $unset: { moderationStatus: '', manualReviewNote: '', lastSyncedAt: '' } });
+  await anime.updateMany({}, { $unset: { tmdbId: '', tmdbUrl: '', vidlinkId: '', moderationStatus: '', manualReviewNote: '', lastSyncedAt: '' } });
 
   console.log('Migration complete:');
   console.log('  Movies migrated to direct IMDb identity: ' + movieUpdate.modifiedCount);
