@@ -14,6 +14,7 @@ const BOOTSTRAP_ICONS = {
   star: "star-fill",
   arrow: "arrow-right",
   film: "film",
+  tv: "tv-fill",
   download: "download",
   external: "box-arrow-up-right",
   spark: "stars",
