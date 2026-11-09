@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home, Search, Bookmark, Settings, Play, Check, Star, ArrowRight,
@@ -88,23 +88,83 @@ function SeriesCard({ item, kind, onOpen }) {
 }
 
 function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
+  const rowRef = useRef(null);
+  const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   if (!movies.length) return null;
+
+  function onPointerDown(event) {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    dragRef.current = {
+      active: true,
+      startX: event.clientX,
+      startScroll: rowRef.current?.scrollLeft || 0,
+      moved: false
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function onPointerMove(event) {
+    if (!dragRef.current.active || !rowRef.current) return;
+    const distance = event.clientX - dragRef.current.startX;
+    if (Math.abs(distance) > 4) dragRef.current.moved = true;
+    rowRef.current.scrollLeft = dragRef.current.startScroll - distance;
+  }
+
+  function onPointerUp() {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    if (dragRef.current.moved) window.setTimeout(() => { dragRef.current.moved = false; }, 0);
+  }
+
+  function onClickCapture(event) {
+    if (!dragRef.current.moved) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragRef.current.moved = false;
+  }
+
   return (
-    <section className="mt-9">
-      <div className="section-heading">
+    <section className="netflix-shelf">
+      <div className="section-heading shelf-heading">
         <div>
           {eyebrow && <span>{eyebrow}</span>}
           <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
         </div>
         <span>{movies.length} TITLES</span>
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-3">
+      <div
+        ref={rowRef}
+        className="media-row flex gap-4 overflow-x-auto pb-3"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onLostPointerCapture={onPointerUp}
+        onClickCapture={onClickCapture}
+      >
         {movies.map((movie) => (
           <MovieCard key={movie.imdbId || movie.id || (String(movie.title || 'movie') + '-' + String(movie.releaseYear || 'unknown') + '-' + movies.indexOf(movie))} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
         ))}
       </div>
     </section>
   );
+}
+
+function SkeletonCard() {
+  return <div className="skeleton-card" aria-hidden="true"><div className="skeleton-poster" /><div className="skeleton-line wide" /><div className="skeleton-line short" /></div>;
+}
+
+function SkeletonShelf({ title = "Loading titles…" }) {
+  return (
+    <section className="netflix-shelf skeleton-shelf" aria-label={title}>
+      <div className="section-heading shelf-heading"><h2>{title}</h2><span className="skeleton-label" /></div>
+      <div className="media-row flex gap-4 overflow-hidden">{Array.from({ length: 7 }, (_, index) => <SkeletonCard key={index} />)}</div>
+    </section>
+  );
+}
+
+function SkeletonGrid({ count = 12 }) {
+  return <div className="skeleton-grid">{Array.from({ length: count }, (_, index) => <SkeletonCard key={index} />)}</div>;
 }
 
 const NAV_ITEMS = [
@@ -120,6 +180,9 @@ export default function SitulaApp() {
   const router = useRouter();
   const [tab, setTab] = useState("home");
   const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [tvShows, setTvShows] = useState([]);
@@ -220,6 +283,37 @@ export default function SitulaApp() {
   }, [tab, storageReady]);
 
   useEffect(() => {
+    const value = query.trim();
+    if (value.length < 2) {
+      setSuggestions([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSuggestionsLoading(true);
+      try {
+        const response = await fetch("/api/movies/suggestions?q=" + encodeURIComponent(value), {
+          cache: "no-store",
+          signal: controller.signal
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && !controller.signal.aborted) {
+          setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+        }
+      } catch {
+        if (!controller.signal.aborted) setSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setSuggestionsLoading(false);
+      }
+    }, 120);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  useEffect(() => {
     if (tab !== "home" && tab !== "search") return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -307,8 +401,11 @@ export default function SitulaApp() {
       return;
     }
     const normalized = { ...movie, imdbId };
+    try { localStorage.setItem("situla:movie:" + imdbId, JSON.stringify(normalized)); } catch {}
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
-    router.push("/watch/" + encodeURIComponent(imdbId));
+    setSearchOpen(false);
+    const providerQuery = Number(normalized.vidlinkId) > 0 ? "?vidlinkId=" + encodeURIComponent(normalized.vidlinkId) : "";
+    router.push("/watch/" + encodeURIComponent(imdbId) + providerQuery);
   }
 
   function openTvSeries(series) {
@@ -429,11 +526,26 @@ export default function SitulaApp() {
             <p className="text-[17px] font-black tracking-[.18em]">SITULA</p>
             <p className="text-[9px] font-bold tracking-[.19em]">MOVIES · DISCOVER MORE</p>
           </div>
-          <label className="header-search search-box" aria-label="Search catalog">
-            <Search size={18} strokeWidth={1.9} aria-hidden="true" />
-            <input value={query} onFocus={() => setTab("search")} onChange={(event) => { setTab("search"); setQuery(event.target.value); }} onKeyDown={(event) => { if (event.key === "Enter") setTab("search"); }} placeholder="Search movies, TV, anime…" aria-label="Search movies, TV and anime" />
-            {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search"><X size={16} /></button>}
-          </label>
+          <div className="header-search-wrap">
+            <label className="header-search search-box" aria-label="Search catalog">
+              <Search size={18} strokeWidth={1.9} aria-hidden="true" />
+              <input value={query} onFocus={() => { setTab("search"); setSearchOpen(true); }} onChange={(event) => { setTab("search"); setQuery(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter") { setTab("search"); setSearchOpen(false); } if (event.key === "Escape") setSearchOpen(false); }} placeholder="Search by movie title…" aria-label="Search movie titles" />
+              {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><X size={16} /></button>}
+            </label>
+            {searchOpen && query.trim().length >= 2 && (
+              <div className="suggestion-panel" role="listbox" aria-label="Matching movie titles">
+                {suggestionsLoading ? (
+                  <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
+                ) : suggestions.length ? suggestions.map((movie) => (
+                  <button key={movie.imdbId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openMovie(movie)}>
+                    {movie.posterUrl ? <img src={movie.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><Clapperboard size={17} /></div>}
+                    <span className="suggestion-title"><strong>{movie.title}</strong><small>{movie.releaseYear || "Movie"} · {movie.originalTitle && movie.originalTitle !== movie.title ? movie.originalTitle : "Play movie"}</small></span>
+                    <Play size={16} />
+                  </button>
+                )) : <div className="suggestion-empty">No matching movie titles found.</div>}
+              </div>
+            )}
+          </div>
           <div className="theme-switcher">
             <button type="button" className="theme-trigger watch-control" onClick={() => setThemeMenuOpen((open) => !open)} aria-label="Choose appearance" aria-expanded={themeMenuOpen} title="Appearance">
               {themeMode === "dark" ? <Moon size={19} /> : themeMode === "light" ? <Sun size={19} /> : <Monitor size={19} />}
@@ -489,12 +601,14 @@ export default function SitulaApp() {
                   </div>
                 </div>
               </section>
+            ) : loading ? (
+              <>
+                <div className="hero-skeleton"><div className="skeleton-hero-copy"><div className="skeleton-line short" /><div className="skeleton-line hero-title" /><div className="skeleton-line wide" /><div className="skeleton-line medium" /><div className="skeleton-hero-button" /></div></div>
+                <SkeletonShelf title="Trending now" />
+                <SkeletonShelf title="Popular on Situla" />
+              </>
             ) : (
-              <div className="empty-panel">
-                <Icon name="film" size={32} />
-                <p className="mt-3 font-bold text-white">{loading ? "Loading your movie catalog…" : "Your catalog is getting ready"}</p>
-                <p className="mt-2 text-xs">{error || "Approved titles from the Situla API will appear here."}</p>
-              </div>
+              <div className="empty-panel"><Icon name="film" size={32} /><p className="mt-3 font-bold text-white">Your catalog is getting ready</p><p className="mt-2 text-xs">{error || "Approved titles from the Situla API will appear here."}</p></div>
             )}
 
             {allGenres.length > 1 && (
@@ -527,7 +641,7 @@ export default function SitulaApp() {
               <span>{tvShows.length} / {tvTotal || tvShows.length} SHOWS</span>
             </div>
             {loading ? (
-              <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading TV series…</p></div>
+              <SkeletonGrid count={12} />
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : tvShows.length ? (
@@ -548,7 +662,7 @@ export default function SitulaApp() {
               <span>{animeShows.length} / {animeTotal || animeShows.length} SERIES</span>
             </div>
             {loading ? (
-              <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Loading anime…</p></div>
+              <SkeletonGrid count={12} />
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Anime catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : animeShows.length ? (
@@ -569,7 +683,7 @@ export default function SitulaApp() {
               <span>{movies.length} / {moviesTotal || movies.length} RESULTS</span>
             </div>
             {loading ? (
-              <div className="empty-panel"><div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-white/15 border-t-[#e8b65b]" /><p className="mt-3 text-sm">Searching the catalog…</p></div>
+              <SkeletonGrid count={12} />
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Search unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : movies.length ? (
