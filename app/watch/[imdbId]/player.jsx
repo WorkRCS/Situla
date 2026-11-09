@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
@@ -175,7 +174,7 @@ export default function PlayerExperience({ imdbId }) {
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
           else router.replace("/");
-        }} className="watch-control" aria-label="Back to Situla"><ArrowLeft size={20} strokeWidth={1.9} /></button>
+        }} className="watch-control" aria-label="Back to Situla"><i className="bi bi-arrow-left" aria-hidden="true" /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · IMDb</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
