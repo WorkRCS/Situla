@@ -69,10 +69,10 @@ export function normalizeImportIds(body = {}) {
   }
   const ids = [...new Set(body.ids.map((value) => String(value).trim()).filter(Boolean))];
   if (!ids.length) throw new Error('Add at least one movie ID.');
-  if (source === 'imdb' && ids.some((id) => !/^tt\\d{5,12}$/i.test(id))) {
+  if (source === 'imdb' && ids.some((id) => !/^tt\d{5,12}$/i.test(id))) {
     throw new Error('IMDb IDs must use the tt followed by digits format.');
   }
-  if (source === 'tmdb' && ids.some((id) => !/^\\d{1,12}$/.test(id) || Number(id) <= 0)) {
+  if (source === 'tmdb' && ids.some((id) => !/^\d{1,12}$/.test(id) || Number(id) <= 0)) {
     throw new Error('TMDB IDs must be positive numeric IDs.');
   }
   return { source, ids: ids.map((id) => source === 'imdb' ? id.toLowerCase() : id) };
