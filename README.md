@@ -24,7 +24,7 @@ Situla is a mobile-first media discovery and streaming website built with Next.j
 6. Open http://localhost:3000.
 7. Check http://localhost:3000/api/health.
 
-Run npm run build to verify the production Next.js build and npm test for the API/crawler/schema tests. From the project root, run npm run seed:movies to add 60 new eligible movies, or npm run seed:series to add 50 new popular TV shows and 50 new popular anime titles (in addition to any missing curated starter titles). Use npm run seed:tv or npm run seed:anime to run either catalog independently. Append a target count, for example npm run seed:series -- 40, to request 40 new titles of each type. Each importer prints actual insert counts, skips IDs already in MongoDB, and saves accepted records as it goes.
+Run `npm install` after pulling updates that change dependencies (including `lucide-react`). Run `npm run build` to verify the production Next.js build and npm test for the API/crawler/schema tests. From the project root, run npm run seed:movies to add 60 new eligible movies, or npm run seed:series to add 50 new popular TV shows and 50 new popular anime titles (in addition to any missing curated starter titles). Use npm run seed:tv or npm run seed:anime to run either catalog independently. Append a target count, for example npm run seed:series -- 40, to request 40 new titles of each type. Each importer prints actual insert counts, skips IDs already in MongoDB, and saves accepted records as it goes.
 
 Never commit .env. The real credentials are not in this repository.
 
