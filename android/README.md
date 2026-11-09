@@ -64,7 +64,7 @@ gradle --no-daemon :app:installDebug
 adb shell monkey -p com.workrcs.situla 1
 ```
 
-On macOS/Linux use `./gradle` only after generating the standard Gradle wrapper; with a Gradle 9.4.1 install, run `gradle --no-daemon :app:installDebug` from `android/`. Android Studio is not required after Android SDK, platform 36, build-tools 36.0.0 and an AVD are installed.
+On macOS/Linux, use the same `gradle --no-daemon :app:installDebug` command from `android/` after installing Gradle 9.4.1. The checked-in repository currently includes wrapper properties but not the generated wrapper scripts, so use the installed Gradle command for this first emulator test. Android Studio is not required after Android SDK, platform 36, build-tools 36.0.0 and an AVD are installed.
 
 ## Requires real deployment data before activation
 
