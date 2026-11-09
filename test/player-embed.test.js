@@ -33,6 +33,15 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
   assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-regional.txt"));
   assert.ok(blocker.includes("https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt"));
   assert.ok(blocker.includes("12L * 60L * 60L * 1000L"));
+  const gradle = await read('../android/app/build.gradle.kts');
+  assert.ok(gradle.includes('configurations.create("braveAdblockAar")'));
+  assert.ok(gradle.includes('add(braveAdblockAar.name, "io.github.mlm-games:adblock:0.1.3@aar")'));
+  assert.ok(gradle.includes('tasks.register<Copy>("extractBraveAdblockAar")'));
+  assert.ok(gradle.includes('include("jni/**/*.so")'));
+  assert.ok(gradle.includes("compileSdk = 36"));
+  assert.doesNotMatch(gradle, /implementation\(["']io\.github\.mlm-games:adblock/);
+  const bridgeSource = await read('../android/app/src/main/java/org/mlm/adblock/AdblockEngine.kt');
+  assert.ok(bridgeSource.includes("System.loadLibrary(\"adblock_ffi\")"));
   assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri, sourceUrl, accept, request\.isForMainFrame\)/);
   assert.ok(player.includes("settings.setSupportMultipleWindows(true)"));
   assert.ok(player.includes("override fun onCreateWindow("));
