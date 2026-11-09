@@ -7,6 +7,9 @@ coverage/
 .DS_Store
 npm-debug.log*
 
+# Rust outputs
+android/adblock-rust/target/
+
 # Android Studio / Gradle outputs
 android/local.properties
 android/.gradle/
