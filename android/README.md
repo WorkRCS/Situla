@@ -21,12 +21,18 @@ Kotlin + Jetpack Compose Android client for the Situla movie catalog.
 
 ## Backend configuration
 
-Create or edit `android/local.properties` (do not commit it):
+The Android app now uses the hosted production API by default:
+
+`https://situla.vercel.app/`
+
+You do not need to add `situlaApiBaseUrl` to `android/local.properties` for the standard setup. The URL can still be overridden locally when testing another backend:
 
 ```properties
 sdk.dir=C:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
-situlaApiBaseUrl=https://YOUR-VERCEL-PROJECT.vercel.app/
+situlaApiBaseUrl=https://YOUR-OTHER-VERCEL-PROJECT.vercel.app/
 ```
+
+Do not commit `local.properties`; keep machine-specific SDK paths local.
 
 The API must return the movie's numeric `tmdbId` and imported movie records must be approved in the backend before they appear in the public catalog. IMDb IDs are resolved by the backend to TMDB IDs; the VidLink movie route requires the TMDB ID.
 
