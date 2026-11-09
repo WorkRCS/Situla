@@ -4,7 +4,7 @@ import android.content.Context
 import java.io.File
 
 object VpnProfileStore {
-    val regions = listOf("Malaysia", "Singapore", "Japan", "Germany")
+    val regions = listOf("Singapore", "Malaysia", "Japan", "Germany", "Netherlands", "Poland")
     private const val PREFERENCES = "situla_vpn_preferences"
 
     fun autoConnectRegion(context: Context): String? =
@@ -20,6 +20,29 @@ object VpnProfileStore {
                 putString("auto_connect_region", region)
             }
         }.apply()
+    }
+
+    fun preferredAvailableRegion(context: Context): String? {
+        val available = availableRegions(context)
+        return autoConnectRegion(context)?.takeIf { it in available } ?: available.firstOrNull()
+    }
+
+    fun regionLatencies(context: Context): Map<String, Long> {
+        val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+        return regions.mapNotNull { region ->
+            preferences.getLong("latency_ms_${region.lowercase()}", -1L)
+                .takeIf { it > 0L }
+                ?.let { region to it }
+        }.toMap()
+    }
+
+    fun saveRegionLatency(context: Context, region: String, latencyMs: Long) {
+        require(region in regions)
+        require(latencyMs > 0L)
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+            .edit()
+            .putLong("latency_ms_${region.lowercase()}", latencyMs)
+            .apply()
     }
 
     fun autoRotateEnabled(context: Context): Boolean =
