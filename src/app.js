@@ -443,10 +443,17 @@ app.get('/api/movies', async (c) => {
     const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 40) : 20;
     const year = Number(c.req.query('year') || 0);
     const query = (c.req.query('q') || '').trim().slice(0, 80);
-    const filter = { moderationStatus: 'approved', adult: false, originalLanguage: 'en' };
+    const filter = {
+      moderationStatus: 'approved',
+      adult: false,
+      originalLanguage: 'en',
+      imdbId: /^tt\\d{5,12}$/
+    };
     if (year >= 1870 && year <= new Date().getFullYear()) filter.releaseYear = year;
-    if (query) filter.$text = { $search: query };
-    const sort = query
+    const imdbQuery = /^tt\\d{5,12}$/i.test(query);
+    if (imdbQuery) filter.imdbId = query.toLowerCase();
+    else if (query) filter.$text = { $search: query };
+    const sort = query && !imdbQuery
       ? { score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }
       : { popularity: -1, releaseDate: -1 };
     const [items, total] = await Promise.all([
