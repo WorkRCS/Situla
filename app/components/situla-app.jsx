@@ -2,30 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Home, Search, Bookmark, Settings, Play, Check, Star, ArrowRight,
+  Clapperboard, Download, ExternalLink, Sparkles, X, CircleHelp
+} from "lucide-react";
 
-function Icon({ name, size = 19 }) {
-  const props = {
-    width: size, height: size, viewBox: "0 0 24 24", fill: "none",
-    stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round",
-    strokeLinejoin: "round", "aria-hidden": true
-  };
-  switch (name) {
-    case "home": return <svg {...props}><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /></svg>;
-    case "search": return <svg {...props}><circle cx="10.8" cy="10.8" r="7.2" /><path d="m16.2 16.2 4.3 4.3" /></svg>;
-    case "saved": return <svg {...props}><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-4-6 4z" /></svg>;
-    case "settings": return <svg {...props}><circle cx="12" cy="12" r="3" /><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.7Z" transform="translate(-1 -1) scale(1.08)" /></svg>;
-    case "play": return <svg {...props}><path d="M8 5.5a1 1 0 0 1 1.5-.86l9.4 5.5a2.1 2.1 0 0 1 0 3.62l-9.4 5.5A1 1 0 0 1 8 18.4z" fill="currentColor" stroke="none" /></svg>;
-    case "bookmark": return <svg {...props}><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-4-6 4z" /></svg>;
-    case "check": return <svg {...props}><path d="m5 12 4 4L19 6" /></svg>;
-    case "star": return <svg {...props}><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor" stroke="none" /></svg>;
-    case "arrow": return <svg {...props}><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
-    case "film": return <svg {...props}><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 4v16M17 4v16M3 9h4m-4 6h4m10-6h4m-4 6h4" /></svg>;
-    case "download": return <svg {...props}><path d="M12 3v12m-5-5 5 5 5-5M4 19v2h16v-2" /></svg>;
-    case "external": return <svg {...props}><path d="M14 3h7v7M10 14 21 3" /><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6" /></svg>;
-    case "spark": return <svg {...props}><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></svg>;
-    case "close": return <svg {...props}><path d="m6 6 12 12M18 6 6 18" /></svg>;
-    default: return <svg {...props}><circle cx="12" cy="12" r="9" /></svg>;
-  }
+const ICONS = {
+  home: Home, search: Search, saved: Bookmark, settings: Settings, play: Play,
+  bookmark: Bookmark, check: Check, star: Star, arrow: ArrowRight,
+  film: Clapperboard, download: Download, external: ExternalLink,
+  spark: Sparkles, close: X
+};
+
+function Icon({ name, size = 19, className }) {
+  const LucideIcon = ICONS[name] || CircleHelp;
+  return <LucideIcon size={size} strokeWidth={1.9} fill={name === "star" ? "currentColor" : "none"} aria-hidden="true" className={className} />;
 }
 
 function MovieCard({ movie, onOpen, onSave, saved }) {
