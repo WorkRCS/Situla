@@ -59,6 +59,13 @@ import com.workrcs.situla.data.SitulaApiProvider
 import com.workrcs.situla.data.WatchHistoryEntity
 import kotlinx.coroutines.launch
 
+private val IMDbTestIds = listOf(
+    "tt1375666", "tt0816692", "tt0482571", "tt0133093", "tt1856101",
+    "tt2543164", "tt1160419", "tt1631867", "tt0945513", "tt1130884",
+    "tt8946378", "tt0167404", "tt6644200", "tt1392190", "tt6710474",
+    "tt3659388", "tt1454468", "tt0470752", "tt0107290", "tt0120737"
+)
+
 private enum class Tab(val label: String) { HOME("Home"), SEARCH("Search"), HISTORY("History"), SETTINGS("Settings") }
 
 @Composable
@@ -255,20 +262,38 @@ private fun SettingsScreen(api: SitulaApi?) {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Text("Import real IMDb IDs", fontWeight = FontWeight.Bold)
                 Text("One IMDb ID per line (maximum 200). The backend resolves IDs through TMDB and applies the movie filters.", color = Color(0xFF9BA5B4), fontSize = 10.sp, modifier = Modifier.padding(vertical = 6.dp))
-                OutlinedTextField(idText, { idText = it }, label = { Text("IMDb IDs (tt…)") }, minLines = 3, modifier = Modifier.fillMaxWidth())
+                Button(onClick = { idText = IMDbTestIds.joinToString("\n") }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Load 20 verified IMDb test IDs")
+                }
+                OutlinedTextField(idText, { idText = it }, label = { Text("IMDb IDs (tt…; max 200)") }, minLines = 3, modifier = Modifier.fillMaxWidth())
                 Button(onClick = {
                     val ids = idText.split(Regex("[,\\s]+")).map { it.trim() }.filter { it.isNotBlank() }.distinct()
-                    if (api == null) result = "Backend URL is not configured."
+                    if (ids.isEmpty()) result = "Add at least one IMDb ID."
+                    else if (ids.size > 200) result = "The maximum is 200 IDs per import job."
+                    else if (api == null) result = "Backend URL is not configured."
                     else scope.launch {
                         importing = true
-                        result = runCatching { api.importIds(ImportIdsRequest(ids = ids)) }.fold(
-                            { "Matched " + it.matched + " · Added " + it.imported + " · Updated " + it.updated + " · Skipped " + it.skipped },
-                            { it.message ?: "Import failed. Check admin session and TMDB connectivity." }
-                        )
-                        importing = false
+                        try {
+                            var matched = 0
+                            var added = 0
+                            var updated = 0
+                            var skipped = 0
+                            ids.chunked(20).forEach { batch ->
+                                val part = api.importIds(ImportIdsRequest(ids = batch)).result
+                                matched += part.matched
+                                added += part.imported
+                                updated += part.updated
+                                skipped += part.skipped
+                            }
+                            result = "Requested ${ids.size} · Matched $matched · Added $added · Updated $updated · Filtered/not found $skipped. New titles need approval."
+                        } catch (error: Exception) {
+                            result = error.message ?: "Import failed. Check admin session and TMDB connectivity."
+                        } finally {
+                            importing = false
+                        }
                     }
                 }, enabled = !importing && api != null && idText.isNotBlank(), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                    Text(if (importing) "Importing…" else "Import IDs from TMDB")
+                    Text(if (importing) "Importing…" else "Import real movies from TMDB")
                 }
                 result?.let { Text(it, color = Color(0xFF9BA5B4), fontSize = 10.sp, modifier = Modifier.padding(top = 8.dp)) }
             }
