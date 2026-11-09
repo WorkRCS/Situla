@@ -1,6 +1,5 @@
 package com.workrcs.situla.ui
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,7 +33,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @Composable
-fun MoviePlayerScreen(context: Context, movie: Movie, onBack: () -> Unit) {
+fun MoviePlayerScreen(movie: Movie, onBack: () -> Unit) {
     val streamUrl = movie.playbackUrl?.trim().orEmpty()
     val secureUrl = streamUrl.startsWith("https://", ignoreCase = true)
     BackHandler(onBack = onBack)
@@ -71,9 +70,9 @@ fun MoviePlayerScreen(context: Context, movie: Movie, onBack: () -> Unit) {
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            player.pause()
             playerScope.launch {
                 runCatching { recorder.flush(movie, player) }
+                player.pause()
                 recorder.stop()
                 player.release()
                 playerScope.cancel()
