@@ -1,10 +1,15 @@
 package com.workrcs.situla.ui
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.graphics.Color
 
 private val SitulaDarkColors = darkColorScheme(
@@ -35,6 +40,18 @@ private val SitulaLightColors = lightColorScheme(
 
 @Composable
 fun SitulaTheme(content: @Composable () -> Unit) {
-    val colors = if (isSystemInDarkTheme()) SitulaDarkColors else SitulaLightColors
+    val darkMode = isSystemInDarkTheme()
+    val colors = if (darkMode) SitulaDarkColors else SitulaLightColors
+    val activity = LocalContext.current as? Activity
+    SideEffect {
+        activity?.window?.let { window ->
+            window.statusBarColor = colors.background.toArgb()
+            window.navigationBarColor = colors.background.toArgb()
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                isAppearanceLightStatusBars = !darkMode
+                isAppearanceLightNavigationBars = !darkMode
+            }
+        }
+    }
     MaterialTheme(colorScheme = colors, content = content)
 }
