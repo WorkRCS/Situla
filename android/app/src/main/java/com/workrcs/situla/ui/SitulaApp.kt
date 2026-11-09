@@ -131,6 +131,16 @@ fun SitulaApp(context: Context) {
                 }
 
                 webChromeClient = object : WebChromeClient() {
+                    // VidLink is embedded without iframe sandboxing for player compatibility.
+                    // Keep native WebView popups/new windows disabled so ad clicks cannot
+                    // open a second WebView or escape the Situla host.
+                    override fun onCreateWindow(
+                        view: WebView?,
+                        isDialog: Boolean,
+                        isUserGesture: Boolean,
+                        resultMsg: android.os.Message?
+                    ): Boolean = false
+
                     private fun showFullScreen(view: View?, callback: CustomViewCallback?) {
                         val host = activity
                         val decor = host?.window?.decorView as? ViewGroup
