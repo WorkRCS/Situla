@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 /** Saves resume position and actual play time separately, with bounded low-frequency writes. */
 class WatchProgressRecorder(
     private val dao: WatchHistoryDao,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate)
 ) {
     private var ticker: Job? = null
     private var lastElapsedMs = 0L
