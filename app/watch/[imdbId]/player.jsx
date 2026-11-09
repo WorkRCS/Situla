@@ -142,7 +142,6 @@ export default function PlayerExperience({ imdbId }) {
           allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
         />
       ) : (
         <div className="player-message">
