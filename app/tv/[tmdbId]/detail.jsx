@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Play } from "lucide-react";
 
 export default function TvSeriesExperience({ tmdbId }) {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function TvSeriesExperience({ tmdbId }) {
   return (
     <main className="app-shell min-h-screen">
       <div className="mx-auto max-w-[1080px] px-4 py-6 md:px-8 md:py-10">
-        <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back">←</button>
+        <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back"><ArrowLeft size={20} strokeWidth={1.9} /></button>
         {loading ? (
           <div className="empty-panel">Loading TV series…</div>
         ) : error && !series ? (
@@ -122,7 +123,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                 {seasonLoading && <p className="mt-3 text-xs text-[#9297a7]">Loading episode list…</p>}
                 {selectedEpisode && <p className="mt-3 text-xs leading-5 text-[#858b9b]">{selectedEpisode.overview}</p>}
                 {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
-                <button className="gold-button mt-5" disabled={!seasonNumber || !episodeNumber || seasonLoading} onClick={playEpisode}>{resumeEpisode ? "▶ Resume episode" : "▶ Play episode"}</button>
+                <button className="gold-button mt-5" disabled={!seasonNumber || !episodeNumber || seasonLoading} onClick={playEpisode}><Play size={16} fill="currentColor" strokeWidth={1.8} /> {resumeEpisode ? "Resume episode" : "Play episode"}</button>
               </div>
             </section>
           </div>
