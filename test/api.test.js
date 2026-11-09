@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import app, { movieDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
+import { vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
 
 test('admin and crawler API routes are removed', async () => {
   const paths = [
@@ -151,4 +152,14 @@ test('public movie and TV routes reject non-IMDb identifiers before database acc
   assert.equal(tv.status, 400);
   assert.equal(moviePlayer.status, 404);
   assert.equal(tvPlayer.status, 404);
+});
+
+
+test('VidLink movie and TV URLs use direct IMDb IDs only', () => {
+  assert.equal(vidlinkMovieUrl('tt0848228'), 'https://vidlink.pro/movie/tt0848228');
+  assert.equal(vidlinkTvUrl('tt0944947', 1, 1), 'https://vidlink.pro/tv/tt0944947/1/1');
+  assert.equal(vidlinkMovieUrl('24428'), null);
+  assert.equal(vidlinkTvUrl('1399', 1, 1), null);
+  assert.equal(vidlinkTvUrl('tt0944947', -1, 1), null);
+  assert.equal(vidlinkTvUrl('tt0944947', 1, 0), null);
 });
