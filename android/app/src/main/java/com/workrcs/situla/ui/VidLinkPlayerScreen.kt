@@ -111,7 +111,6 @@ fun VidLinkPlayerScreen(
                     settings.loadsImagesAutomatically = true
                     settings.mediaPlaybackRequiresUserGesture = false
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-                    safeBrowsingEnabled = true
                     // Keep JavaScript popups disabled; multiple windows remain off below.
                     settings.javaScriptCanOpenWindowsAutomatically = false
                     settings.setSupportMultipleWindows(false)
@@ -139,7 +138,7 @@ fun VidLinkPlayerScreen(
                             if (NetworkAdBlocker.shouldBlock(uri)) return true
                         // A player-frame click must not navigate to an unrelated ad/redirect site.
                         // Actual media fetches are not frame navigations and remain unaffected.
-                        if (!request.isForMainFrame && request.hasGesture && !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)) return true
+                        if (!request.isForMainFrame && request.hasGesture() && !NetworkAdBlocker.isTrustedPlayerFrameNavigation(uri)) return true
                             return request.isForMainFrame && !NetworkAdBlocker.isTrustedTopLevel(uri)
                         }
                     }
