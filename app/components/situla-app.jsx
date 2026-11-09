@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -175,18 +176,19 @@ function SkeletonGrid({ count = 12 }) {
 }
 
 const NAV_ITEMS = [
-  { id: "home", label: "Movies", icon: "home" },
-  { id: "tv", label: "TV", icon: "film" },
-  { id: "anime", label: "Anime", icon: "play" },
-  { id: "search", label: "Search", icon: "search" },
-  { id: "saved", label: "My List", icon: "saved" },
-  { id: "settings", label: "Settings", icon: "settings" }
+  { id: "home", href: "/", label: "Home", icon: "home" },
+  { id: "movies", href: "/movies", label: "Movies", icon: "film" },
+  { id: "tv", href: "/tv", label: "TV", icon: "tv" },
+  { id: "anime", href: "/anime", label: "Anime", icon: "play" },
+  { id: "search", href: "/search", label: "Search", icon: "search" },
+  { id: "saved", href: "/saved", label: "Saved", icon: "saved" },
+  { id: "settings", href: "/settings", label: "Settings", icon: "settings" }
 ];
 
-export default function SitulaApp() {
+export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const router = useRouter();
-  const [tab, setTab] = useState("home");
-  const [query, setQuery] = useState("");
+  const tab = view;
+  const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -323,7 +325,7 @@ export default function SitulaApp() {
   }, [query]);
 
   useEffect(() => {
-    if (tab !== "home" && tab !== "search") return;
+    if (tab !== "home" && tab !== "movies" && tab !== "search") return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
@@ -438,7 +440,7 @@ export default function SitulaApp() {
     if (loadingMore) return;
     setLoadingMore(true);
     try {
-      if (tab === "home" || tab === "search") {
+      if (tab === "home" || tab === "movies" || tab === "search") {
         const nextPage = moviesPage + 1;
         const params = new URLSearchParams({ page: String(nextPage), limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
@@ -540,12 +542,27 @@ export default function SitulaApp() {
           <div className="brand-mark" aria-hidden="true">S</div>
           <div className="brand-copy min-w-0">
             <p className="text-[17px] font-black tracking-[.18em]">SITULA</p>
-            <p className="text-[9px] font-bold tracking-[.19em]">MOVIES · DISCOVER MORE</p>
+            <p className="text-[9px] font-bold tracking-[.19em]">{({
+            home: "DISCOVER MORE",
+            movies: "MOVIE CATALOG",
+            tv: "TV SHOWS",
+            anime: "ANIME COLLECTION",
+            search: "FIND SOMETHING TO WATCH",
+            saved: "YOUR COLLECTION",
+            settings: "APP PREFERENCES"
+          })[tab] || "DISCOVER MORE"}</p>
           </div>
           <div className="header-search-wrap">
             <label className="header-search search-box" aria-label="Search catalog">
               <BootstrapIcon icon="search" size={18} />
-              <input value={query} onFocus={() => { setTab("search"); setSearchOpen(true); }} onChange={(event) => { setTab("search"); setQuery(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => { if (event.key === "Enter") { setTab("search"); setSearchOpen(false); } if (event.key === "Escape") setSearchOpen(false); }} placeholder="Search by movie title…" aria-label="Search movie titles" />
+              <input value={query} onFocus={() => setSearchOpen(true)} onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  setSearchOpen(false);
+                  router.push("/search" + (query.trim() ? "?q=" + encodeURIComponent(query.trim()) : ""));
+                }
+                if (event.key === "Escape") setSearchOpen(false);
+              }} placeholder="Search by movie title…" aria-label="Search movie titles" />
               {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
             </label>
             {searchOpen && query.trim().length >= 2 && (
@@ -646,6 +663,27 @@ export default function SitulaApp() {
         )}
 
 
+        {tab === "movies" && (
+          <section className="pb-8">
+            <div className="section-heading">
+              <div><span>EXPLORE THE CATALOG</span><h1 className="mt-1 text-2xl font-black">Movies</h1></div>
+              <span>{movies.length} / {moviesTotal || movies.length} TITLES</span>
+            </div>
+            {loading ? (
+              <SkeletonGrid count={12} />
+            ) : error ? (
+              <div className="empty-panel"><p className="font-bold text-white">Movie catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
+            ) : movies.length ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+                {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
+              </div>
+            ) : (
+              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No movies published yet</p><p className="mt-2 text-xs">Movies in the Situla catalog will appear here.</p></div>
+            )}
+            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+          </section>
+        )}
+
         {tab === "tv" && (
           <section className="pb-8">
             <div className="section-heading">
@@ -717,7 +755,7 @@ export default function SitulaApp() {
                 {savedMovies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
-              <div className="empty-panel"><Icon name="saved" size={30} /><p className="mt-3 font-bold text-white">Your list is empty</p><p className="mt-2 text-xs">Tap the bookmark on any movie to save it here.</p><button className="gold-button mt-5" onClick={() => setTab("home")}>Explore movies <Icon name="arrow" size={15} /></button></div>
+              <div className="empty-panel"><Icon name="saved" size={30} /><p className="mt-3 font-bold text-white">Your list is empty</p><p className="mt-2 text-xs">Tap the bookmark on any movie to save it here.</p><button className="gold-button mt-5" onClick={() => router.push("/movies")}>Explore movies <Icon name="arrow" size={15} /></button></div>
             )}
           </section>
         )}
@@ -763,16 +801,15 @@ export default function SitulaApp() {
 
       <nav className="bottom-nav" aria-label="Main navigation">
         {NAV_ITEMS.map((item) => (
-          <button
+          <Link
             key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
+            href={item.href}
             className={"nav-button" + (tab === item.id ? " active" : "")}
             aria-current={tab === item.id ? "page" : undefined}
           >
             <Icon name={item.icon} size={20} />
             <span>{item.label}</span>
-          </button>
+          </Link>
         ))}
       </nav>
     </main>
