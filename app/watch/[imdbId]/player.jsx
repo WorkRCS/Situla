@@ -6,16 +6,12 @@ import { useRouter } from "next/navigation";
 function Icon({ name, size = 20 }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
   if (name === "back") return <svg {...common}><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>;
-  if (name === "expand") return <svg {...common}><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
-  if (name === "external") return <svg {...common}><path d="M14 3h7v7M10 14 21 3" /><path d="M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6" /></svg>;
-  return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 8v4l3 2" /></svg>;
+  return <svg {...common}><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
 }
 
 async function lockLandscape() {
   try {
-    if (screen.orientation && typeof screen.orientation.lock === "function") {
-      await screen.orientation.lock("landscape");
-    }
+    if (screen.orientation && typeof screen.orientation.lock === "function") await screen.orientation.lock("landscape");
   } catch {}
 }
 
@@ -36,12 +32,12 @@ export default function PlayerExperience({ imdbId }) {
           cache: "no-store",
           signal: controller.signal
         });
-        if (response.ok) {
-          const data = await response.json();
-          setMovie(data.item || null);
-        }
-      } catch {}
-      finally {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Movie metadata is unavailable.");
+        setMovie(data.item || null);
+      } catch (error) {
+        if (!controller.signal.aborted) setMovie({ playerError: error.message || "Unable to load this movie." });
+      } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     }
@@ -61,34 +57,33 @@ export default function PlayerExperience({ imdbId }) {
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== "https://vidsrc.sh") return;
+      if (event.origin !== "https://vidlink.pro") return;
       const payload = event.data;
-      if (!payload || payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
+      if (!payload || typeof payload !== "object") return;
 
-      const details = payload.data;
-      const eventImdbId = String(details.player_info?.imdb || imdbId).toLowerCase();
-      if (eventImdbId !== imdbId) return;
-
-      const status = String(details.player_status || "");
-      if (status === "playing" && Date.now() - lastProgressWrite.current < 5000) return;
-      if (status === "playing") lastProgressWrite.current = Date.now();
-
-      if (status === "completed") {
-        try {
-          const key = "situla:progress:v1";
-          const current = JSON.parse(localStorage.getItem(key) || "[]");
-          localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
-        } catch {}
+      if (payload.type === "MEDIA_DATA" && payload.data && typeof payload.data === "object") {
+        try { localStorage.setItem("situla:vidlink-media:v1", JSON.stringify(payload.data)); } catch {}
         return;
       }
 
-      const watched = Number(details.player_progress);
-      const duration = Number(details.player_duration);
-      if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
+      if (payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
+      const details = payload.data;
+      if (details.mediaType !== "movie" || Number(details.mtmdbId) !== Number(movie?.tmdbId)) return;
 
+      const eventName = String(details.event || "");
+      if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
+      if (["timeupdate", "pause", "seeked"].includes(eventName)) lastProgressWrite.current = Date.now();
+
+      const key = "situla:progress:v1";
       try {
-        const key = "situla:progress:v1";
         const current = JSON.parse(localStorage.getItem(key) || "[]");
+        if (eventName === "ended") {
+          localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
+          return;
+        }
+        const watched = Number(details.currentTime);
+        const duration = Number(details.duration);
+        if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
         const entry = {
           imdbId,
           title: movie?.title || "Movie",
@@ -106,7 +101,6 @@ export default function PlayerExperience({ imdbId }) {
         localStorage.setItem(key, JSON.stringify(next));
       } catch {}
     };
-
     window.addEventListener("message", onPlayerMessage);
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
@@ -138,47 +132,65 @@ export default function PlayerExperience({ imdbId }) {
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       } else {
         if (target.requestFullscreen) await target.requestFullscreen();
-        else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+        else if (target.webkitRequestFullscreen) await target.webkitRequestFullscreen();
         await lockLandscape();
       }
     } catch {}
   }, []);
 
-  const playerUrl = "https://vidsrc.sh/embed/movie/" + encodeURIComponent(imdbId) +
-    (startAt > 0 ? "?startAt=" + encodeURIComponent(String(startAt)) : "");
+  const tmdbId = Number(movie?.tmdbId);
+  const playerParams = new URLSearchParams({
+    primaryColor: "e8b65b",
+    secondaryColor: "171a23",
+    iconColor: "ffffff",
+    icons: "default",
+    player: "default",
+    title: "false",
+    poster: "true",
+    autoplay: "false",
+    nextbutton: "false"
+  });
+  if (startAt > 0) playerParams.set("startAt", String(startAt));
+  const playerUrl = Number.isSafeInteger(tmdbId) && tmdbId > 0
+    ? "https://vidlink.pro/movie/" + tmdbId + "?" + playerParams.toString()
+    : null;
 
   return (
     <main ref={screenRef} className="watch-screen" onDoubleClick={toggleFullscreen}>
-      <iframe
-        key={playerUrl}
-        className="watch-frame"
-        src={playerUrl}
-        title={(movie?.title || "Situla movie") + " player"}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write"
-        allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
+      {playerUrl ? (
+        <iframe
+          key={playerUrl}
+          className="watch-frame"
+          src={playerUrl}
+          title={(movie?.title || "Situla movie") + " player"}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <div className="player-message">
+          <div className="player-message-card">
+            <div className="player-message-mark">S</div>
+            <h1>{loading ? "Preparing your movie" : "Player unavailable"}</h1>
+            <p>{movie?.playerError || (loading ? "Loading verified movie details…" : "VidLink needs a matching movie ID before playback can start.")}</p>
+            <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
+          </div>
+        </div>
+      )}
       <header className="watch-topbar">
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
           else router.replace("/");
         }} className="watch-control" aria-label="Back to Situla"><Icon name="back" /></button>
         <div className="watch-title">
-          <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER</p>
+          <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · IMDb</p>
           <h1 className="truncate text-sm font-bold">{movie?.title || (loading ? "Loading movie…" : "Now Playing")}</h1>
         </div>
         <button className="watch-control" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
           <Icon name="expand" />
         </button>
       </header>
-      <a
-        className="absolute bottom-4 right-4 z-[4] inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/65 px-3 py-2 text-[11px] font-bold text-white/80 backdrop-blur-md"
-        href={playerUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Open player page <Icon name="external" size={14} />
-      </a>
     </main>
   );
 }
