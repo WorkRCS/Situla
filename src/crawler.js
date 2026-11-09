@@ -444,3 +444,126 @@ export async function importMovieIds(body = {}) {
     unmatched
   };
 }
+
+
+/**
+ * Import a requested number of NEW eligible popular movies.
+ * Successful records are saved immediately, so one failed metadata request
+ * cannot discard other titles in the discovery page or previous inserts.
+ */
+export async function importPopularMovies(options = {}) {
+  const targetCount = Number(options.targetCount ?? 60);
+  const maxPages = Number(options.maxPages ?? 20);
+  if (!Number.isSafeInteger(targetCount) || targetCount < 1 || targetCount > 200) {
+    throw new Error('targetCount must be a whole number between 1 and 200.');
+  }
+  if (!Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 50) {
+    throw new Error('maxPages must be a whole number between 1 and 50.');
+  }
+
+  await connectDatabase();
+  await migrateLegacyMovieIds();
+
+  const existing = await Movie.find({ imdbId: { $type: 'string' } }).select('imdbId').lean();
+  const existingIds = new Set(existing.map((item) => String(item.imdbId || '').toLowerCase()));
+  const claimedIds = new Set();
+  const seenTmdbIds = new Set();
+  const failures = [];
+  let imported = 0;
+  let filtered = 0;
+  let duplicates = 0;
+  let pagesProcessed = 0;
+  let candidatesChecked = 0;
+
+  for (let page = 1; page <= maxPages && imported < targetCount; page += 1) {
+    let discovery;
+    try {
+      discovery = await tmdbRequest('/discover/movie', {
+        include_adult: false,
+        include_video: false,
+        language: 'en-US',
+        sort_by: 'popularity.desc',
+        with_original_language: 'en',
+        with_genres: '878|9648|14|27|28|12',
+        page
+      });
+    } catch (error) {
+      failures.push({ page, message: error.message });
+      break;
+    }
+
+    pagesProcessed += 1;
+    const candidates = (discovery.results || []).filter((movie) => {
+      const id = Number(movie.id);
+      if (!Number.isSafeInteger(id) || id <= 0 || seenTmdbIds.has(id)) return false;
+      seenTmdbIds.add(id);
+      return !movie.adult && movie.original_language === 'en' && Boolean(movie.release_date) && Boolean(movie.poster_path);
+    });
+
+    const details = await mapLimit(candidates, 5, async (movie) => {
+      try {
+        const data = await tmdbRequest('/movie/' + encodeURIComponent(movie.id), {
+          language: 'en-US',
+          append_to_response: 'release_dates,keywords,external_ids'
+        });
+        return { movie, record: mapMovie(movie, data) };
+      } catch (error) {
+        return { movie, error };
+      }
+    });
+
+    for (const result of details) {
+      candidatesChecked += 1;
+      if (result?.error) {
+        failures.push({ tmdbId: result.movie?.id || null, message: result.error.message });
+        continue;
+      }
+      const record = result?.record;
+      const valid = record &&
+        /^tt\d{5,12}$/.test(record.imdbId) &&
+        !record.adult &&
+        record.originalLanguage === 'en' &&
+        Boolean(record.releaseDate) &&
+        Boolean(record.posterPath) &&
+        record.genreIds.some((id) => ALLOWED_IMPORT_GENRES.has(Number(id)));
+
+      if (!valid) {
+        filtered += 1;
+        continue;
+      }
+      if (existingIds.has(record.imdbId) || claimedIds.has(record.imdbId)) {
+        duplicates += 1;
+        continue;
+      }
+      if (imported >= targetCount) break;
+
+      claimedIds.add(record.imdbId);
+      try {
+        await Movie.create({
+          ...record,
+          moderationStatus: 'approved',
+          manualReviewNote: 'Popular Situla seed: English, non-adult, poster/date and approved genre filters passed.'
+        });
+        existingIds.add(record.imdbId);
+        imported += 1;
+      } catch (error) {
+        claimedIds.delete(record.imdbId);
+        if (error?.code === 11000) duplicates += 1;
+        else failures.push({ imdbId: record.imdbId, title: record.title, message: error.message });
+      }
+    }
+  }
+
+  return {
+    requested: targetCount,
+    imported,
+    remaining: Math.max(0, targetCount - imported),
+    targetReached: imported >= targetCount,
+    pagesProcessed,
+    candidatesChecked,
+    filtered,
+    duplicates,
+    failed: failures.length,
+    failures: failures.slice(0, 12)
+  };
+}
