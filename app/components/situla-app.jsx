@@ -98,28 +98,29 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
       active: true,
       startX: event.clientX,
       startScroll: rowRef.current?.scrollLeft || 0,
-      moved: false
+      moved: false,
+      suppressClick: false
     };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   function onPointerMove(event) {
     if (!dragRef.current.active || !rowRef.current) return;
     const distance = event.clientX - dragRef.current.startX;
-    if (Math.abs(distance) > 4) dragRef.current.moved = true;
-    rowRef.current.scrollLeft = dragRef.current.startScroll - distance;
+    if (Math.abs(distance) > 8) dragRef.current.moved = true;
+    if (dragRef.current.moved) rowRef.current.scrollLeft = dragRef.current.startScroll - distance;
   }
 
   function onPointerUp() {
     if (!dragRef.current.active) return;
     dragRef.current.active = false;
-    if (dragRef.current.moved) window.setTimeout(() => { dragRef.current.moved = false; }, 0);
+    dragRef.current.suppressClick = dragRef.current.moved;
   }
 
   function onClickCapture(event) {
-    if (!dragRef.current.moved) return;
+    if (!dragRef.current.suppressClick) return;
     event.preventDefault();
     event.stopPropagation();
+    dragRef.current.suppressClick = false;
     dragRef.current.moved = false;
   }
 
@@ -139,7 +140,6 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        onLostPointerCapture={onPointerUp}
         onClickCapture={onClickCapture}
       >
         {movies.map((movie) => (
@@ -185,6 +185,8 @@ export default function SitulaApp() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
+  const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
   const [savedMovies, setSavedMovies] = useState([]);
@@ -319,15 +321,25 @@ export default function SitulaApp() {
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
+        const isDiscover = tab === "home" && genre === "All";
         const params = new URLSearchParams({ page: "1", limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
-        const response = await fetch("/api/movies?" + params.toString(), {
-          cache: "no-store",
-          signal: controller.signal
-        });
+        if (tab === "home" && genre !== "All") {
+          const selected = categoryShelves.find((item) => item.name === genre);
+          if (selected?.genreIds?.length) params.set("genreIds", selected.genreIds.join(","));
+        }
+        const endpoint = isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString();
+        const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
-        setMovies(Array.isArray(payload.items) ? payload.items : []);
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        setMovies(items);
+        if (isDiscover) {
+          setFeaturedMovie(payload.featured || items[0] || null);
+          setCategoryShelves(Array.isArray(payload.categories) ? payload.categories : []);
+        } else if (tab === "home" && !featuredMovie && items.length) {
+          setFeaturedMovie(items[0]);
+        }
         setMoviesPage(Number(payload.pagination?.page) || 1);
         setMoviesTotal(Number(payload.pagination?.total) || 0);
         setError("");
@@ -335,16 +347,17 @@ export default function SitulaApp() {
         if (!controller.signal.aborted) {
           setError(requestError.message || "Could not load movies. Please try again.");
           setMovies([]);
+          if (tab === "home" && !featuredMovie) setFeaturedMovie(null);
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, tab === "search" && query.trim() ? 300 : 0);
+    }, tab === "search" && query.trim() ? 250 : 0);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query, tab]);
+  }, [query, tab, genre]);
 
 
   useEffect(() => {
@@ -382,17 +395,10 @@ export default function SitulaApp() {
     return () => controller.abort();
   }, [tab]);
 
-  const allGenres = useMemo(() => {
-    const values = new Set();
-    movies.forEach((movie) => (movie.genres || []).forEach((value) => values.add(value)));
-    return ["All", ...Array.from(values).slice(0, 9)];
-  }, [movies]);
+  const allGenres = useMemo(() => ["All", ...categoryShelves.map((item) => item.name)], [categoryShelves]);
 
   const savedIds = useMemo(() => new Set(savedMovies.map((movie) => movie.imdbId)), [savedMovies]);
-  const filteredMovies = useMemo(() => {
-    if (genre === "All") return movies;
-    return movies.filter((movie) => (movie.genres || []).includes(genre));
-  }, [movies, genre]);
+  const filteredMovies = movies;
 
   function openMovie(movie) {
     const imdbId = String(movie?.imdbId || "").toLowerCase();
@@ -404,7 +410,8 @@ export default function SitulaApp() {
     try { localStorage.setItem("situla:movie:" + imdbId, JSON.stringify(normalized)); } catch {}
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
     setSearchOpen(false);
-    const providerQuery = Number(normalized.vidlinkId) > 0 ? "?vidlinkId=" + encodeURIComponent(normalized.vidlinkId) : "";
+    const providerId = Number(normalized.vidlinkId) || 0;
+    const providerQuery = providerId > 0 ? "?vidlinkId=" + encodeURIComponent(providerId) : "";
     router.push("/watch/" + encodeURIComponent(imdbId) + providerQuery);
   }
 
@@ -430,6 +437,10 @@ export default function SitulaApp() {
         const nextPage = moviesPage + 1;
         const params = new URLSearchParams({ page: String(nextPage), limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
+        if (tab === "home" && genre !== "All") {
+          const selected = categoryShelves.find((item) => item.name === genre);
+          if (selected?.genreIds?.length) params.set("genreIds", selected.genreIds.join(","));
+        }
         const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store" });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
@@ -515,7 +526,7 @@ export default function SitulaApp() {
   const hasMoreMovies = moviesPage * 40 < moviesTotal;
   const hasMoreTv = tvPage * 40 < tvTotal;
   const hasMoreAnime = animePage * 40 < animeTotal;
-  const featured = movies[0];
+  const featured = featuredMovie || movies[0];
 
   return (
     <main className="app-shell">
@@ -560,20 +571,7 @@ export default function SitulaApp() {
       </header>
 
       <div className="mx-auto max-w-[1320px] px-4 pt-5 md:px-8 md:pt-8">
-        {(tab === "home" || tab === "search") && <div className="mb-5">
-          <label className="search-box">
-            <Icon name="search" size={19} />
-            <input
-              value={query}
-              onFocus={() => setTab("search")}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => { if (event.key === "Enter") setTab("search"); }}
-              placeholder="Search movies, actors, genres…"
-              aria-label="Search movies"
-            />
-            {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search"><Icon name="close" size={16} /></button>}
-          </label>
-        </div>}
+
 
         {tab === "home" && (
           <>
@@ -625,13 +623,16 @@ export default function SitulaApp() {
             {recentMovies.length > 0 && (
               <MovieShelf title="Recently opened" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             )}
-            <MovieShelf title={genre === "All" ? "Popular on Situla" : genre + " movies"} eyebrow="CURATED FOR YOU" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
-            {genre === "All" && allGenres.slice(1, 5).map((category) => {
-              const categoryMovies = movies.filter((movie) => (movie.genres || []).includes(category));
-              return categoryMovies.length
-                ? <MovieShelf key={category} title={category} eyebrow="EXPLORE BY CATEGORY" movies={categoryMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
-                : null;
-            })}
+            {genre === "All" ? (
+              <>
+                <MovieShelf title="Popular on Situla" eyebrow="CURATED FOR YOU" movies={movies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+                {categoryShelves.map((category) => (
+                  <MovieShelf key={category.key} title={category.name} eyebrow="BROWSE BY GENRE" movies={category.items} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+                ))}
+              </>
+            ) : (
+              <MovieShelf title={genre + " movies"} eyebrow="DATABASE GENRE RESULTS" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+            )}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <ArrowRight size={16} /></button></div>}
