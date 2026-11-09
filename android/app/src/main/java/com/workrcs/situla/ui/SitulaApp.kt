@@ -136,7 +136,12 @@ fun SitulaApp(context: Context) {
             }
         }
     ) { insets ->
-        Column(Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)) {
+        val contentModifier = if (playingMovie != null) {
+            Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background)
+        } else {
+            Modifier.fillMaxSize().padding(insets).background(MaterialTheme.colorScheme.background).padding(horizontal = 16.dp)
+        }
+        Column(contentModifier) {
             when {
                 playingMovie != null -> MoviePlayerScreen(
                     movie = playingMovie!!,
