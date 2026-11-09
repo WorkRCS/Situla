@@ -9,7 +9,7 @@ object VpnProfileStore {
 
     fun autoConnectRegion(context: Context): String? =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-            .getString("auto_connect_region", null)
+            .getString("auto_connect_region", regions.first())
             ?.takeIf { it in regions }
 
     fun setAutoConnectRegion(context: Context, region: String?) {
@@ -24,7 +24,7 @@ object VpnProfileStore {
 
     fun autoRotateEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-            .getBoolean("auto_rotate_enabled", false)
+            .getBoolean("auto_rotate_enabled", true)
 
     fun setAutoRotateEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
@@ -53,7 +53,7 @@ object VpnProfileStore {
                 limit = 1
             )
         } else {
-            peerBody.trimEnd() + "\\nAllowedIPs = 0.0.0.0/0, ::/0\\n"
+            peerBody.trimEnd() + "\nAllowedIPs = 0.0.0.0/0, ::/0\\n"
         }
 
         val withAutomaticRoutes = rawProfile.substring(0, peerStart) +
@@ -64,7 +64,7 @@ object VpnProfileStore {
             dnsRegex.replace(withAutomaticRoutes, dnsLine, limit = 1)
         } else {
             val interfaceHeader = Regex("(?im)^\\s*\\[Interface]\\s*$")
-            interfaceHeader.replaceFirst(withAutomaticRoutes) { "${it.value}\\n$dnsLine" }
+            interfaceHeader.replaceFirst(withAutomaticRoutes) { "${it.value}\n$dnsLine" }
         }
         val parsed = com.wireguard.config.Config.parse(withDns.byteInputStream(Charsets.UTF_8))
         require(parsed.peers.size == 1 && parsed.peers.single().endpoint.isPresent) {
