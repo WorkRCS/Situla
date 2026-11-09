@@ -437,14 +437,25 @@ fun VidLinkPlayerScreen(
                                 }?.value.orEmpty().lowercase()
                                 val requestType = when {
                                     request.isForMainFrame -> "document"
-                                    fetchDestination == "iframe" || fetchDestination == "frame" -> "subdocument"
-                                    cleanUrl.endsWith(".js", true) -> "script"
-                                    cleanUrl.endsWith(".css", true) -> "stylesheet"
-                                    cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm|m4s|ts)$")) ||
+                                    fetchDestination == "iframe" || fetchDestination == "frame" ||
+                                        fetchDestination == "document" -> "subdocument"
+                                    fetchDestination == "script" || accept.contains("javascript") ||
+                                        cleanUrl.endsWith(".js", true) -> "script"
+                                    fetchDestination == "style" || accept.contains("text/css") ||
+                                        cleanUrl.endsWith(".css", true) -> "stylesheet"
+                                    fetchDestination == "image" || accept.contains("image/") ||
+                                        cleanUrl.matches(Regex("(?i).*\\.(png|jpg|jpeg|gif|webp|svg|avif)$")) -> "image"
+                                    fetchDestination == "font" ||
+                                        cleanUrl.matches(Regex("(?i).*\\.(woff2?|ttf|otf)$")) -> "font"
+                                    fetchDestination == "audio" || fetchDestination == "video" ||
+                                        cleanUrl.matches(Regex("(?i).*\\.(mp4|m3u8|mpd|m4a|mp3|webm|m4s|ts)$")) ||
                                         accept.contains("video/") || accept.contains("audio/") -> "media"
-                                    cleanUrl.matches(Regex("(?i).*\\.(png|jpg|jpeg|gif|webp|svg|avif)$")) -> "image"
-                                    cleanUrl.matches(Regex("(?i).*\\.(woff2?|ttf|otf)$")) -> "font"
+                                    accept.contains("text/html") -> "subdocument"
                                     else -> "other"
+                                }
+                                val scheme = request.url.scheme.orEmpty()
+                                if (!scheme.equals("https", ignoreCase = true)) {
+                                    return WebResourceResponse("text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0)))
                                 }
                                 if (BraveAdblock.shouldBlock(address, referer, requestType)) {
                                     return WebResourceResponse(
