@@ -22,7 +22,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-        manifestPlaceholders["situlaApiBaseUrl"] = localProperties.getProperty("situlaApiBaseUrl", "")
+        manifestPlaceholders["situlaApiBaseUrl"] = localProperties.getProperty("situlaApiBaseUrl", "https://situla.vercel.app/")
     }
     buildFeatures { compose = true; buildConfig = false }
     compileOptions {
