@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeInput, describeTmdbNetworkError, tmdbRequest } from '../src/crawler.js';
+import { normalizeInput, normalizeImportIds, describeTmdbNetworkError, tmdbRequest } from '../src/crawler.js';
 
 test('uses the requested release years and safe page defaults', () => {
   const result = normalizeInput({ startYear: 2010, endYear: 2026 });
@@ -50,4 +50,11 @@ test('fails clearly when the example TMDB key has not been replaced', async (t) 
     else process.env.TMDB_API_KEY = previous;
   });
   await assert.rejects(() => tmdbRequest('/configuration'), /missing or still contains the example placeholder/);
+});
+
+test('normalizes a deduplicated batch of IMDb IDs and caps requests at 20', () => {
+  const result = normalizeImportIds({ source: 'IMDb', ids: ['tt1375666', 'TT0816692', 'tt1375666'] });
+  assert.deepEqual(result, { source: 'imdb', ids: ['tt1375666', 'tt0816692'] });
+  assert.throws(() => normalizeImportIds({ source: 'imdb', ids: ['wrong-id'] }), /IMDb IDs/);
+  assert.throws(() => normalizeImportIds({ source: 'imdb', ids: Array.from({ length: 21 }, (_, i) => 'tt' + String(i + 1000000)) }), /between 1 and 20/);
 });
