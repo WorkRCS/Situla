@@ -6,8 +6,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val adblockJniLibs = layout.buildDirectory.dir("generated/adblock-jni")
-
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
