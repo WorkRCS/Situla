@@ -127,9 +127,22 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     } catch {}
   }, []);
 
+  const playerParams = new URLSearchParams({
+    primaryColor: "e8b65b",
+    secondaryColor: "171a23",
+    iconColor: "ffffff",
+    icons: "default",
+    player: "default",
+    title: "false",
+    poster: "true",
+    autoplay: "false"
+  });
+  if (kind === "tv") playerParams.set("nextbutton", "false");
+  if (startAt > 0 && kind === "tv") playerParams.set("startAt", String(startAt));
+  if (kind === "anime") playerParams.set("fallback", "true");
   const playerUrl = kind === "tv"
-    ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?nextbutton=true" + (startAt > 0 ? "&startAt=" + encodeURIComponent(String(startAt)) : "")
-    : "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" + encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?fallback=true";
+    ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?" + playerParams.toString()
+    : "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" + encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?" + playerParams.toString();
 
   return (
     <main ref={screenRef} className="watch-screen" onDoubleClick={toggleFullscreen}>
@@ -138,9 +151,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         className="watch-frame"
         src={playerUrl}
         title={title + (kind === "tv" ? " · S" + season + " E" + episode : " · Episode " + episode)}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
-        referrerPolicy="strict-origin-when-cross-origin"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-pointer-lock allow-orientation-lock"
+        referrerPolicy="no-referrer"
       />
       <header className="watch-topbar">
         <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series">←</button>
