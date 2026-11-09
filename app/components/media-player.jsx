@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
+export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode, audio }) {
   const router = useRouter();
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
@@ -13,78 +13,81 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     const controller = new AbortController();
-    const endpoint = kind === "tv" ? "/api/tv/" + encodeURIComponent(tmdbId) : "/api/anime/" + encodeURIComponent(malId);
+    const endpoint = kind === "tv" ? "/api/tv/" + encodeURIComponent(imdbId) : "/api/anime/" + encodeURIComponent(malId);
     fetch(endpoint, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (response.ok && payload.item) {
-          setSeriesInfo(payload.item);
           setTitle(payload.item.titleEnglish || payload.item.title);
           setPosterUrl(payload.item.posterUrl || null);
         }
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [kind, tmdbId, malId]);
+  }, [kind, imdbId, malId]);
 
   useEffect(() => {
     try {
       const key = kind === "tv" ? "situla:tv-progress:v1" : "situla:anime-progress:v1";
       const saved = JSON.parse(localStorage.getItem(key) || "[]");
       const entry = Array.isArray(saved) ? saved.find((item) => kind === "tv"
-        ? Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
+        ? String(item.imdbId).toLowerCase() === imdbId.toLowerCase() && Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
         : Number(item.malId) === Number(malId) && Number(item.episode) === Number(episode) && item.audio === (audio || "sub")
       ) : null;
       setStartAt(entry && Number.isFinite(Number(entry.watched)) ? Math.max(0, Math.floor(Number(entry.watched))) : 0);
     } catch {
       setStartAt(0);
     }
-  }, [kind, tmdbId, malId, season, episode, audio]);
+  }, [kind, imdbId, malId, season, episode, audio]);
 
   useEffect(() => {
-    const onVidLinkMessage = (event) => {
-      if (event.origin !== "https://vidlink.pro") return;
+    const onPlayerMessage = (event) => {
+      const expectedOrigin = kind === "tv" ? "https://vidsrc.sh" : "https://vidlink.pro";
+      if (event.origin !== expectedOrigin) return;
       const payload = event.data;
-      if (!payload || typeof payload !== "object") return;
+      if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" || !payload.data) return;
 
-      if (payload.type === "MEDIA_DATA" && payload.data && typeof payload.data === "object") {
-        try {
-          localStorage.setItem("situla:vidlink-media:v1", JSON.stringify(payload.data));
-        } catch {}
-        return;
-      }
-
-      if (payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
-      const data = payload.data;
-      const incomingType = String(data.mediaType || "").toLowerCase();
-      if (incomingType && incomingType !== kind) return;
+      let eventName;
+      let watchedValue;
+      let durationValue;
       if (kind === "tv") {
-        if (Number(data.mtmdbId) !== Number(tmdbId)) return;
-        if (Number(data.season) !== Number(season) || Number(data.episode) !== Number(episode)) return;
+        const data = payload.data;
+        const info = data.player_info || {};
+        if (String(info.imdb || "").toLowerCase() !== imdbId.toLowerCase()) return;
+        if (Number(info.season) !== Number(season) || Number(info.episode) !== Number(episode)) return;
+        if (String(info.mediaType || "").toLowerCase() !== "tv") return;
+        eventName = data.player_status === "completed" ? "ended" : data.player_status;
+        watchedValue = Number(data.player_progress);
+        durationValue = Number(data.player_duration);
       } else {
+        const data = payload.data;
+        const incomingType = String(data.mediaType || "").toLowerCase();
+        if (incomingType && incomingType !== "anime") return;
         const incomingMalId = Number(data.malId ?? data.mal_id ?? data.mediaId ?? data.id);
         if (incomingMalId && incomingMalId !== Number(malId)) return;
         if (Number(data.episode) && Number(data.episode) !== Number(episode)) return;
+        eventName = String(data.event || "");
+        watchedValue = Number(data.currentTime);
+        durationValue = Number(data.duration);
       }
 
-      const eventName = String(data.event || "");
-      if (eventName === "timeupdate" && Date.now() - lastWrite.current < 5000) return;
-      if (["timeupdate", "pause", "seeked", "ended"].includes(eventName)) lastWrite.current = Date.now();
+      if (eventName === "playing" && Date.now() - lastWrite.current < 5000) return;
+      if (["playing", "timeupdate", "pause", "seeked", "ended"].includes(eventName)) lastWrite.current = Date.now();
+      if (!["playing", "timeupdate", "pause", "seeked", "ended", "completed"].includes(eventName)) return;
 
       try {
-        const watchedValue = Number(data.currentTime);
-        const durationValue = Number(data.duration);
         if (!Number.isFinite(durationValue) || durationValue <= 0) return;
-        const watched = eventName === "ended" ? durationValue : watchedValue;
+        const watched = eventName === "ended" || eventName === "completed" ? durationValue : watchedValue;
         if (!Number.isFinite(watched) || watched < 0) return;
         const updatedAt = Date.now();
         const mediaKey = kind === "tv"
-          ? "tv:" + tmdbId + ":s" + season + ":e" + episode
+          ? "tv:" + imdbId + ":s" + season + ":e" + episode
           : "anime:" + malId + ":e" + episode + ":" + (audio || "sub");
         const historyEntry = {
           key: mediaKey,
           mediaType: kind,
-          mediaId: kind === "tv" ? String(tmdbId) : String(malId),
+          mediaId: kind === "tv" ? imdbId : String(malId),
+          imdbId: kind === "tv" ? imdbId : null,
           title,
           posterUrl,
           season: kind === "tv" ? Number(season) : null,
@@ -102,18 +105,18 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           const key = "situla:tv-progress:v1";
           const current = JSON.parse(localStorage.getItem(key) || "[]");
           const matchesEpisode = (item) =>
-            Number(item.tmdbId) === Number(tmdbId) &&
+            String(item.imdbId).toLowerCase() === imdbId.toLowerCase() &&
             Number(item.season) === Number(season) &&
             Number(item.episode) === Number(episode);
-          if (eventName === "ended") {
+          if (eventName === "ended" || eventName === "completed") {
             localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => !matchesEpisode(item))));
             return;
           }
           const entry = {
-            tmdbId: Number(tmdbId), title, season: Number(season), episode: Number(episode),
+            imdbId, title, posterUrl, season: Number(season), episode: Number(episode),
             watched: Math.max(0, watched), duration: durationValue, updatedAt
           };
-          localStorage.setItem(key, JSON.stringify([entry, ...(Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])].slice(0, 30)));
+          localStorage.setItem(key, JSON.stringify([entry, ...(Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])].slice(0, 100)));
         } else {
           const key = "situla:anime-progress:v1";
           const current = JSON.parse(localStorage.getItem(key) || "[]");
@@ -122,7 +125,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
             malId: Number(malId), title, episode: Number(episode), audio: audio || "sub",
             watched: Math.max(0, watched), duration: durationValue, updatedAt
           };
-          const next = eventName === "ended"
+          const next = eventName === "ended" || eventName === "completed"
             ? (Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])
             : [entry, ...(Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])].slice(0, 100);
           localStorage.setItem(key, JSON.stringify(next));
@@ -130,26 +133,26 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         }
       } catch {}
     };
-    window.addEventListener("message", onVidLinkMessage);
-    return () => window.removeEventListener("message", onVidLinkMessage);
-  }, [kind, tmdbId, malId, season, episode, audio, title, posterUrl]);
+    window.addEventListener("message", onPlayerMessage);
+    return () => window.removeEventListener("message", onPlayerMessage);
+  }, [kind, imdbId, malId, season, episode, audio, title, posterUrl]);
 
-  const playerParams = new URLSearchParams({
-    primaryColor: "e8b65b",
-    secondaryColor: "171a23",
-    iconColor: "ffffff",
-    icons: "default",
-    player: "default",
-    title: "false",
-    poster: "true",
-    autoplay: "false"
-  });
-  if (kind === "tv") playerParams.set("nextbutton", "true");
-  if (startAt > 0 && kind === "tv") playerParams.set("startAt", String(startAt));
-  if (kind === "anime") playerParams.set("fallback", "true");
-  const playerUrl = kind === "tv"
-    ? "https://vidlink.pro/tv/" + encodeURIComponent(tmdbId) + "/" + encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?" + playerParams.toString()
-    : "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" + encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?" + playerParams.toString();
+  const playerUrl = (() => {
+    if (kind === "tv") {
+      const params = new URLSearchParams({ autonext: "1" });
+      if (startAt > 0) params.set("startAt", String(startAt));
+      return "https://vidsrc.sh/embed/tv/" + encodeURIComponent(imdbId) + "/" +
+        encodeURIComponent(season) + "/" + encodeURIComponent(episode) + "?" + params.toString();
+    }
+    const params = new URLSearchParams({
+      primaryColor: "e8b65b", secondaryColor: "171a23", iconColor: "ffffff",
+      icons: "default", player: "default", title: "false", poster: "true",
+      autoplay: "false", fallback: "true"
+    });
+    if (startAt > 0) params.set("startAt", String(startAt));
+    return "https://vidlink.pro/anime/" + encodeURIComponent(malId) + "/" +
+      encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?" + params.toString();
+  })();
 
   return (
     <main className="watch-screen series-watch-screen">
