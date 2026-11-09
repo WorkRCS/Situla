@@ -52,7 +52,7 @@ fun VidLinkPlayerScreen(
     val activity = remember(context) { context.findActivity() }
 
     var fullScreenView by remember { mutableStateOf<View?>(null) }
-    var playerWebView by remember(movie.imdbId, movie.playerAvailable) { mutableStateOf<WebView?>(null) }
+    var playerWebView by remember(movie.imdbId) { mutableStateOf<WebView?>(null) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
 
@@ -77,8 +77,8 @@ fun VidLinkPlayerScreen(
     BackHandler(enabled = fullScreenView != null, onBack = { exitFullScreen() })
     DisposableEffect(activity) { onDispose { exitFullScreen() } }
 
-    val playerUrl = remember(movie.imdbId, movie.playerAvailable) {
-        if (movie.playerAvailable) "https://situla.vercel.app/api/player/movie/${movie.imdbId}" else null
+    val playerUrl = remember(movie.imdbId) {
+        if (movie.imdbId.matches(Regex("^tt\\d{5,12}$", RegexOption.IGNORE_CASE))) "https://vidlink.pro/movie/${movie.imdbId}" else null
     }
     val boxModifier = if (embedded) {
         Modifier.fillMaxWidth().aspectRatio(16f / 9f).background(Color.Black)
@@ -98,7 +98,7 @@ fun VidLinkPlayerScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
                 WebView(viewContext).apply {
-                    tag = movie.imdbId + ":" + movie.playerAvailable
+                    tag = movie.imdbId
                     setBackgroundColor(AndroidColor.BLACK)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -186,7 +186,7 @@ fun VidLinkPlayerScreen(
                 }
             },
             update = { webView ->
-                val nextId = movie.imdbId + ":" + movie.playerAvailable
+                val nextId = movie.imdbId
                 val currentId = webView.tag as? String
                 if (currentId != nextId) {
                     webView.tag = nextId
