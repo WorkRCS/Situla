@@ -31,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,11 @@ import com.workrcs.situla.data.LoginRequest
 import com.workrcs.situla.data.Movie
 import com.workrcs.situla.data.SitulaApi
 import com.workrcs.situla.data.SitulaApiProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
 import com.workrcs.situla.data.WatchHistoryEntity
 import kotlinx.coroutines.launch
 
@@ -297,9 +303,62 @@ private fun SettingsScreen(api: SitulaApi?) {
     var importing by remember { mutableStateOf(false) }
     var idText by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<String?>(null) }
+    var networkTest by remember { mutableStateOf<String?>(null) }
+    var testingNetwork by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
         item { SectionTitle("Settings & admin", "PRIVATE AREA") }
+        item {
+            Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
+                Text("Network diagnostics", fontWeight = FontWeight.Bold)
+                Text("Phone test follows the phone's current Android network/VPN route. Backend test runs from the Vercel server and checks its TMDB API key.", color = Color(0xFF9BA5B4), fontSize = 10.sp, modifier = Modifier.padding(vertical = 6.dp))
+                Button(
+                    onClick = {
+                        scope.launch {
+                            testingNetwork = true
+                            networkTest = try {
+                                withContext(Dispatchers.IO) {
+                                    val client = OkHttpClient.Builder()
+                                        .connectTimeout(6, TimeUnit.SECONDS)
+                                        .readTimeout(8, TimeUnit.SECONDS)
+                                        .callTimeout(10, TimeUnit.SECONDS)
+                                        .build()
+                                    val request = Request.Builder()
+                                        .url("https://api.themoviedb.org/3/configuration")
+                                        .header("Accept", "application/json")
+                                        .build()
+                                    client.newCall(request).execute().use { response ->
+                                        "Phone reached api.themoviedb.org (HTTP ${response.code}). This confirms network reachability only; no API key was sent."
+                                    }
+                                }
+                            } catch (error: Exception) {
+                                "Phone could not reach TMDB: " + (error.message ?: "network error")
+                            } finally {
+                                testingNetwork = false
+                            }
+                        }
+                    },
+                    enabled = !testingNetwork,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (testingNetwork) "Testing phone network…" else "Test this phone → TMDB") }
+                Button(
+                    onClick = {
+                        if (api == null) networkTest = "Backend URL is not configured."
+                        else scope.launch {
+                            testingNetwork = true
+                            networkTest = runCatching { api.tmdbStatus() }.fold(
+                                { response -> "Backend → TMDB: " + (response["message"]?.toString() ?: response["status"]?.toString() ?: "Response received") },
+                                { error -> "Backend TMDB test failed: " + (error.message ?: "Check admin login and server network.") }
+                            )
+                            testingNetwork = false
+                        }
+                    },
+                    enabled = !testingNetwork && api != null,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Test Vercel backend → TMDB") }
+                networkTest?.let { Text(it, color = Color(0xFFB8C0CC), fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp)) }
+            }
+        }
         item {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Wifi, null, tint = MaterialTheme.colorScheme.primary); Text(" VPN regions", fontWeight = FontWeight.Bold) }
@@ -311,7 +370,7 @@ private fun SettingsScreen(api: SitulaApi?) {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AdminPanelSettings, null, tint = MaterialTheme.colorScheme.primary); Text(" Admin sign in", fontWeight = FontWeight.Bold) }
                 OutlinedTextField(username, { username = it }, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
-                OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 Button(onClick = {
                     if (api == null) status = "Set situlaApiBaseUrl in android/local.properties first."
                     else scope.launch {
