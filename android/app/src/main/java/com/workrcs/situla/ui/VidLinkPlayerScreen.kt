@@ -121,22 +121,6 @@ private class VidLinkProgressBridge(
                     lastWatchedAtMs = System.currentTimeMillis()
                 )
             )
-            playerError?.let { message ->
-                Column(
-                    Modifier.fillMaxWidth().background(Color(0xEE151922)).padding(10.dp)
-                ) {
-                    Text(message, color = Color.White)
-                    Button(
-                        onClick = {
-                            playerError = null
-                            playerWebViewHolder[0]?.reload()
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
-                    ) {
-                        Text("Reload VidLink player")
-                    }
-                }
-            }
         }
     }
 }
@@ -591,6 +575,22 @@ fun VidLinkPlayerScreen(
                     webView.destroy()
                 }
             )
+            playerError?.let { message ->
+                Column(
+                    Modifier.fillMaxWidth().background(Color(0xEE151922)).padding(10.dp)
+                ) {
+                    Text(message, color = Color.White)
+                    Button(
+                        onClick = {
+                            playerError = null
+                            playerWebViewHolder[0]?.reload()
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+                    ) {
+                        Text("Reload VidLink player")
+                    }
+                }
+            }
         }
     }
 }
