@@ -148,8 +148,8 @@ const imageUrl = (path, size = 'w342') => path
 
 export function movieDto(movie) {
   return {
-    // Public/admin API returns movie metadata only. Playback is resolved inside
-    // the Android app from tmdbId; never return a provider URL or iframe markup.
+    // Public/admin API returns movie metadata only. The web client builds its
+    // player route from tmdbId; never return a provider URL or iframe markup.
     id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
     originalTitle: movie.originalTitle, overview: movie.overview,
     posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
