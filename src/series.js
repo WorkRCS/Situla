@@ -426,7 +426,7 @@ export async function importPopularTvSeries(options = {}) {
       }
     }
 
-    if (!candidates.length || page >= totalPages || !(discovery.results || []).length) break;
+    if ((details.length > 0 && details.every((result) => result?.error)) || page >= totalPages || !(discovery.results || []).length) break;
   }
 
   return {
