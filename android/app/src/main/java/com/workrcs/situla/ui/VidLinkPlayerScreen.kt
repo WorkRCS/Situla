@@ -50,12 +50,16 @@ private class VidLinkProgressBridge(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
     private var lastPositionMs = initialPositionMs
+    private var totalWatchedMs = 0L
     private var lastEventElapsedMs = SystemClock.elapsedRealtime()
+    private var lastPersistElapsedMs = 0L
 
     @Synchronized
-    fun resetResumePosition(positionMs: Long) {
+    fun resetResumePosition(positionMs: Long, watchedMs: Long) {
         lastPositionMs = positionMs.coerceAtLeast(0L)
+        totalWatchedMs = watchedMs.coerceAtLeast(0L)
         lastEventElapsedMs = SystemClock.elapsedRealtime()
+        lastPersistElapsedMs = lastEventElapsedMs
     }
 
     @JavascriptInterface
@@ -75,12 +79,16 @@ private class VidLinkProgressBridge(
         val newlyWatched = if (countedEvents && advanced) positionMs - lastPositionMs else 0L
 
         // Seeking updates the resume position but does not count skipped content as watch time.
+        totalWatchedMs += newlyWatched
         lastPositionMs = positionMs
         lastEventElapsedMs = now
+        val shouldPersist = event == "pause" || event == "seeked" || event == "ended" ||
+            (event == "timeupdate" && now - lastPersistElapsedMs >= 15_000L)
+        if (!shouldPersist) return
+        lastPersistElapsedMs = now
+        val watchedSnapshot = totalWatchedMs
 
         scope.launch {
-            val previous = dao.find(movie.tmdbId)
-            val totalWatched = (previous?.watchedMs ?: 0L) + newlyWatched
             dao.upsert(
                 WatchHistoryEntity(
                     tmdbId = movie.tmdbId,
@@ -89,7 +97,7 @@ private class VidLinkProgressBridge(
                     releaseYear = movie.releaseYear,
                     positionMs = positionMs.coerceAtMost(durationMs),
                     durationMs = durationMs,
-                    watchedMs = totalWatched,
+                    watchedMs = watchedSnapshot,
                     completed = event == "ended" || (durationMs > 0L && positionMs >= durationMs * 0.95),
                     lastWatchedAtMs = System.currentTimeMillis()
                 )
@@ -133,7 +141,7 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
         val saved = runCatching { dao.find(movie.tmdbId) }.getOrNull()
         if (saved != null && !saved.completed) {
             resumePositionMs.longValue = saved.positionMs.coerceAtLeast(0L)
-            progressBridge.resetResumePosition(saved.positionMs)
+            progressBridge.resetResumePosition(saved.positionMs, saved.watchedMs)
         }
     }
 
