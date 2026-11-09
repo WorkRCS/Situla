@@ -17,20 +17,26 @@ function getTmdbBase() {
 
 function getCauseDetails(error) {
   const details = [];
+  const queue = [error];
   const seen = new Set();
-  let current = error;
-  for (let depth = 0; current && depth < 5 && !seen.has(current); depth += 1) {
+
+  while (queue.length && seen.size < 20) {
+    const current = queue.shift();
+    if (!current || (typeof current !== 'object' && typeof current !== 'function') || seen.has(current)) continue;
     seen.add(current);
+
     if (current.code) details.push(String(current.code));
     if (current.message) details.push(String(current.message));
-    current = current.cause;
+    if (current.cause) queue.push(current.cause);
+    if (Array.isArray(current.errors)) queue.push(...current.errors);
   }
+
   return details;
 }
 
 export function describeTmdbNetworkError(error) {
   const details = getCauseDetails(error);
-  const code = details.find((item) => /^(ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_[A-Z_]+|CERT_[A-Z_]+|DEPTH_[A-Z_]+)$/.test(item));
+  const code = details.find((item) => /^(ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_[A-Z_]+|CERT_[A-Z_]+|DEPTH_[A-Z_]+|ERR_TLS_[A-Z_]+|UNABLE_TO_VERIFY_LEAF_SIGNATURE|SELF_SIGNED_CERT_IN_CHAIN|CERT_HAS_EXPIRED)$/.test(item));
   if (error?.name === 'TimeoutError' || code === 'ETIMEDOUT' || code === 'UND_ERR_CONNECT_TIMEOUT') {
     return 'TMDB did not respond in time. Check your internet connection, firewall, VPN or proxy, then retry.';
   }
