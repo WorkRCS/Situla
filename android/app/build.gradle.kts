@@ -74,14 +74,128 @@ val nativeAbis = (findProperty("situlaAndroidAbis") as String?)
     ?.filter { it.isNotEmpty() }
     ?: listOf("x86_64") // Fast default for the standard Windows Android Emulator.
 
+val isWindowsHost = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
+val cargoHomeDirectory = File(
+    System.getenv("CARGO_HOME") ?: File(System.getProperty("user.home"), ".cargo").absolutePath
+)
+val cargoBinDirectory = File(cargoHomeDirectory, "bin")
+val cargoSearchPath = listOf(cargoBinDirectory.absolutePath, System.getenv("PATH").orEmpty())
+    .filter { it.isNotBlank() }
+    .joinToString(File.pathSeparator)
+
+val androidSdkDirectory = localProperties.getProperty("sdk.dir")
+    ?.let { File(it) }
+    ?: File(System.getenv("ANDROID_SDK_ROOT") ?: System.getenv("ANDROID_HOME") ?: "")
+val configuredNdkDirectory = sequenceOf(
+    System.getenv("ANDROID_NDK_HOME"),
+    System.getenv("ANDROID_NDK_ROOT"),
+    localProperties.getProperty("ndk.dir")
+).filterNotNull().firstOrNull { File(it).isDirectory }?.let { File(it) }
+    ?: File(androidSdkDirectory, "ndk").listFiles()
+        ?.filter { it.isDirectory }
+        ?.maxByOrNull { it.name }
+    ?: File(androidSdkDirectory, "ndk/27.2.12479018")
+
+fun runNativeSetupCommand(
+    command: List<String>,
+    extraEnvironment: Map<String, String>
+): Pair<Int, String> {
+    val process = ProcessBuilder(command)
+        .redirectErrorStream(true)
+        .apply { environment().putAll(extraEnvironment) }
+        .start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    return process.waitFor() to output
+}
+
+val nativeRustTargets = mapOf(
+    "arm64-v8a" to "aarch64-linux-android",
+    "armeabi-v7a" to "armv7-linux-androideabi",
+    "x86_64" to "x86_64-linux-android",
+    "x86" to "i686-linux-android"
+)
+
 val buildBraveAdblock by tasks.registering(org.gradle.api.tasks.Exec::class) {
     group = "build"
-    description = "Compile Brave adblock-rust JNI library for the selected Android ABI(s)."
+    description = "Build Brave adblock-rust JNI library; install cargo-ndk and Rust targets when missing."
     workingDir(rootProject.file("adblock-rust"))
     inputs.dir(rootProject.file("adblock-rust"))
     inputs.property("situlaAndroidAbis", nativeAbis.joinToString(","))
     outputs.dir(adblockJniLibs)
+
+    environment("PATH", cargoSearchPath)
+    environment("CARGO_HOME", cargoHomeDirectory.absolutePath)
     environment("CARGO_TARGET_DIR", layout.buildDirectory.dir("rust-target").get().asFile.absolutePath)
+    if (configuredNdkDirectory.isDirectory) {
+        environment("ANDROID_NDK_HOME", configuredNdkDirectory.absolutePath)
+        environment("ANDROID_NDK_ROOT", configuredNdkDirectory.absolutePath)
+    }
+
+    doFirst {
+        val nativeEnvironment = mapOf(
+            "PATH" to cargoSearchPath,
+            "CARGO_HOME" to cargoHomeDirectory.absolutePath
+        ) + if (configuredNdkDirectory.isDirectory) {
+            mapOf(
+                "ANDROID_NDK_HOME" to configuredNdkDirectory.absolutePath,
+                "ANDROID_NDK_ROOT" to configuredNdkDirectory.absolutePath
+            )
+        } else emptyMap()
+
+        // Android Studio often launches Gradle without the user's Cargo bin folder on PATH.
+        // Test the actual Cargo subcommand; install it automatically when it is missing.
+        val cargoNdkProbe = runNativeSetupCommand(
+            listOf("cargo", "ndk", "--help"),
+            nativeEnvironment
+        )
+        if (cargoNdkProbe.first != 0) {
+            logger.lifecycle("Situla: cargo-ndk is missing from this Gradle environment; installing it automatically.")
+            val install = runNativeSetupCommand(
+                listOf("cargo", "install", "cargo-ndk", "--locked"),
+                nativeEnvironment
+            )
+            if (install.first != 0) {
+                throw GradleException(
+                    "Could not install cargo-ndk (exit ${install.first}). " +
+                        "Check that Rust/Cargo is installed and the network is available.\\n${install.second}"
+                )
+            }
+            logger.lifecycle("Situla: cargo-ndk installation completed.")
+        }
+
+        val rustTargets = nativeRustTargets.filterKeys { it in nativeAbis }.values
+        val installedTargets = runNativeSetupCommand(
+            listOf("rustup", "target", "list", "--installed"),
+            nativeEnvironment
+        )
+        if (installedTargets.first != 0) {
+            throw GradleException(
+                "Rustup is required to prepare Android Rust targets automatically.\\n${installedTargets.second}"
+            )
+        }
+        val installedTargetNames = installedTargets.second.lineSequence().map { it.trim() }.toSet()
+        val missingTargets = rustTargets.filterNot { it in installedTargetNames }
+        if (missingTargets.isNotEmpty()) {
+            logger.lifecycle("Situla: installing missing Rust Android targets: ${missingTargets.joinToString()}")
+            val targetInstall = runNativeSetupCommand(
+                listOf("rustup", "target", "add") + missingTargets,
+                nativeEnvironment
+            )
+            if (targetInstall.first != 0) {
+                throw GradleException(
+                    "Could not install Rust Android target(s): ${missingTargets.joinToString()}.\\n${targetInstall.second}"
+                )
+            }
+        }
+
+        if (!configuredNdkDirectory.isDirectory) {
+            logger.warn(
+                "Situla: Android NDK directory was not resolved from local.properties or environment. " +
+                    "cargo-ndk will try its standard Android Studio SDK auto-detection."
+            )
+        }
+    }
+
     val arguments = mutableListOf("cargo", "ndk")
     nativeAbis.forEach { abi ->
         arguments.add("-t")
