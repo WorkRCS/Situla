@@ -22,13 +22,13 @@ test('Android player keeps targeted ad filtering but does not restrict media sou
 
   assert.match(blocker, /private val blockedDomains = setOf/);
   assert.match(blocker, /fun shouldBlock\(/);
-  assert.match(blocker, /org\\.mlm\\.adblock\\.AdblockEngine/);
+  assert.match(blocker, /org\.mlm\.adblock\.AdblockEngine/);
   assert.match(blocker, /AdblockEngine\\.create\(\)/);
   assert.match(blocker, /checkNetworkRequest\(/);
   assert.match(blocker, /cosmeticResources\(/);
-  assert.match(blocker, /easylist\\.to\\/easylist\\/easylist\\.txt/);
-  assert.match(blocker, /easylist\\.to\\/easylist\\/easyprivacy\\.txt/);
-  assert.match(blocker, /brave\\/adblock-lists\\/master\\/brave-unbreak\\.txt/);
+  assert.match(blocker, /easylist\.to\/easylist\/easylist\.txt/);
+  assert.match(blocker, /easylist\.to\/easylist\/easyprivacy\.txt/);
+  assert.match(blocker, /brave\/adblock-lists\/master\/brave-unbreak\.txt/);
   assert.match(player, /NetworkAdBlocker\.shouldBlock\(uri\)/);
   assert.doesNotMatch(player, /isTrustedPlayerFrameNavigation/);
   assert.match(player, /return request\.isForMainFrame && !NetworkAdBlocker\.isTrustedTopLevel\(uri\)/);
@@ -96,7 +96,7 @@ test('Android WireGuard restores full-tunnel routing and AdGuard DNS for importe
 test('Android app retains popup rejection and the existing targeted request filter', async () => {
   const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
   const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
-  assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri)'));
+  assert.ok(wrapper.includes('NetworkAdBlocker.shouldBlock(uri, sourceUrl, accept, request.isForMainFrame)'));
   assert.ok(wrapper.includes('): Boolean = false'));
   assert.ok(wrapper.includes('javaScriptCanOpenWindowsAutomatically = false'));
   assert.ok(wrapper.includes('setSupportMultipleWindows(false)'));
