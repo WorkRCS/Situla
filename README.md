@@ -4,11 +4,12 @@ Situla is a mobile-first movie, TV and anime catalog with a Next.js web app and 
 
 ## Identifiers and playback
 
-- Movies: IMDb title ID (`tt...`) is the required unique database key. Playback uses the IMDb-compatible VidSrc iframe endpoint.
-- TV series: IMDb title ID (`tt...`) is the required unique database key. Season and episode metadata is embedded in the TV document and playback uses the IMDb-compatible VidSrc iframe endpoint.
-- Anime: MAL ID remains the anime key because the current VidLink anime player requires a MyAnimeList ID. Anime has no TMDB dependency.
+- Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Playback uses VidLink.
+- TV series: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Season and episode metadata is embedded in the TV document; playback uses VidLink.
+- VidLink's official embed documentation currently requires a numeric TMDB provider key for movie/TV playback. Situla stores that value internally as `vidlinkId`; it is not a route key and is never added to the browser address bar. The public Situla URL remains `/watch/{imdbId}` and `/tv/{imdbId}`.
+- Anime: MAL ID remains the anime key because VidLink's anime endpoint requires a MyAnimeList ID.
 
-The iframe player is retained. VidSrc documents IMDb IDs for movie and TV embeds, start-position support, TV auto-next, playback progress events, and player commands for play/pause/mute/unmute/seek. Its published player-control API does not expose a volume-gain/amplification command. A parent page cannot arbitrarily raise audio gain inside a cross-origin iframe.
+The iframe provider is VidLink Pro for movies, TV and anime. Its published customization parameters do not document a way to hide the built-in CC/subtitle control. Situla disables browser Picture-in-Picture permission, and sandboxes the player iframe to block popup windows and top-level navigation. A cross-origin embed may still navigate within its own frame, so absolute provider-side ad removal cannot be guaranteed by the parent site.
 
 ## Local setup
 
