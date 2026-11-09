@@ -22,6 +22,8 @@
     <nav class="side-nav">
       <button class="nav-item active" data-view="overview"><i class="bi bi-grid-1x2"></i><span>Overview</span></button>
       <button class="nav-item" data-view="catalog"><i class="bi bi-collection-play"></i><span>Movie catalog</span></button>
+      <button class="nav-item" data-view="tv"><i class="bi bi-tv"></i><span>TV series</span></button>
+      <button class="nav-item" data-view="anime"><i class="bi bi-camera-reels"></i><span>Anime series</span></button>
       <button class="nav-item" data-view="crawler"><i class="bi bi-cloud-download"></i><span>Movie discovery</span></button>
       <button class="nav-item" data-view="history"><i class="bi bi-clock-history"></i><span>Crawl history</span></button>
     </nav>
@@ -120,6 +122,39 @@
           <div class="table-top"><span id="catalog-total">Loading catalog…</span><button class="link-btn" id="refresh-catalog"><i class="bi bi-arrow-clockwise"></i> Refresh</button></div>
           <div class="table-responsive"><table class="table align-middle movie-table"><thead><tr><th>Movie</th><th>Release</th><th>Rating</th><th>Runtime</th><th>Status</th><th class="text-end">Review</th></tr></thead><tbody id="movie-rows"><tr><td colspan="6"><div class="loading">Loading movies…</div></td></tr></tbody></table></div>
           <div class="table-bottom"><span id="page-label">Page 1</span><div><button class="page-btn" id="prev-page" disabled><i class="bi bi-chevron-left"></i></button><button class="page-btn" id="next-page" disabled><i class="bi bi-chevron-right"></i></button></div></div>
+        </div>
+      </section>
+
+
+      <section class="view" id="view-tv">
+        <div class="page-head"><div><div class="overline">SERIES LIBRARY</div><h1>TV series</h1><p class="muted">Import by TMDB TV ID. Each show keeps its seasons and episodes separately.</p></div></div>
+        <div class="panel crawler-panel">
+          <div class="panel-head"><div><h2>Import TV series</h2><p>Enter one or more TMDB TV IDs, separated by spaces, commas or new lines. Up to 20 per batch.</p></div></div>
+          <form id="tv-import-form">
+            <textarea class="form-control" id="tv-import-ids" rows="3" spellcheck="false">1396, 1399, 87108, 70523, 66732, 76479, 100088, 95396, 94605, 63639, 19885, 82856, 83867, 93740, 125988, 95557, 84958, 61889, 62560, 42009</textarea>
+            <button class="primary-btn mt-3" id="tv-import-btn" type="submit"><i class="bi bi-cloud-arrow-down"></i><span>Import TV series IDs</span></button>
+            <p class="crawl-message d-none" id="tv-import-message" role="status"></p>
+          </form>
+        </div>
+        <div class="panel table-panel mt-4">
+          <div class="panel-head"><div><h2>TV series review</h2><p>New imports are Pending until approved.</p></div><select id="tv-status-filter" class="form-select"><option value="pending">Pending review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div>
+          <div class="table-responsive"><table class="table align-middle movie-table"><thead><tr><th>Series</th><th>First aired</th><th>Rating</th><th>Seasons</th><th>Status</th><th class="text-end">Review</th></tr></thead><tbody id="tv-rows"><tr><td colspan="6"><div class="loading">Loading TV series…</div></td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-anime">
+        <div class="page-head"><div><div class="overline">ANIMATION LIBRARY</div><h1>Anime series</h1><p class="muted">Anime is indexed by its MyAnimeList ID, as required by the VidLink anime player.</p></div></div>
+        <div class="panel crawler-panel">
+          <div class="panel-head"><div><h2>Import anime by MAL ID</h2><p>Enter MyAnimeList IDs, separated by spaces, commas or new lines. Up to 12 per batch.</p></div></div>
+          <form id="anime-import-form">
+            <textarea class="form-control" id="anime-import-ids" rows="3" spellcheck="false">5114, 16498, 1535, 11061, 9253, 38000, 40748, 30276, 32182, 37521, 52991, 44511</textarea>
+            <button class="primary-btn mt-3" id="anime-import-btn" type="submit"><i class="bi bi-cloud-arrow-down"></i><span>Import MAL IDs</span></button>
+            <p class="crawl-message d-none" id="anime-import-message" role="status"></p>
+          </form>
+        </div>
+        <div class="panel table-panel mt-4">
+          <div class="panel-head"><div><h2>Anime series review</h2><p>TV/ONA anime with poster, episodes and strong MAL ratings are imported as Pending.</p></div><select id="anime-status-filter" class="form-select"><option value="pending">Pending review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></div>
+          <div class="table-responsive"><table class="table align-middle movie-table"><thead><tr><th>Anime</th><th>Year</th><th>MAL score</th><th>Episodes</th><th>Status</th><th class="text-end">Review</th></tr></thead><tbody id="anime-rows"><tr><td colspan="6"><div class="loading">Loading anime…</div></td></tr></tbody></table></div>
         </div>
       </section>
 
