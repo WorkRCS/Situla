@@ -4,12 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+const VIDLINK_ORIGIN = "https://vidlink.pro";
+
 export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [startAt, setStartAt] = useState(0);
   const router = useRouter();
+  const iframeRef = useRef(null);
   const lastProgressWrite = useRef(0);
+
+  useEffect(() => {
+    // Keep the browser address canonical: IMDb route only, no legacy provider query.
+    const canonicalPath = "/watch/" + encodeURIComponent(imdbId);
+    if (window.location.pathname + window.location.search !== canonicalPath) {
+      window.history.replaceState(window.history.state, "", canonicalPath);
+    }
+  }, [imdbId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,22 +65,23 @@ export default function PlayerExperience({ imdbId }) {
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== "https://vidsrc.sh") return;
+      if (event.origin !== VIDLINK_ORIGIN || event.source !== iframeRef.current?.contentWindow) return;
       const payload = event.data;
       if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" || !payload.data) return;
-      const details = payload.data;
-      const info = details.player_info || {};
-      if (String(info.imdb || "").toLowerCase() !== imdbId.toLowerCase() || info.mediaType !== "movie") return;
+      const data = payload.data;
+      if (String(data.mediaType || "").toLowerCase() !== "movie") return;
+      if (Number(data.mtmdbId) !== Number(movie?.vidlinkId)) return;
 
-      const eventName = String(details.player_status || "");
-      if (eventName === "playing" && Date.now() - lastProgressWrite.current < 5000) return;
-      if (["playing", "paused", "seeked", "completed"].includes(eventName)) lastProgressWrite.current = Date.now();
+      const eventName = String(data.event || "");
+      if (!["play", "pause", "seeked", "ended", "timeupdate"].includes(eventName)) return;
+      if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
+      lastProgressWrite.current = Date.now();
 
       try {
-        const watchedValue = Number(details.player_progress);
-        const duration = Number(details.player_duration);
+        const watchedValue = Number(data.currentTime);
+        const duration = Number(data.duration);
         if (!Number.isFinite(duration) || duration <= 0) return;
-        const watched = eventName === "completed" ? duration : watchedValue;
+        const watched = eventName === "ended" ? duration : watchedValue;
         if (!Number.isFinite(watched) || watched < 0) return;
 
         const updatedAt = Date.now();
@@ -91,7 +103,7 @@ export default function PlayerExperience({ imdbId }) {
 
         const key = "situla:progress:v1";
         const current = JSON.parse(localStorage.getItem(key) || "[]");
-        if (eventName === "completed") {
+        if (eventName === "ended") {
           localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
           return;
         }
@@ -116,21 +128,49 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const playerParams = new URLSearchParams();
+  const vidlinkId = Number(movie?.vidlinkId);
+  const playerParams = new URLSearchParams({
+    primaryColor: "e8b65b",
+    secondaryColor: "171a23",
+    iconColor: "ffffff",
+    icons: "default",
+    player: "default",
+    title: "false",
+    poster: "true",
+    autoplay: "false",
+    nextbutton: "false"
+  });
   if (startAt > 0) playerParams.set("startAt", String(startAt));
-  const query = playerParams.toString();
-  const playerUrl = "https://vidsrc.sh/embed/movie/" + encodeURIComponent(imdbId) + (query ? "?" + query : "");
+  const playerUrl = Number.isSafeInteger(vidlinkId) && vidlinkId > 0
+    ? VIDLINK_ORIGIN + "/movie/" + vidlinkId + "?" + playerParams.toString()
+    : null;
 
   return (
     <main className="watch-screen">
-      <iframe
-        key={playerUrl}
-        className="watch-frame"
-        src={playerUrl}
-        title={(movie?.title || "Situla movie") + " player"}
-        allow="autoplay; encrypted-media; fullscreen"
-        allowFullScreen
-      />
+      {playerUrl ? (
+        <iframe
+          ref={iframeRef}
+          key={playerUrl}
+          className="watch-frame"
+          src={playerUrl}
+          title={(movie?.title || "Situla movie") + " player"}
+          allow="autoplay; encrypted-media; fullscreen"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+        />
+      ) : (
+        <div className="player-message">
+          <div className="player-message-card">
+            <div className="player-message-mark">S</div>
+            <h1>{loading ? "Preparing your movie" : "Playback unavailable"}</h1>
+            <p>{movie?.playerError || (loading
+              ? "Loading saved movie details…"
+              : "This IMDb title has no saved VidLink provider mapping yet. Add its numeric provider mapping to the database to enable playback.")}</p>
+            <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
+          </div>
+        </div>
+      )}
       <header className="watch-topbar">
         <button type="button" onClick={() => {
           if (window.history.length > 1) router.back();
