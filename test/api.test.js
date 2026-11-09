@@ -56,7 +56,7 @@ test('movie DTO keeps IMDb route identity and provides internal VidLink mapping'
     tmdbId: 27205,
     vidlinkId: 27205,
     playbackUrl: 'https://player.example/should-not-be-returned',
-    playerUrl: 'https://vidsrc.sh/embed/movie/tt1375666',
+    playerUrl: 'https://vidlink.pro/movie/27205',
     embedUrl: 'https://example.test/embed',
     iframeHtml: '<iframe src="https://example.test/embed"></iframe>'
   });
