@@ -46,7 +46,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   }, [kind, tmdbId, season, episode]);
 
   useEffect(() => {
-    if (kind !== "tv") return;
     const onVidLinkMessage = (event) => {
       if (event.origin !== "https://vidlink.pro") return;
       const payload = event.data;
@@ -61,34 +60,77 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
       if (payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
       const data = payload.data;
-      if (String(data.mediaType || "") !== "tv") return;
-      if (Number(data.mtmdbId) !== Number(tmdbId)) return;
-      if (Number(data.season) !== Number(season) || Number(data.episode) !== Number(episode)) return;
+      const incomingType = String(data.mediaType || "").toLowerCase();
+      if (incomingType && incomingType !== kind) return;
+      if (kind === "tv") {
+        if (Number(data.mtmdbId) !== Number(tmdbId)) return;
+        if (Number(data.season) !== Number(season) || Number(data.episode) !== Number(episode)) return;
+      } else {
+        const incomingMalId = Number(data.malId ?? data.mal_id ?? data.mediaId ?? data.id);
+        if (incomingMalId && incomingMalId !== Number(malId)) return;
+        if (Number(data.episode) && Number(data.episode) !== Number(episode)) return;
+      }
 
       const eventName = String(data.event || "");
       if (eventName === "timeupdate" && Date.now() - lastWrite.current < 5000) return;
-      if (eventName === "timeupdate" || eventName === "pause" || eventName === "seeked") lastWrite.current = Date.now();
+      if (["timeupdate", "pause", "seeked", "ended"].includes(eventName)) lastWrite.current = Date.now();
 
       try {
-        const key = "situla:tv-progress:v1";
-        const current = JSON.parse(localStorage.getItem(key) || "[]");
-        if (eventName === "ended") {
-          localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) =>
-            !(Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === Number(season) && Number(item.episode) === Number(episode))
-          )));
-          return;
-        }
-        const watched = Number(data.currentTime);
-        const duration = Number(data.duration);
-        if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
-        const entry = {
-          tmdbId: Number(tmdbId), title, season: Number(season), episode: Number(episode),
-          watched: Math.max(0, watched), duration: Math.max(0, duration), updatedAt: Date.now()
+        const watchedValue = Number(data.currentTime);
+        const durationValue = Number(data.duration);
+        if (!Number.isFinite(durationValue) || durationValue <= 0) return;
+        const watched = eventName === "ended" ? durationValue : watchedValue;
+        if (!Number.isFinite(watched) || watched < 0) return;
+        const updatedAt = Date.now();
+        const mediaKey = kind === "tv"
+          ? "tv:" + tmdbId + ":s" + season + ":e" + episode
+          : "anime:" + malId + ":e" + episode + ":" + (audio || "sub");
+        const historyEntry = {
+          key: mediaKey,
+          mediaType: kind,
+          mediaId: kind === "tv" ? String(tmdbId) : String(malId),
+          title: kind === "tv" ? title : title,
+          season: kind === "tv" ? Number(season) : null,
+          episode: Number(episode),
+          audio: kind === "anime" ? (audio || "sub") : null,
+          watched: Math.max(0, watched),
+          duration: durationValue,
+          updatedAt
         };
-        const next = [entry, ...(Array.isArray(current) ? current.filter((item) =>
-          !(Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === Number(season) && Number(item.episode) === Number(episode))
-        ) : [])].slice(0, 30);
-        localStorage.setItem(key, JSON.stringify(next));
+        const history = JSON.parse(localStorage.getItem("situla:watch-history:v1") || "[]");
+        const nextHistory = [historyEntry, ...(Array.isArray(history) ? history.filter((item) => item.key !== mediaKey) : [])].slice(0, 500);
+        localStorage.setItem("situla:watch-history:v1", JSON.stringify(nextHistory));
+
+        if (kind === "tv") {
+          const key = "situla:tv-progress:v1";
+          const current = JSON.parse(localStorage.getItem(key) || "[]");
+          const matchesEpisode = (item) =>
+            Number(item.tmdbId) === Number(tmdbId) &&
+            Number(item.season) === Number(season) &&
+            Number(item.episode) === Number(episode);
+          if (eventName === "ended") {
+            localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => !matchesEpisode(item))));
+            return;
+          }
+          const entry = {
+            tmdbId: Number(tmdbId), title, season: Number(season), episode: Number(episode),
+            watched: Math.max(0, watched), duration: durationValue, updatedAt
+          };
+          localStorage.setItem(key, JSON.stringify([entry, ...(Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])].slice(0, 30)));
+        } else {
+          const key = "situla:anime-progress:v1";
+          const current = JSON.parse(localStorage.getItem(key) || "[]");
+          const matchesEpisode = (item) => Number(item.malId) === Number(malId) && Number(item.episode) === Number(episode) && item.audio === (audio || "sub");
+          const entry = {
+            malId: Number(malId), title, episode: Number(episode), audio: audio || "sub",
+            watched: Math.max(0, watched), duration: durationValue, updatedAt
+          };
+          const next = eventName === "ended"
+            ? (Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])
+            : [entry, ...(Array.isArray(current) ? current.filter((item) => !matchesEpisode(item)) : [])].slice(0, 100);
+          localStorage.setItem(key, JSON.stringify(next));
+          localStorage.setItem("situla:anime-last-episode:v1", JSON.stringify({ malId: Number(malId), episode: Number(episode), audio: audio || "sub" }));
+        }
       } catch {}
     };
     window.addEventListener("message", onVidLinkMessage);
