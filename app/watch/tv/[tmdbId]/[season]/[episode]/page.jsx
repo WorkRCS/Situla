@@ -1,4 +1,4 @@
-import SeriesMediaPlayer from "../../../../components/media-player";
+import SeriesMediaPlayer from "../../../../../components/media-player";
 
 export const dynamic = "force-dynamic";
 
