@@ -30,13 +30,16 @@ async function main() {
   const movies = db.collection('movies');
   const tv = db.collection('tvseries');
 
-  const [movieTotal, movieValid, movieInvalid, tvTotal, tvValid, tvInvalid, duplicateMovies, duplicateTv] = await Promise.all([
+  const [movieTotal, movieValid, movieInvalid, tvTotal, tvValid, tvInvalid, legacyMovieProviderFields, legacyTvProviderFields, legacyAnimeProviderFields, duplicateMovies, duplicateTv] = await Promise.all([
     movies.countDocuments({}),
     movies.countDocuments({ imdbId: IMDB_ID }),
     movies.countDocuments(invalidImdbFilter),
     tv.countDocuments({}),
     tv.countDocuments({ imdbId: IMDB_ID }),
     tv.countDocuments(invalidImdbFilter),
+    movies.countDocuments({ vidlinkId: { $exists: true } }),
+    tv.countDocuments({ vidlinkId: { $exists: true } }),
+    db.collection('animeseries').countDocuments({ vidlinkId: { $exists: true } }),
     duplicateIds(movies),
     duplicateIds(tv)
   ]);
@@ -46,6 +49,7 @@ async function main() {
     database: dbName,
     movies: { total: movieTotal, validImdbId: movieValid, missingOrInvalidImdbId: movieInvalid },
     tvSeries: { total: tvTotal, validImdbId: tvValid, missingOrInvalidImdbId: tvInvalid },
+    legacyVidLinkFieldsToRemove: { movies: legacyMovieProviderFields, tvSeries: legacyTvProviderFields, anime: legacyAnimeProviderFields },
     duplicateMovieImdbIds: duplicateMovies,
     duplicateTvImdbIds: duplicateTv
   }, null, 2));
