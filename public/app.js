@@ -104,7 +104,7 @@ function movieMarkup(movie) {
     ? '<button class="row-action accept" data-review="approved" data-id="' + escapeHtml(movie.id) + '" aria-label="Approve"><i class="bi bi-check-lg"></i></button><button class="row-action decline" data-review="rejected" data-id="' + escapeHtml(movie.id) + '" aria-label="Reject"><i class="bi bi-x-lg"></i></button>'
     : '<button class="row-action" data-review="pending" data-id="' + escapeHtml(movie.id) + '" aria-label="Return to pending"><i class="bi bi-arrow-counterclockwise"></i></button>';
   return '<tr><td><div class="movie-cell">' + poster + '<div><b>' + escapeHtml(movie.title) +
-    '</b><small>IMDb ID ' + escapeHtml(movie.tmdbId) + (movie.genres?.length ? ' · ' + escapeHtml(movie.genres.slice(0, 2).join(', ')) : '') +
+    '</b><small>IMDb ID ' + escapeHtml(movie.imdbId) + (movie.genres?.length ? ' · ' + escapeHtml(movie.genres.slice(0, 2).join(', ')) : '') +
     '</small></div></div></td><td>' + escapeHtml(movie.releaseDate || '—') + '</td><td><span class="rating"><i class="bi bi-star-fill"></i> ' +
     Number(movie.voteAverage || 0).toFixed(1) + '</span><small class="table-sub">' + Number(movie.voteCount || 0).toLocaleString() +
     ' votes</small></td><td>' + (movie.runtime ? escapeHtml(movie.runtime) + ' min' : '—') + '</td><td>' +
