@@ -1,7 +1,53 @@
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun } from './models.js';
 
-const TMDB_BASE = (process.env.TMDB_API_BASE_URL || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+function getTmdbBase() {
+  const configured = (process.env.TMDB_API_BASE_URL || 'https://api.themoviedb.org/3').trim();
+  let parsed;
+  try {
+    parsed = new URL(configured);
+  } catch {
+    throw new Error('TMDB_API_BASE_URL is not a valid URL. Use https://api.themoviedb.org/3.');
+  }
+  if (!['https:', 'http:'].includes(parsed.protocol)) {
+    throw new Error('TMDB_API_BASE_URL must use HTTPS (HTTP is permitted only for local testing).');
+  }
+  return configured.replace(/\\/+$/, '');
+}
+
+function getCauseDetails(error) {
+  const details = [];
+  const seen = new Set();
+  let current = error;
+  for (let depth = 0; current && depth < 5 && !seen.has(current); depth += 1) {
+    seen.add(current);
+    if (current.code) details.push(String(current.code));
+    if (current.message) details.push(String(current.message));
+    current = current.cause;
+  }
+  return details;
+}
+
+export function describeTmdbNetworkError(error) {
+  const details = getCauseDetails(error);
+  const code = details.find((item) => /^(ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_[A-Z_]+|CERT_[A-Z_]+|DEPTH_[A-Z_]+)$/.test(item));
+  if (error?.name === 'TimeoutError' || code === 'ETIMEDOUT' || code === 'UND_ERR_CONNECT_TIMEOUT') {
+    return 'TMDB did not respond in time. Check your internet connection, firewall, VPN or proxy, then retry.';
+  }
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
+    return 'DNS could not resolve api.themoviedb.org. Check DNS/internet access or try another network.';
+  }
+  if (code === 'ECONNREFUSED') {
+    return 'The connection to TMDB was refused. Check firewall, proxy or network filtering.';
+  }
+  if (code === 'ECONNRESET') {
+    return 'The connection to TMDB was reset by the network. Check VPN/proxy/firewall and retry.';
+  }
+  if (code?.startsWith('CERT_') || code?.startsWith('DEPTH_')) {
+    return 'TLS certificate validation failed while connecting to TMDB. Check system date, antivirus HTTPS inspection or proxy certificate settings.';
+  }
+  return 'Node.js could not connect to TMDB. Check outbound HTTPS access to api.themoviedb.org:443 and any required proxy configuration.';
+}
 
 export function normalizeInput(body = {}) {
   const currentYear = new Date().getFullYear();
@@ -18,20 +64,70 @@ export function normalizeInput(body = {}) {
   return { startYear, endYear, startPage, maxPages: Math.min(askedPages, pageCap) };
 }
 
-async function tmdbRequest(path, params = {}) {
-  const apiKey = process.env.TMDB_API_KEY;
-  if (!apiKey) throw new Error('TMDB_API_KEY is not configured in .env.');
-  const url = new URL(TMDB_BASE + path);
-  url.searchParams.set('api_key', apiKey);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
-  });
-  const response = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(12000) });
-  if (!response.ok) {
-    if (response.status === 429) throw new Error('TMDB rate limit reached. Please retry later.');
-    throw new Error('TMDB request failed (' + response.status + ').');
+export async function tmdbRequest(path, params = {}) {
+  const apiKey = (process.env.TMDB_API_KEY || '').trim();
+  if (!apiKey || apiKey.startsWith('replace_')) {
+    throw new Error('TMDB_API_KEY is missing or still contains the example placeholder. Add your TMDB v3 API key to .env and restart the backend.');
   }
-  return response.json();
+
+  const url = new URL(getTmdbBase() + path);
+  url.searchParams.set('api_key', apiKey);
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+  }
+
+  let response;
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json', 'User-Agent': 'Situla/0.1 TMDB metadata client' },
+        signal: AbortSignal.timeout(25000)
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      const details = getCauseDetails(error);
+      const transient = error?.name === 'TimeoutError' ||
+        details.some((item) => ['EAI_AGAIN', 'ECONNRESET', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT'].includes(item));
+      if (!transient || attempt === 3) {
+        const host = new URL(url).host;
+        const diagnostic = describeTmdbNetworkError(error);
+        const code = details.find((item) => /^(ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_[A-Z_]+|CERT_[A-Z_]+|DEPTH_[A-Z_]+)$/.test(item));
+        throw new Error('Unable to reach TMDB (' + host + ')' + (code ? ' [' + code + ']' : '') + '. ' + diagnostic);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 700 * attempt));
+    }
+  }
+
+  if (!response) {
+    throw new Error('Unable to reach TMDB. ' + describeTmdbNetworkError(lastError));
+  }
+  if (response.status === 401) {
+    throw new Error('TMDB rejected TMDB_API_KEY (HTTP 401). Verify that .env contains the TMDB v3 API key, not the account password, and restart the backend.');
+  }
+  if (response.status === 403) {
+    throw new Error('TMDB denied this API request (HTTP 403). Check API key permissions and TMDB account/API access.');
+  }
+  if (response.status === 429) {
+    throw new Error('TMDB rate limit reached (HTTP 429). Wait briefly before starting another crawl.');
+  }
+  if (!response.ok) {
+    throw new Error('TMDB API returned HTTP ' + response.status + ' for ' + path + '.');
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    throw new Error('TMDB returned an invalid JSON response. Check the configured TMDB_API_BASE_URL.');
+  }
+}
+
+export async function checkTmdbConnection() {
+  const payload = await tmdbRequest('/configuration');
+  if (!payload || !payload.images) throw new Error('TMDB responded, but the configuration payload was unexpected.');
+  return { ok: true, host: new URL(getTmdbBase()).host, message: 'TMDB API connection and API key are working.' };
 }
 
 async function mapLimit(items, limit, mapper) {
