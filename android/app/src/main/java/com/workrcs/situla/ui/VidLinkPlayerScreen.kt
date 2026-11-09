@@ -85,11 +85,39 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                 isUserGesture: Boolean,
                                 resultMsg: android.os.Message?
                             ): Boolean = false
+
+                            override fun onJsAlert(
+                                view: WebView?,
+                                url: String?,
+                                message: String?,
+                                result: android.webkit.JsResult?
+                            ): Boolean {
+                                result?.cancel()
+                                return true
+                            }
+
+                            override fun onJsConfirm(
+                                view: WebView?,
+                                url: String?,
+                                message: String?,
+                                result: android.webkit.JsResult?
+                            ): Boolean {
+                                result?.cancel()
+                                return true
+                            }
                         }
                         webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
-                                return uri.scheme != "https"
+                                if (!uri.scheme.equals("https", ignoreCase = true)) return true
+                                val isMainFrame = request.isForMainFrame
+                                val source = view?.url ?: "https://vidlink.pro/"
+                                val requestType = if (isMainFrame) "document" else "subdocument"
+                                if (BraveAdblock.shouldBlock(uri.toString(), source, requestType)) return true
+                                if (isMainFrame && !uri.host.equals("vidlink.pro", ignoreCase = true) &&
+                                    uri.host?.endsWith(".vidlink.pro", ignoreCase = true) != true
+                                ) return true
+                                false
                             }
 
                             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
