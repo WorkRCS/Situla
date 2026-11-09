@@ -156,6 +156,8 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
           <iframe id="situla-vidlink-player"
                   src="${htmlAttribute(playerUrl)}"
                   allow="autoplay; fullscreen; picture-in-picture"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
                   allowfullscreen></iframe>
           <script>
             (function() {
@@ -234,6 +236,17 @@ fun VidLinkPlayerScreen(movie: Movie, onBack: () -> Unit) {
                                 url: String?,
                                 message: String?,
                                 result: android.webkit.JsResult?
+                            ): Boolean {
+                                result?.cancel()
+                                return true
+                            }
+
+                            override fun onJsPrompt(
+                                view: WebView?,
+                                url: String?,
+                                message: String?,
+                                defaultValue: String?,
+                                result: android.webkit.JsPromptResult?
                             ): Boolean {
                                 result?.cancel()
                                 return true
