@@ -294,9 +294,12 @@ app.get('/api/movies', async (c) => {
     const query = (c.req.query('q') || '').trim().slice(0, 80);
     const filter = { moderationStatus: 'approved', adult: false, originalLanguage: 'en' };
     if (year >= 1870 && year <= new Date().getFullYear()) filter.releaseYear = year;
-    if (query) filter.title = new RegExp(query.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&'), 'i');
+    if (query) filter.$text = { $search: query };
+    const sort = query
+      ? { score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }
+      : { popularity: -1, releaseDate: -1 };
     const [items, total] = await Promise.all([
-      Movie.find(filter).sort({ popularity: -1, releaseDate: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       Movie.countDocuments(filter)
     ]);
     return c.json({ items: items.map(movieDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
