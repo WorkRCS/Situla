@@ -316,11 +316,30 @@ fun VidLinkPlayerScreen(
           <script>
             (function() {
               'use strict';
+              var frame = document.getElementById('situla-vidlink-player');
+              var iframeSignaled = false;
+              function report(status, detail) {
+                try { SitulaProgress.onPlayerStatus('${progressToken}', status, String(detail || '')); }
+                catch (ignored) {}
+              }
+              report('wrapper_ready', window.location.href);
+              frame.addEventListener('load', function() {
+                iframeSignaled = true;
+                report('iframe_loaded', frame.src);
+              });
+              frame.addEventListener('error', function() {
+                iframeSignaled = true;
+                report('iframe_error', frame.src);
+              });
+              setTimeout(function() {
+                if (!iframeSignaled) report('iframe_wait_timeout', frame.src);
+              }, 11000);
               window.addEventListener('message', function(event) {
                 if (event.origin !== 'https://vidlink.pro') return;
                 var payload = event.data || {};
                 if (payload.type === 'PLAYER_EVENT' && payload.data) {
                   var player = payload.data;
+                  report('vidlink_player_event', String(player.event || 'player event'));
                   if (typeof player.currentTime === 'number' &&
                       typeof player.duration === 'number') {
                     SitulaProgress.onProgress(
@@ -332,6 +351,7 @@ fun VidLinkPlayerScreen(
                   }
                 } else if (payload.type === 'MEDIA_DATA' && payload.data && payload.data.progress) {
                   var progress = payload.data.progress;
+                  report('vidlink_media_data', 'VidLink sent media progress data');
                   if (typeof progress.watched === 'number' &&
                       typeof progress.duration === 'number') {
                     SitulaProgress.onProgress('${progressToken}', progress.watched, progress.duration, 'timeupdate');
@@ -440,6 +460,9 @@ fun VidLinkPlayerScreen(
                                         "SitulaVidLink",
                                         "${it.message()} (line ${it.lineNumber()}, source ${it.sourceId()})"
                                     )
+                                    if (it.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                                        reportPlayerStatus("javascript_error", it.message())
+                                    }
                                 }
                                 return true
                             }
@@ -484,14 +507,30 @@ fun VidLinkPlayerScreen(
                         }
 
                         webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                super.onPageStarted(view, url, favicon)
+                                val pageUrl = url.orEmpty()
+                                val isDirectVidLink = directPlayerModeHolder[0] &&
+                                    runCatching { isVidLinkHost(Uri.parse(pageUrl)) }.getOrDefault(false)
+                                reportPlayerStatus(if (isDirectVidLink) "direct_page_loading" else "wrapper_loading", pageUrl)
+                            }
+
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                super.onPageFinished(view, url)
+                                val pageUrl = url.orEmpty()
+                                val isDirectVidLink = directPlayerModeHolder[0] &&
+                                    runCatching { isVidLinkHost(Uri.parse(pageUrl)) }.getOrDefault(false)
+                                reportPlayerStatus(if (isDirectVidLink) "direct_page_loaded" else "wrapper_ready", pageUrl)
+                            }
+
                             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                                 val uri = request?.url ?: return true
                                 if (!uri.scheme.equals("https", ignoreCase = true)) return true
 
-                                // Allow only VidLink's player iframe navigation. Other third-party
-                                // documents remain subject to Brave rules, and top-level redirects
-                                // are still blocked by the main-frame policy below.
+                                // Permit VidLink as an iframe, or as the explicit direct-page
+                                // fallback. Other top-level destinations remain blocked.
                                 if (!request.isForMainFrame && isVidLinkHost(uri)) return false
+                                if (request.isForMainFrame && directPlayerModeHolder[0] && isVidLinkHost(uri)) return false
 
                                 val source = view?.url ?: "https://situla.vercel.app/"
                                 val type = if (request.isForMainFrame) "document" else "subdocument"
@@ -543,6 +582,8 @@ fun VidLinkPlayerScreen(
                                     else -> "other"
                                 }
                                 if (BraveAdblock.shouldBlock(address, referer, requestType)) {
+                                    Log.w("SitulaVidLink", "Brave blocked $requestType request: $address")
+                                    reportPlayerStatus("blocked_by_brave", "$requestType · ${requestedUri.host ?: address}")
                                     return WebResourceResponse(
                                         "text/plain",
                                         "UTF-8",
@@ -558,9 +599,10 @@ fun VidLinkPlayerScreen(
                                 errorResponse: android.webkit.WebResourceResponse?
                             ) {
                                 val uri = request?.url ?: return
-                                if (isVidLinkHost(uri) && (errorResponse?.statusCode ?: 0) >= 400) {
-                                    val code = errorResponse?.statusCode ?: 0
-                                    playerError = "VidLink returned HTTP $code for ${uri.lastPathSegment ?: "player resource"}."
+                                val code = errorResponse?.statusCode ?: 0
+                                if (code >= 400 && (request.isForMainFrame || isVidLinkHost(uri))) {
+                                    playerError = "Player request returned HTTP $code for ${uri.host ?: "unknown host"}/${uri.lastPathSegment ?: "resource"}."
+                                    reportPlayerStatus("http_error_$code", uri.toString())
                                     Log.w("SitulaVidLink", "HTTP $code while loading $uri")
                                 }
                             }
@@ -571,9 +613,10 @@ fun VidLinkPlayerScreen(
                                 error: android.webkit.WebResourceError?
                             ) {
                                 val uri = request?.url ?: return
-                                if (isVidLinkHost(uri)) {
+                                if (request.isForMainFrame || isVidLinkHost(uri)) {
                                     val description = error?.description?.toString() ?: "Network error"
-                                    playerError = "Cannot load VidLink: $description"
+                                    playerError = "Cannot load player page: $description"
+                                    reportPlayerStatus("network_error", "$description · $uri")
                                     Log.w("SitulaVidLink", "Load error for $uri: $description")
                                 }
                             }
@@ -584,6 +627,7 @@ fun VidLinkPlayerScreen(
                                 error: android.net.http.SslError?
                             ) {
                                 playerError = "VidLink HTTPS certificate validation failed."
+                                reportPlayerStatus("ssl_error", error?.toString().orEmpty())
                                 handler?.cancel()
                             }
 
@@ -601,19 +645,23 @@ fun VidLinkPlayerScreen(
                                 detail: android.webkit.RenderProcessGoneDetail?
                             ): Boolean {
                                 playerError = "Android WebView player process stopped. Reload the movie page."
+                                reportPlayerStatus("webview_process_gone", "Android WebView renderer exited")
                                 Log.e("SitulaVidLink", "WebView render process exited")
                                 return true
                             }
                         }
 
-                        tag = playerUrl
-                        loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
+                        tag = playerLoadKey
+                        if (directPlayerMode) loadUrl(playerUrl)
+                        else loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 update = { webView ->
-                    if (webView.tag != playerUrl) {
-                        webView.tag = playerUrl
-                        webView.loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
+                    if (webView.tag != playerLoadKey) {
+                        webView.tag = playerLoadKey
+                        playerError = null
+                        if (directPlayerMode) webView.loadUrl(playerUrl)
+                        else webView.loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 onRelease = { webView ->
@@ -636,9 +684,44 @@ fun VidLinkPlayerScreen(
                         },
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
                     ) {
-                        Text("Reload VidLink player")
+                        Text("Reload player")
                     }
                 }
+            }
+        }
+        Column(
+            Modifier.fillMaxWidth().background(Color(0xFF101319)).padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            Text("VidLink diagnostics", color = Color.White)
+            Text("Status: $playerStatus", color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp))
+            Text(
+                "TMDB ID: ${movie.tmdbId} · Mode: ${if (directPlayerMode) "Direct page" else "Iframe"}",
+                color = Color(0xFFB8C3D1), modifier = Modifier.padding(top = 3.dp)
+            )
+            if (playerDetail.isNotBlank()) {
+                Text("Detail: $playerDetail", color = Color(0xFF8F9BAA), modifier = Modifier.padding(top = 3.dp))
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Button(
+                    onClick = {
+                        iframeLoaded = false
+                        directPlayerMode = true
+                        playerError = null
+                        playerDetail = playerUrl
+                        playerStatus = "Opening VidLink directly inside the app…"
+                    },
+                    modifier = Modifier.weight(1f).padding(end = 4.dp)
+                ) { Text("Direct player") }
+                Button(
+                    onClick = {
+                        iframeLoaded = false
+                        directPlayerMode = false
+                        playerError = null
+                        playerDetail = ""
+                        playerStatus = "Retrying embedded iframe…"
+                    },
+                    modifier = Modifier.weight(1f).padding(start = 4.dp)
+                ) { Text("Retry iframe") }
             }
         }
     }
