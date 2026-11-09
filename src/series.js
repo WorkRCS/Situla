@@ -175,7 +175,7 @@ export async function getTvSeason(tmdbId, seasonNumber) {
 }
 
 async function jikanRequest(path, options = {}) {
-  const base = (process.env.JIKAN_API_BASE_URL || 'https://api.jikan.moe/v4').replace(/\\/+$/, '');
+  const base = (process.env.JIKAN_API_BASE_URL || 'https://api.jikan.moe/v4').replace(/\/+$/, '');
   let lastError;
 
   for (let attempt = 1; attempt <= 3; attempt += 1) {
@@ -384,11 +384,15 @@ export async function importPopularTvSeries(options = {}) {
     pagesProcessed += 1;
 
     const details = await mapLimit(candidates, 3, async (item) => {
-      const data = await tmdbRequest('/tv/' + encodeURIComponent(item.id), {
-        language: 'en-US',
-        append_to_response: 'content_ratings,external_ids,keywords'
-      });
-      return { id: Number(item.id), record: mapTvSeries(data) };
+      try {
+        const data = await tmdbRequest('/tv/' + encodeURIComponent(item.id), {
+          language: 'en-US',
+          append_to_response: 'content_ratings,external_ids,keywords'
+        });
+        return { id: Number(item.id), record: mapTvSeries(data) };
+      } catch (error) {
+        return { id: Number(item.id), error };
+      }
     });
 
     for (const result of details) {
