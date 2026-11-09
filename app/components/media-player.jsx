@@ -185,7 +185,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
             <div className="player-message-mark">S</div>
             <h1>{loading ? "Preparing playback" : "Playback unavailable"}</h1>
             <p>{kind === "tv" && !loading
-              ? "This IMDb series has no saved VidLink provider mapping yet. Add its numeric provider mapping to the database to enable playback."
+              ? "Playback is not configured for this series yet. Please try another title or contact support."
               : loading ? "Loading saved media details…" : "This episode could not be loaded."}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
