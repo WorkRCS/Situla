@@ -37,6 +37,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.workrcs.situla.security.AdblockFilterRepository
+import com.workrcs.situla.vpn.WireGuardVpnManager
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -103,7 +109,21 @@ fun SitulaApp(context: Context) {
             .onFailure { error = it.message ?: "Could not reach Situla backend." }
         loading = false
     }
-    LaunchedEffect(Unit) { loadMovies() }
+    LaunchedEffect(Unit) {
+        launch { loadMovies() }
+        launch { AdblockFilterRepository.refreshAndInitialize(context.applicationContext) }
+    }
+
+    DisposableEffect(context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                WireGuardVpnManager.stopAutoRotation()
+                scope.launch { runCatching { WireGuardVpnManager.disconnect() } }
+            }
+        }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
+        onDispose { ProcessLifecycleOwner.get().lifecycle.removeObserver(observer) }
+    }
 
     BackHandler(enabled = playingMovie != null || selectedMovie != null || tab != Tab.HOME) {
         when {
@@ -143,14 +163,18 @@ fun SitulaApp(context: Context) {
         }
         Column(contentModifier) {
             when {
-                playingMovie != null -> MoviePlayerScreen(
-                    movie = playingMovie!!,
-                    onBack = { playingMovie = null }
-                )
+                playingMovie != null -> {
+                    val movie = playingMovie!!
+                    if (movie.playbackUrl.isNullOrBlank()) {
+                        VidLinkPlayerScreen(movie = movie, onBack = { playingMovie = null })
+                    } else {
+                        MoviePlayerScreen(movie = movie, onBack = { playingMovie = null })
+                    }
+                }
                 selectedMovie != null -> MovieDetailScreen(
                     movie = selectedMovie!!,
                     onBack = { selectedMovie = null },
-                    onPlay = { selectedMovie?.let { if (!it.playbackUrl.isNullOrBlank()) playingMovie = it } }
+                    onPlay = { selectedMovie?.let { if (it.tmdbId > 0) playingMovie = it } }
                 )
                 else -> {
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -183,7 +207,7 @@ fun SitulaApp(context: Context) {
                             error = error
                         )
                         Tab.HISTORY -> HistoryScreen(history)
-                        Tab.SETTINGS -> SettingsScreen(api)
+                        Tab.SETTINGS -> SettingsScreen(api, context)
                     }
                 }
             }
@@ -312,7 +336,7 @@ private fun HistoryScreen(history: List<WatchHistoryEntity>) {
 }
 
 @Composable
-private fun SettingsScreen(api: SitulaApi?) {
+private fun SettingsScreen(api: SitulaApi?, context: Context) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Admin session not connected.") }
@@ -375,13 +399,8 @@ private fun SettingsScreen(api: SitulaApi?) {
                 networkTest?.let { Text(it, color = Color(0xFFB8C0CC), fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp)) }
             }
         }
-        item {
-            Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Wifi, null, tint = MaterialTheme.colorScheme.primary); Text(" VPN regions", fontWeight = FontWeight.Bold) }
-                Text("Malaysia and Singapore are reserved in the design. Real connection and automatic failover remain disabled until four server profiles and client keys are supplied.", color = Color(0xFF9BA5B4), fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
-                Text("No fake Connected status is shown.", color = MaterialTheme.colorScheme.error, fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp))
-            }
-        }
+        item { SitulaVpnControls(context) }
+        item { SitulaProtectionControls(context) }
         item {
             Column(Modifier.fillMaxWidth().background(Color(0xFF111722), RoundedCornerShape(14.dp)).padding(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.AdminPanelSettings, null, tint = MaterialTheme.colorScheme.primary); Text(" Admin sign in", fontWeight = FontWeight.Bold) }
@@ -438,7 +457,6 @@ private fun SettingsScreen(api: SitulaApi?) {
                 result?.let { Text(it, color = Color(0xFF9BA5B4), fontSize = 10.sp, modifier = Modifier.padding(top = 8.dp)) }
             }
         }
-        item { Text("Brave adblock-rust and VPN controls only activate after the native filter engine and signed tunnel profiles are installed. This preview does not intercept traffic.", color = Color(0xFF9BA5B4), fontSize = 10.sp) }
     }
 }
 
