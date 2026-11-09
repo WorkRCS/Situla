@@ -31,16 +31,14 @@ test('IMDb import route rejects requests without an admin session', async () => 
   const response = await app.request('/api/admin/import-ids', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source: 'imdb', ids: ['tt1375666'] })
+    body: JSON.stringify({ ids: ['tt1375666'] })
   });
   assert.equal(response.status, 401);
 });
 
-
-test('movie API DTO exposes metadata and TMDB ID but never player/embed URLs or iframe HTML', () => {
+test('movie API DTO exposes IMDb ID and thumbnails without exposing TMDB IDs or player URLs', () => {
   const dto = movieDto({
     _id: '507f1f77bcf86cd799439011',
-    tmdbId: 27205,
     imdbId: 'tt1375666',
     title: 'Inception',
     originalTitle: 'Inception',
@@ -60,18 +58,18 @@ test('movie API DTO exposes metadata and TMDB ID but never player/embed URLs or 
     adult: false,
     moderationStatus: 'approved',
     manualReviewNote: '',
-    tmdbUrl: 'https://www.themoviedb.org/movie/27205',
     playbackUrl: 'https://player.example/should-not-be-returned',
-    playerUrl: 'https://vidlink.pro/movie/27205',
+    playerUrl: 'https://vidsrc.sh/embed/movie/tt1375666',
     embedUrl: 'https://example.test/embed',
     iframeHtml: '<iframe src="https://example.test/embed"></iframe>'
   });
 
-  assert.equal(dto.tmdbId, 27205);
+  assert.equal(dto.imdbId, 'tt1375666');
+  assert.equal(dto.imdbUrl, 'https://www.imdb.com/title/tt1375666/');
   assert.equal(dto.title, 'Inception');
   assert.match(dto.posterUrl, /image\.tmdb\.org/);
   assert.match(dto.backdropUrl, /image\.tmdb\.org/);
-  for (const forbidden of ['playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
+  for (const forbidden of ['tmdbId', 'tmdbUrl', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
     assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must never be returned by the movie API');
   }
 });

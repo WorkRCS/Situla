@@ -68,7 +68,7 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
       </div>
       <div className="flex gap-4 overflow-x-auto pb-3">
         {movies.map((movie) => (
-          <MovieCard key={movie.tmdbId} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.tmdbId)} />
+          <MovieCard key={movie.imdbId} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
         ))}
       </div>
     </section>
@@ -156,20 +156,20 @@ export default function SitulaApp() {
     return ["All", ...Array.from(values).slice(0, 9)];
   }, [movies]);
 
-  const savedIds = useMemo(() => new Set(savedMovies.map((movie) => movie.tmdbId)), [savedMovies]);
+  const savedIds = useMemo(() => new Set(savedMovies.map((movie) => movie.imdbId)), [savedMovies]);
   const filteredMovies = useMemo(() => {
     if (genre === "All") return movies;
     return movies.filter((movie) => (movie.genres || []).includes(genre));
   }, [movies, genre]);
 
   function openMovie(movie) {
-    setRecentMovies((current) => [movie, ...current.filter((item) => item.tmdbId !== movie.tmdbId)].slice(0, 12));
-    router.push("/watch/" + encodeURIComponent(movie.tmdbId));
+    setRecentMovies((current) => [movie, ...current.filter((item) => item.imdbId !== movie.imdbId)].slice(0, 12));
+    router.push("/watch/" + encodeURIComponent(movie.imdbId));
   }
 
   function toggleSaved(movie) {
-    setSavedMovies((current) => current.some((item) => item.tmdbId === movie.tmdbId)
-      ? current.filter((item) => item.tmdbId !== movie.tmdbId)
+    setSavedMovies((current) => current.some((item) => item.imdbId === movie.imdbId)
+      ? current.filter((item) => item.imdbId !== movie.imdbId)
       : [movie, ...current].slice(0, 100));
   }
 
@@ -231,8 +231,8 @@ export default function SitulaApp() {
                   <div className="mt-6 flex flex-wrap gap-3">
                     <button className="gold-button" onClick={() => openMovie(featured)}><Icon name="play" size={17} /> Play now</button>
                     <button className="ghost-button" onClick={() => toggleSaved(featured)}>
-                      <Icon name={savedIds.has(featured.tmdbId) ? "check" : "bookmark"} size={16} />
-                      {savedIds.has(featured.tmdbId) ? "In my list" : "My list"}
+                      <Icon name={savedIds.has(featured.imdbId) ? "check" : "bookmark"} size={16} />
+                      {savedIds.has(featured.imdbId) ? "In my list" : "My list"}
                     </button>
                   </div>
                 </div>
@@ -277,7 +277,7 @@ export default function SitulaApp() {
               <div className="empty-panel"><p className="font-bold text-white">Search unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : movies.length ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
-                {movies.map((movie) => <MovieCard key={movie.tmdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.tmdbId)} />)}
+                {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
               <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No movies found" : "Search the catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Type a movie title, keyword or year above."}</p></div>
@@ -290,7 +290,7 @@ export default function SitulaApp() {
             <div className="section-heading"><div><span>YOUR COLLECTION</span><h1 className="mt-1 text-2xl font-black">My List</h1></div><span>{savedMovies.length} SAVED</span></div>
             {savedMovies.length ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
-                {savedMovies.map((movie) => <MovieCard key={movie.tmdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.tmdbId)} />)}
+                {savedMovies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
               <div className="empty-panel"><Icon name="saved" size={30} /><p className="mt-3 font-bold text-white">Your list is empty</p><p className="mt-2 text-xs">Tap the bookmark on any movie to save it here.</p><button className="gold-button mt-5" onClick={() => setTab("home")}>Explore movies <Icon name="arrow" size={15} /></button></div>
@@ -307,7 +307,7 @@ export default function SitulaApp() {
               </a>
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Movie information is served by the Situla catalog API. Playback opens the VidLink player using each movie’s TMDB ID.</p>
+                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Movie information is served by the Situla catalog API. Playback opens the IMDb-compatible player using each movie’s IMDb ID.</p>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
@@ -315,7 +315,7 @@ export default function SitulaApp() {
         )}
 
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
-          SITULA · DISCOVER MORE · MOVIE DATA POWERED BY TMDB
+          SITULA · DISCOVER MORE · IMDb IDs · movie metadata via TMDB
         </footer>
       </div>
 

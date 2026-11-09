@@ -3,15 +3,15 @@ import PlayerExperience from "./player";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }) {
-  const { tmdbId } = await params;
+  const { imdbId } = await params;
   return {
     title: "Now Playing",
     robots: { index: false, follow: false },
-    alternates: { canonical: "/watch/" + encodeURIComponent(tmdbId) }
+    alternates: { canonical: "/watch/" + encodeURIComponent(imdbId) }
   };
 }
 
 export default async function WatchPage({ params }) {
-  const { tmdbId } = await params;
-  return <PlayerExperience tmdbId={tmdbId} />;
+  const { imdbId } = await params;
+  return <PlayerExperience imdbId={imdbId} />;
 }

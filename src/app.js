@@ -7,58 +7,138 @@ import { SignJWT, jwtVerify } from 'jose';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { connectDatabase } from './db.js';
 import { Movie, CrawlRun } from './models.js';
-import { runManualCrawl, checkTmdbConnection, importMovieIds } from './crawler.js';
+import { runManualCrawl, checkTmdbConnection, importMovieIds, migrateLegacyMovieIds } from './crawler.js';
 
 const app = new Hono();
 const attempts = new Map();
 const COOKIE = 'situla_admin';
 
-// Curated first-run titles. These are real TMDB metadata records, not fake playback assets.
+// Curated IMDb titles selected for the existing Situla catalog filters.
 const STARTER_IMDB_IDS = [
-  'tt1375666', 'tt0816692', 'tt0482571', 'tt0133093', 'tt1856101',
-  'tt2543164', 'tt1160419', 'tt1631867', 'tt0945513', 'tt1130884',
-  'tt8946378', 'tt0167404', 'tt6644200', 'tt1392190', 'tt6710474',
-  'tt3659388', 'tt1454468', 'tt0470752', 'tt0107290', 'tt0120737'
+  'tt1375666',
+  'tt0816692',
+  'tt0482571',
+  'tt0133093',
+  'tt1856101',
+  'tt2543164',
+  'tt1160419',
+  'tt1631867',
+  'tt0945513',
+  'tt1130884',
+  'tt8946378',
+  'tt0167404',
+  'tt6644200',
+  'tt1392190',
+  'tt6710474',
+  'tt3659388',
+  'tt1454468',
+  'tt0470752',
+  'tt0107290',
+  'tt0120737',
+  'tt0468569',
+  'tt0209144',
+  'tt0114369',
+  'tt2267998',
+  'tt1392214',
+  'tt0443706',
+  'tt0181689',
+  'tt1276104',
+  'tt6723592',
+  'tt0499549',
+  'tt1630029',
+  'tt0848228',
+  'tt4154756',
+  'tt4154796',
+  'tt0371746',
+  'tt2015381',
+  'tt1843866',
+  'tt1211837',
+  'tt4633694',
+  'tt9362722',
+  'tt0317705',
+  'tt0910970',
+  'tt2096673',
+  'tt2380307',
+  'tt0892769',
+  'tt3915174',
+  'tt0241527',
+  'tt1201607',
+  'tt0167261',
+  'tt0167260',
+  'tt0903624',
+  'tt0325980',
+  'tt0103064',
+  'tt0088247',
+  'tt0078748',
+  'tt0090605',
+  'tt0084787',
+  'tt5052448',
+  'tt7784604',
+  'tt1457767',
+  'tt1396484',
+  'tt1877830',
+  'tt0172495',
+  'tt2911666',
+  'tt1431045',
+  'tt3315342',
+  'tt1318514',
+  'tt2103281',
+  'tt4912910',
+  'tt1745960',
+  'tt0258463',
+  'tt1392170',
+  'tt0073195',
+  'tt0081505',
+  'tt0076759',
+  'tt0080684',
+  'tt3748528',
+  'tt2488496',
+  'tt0086190',
+  'tt1136608'
 ];
 let starterCatalogPromise;
 
 async function ensureStarterCatalog() {
+  const migration = await migrateLegacyMovieIds();
   const apiKey = (process.env.TMDB_API_KEY || '').trim();
-  if (!apiKey || apiKey.startsWith('replace_')) return 0;
-
-  const approvedCount = await Movie.countDocuments({
-    moderationStatus: 'approved',
-    adult: false,
-    originalLanguage: 'en'
-  });
-  if (approvedCount > 0) return approvedCount;
+  if (migration.requiresApiKey || !apiKey || apiKey.startsWith('replace_')) return 0;
 
   if (!starterCatalogPromise) {
     starterCatalogPromise = (async () => {
-      await importMovieIds({ source: 'imdb', ids: STARTER_IMDB_IDS });
-      const candidates = await Movie.find({
+      const existing = await Movie.find({ imdbId: { $in: STARTER_IMDB_IDS } }).select('imdbId').lean();
+      const present = new Set(existing.map((movie) => movie.imdbId));
+      const missing = STARTER_IMDB_IDS.filter((id) => !present.has(id));
+
+      for (let index = 0; index < missing.length; index += 20) {
+        try {
+          await importMovieIds({ source: 'imdb', ids: missing.slice(index, index + 20) });
+        } catch (error) {
+          console.error('Situla curated IMDb batch import failed:', error.message);
+        }
+      }
+
+      const eligible = await Movie.find({
         imdbId: { $in: STARTER_IMDB_IDS },
         adult: false,
         originalLanguage: 'en',
         moderationStatus: { $ne: 'rejected' }
-      }).select('tmdbId').lean();
-
-      const ids = candidates.map((movie) => movie.tmdbId);
-      if (ids.length) {
+      }).select('imdbId').lean();
+      const eligibleIds = eligible.map((movie) => movie.imdbId);
+      if (eligibleIds.length) {
         await Movie.updateMany(
-          { tmdbId: { $in: ids }, moderationStatus: { $ne: 'rejected' } },
+          { imdbId: { $in: eligibleIds }, moderationStatus: { $ne: 'rejected' } },
           {
             $set: {
               moderationStatus: 'approved',
-              manualReviewNote: 'Curated Situla starter catalog, automatically seeded from TMDB metadata.'
+              manualReviewNote: 'Curated Situla catalog selection; IMDb ID verified and metadata filtered.'
             }
           }
         );
       }
-      console.info('Situla starter catalog seeded:', ids.length, 'titles');
-      return ids.length;
+      console.info('Situla curated IMDb catalog ready:', eligibleIds.length, 'titles');
+      return eligibleIds.length;
     })().catch((error) => {
-      console.error('Situla starter catalog seed failed:', error.message);
+      console.error('Situla curated catalog seed failed:', error.message);
       return 0;
     });
   }
@@ -147,18 +227,31 @@ const imageUrl = (path, size = 'w342') => path
   : null;
 
 export function movieDto(movie) {
+  const imdbId = String(movie.imdbId || '').toLowerCase();
   return {
-    // Public/admin API returns movie metadata only. The web client builds its
-    // player route from tmdbId; never return a provider URL or iframe markup.
-    id: String(movie._id), tmdbId: movie.tmdbId, imdbId: movie.imdbId || null, title: movie.title,
-    originalTitle: movie.originalTitle, overview: movie.overview,
-    posterUrl: imageUrl(movie.posterPath), backdropUrl: imageUrl(movie.backdropPath, 'w780'),
-    releaseDate: movie.releaseDate, releaseYear: movie.releaseYear, runtime: movie.runtime,
-    voteAverage: movie.voteAverage, voteCount: movie.voteCount, popularity: movie.popularity,
-    originalLanguage: movie.originalLanguage, genres: movie.genres, keywords: movie.keywords,
-    certification: movie.certification, adult: movie.adult, moderationStatus: movie.moderationStatus,
-    manualReviewNote: movie.manualReviewNote, tmdbUrl: movie.tmdbUrl,
-    createdAt: movie.createdAt, updatedAt: movie.updatedAt
+    id: String(movie._id),
+    imdbId,
+    imdbUrl: /^tt\d{5,12}$/.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
+    title: movie.title,
+    originalTitle: movie.originalTitle,
+    overview: movie.overview,
+    posterUrl: imageUrl(movie.posterPath),
+    backdropUrl: imageUrl(movie.backdropPath, 'w780'),
+    releaseDate: movie.releaseDate,
+    releaseYear: movie.releaseYear,
+    runtime: movie.runtime,
+    voteAverage: movie.voteAverage,
+    voteCount: movie.voteCount,
+    popularity: movie.popularity,
+    originalLanguage: movie.originalLanguage,
+    genres: movie.genres,
+    keywords: movie.keywords,
+    certification: movie.certification,
+    adult: movie.adult,
+    moderationStatus: movie.moderationStatus,
+    manualReviewNote: movie.manualReviewNote,
+    createdAt: movie.createdAt,
+    updatedAt: movie.updatedAt
   };
 }
 
@@ -252,7 +345,7 @@ app.get('/api/admin/movies', requireAdmin, async (c) => {
       const safe = query.replace(/[.*+?^\$\{\}()|[\]\\]/g, '\\$&');
       const expression = new RegExp(safe, 'i');
       filter.$or = [{ title: expression }, { originalTitle: expression }];
-      if (/^\d+$/.test(query)) filter.$or.push({ tmdbId: Number(query) });
+      if (/^tt\d{5,12}$/i.test(query)) filter.$or.push({ imdbId: query.toLowerCase() });
     }
     const [items, total] = await Promise.all([
       Movie.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -319,8 +412,8 @@ app.post('/api/admin/import-ids', requireSameOrigin, requireAdmin, async (c) => 
     const result = await importMovieIds(body);
     return c.json({ result });
   } catch (error) {
-    const invalid = /Import source|between 1 and 20|at least one|IMDb IDs|TMDB IDs/.test(error.message || '');
-    console.error('Manual IMDb/TMDB import failed:', error.message);
+    const invalid = /IMDb title IDs|between 1 and 20|at least one|IMDb IDs/.test(error.message || '');
+    console.error('Manual IMDb import failed:', error.message);
     return c.json({ error: error.message || 'Movie ID import failed.' }, invalid ? 400 : 502);
   }
 });
@@ -367,18 +460,18 @@ app.get('/api/movies', async (c) => {
   }
 });
 
-app.get('/api/movies/:tmdbId', async (c) => {
-  const tmdbId = Number(c.req.param('tmdbId'));
-  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return c.json({ error: 'Invalid TMDB ID.' }, 400);
+app.get('/api/movies/:imdbId', async (c) => {
+  const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
+  if (!/^tt\d{5,12}$/.test(imdbId)) return c.json({ error: 'Invalid IMDb title ID.' }, 400);
   try {
     await connectDatabase();
     const movie = await Movie.findOne({
-      tmdbId, moderationStatus: 'approved', adult: false, originalLanguage: 'en'
+      imdbId, moderationStatus: 'approved', adult: false, originalLanguage: 'en'
     }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
     return c.json({ item: movieDto(movie) });
   } catch (error) {
-    console.error('Public movie detail failed:', error.message);
+    console.error('Public IMDb movie detail failed:', error.message);
     return c.json({ error: 'Movie detail is temporarily unavailable.' }, 503);
   }
 });

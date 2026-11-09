@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
 
 const movieSchema = new mongoose.Schema({
-  tmdbId: { type: Number, required: true, unique: true },
-  imdbId: { type: String, trim: true },
+  imdbId: { type: String, required: true, trim: true, lowercase: true },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
@@ -22,11 +21,11 @@ const movieSchema = new mongoose.Schema({
   adult: { type: Boolean, default: false },
   moderationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   manualReviewNote: { type: String, default: '' },
-  tmdbUrl: { type: String, default: '' },
   lastSyncedAt: { type: Date, default: Date.now }
 }, { timestamps: true, versionKey: false });
-movieSchema.index({ moderationStatus: 1, releaseYear: -1, popularity: -1 });
+
 movieSchema.index({ imdbId: 1 }, { unique: true, partialFilterExpression: { imdbId: { $type: 'string' } } });
+movieSchema.index({ moderationStatus: 1, releaseYear: -1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ originalLanguage: 1, adult: 1, releaseYear: -1 });
 

@@ -57,4 +57,5 @@ test('normalizes a deduplicated batch of IMDb IDs and caps requests at 20', () =
   assert.deepEqual(result, { source: 'imdb', ids: ['tt1375666', 'tt0816692'] });
   assert.throws(() => normalizeImportIds({ source: 'imdb', ids: ['wrong-id'] }), /IMDb IDs/);
   assert.throws(() => normalizeImportIds({ source: 'imdb', ids: Array.from({ length: 21 }, (_, i) => 'tt' + String(i + 1000000)) }), /between 1 and 20/);
+  assert.throws(() => normalizeImportIds({ source: 'tmdb', ids: ['27205'] }), /Only IMDb title IDs/);
 });

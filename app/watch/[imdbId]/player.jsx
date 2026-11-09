@@ -19,10 +19,11 @@ async function lockLandscape() {
   } catch {}
 }
 
-export default function PlayerExperience({ tmdbId }) {
+export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
+  const [startAt, setStartAt] = useState(0);
   const screenRef = useRef(null);
   const router = useRouter();
   const lastProgressWrite = useRef(0);
@@ -31,7 +32,7 @@ export default function PlayerExperience({ tmdbId }) {
     const controller = new AbortController();
     async function loadMovie() {
       try {
-        const response = await fetch("/api/movies/" + encodeURIComponent(tmdbId), {
+        const response = await fetch("/api/movies/" + encodeURIComponent(imdbId), {
           cache: "no-store",
           signal: controller.signal
         });
@@ -46,39 +47,52 @@ export default function PlayerExperience({ tmdbId }) {
     }
     loadMovie();
     return () => controller.abort();
-  }, [tmdbId]);
+  }, [imdbId]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
+      const entry = Array.isArray(saved) ? saved.find((item) => item.imdbId === imdbId) : null;
+      setStartAt(entry && Number.isFinite(Number(entry.watched)) ? Math.max(0, Math.floor(Number(entry.watched))) : 0);
+    } catch {
+      setStartAt(0);
+    }
+  }, [imdbId]);
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== "https://vidlink.pro") return;
+      if (event.origin !== "https://vidsrc.sh") return;
       const payload = event.data;
-      if (!payload || typeof payload !== "object") return;
+      if (!payload || payload.type !== "PLAYER_EVENT" || !payload.data || typeof payload.data !== "object") return;
 
-      let details = null;
-      if (payload.type === "MEDIA_DATA" && payload.data && typeof payload.data === "object") {
-        details = payload.data;
-      } else if (payload.type === "PLAYER_EVENT" && payload.data && typeof payload.data === "object") {
-        details = payload.data;
-        if (details.event === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
-        if (details.event === "timeupdate") lastProgressWrite.current = Date.now();
+      const details = payload.data;
+      const eventImdbId = String(details.player_info?.imdb || imdbId).toLowerCase();
+      if (eventImdbId !== imdbId) return;
+
+      const status = String(details.player_status || "");
+      if (status === "playing" && Date.now() - lastProgressWrite.current < 5000) return;
+      if (status === "playing") lastProgressWrite.current = Date.now();
+
+      if (status === "completed") {
+        try {
+          const key = "situla:progress:v1";
+          const current = JSON.parse(localStorage.getItem(key) || "[]");
+          localStorage.setItem(key, JSON.stringify((Array.isArray(current) ? current : []).filter((item) => item.imdbId !== imdbId)));
+        } catch {}
+        return;
       }
-      if (!details) return;
 
-      const id = Number(details.tmdbId || details.mtmdbId || details.id || tmdbId);
-      if (!Number.isSafeInteger(id) || id <= 0) return;
-      const watched = Number(details.progress?.watched ?? details.currentTime ?? 0);
-      const duration = Number(details.progress?.duration ?? details.duration ?? 0);
+      const watched = Number(details.player_progress);
+      const duration = Number(details.player_duration);
       if (!Number.isFinite(watched) || !Number.isFinite(duration) || duration <= 0) return;
 
       try {
         const key = "situla:progress:v1";
         const current = JSON.parse(localStorage.getItem(key) || "[]");
-        const posterPath = details.poster_path || details.posterPath;
-        const posterUrl = movie?.posterUrl || (posterPath ? "https://image.tmdb.org/t/p/w342" + posterPath : null);
         const entry = {
-          tmdbId: id,
-          title: movie?.title || details.title || "Movie",
-          posterUrl,
+          imdbId,
+          title: movie?.title || "Movie",
+          posterUrl: movie?.posterUrl || null,
           backdropUrl: movie?.backdropUrl || null,
           releaseYear: movie?.releaseYear || null,
           voteAverage: movie?.voteAverage || 0,
@@ -88,14 +102,14 @@ export default function PlayerExperience({ tmdbId }) {
           duration: Math.max(0, duration),
           updatedAt: Date.now()
         };
-        const next = [entry, ...(Array.isArray(current) ? current.filter((item) => item.tmdbId !== id) : [])].slice(0, 20);
+        const next = [entry, ...(Array.isArray(current) ? current.filter((item) => item.imdbId !== imdbId) : [])].slice(0, 20);
         localStorage.setItem(key, JSON.stringify(next));
       } catch {}
     };
 
     window.addEventListener("message", onPlayerMessage);
     return () => window.removeEventListener("message", onPlayerMessage);
-  }, [movie, tmdbId]);
+  }, [movie, imdbId]);
 
   useEffect(() => {
     const onFullscreenChange = async () => {
@@ -130,11 +144,13 @@ export default function PlayerExperience({ tmdbId }) {
     } catch {}
   }, []);
 
-  const playerUrl = "https://vidlink.pro/movie/" + encodeURIComponent(tmdbId);
+  const playerUrl = "https://vidsrc.sh/embed/movie/" + encodeURIComponent(imdbId) +
+    (startAt > 0 ? "?startAt=" + encodeURIComponent(String(startAt)) : "");
 
   return (
     <main ref={screenRef} className="watch-screen" onDoubleClick={toggleFullscreen}>
       <iframe
+        key={playerUrl}
         className="watch-frame"
         src={playerUrl}
         title={(movie?.title || "Situla movie") + " player"}

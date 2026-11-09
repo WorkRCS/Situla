@@ -63,19 +63,16 @@ const GENRE_NAMES = new Map([
 
 export function normalizeImportIds(body = {}) {
   const source = String(body.source || 'imdb').trim().toLowerCase();
-  if (!['imdb', 'tmdb'].includes(source)) throw new Error('Import source must be imdb or tmdb.');
+  if (source !== 'imdb') throw new Error('Only IMDb title IDs are supported.');
   if (!Array.isArray(body.ids) || body.ids.length < 1 || body.ids.length > 20) {
-    throw new Error('Submit between 1 and 20 IDs per import request.');
+    throw new Error('Submit between 1 and 20 IMDb IDs per import request.');
   }
   const ids = [...new Set(body.ids.map((value) => String(value).trim()).filter(Boolean))];
-  if (!ids.length) throw new Error('Add at least one movie ID.');
-  if (source === 'imdb' && ids.some((id) => !/^tt\d{5,12}$/i.test(id))) {
+  if (!ids.length) throw new Error('Add at least one IMDb ID.');
+  if (ids.some((id) => !/^tt\d{5,12}$/i.test(id))) {
     throw new Error('IMDb IDs must use the tt followed by digits format.');
   }
-  if (source === 'tmdb' && ids.some((id) => !/^\d{1,12}$/.test(id) || Number(id) <= 0)) {
-    throw new Error('TMDB IDs must be positive numeric IDs.');
-  }
-  return { source, ids: ids.map((id) => source === 'imdb' ? id.toLowerCase() : id) };
+  return { source: 'imdb', ids: ids.map((id) => id.toLowerCase()) };
 }
 
 export function normalizeInput(body = {}) {
@@ -180,12 +177,12 @@ function mapMovie(item, details) {
   const certification = us?.release_dates?.find((entry) => entry.certification)?.certification || '';
   const keywordSource = details?.keywords || {};
   const keywords = (keywordSource.keywords || keywordSource.results || []).map((entry) => entry.name).filter(Boolean).slice(0, 40);
-  const genreIds = item.genre_ids || source.genre_ids || (source.genres || []).map((genre) => Number(genre.id)).filter(Number.isFinite);
+  let genreIds = (source.genres || []).map((genre) => Number(genre.id)).filter(Number.isFinite);
+  if (!genreIds.length) genreIds = (item.genre_ids || []).map(Number).filter(Number.isFinite);
   const genreNames = (source.genres || []).map((genre) => genre.name).filter(Boolean);
   const imdbId = source.imdb_id || item.imdb_id || source.external_ids?.imdb_id || item.external_ids?.imdb_id;
   return {
-    tmdbId: Number(item.id),
-    ...(imdbId ? { imdbId: String(imdbId).toLowerCase() } : {}),
+    imdbId: imdbId ? String(imdbId).toLowerCase() : '',
     title: source.title || item.title || 'Untitled',
     originalTitle: source.original_title || item.original_title || '',
     overview: source.overview || item.overview || '',
@@ -194,22 +191,85 @@ function mapMovie(item, details) {
     releaseDate,
     releaseYear: releaseDate ? Number(releaseDate.slice(0, 4)) : null,
     runtime: Number.isFinite(source.runtime) ? source.runtime : null,
-    voteAverage: Number(item.vote_average || 0),
-    voteCount: Number(item.vote_count || 0),
-    popularity: Number(item.popularity || 0),
-    originalLanguage: item.original_language || 'en',
+    voteAverage: Number(source.vote_average ?? item.vote_average ?? 0),
+    voteCount: Number(source.vote_count ?? item.vote_count ?? 0),
+    popularity: Number(source.popularity ?? item.popularity ?? 0),
+    originalLanguage: source.original_language || item.original_language || 'en',
     genreIds,
     genres: genreNames.length ? genreNames : genreIds.map((id) => GENRE_NAMES.get(Number(id))).filter(Boolean),
     keywords,
     certification,
-    adult: Boolean(item.adult),
-    tmdbUrl: 'https://www.themoviedb.org/movie/' + item.id,
+    adult: Boolean(source.adult ?? item.adult),
     lastSyncedAt: new Date()
   };
 }
 
+let legacyIdMigrationPromise;
+
+export async function migrateLegacyMovieIds() {
+  if (!legacyIdMigrationPromise) {
+    legacyIdMigrationPromise = (async () => {
+      await connectDatabase();
+      const indexes = await Movie.collection.indexes().catch(() => []);
+      const legacyIndex = indexes.find((index) => index.name === 'tmdbId_1');
+      if (legacyIndex) await Movie.collection.dropIndex(legacyIndex.name);
+
+      const legacyRecords = await Movie.collection.find({
+        tmdbId: { $exists: true },
+        $or: [{ imdbId: { $exists: false } }, { imdbId: null }, { imdbId: '' }]
+      }).project({ _id: 1, tmdbId: 1 }).toArray();
+
+      const apiKey = (process.env.TMDB_API_KEY || '').trim();
+      if (legacyRecords.length && (!apiKey || apiKey.startsWith('replace_'))) {
+        return { migrated: 0, pending: legacyRecords.length, requiresApiKey: true };
+      }
+
+      await mapLimit(legacyRecords, 4, async (legacy) => {
+        const tmdbId = Number(legacy.tmdbId);
+        if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+          await Movie.collection.updateOne(
+            { _id: legacy._id },
+            { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
+          );
+          return null;
+        }
+        try {
+          const details = await tmdbRequest('/movie/' + encodeURIComponent(tmdbId), {
+            language: 'en-US',
+            append_to_response: 'external_ids'
+          });
+          const imdbId = String(details.imdb_id || details.external_ids?.imdb_id || '').toLowerCase();
+          if (!/^tt\d{5,12}$/.test(imdbId)) throw new Error('No IMDb ID exists for this legacy record.');
+          await Movie.collection.updateOne(
+            { _id: legacy._id },
+            { $set: { imdbId }, $unset: { tmdbId: '', tmdbUrl: '' } }
+          );
+        } catch {
+          await Movie.collection.updateOne(
+            { _id: legacy._id },
+            { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
+          );
+        }
+        return null;
+      });
+
+      await Movie.collection.updateMany({}, { $unset: { tmdbId: '', tmdbUrl: '' } });
+      await Movie.collection.createIndex(
+        { imdbId: 1 },
+        { unique: true, partialFilterExpression: { imdbId: { $type: 'string' } } }
+      );
+      return { migrated: legacyRecords.length, pending: 0, requiresApiKey: false };
+    })().catch((error) => {
+      legacyIdMigrationPromise = undefined;
+      throw error;
+    });
+  }
+  return legacyIdMigrationPromise;
+}
+
 export async function runManualCrawl(body = {}) {
   await connectDatabase();
+  await migrateLegacyMovieIds();
   const input = normalizeInput(body);
   const run = await CrawlRun.create({
     startYear: input.startYear,
@@ -258,22 +318,22 @@ export async function runManualCrawl(body = {}) {
         });
       } catch { /* Keep discovery metadata if optional details are unavailable. */ }
       return mapMovie(movie, details);
-    })).filter(Boolean);
+    })).filter((record) => record && /^tt\d{5,12}$/.test(record.imdbId));
 
-    const ids = records.map((record) => record.tmdbId);
-    const existing = ids.length ? await Movie.find({ tmdbId: { $in: ids } }).select('tmdbId').lean() : [];
-    const existingIds = new Set(existing.map((movie) => movie.tmdbId));
+    const ids = records.map((record) => record.imdbId);
+    const existing = ids.length ? await Movie.find({ imdbId: { $in: ids } }).select('imdbId').lean() : [];
+    const existingIds = new Set(existing.map((movie) => movie.imdbId));
     if (records.length) {
       await Movie.bulkWrite(records.map((record) => ({
         updateOne: {
-          filter: { tmdbId: record.tmdbId },
+          filter: { imdbId: record.imdbId },
           update: { $set: record, $setOnInsert: { moderationStatus: 'pending', manualReviewNote: '' } },
           upsert: true
         }
       })), { ordered: false });
     }
 
-    const importedCount = records.filter((record) => !existingIds.has(record.tmdbId)).length;
+    const importedCount = records.filter((record) => !existingIds.has(record.imdbId)).length;
     const updatedCount = records.length - importedCount;
     const nextCandidate = input.startPage + pagesProcessed;
     const nextPage = totalPages > 0 && nextCandidate <= totalPages ? nextCandidate : null;
@@ -299,36 +359,33 @@ export async function runManualCrawl(body = {}) {
 export async function importMovieIds(body = {}) {
   const input = normalizeImportIds(body);
   await connectDatabase();
+  await migrateLegacyMovieIds();
 
-  const resolved = await mapLimit(input.ids, 3, async (externalId) => {
+  const resolved = await mapLimit(input.ids, 3, async (imdbId) => {
     try {
-      let item;
-      if (input.source === 'imdb') {
-        const found = await tmdbRequest('/find/' + encodeURIComponent(externalId), {
-          external_source: 'imdb_id',
-          language: 'en-US'
-        });
-        item = (found.movie_results || [])[0] || null;
-        if (item) item.imdb_id = externalId;
-      } else {
-        item = await tmdbRequest('/movie/' + encodeURIComponent(externalId), {
-          language: 'en-US',
-          append_to_response: 'external_ids'
-        });
-        item.imdb_id = item.imdb_id || item.external_ids?.imdb_id || null;
-      }
+      const found = await tmdbRequest('/find/' + encodeURIComponent(imdbId), {
+        external_source: 'imdb_id',
+        language: 'en-US'
+      });
+      const match = (found.movie_results || [])[0] || null;
+      if (!match) return { externalId: imdbId, reason: 'not_found' };
 
-      if (!item) return { externalId, reason: 'not_found' };
-      const genreIds = item.genre_ids || (item.genres || []).map((genre) => Number(genre.id));
-      const valid = !item.adult &&
-        item.original_language === 'en' &&
-        Boolean(item.release_date) &&
-        Boolean(item.poster_path) &&
-        genreIds.some((id) => ALLOWED_IMPORT_GENRES.has(Number(id)));
-      if (!valid) return { externalId, reason: 'filtered' };
-      return { externalId, record: mapMovie(item, item) };
+      const details = await tmdbRequest('/movie/' + encodeURIComponent(match.id), {
+        language: 'en-US',
+        append_to_response: 'release_dates,keywords,external_ids'
+      });
+      details.imdb_id = details.imdb_id || imdbId;
+      const record = mapMovie(match, details);
+      const valid = /^tt\d{5,12}$/.test(record.imdbId) &&
+        !record.adult &&
+        record.originalLanguage === 'en' &&
+        Boolean(record.releaseDate) &&
+        Boolean(record.posterPath) &&
+        record.genreIds.some((id) => ALLOWED_IMPORT_GENRES.has(Number(id)));
+      if (!valid) return { externalId: imdbId, reason: 'filtered' };
+      return { externalId: imdbId, record };
     } catch (error) {
-      return { externalId, error };
+      return { externalId: imdbId, error };
     }
   });
 
@@ -337,16 +394,16 @@ export async function importMovieIds(body = {}) {
 
   const records = resolved.filter((entry) => entry?.record).map((entry) => entry.record);
   const unmatched = resolved.filter((entry) => !entry?.record).map((entry) => entry.externalId);
-  const tmdbIds = records.map((record) => record.tmdbId);
-  const existing = tmdbIds.length
-    ? await Movie.find({ tmdbId: { $in: tmdbIds } }).select('tmdbId').lean()
+  const imdbIds = records.map((record) => record.imdbId);
+  const existing = imdbIds.length
+    ? await Movie.find({ imdbId: { $in: imdbIds } }).select('imdbId').lean()
     : [];
-  const existingIds = new Set(existing.map((movie) => movie.tmdbId));
+  const existingIds = new Set(existing.map((movie) => movie.imdbId));
 
   if (records.length) {
     await Movie.bulkWrite(records.map((record) => ({
       updateOne: {
-        filter: { tmdbId: record.tmdbId },
+        filter: { imdbId: record.imdbId },
         update: {
           $set: record,
           $setOnInsert: { moderationStatus: 'pending', manualReviewNote: '' }
@@ -356,7 +413,7 @@ export async function importMovieIds(body = {}) {
     })), { ordered: false });
   }
 
-  const imported = records.filter((record) => !existingIds.has(record.tmdbId)).length;
+  const imported = records.filter((record) => !existingIds.has(record.imdbId)).length;
   return {
     requested: input.ids.length,
     matched: records.length,

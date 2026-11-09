@@ -22,7 +22,7 @@
     <nav class="side-nav">
       <button class="nav-item active" data-view="overview"><i class="bi bi-grid-1x2"></i><span>Overview</span></button>
       <button class="nav-item" data-view="catalog"><i class="bi bi-collection-play"></i><span>Movie catalog</span></button>
-      <button class="nav-item" data-view="crawler"><i class="bi bi-cloud-download"></i><span>TMDB crawler</span></button>
+      <button class="nav-item" data-view="crawler"><i class="bi bi-cloud-download"></i><span>Movie discovery</span></button>
       <button class="nav-item" data-view="history"><i class="bi bi-clock-history"></i><span>Crawl history</span></button>
     </nav>
     <div class="sidebar-bottom">
@@ -76,7 +76,7 @@
       </section>
 
       <section class="view" id="view-crawler">
-        <div class="page-head"><div><div class="overline">METADATA IMPORT</div><h1>TMDB crawler</h1><p class="muted">Start a manual discovery batch. There are no automatic crawl jobs.</p></div></div>
+        <div class="page-head"><div><div class="overline">METADATA IMPORT</div><h1>Movie discovery</h1><p class="muted">Start a manual discovery batch. There are no automatic crawl jobs.</p></div></div>
         <div class="crawler-grid">
           <div class="panel crawler-panel">
             <div class="panel-head"><div><h2><i class="bi bi-search me-2"></i>Discover movies</h2><p>English-language movie metadata from TMDB.</p></div><div class="crawler-head-actions"><button class="secondary-btn" type="button" id="tmdb-check-btn"><i class="bi bi-wifi"></i> Test TMDB connection</button><span class="manual-label"><i class="bi bi-hand-index-thumb"></i> Manual only</span></div></div>
@@ -98,7 +98,7 @@
             <h3>Review before publishing</h3>
             <p>New metadata is saved as <b>Pending</b>. Check artwork, rating, certification and keywords before approving it for the app.</p>
             <div class="guidance-line"><i class="bi bi-check2"></i> No automatic imports</div>
-            <div class="guidance-line"><i class="bi bi-check2"></i> Duplicate TMDB IDs are updated</div>
+            <div class="guidance-line"><i class="bi bi-check2"></i> Duplicate IMDb IDs are updated</div>
             <div class="guidance-line"><i class="bi bi-check2"></i> Sensitive themes need human review</div>
           </div>
         </div>
@@ -112,7 +112,7 @@
         <div class="page-head catalog-head">
           <div><div class="overline">CONTENT LIBRARY</div><h1>Movie catalog</h1><p class="muted">Review imported records before they are exposed to the mobile app.</p></div>
           <div class="catalog-tools">
-            <div class="search-box"><i class="bi bi-search"></i><input id="movie-search" type="search" placeholder="Search title or TMDB ID"></div>
+            <div class="search-box"><i class="bi bi-search"></i><input id="movie-search" type="search" placeholder="Search title or IMDb ID"></div>
             <select id="status-filter" class="form-select"><option value="pending">Pending review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All movies</option></select>
           </div>
         </div>
