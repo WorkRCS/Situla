@@ -72,7 +72,7 @@ export default function AnimeSeriesExperience({ malId }) {
               <div className="mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold text-white">Choose episode and audio</h2>
                 <label className="mt-4 block text-xs text-[#9297a7]">Episode
-                  <input className="form-control mt-2 w-full" type="number" min="1" max={anime.episodes || 9999} value={episode} onChange={(event) => setEpisode(event.target.value)} />
+                  <input className="series-control series-input mt-2" type="number" min="1" max={anime.episodes || 9999} value={episode} onChange={(event) => setEpisode(event.target.value)} />
                 </label>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button type="button" className={audio === "sub" ? "gold-button" : "ghost-button"} onClick={() => setAudio("sub")}>Japanese · Sub</button>
