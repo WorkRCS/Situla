@@ -107,14 +107,14 @@ fun SitulaApp(context: Context) {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val region = VpnProfileStore.autoConnectRegion(context)
+            val region = VpnProfileStore.preferredAvailableRegion(context)
             val profile = region?.let { VpnProfileStore.load(context, it) }
             if (region != null && profile != null) {
                 scope.launch {
                     runCatching {
                         WireGuardVpnManager.connect(context, region, profile)
                         if (VpnProfileStore.autoRotateEnabled(context) &&
-                            VpnProfileStore.availableRegions(context).size == VpnProfileStore.regions.size
+                            VpnProfileStore.availableRegions(context).size >= 2
                         ) {
                             WireGuardVpnManager.startAutoRotation(context)
                         }
@@ -139,7 +139,7 @@ fun SitulaApp(context: Context) {
         launch { loadMovies() }
         launch { AdblockFilterRepository.refreshAndInitialize(context.applicationContext) }
 
-        val autoRegion = VpnProfileStore.autoConnectRegion(context)
+        val autoRegion = VpnProfileStore.preferredAvailableRegion(context)
         val autoProfile = autoRegion?.let { VpnProfileStore.load(context, it) }
         if (autoRegion != null && autoProfile != null) {
             val permissionIntent = VpnService.prepare(context)
