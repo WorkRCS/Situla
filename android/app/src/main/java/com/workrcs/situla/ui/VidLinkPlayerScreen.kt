@@ -42,7 +42,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 }
 
 @Composable
-fun VidLinkPlayerScreen(
+fun VidSrcPlayerScreen(
     movie: Movie,
     onBack: () -> Unit,
     embedded: Boolean = false
@@ -51,7 +51,7 @@ fun VidLinkPlayerScreen(
     val activity = remember(context) { context.findActivity() }
 
     var fullScreenView by remember { mutableStateOf<View?>(null) }
-    var playerWebView by remember(movie.tmdbId) { mutableStateOf<WebView?>(null) }
+    var playerWebView by remember(movie.imdbId) { mutableStateOf<WebView?>(null) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
 
@@ -69,7 +69,7 @@ fun VidLinkPlayerScreen(
         }
     }
 
-    // Behave like a browser-wrapped website: navigate within VidLink first,
+    // Behave like a browser-wrapped website: navigate within VidSrc first,
     // then return to Situla's catalog when there is no page history left.
     BackHandler(enabled = !embedded && fullScreenView == null) {
         val webView = playerWebView
@@ -85,8 +85,8 @@ fun VidLinkPlayerScreen(
         onDispose { exitFullScreen() }
     }
 
-    // The API supplies the TMDB ID; the app opens the provider page directly.
-    val playerUrl = remember(movie.tmdbId) { "https://vidlink.pro/movie/${movie.tmdbId}" }
+    // The API supplies the IMDb ID; the app opens the provider page directly.
+    val playerUrl = remember(movie.imdbId) { "https://vidsrc.sh/embed/movie/${movie.imdbId}" }
 
     Box(
         modifier = if (embedded) {
@@ -99,7 +99,7 @@ fun VidLinkPlayerScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
                 WebView(viewContext).apply {
-                    tag = movie.tmdbId
+                    tag = movie.imdbId
                     setBackgroundColor(AndroidColor.BLACK)
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
@@ -143,7 +143,7 @@ fun VidLinkPlayerScreen(
                         }
                     }
                     webChromeClient = object : WebChromeClient() {
-                    // VidLink is embedded without iframe sandboxing for player compatibility.
+                    // VidSrc is embedded without iframe sandboxing for player compatibility.
                     // Keep native WebView popups/new windows disabled so ad clicks cannot
                     // open a second WebView or escape the Situla host.
                     override fun onCreateWindow(
@@ -202,9 +202,9 @@ fun VidLinkPlayerScreen(
                 }
             },
             update = { webView ->
-                val currentId = webView.tag as? Int
-                if (currentId != movie.tmdbId) {
-                    webView.tag = movie.tmdbId
+                val currentId = webView.tag as? String
+                if (currentId != movie.imdbId) {
+                    webView.tag = movie.imdbId
                     webView.loadUrl(playerUrl)
                 }
             },
