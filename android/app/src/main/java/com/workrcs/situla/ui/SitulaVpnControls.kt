@@ -135,7 +135,7 @@ fun SitulaVpnControls(context: Context, onClose: () -> Unit) {
         val selectedHasProfile = selectedRegion in available
         Text(
             if (selectedHasProfile) "$selectedRegion profile is ready"
-            else "No $selectedRegion profile imported · $available.size of 6 regions ready",
+            else "No $selectedRegion profile imported · ${available.size} of 6 regions ready",
             color = if (selectedHasProfile) Color(0xFF9DD6A6) else Color(0xFFFFB1C0),
             fontSize = 10.sp
         )
