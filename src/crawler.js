@@ -224,34 +224,55 @@ export async function migrateLegacyMovieIds() {
         return { migrated: 0, pending: legacyRecords.length, requiresApiKey: true };
       }
 
-      await mapLimit(legacyRecords, 4, async (legacy) => {
-        const tmdbId = Number(legacy.tmdbId);
-        if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
-          await Movie.collection.updateOne(
-            { _id: legacy._id },
-            { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
-          );
-          return null;
-        }
+      const migrationResults = await mapLimit(legacyRecords, 4, async (legacy) => {
         try {
-          const details = await tmdbRequest('/movie/' + encodeURIComponent(tmdbId), {
-            language: 'en-US',
-            append_to_response: 'external_ids'
-          });
+          const tmdbId = Number(legacy.tmdbId);
+          if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
+            await Movie.collection.updateOne(
+              { _id: legacy._id },
+              { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
+            );
+            return null;
+          }
+
+          let details;
+          try {
+            details = await tmdbRequest('/movie/' + encodeURIComponent(tmdbId), {
+              language: 'en-US',
+              append_to_response: 'external_ids'
+            });
+          } catch (error) {
+            return { error };
+          }
+
           const imdbId = String(details.imdb_id || details.external_ids?.imdb_id || '').toLowerCase();
-          if (!/^tt\d{5,12}$/.test(imdbId)) throw new Error('No IMDb ID exists for this legacy record.');
-          await Movie.collection.updateOne(
-            { _id: legacy._id },
-            { $set: { imdbId }, $unset: { tmdbId: '', tmdbUrl: '' } }
-          );
-        } catch {
-          await Movie.collection.updateOne(
-            { _id: legacy._id },
-            { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
-          );
+          if (!/^tt\d{5,12}$/.test(imdbId)) {
+            await Movie.collection.updateOne(
+              { _id: legacy._id },
+              { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
+            );
+            return null;
+          }
+
+          try {
+            await Movie.collection.updateOne(
+              { _id: legacy._id },
+              { $set: { imdbId }, $unset: { tmdbId: '', tmdbUrl: '' } }
+            );
+          } catch (error) {
+            if (error?.code !== 11000) return { error };
+            await Movie.collection.updateOne(
+              { _id: legacy._id },
+              { $set: { moderationStatus: 'rejected' }, $unset: { tmdbId: '', tmdbUrl: '' } }
+            );
+          }
+          return null;
+        } catch (error) {
+          return { error };
         }
-        return null;
       });
+      const migrationFailure = migrationResults.find((entry) => entry?.error);
+      if (migrationFailure) throw migrationFailure.error;
 
       await Movie.collection.updateMany({}, { $unset: { tmdbId: '', tmdbUrl: '' } });
       await Movie.collection.createIndex(

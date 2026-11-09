@@ -99,7 +99,13 @@ const STARTER_IMDB_IDS = [
 let starterCatalogPromise;
 
 async function ensureStarterCatalog() {
-  const migration = await migrateLegacyMovieIds();
+  let migration;
+  try {
+    migration = await migrateLegacyMovieIds();
+  } catch (error) {
+    console.error('Situla legacy IMDb migration will retry later:', error.message);
+    return 0;
+  }
   const apiKey = (process.env.TMDB_API_KEY || '').trim();
   if (migration.requiresApiKey || !apiKey || apiKey.startsWith('replace_')) return 0;
 
