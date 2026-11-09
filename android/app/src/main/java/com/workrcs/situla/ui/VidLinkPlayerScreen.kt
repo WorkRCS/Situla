@@ -265,7 +265,7 @@ fun VidLinkPlayerScreen(
                   src="${htmlAttribute(playerUrl)}"
                   title="VidLink movie player"
                   allow="autoplay; encrypted-media; fullscreen; picture-in-picture; web-share"
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock allow-popups"
                   allowfullscreen
                   webkitallowfullscreen></iframe>
           <script>
@@ -319,6 +319,10 @@ fun VidLinkPlayerScreen(
                     WebView(viewContext).apply {
                         playerWebViewHolder[0] = this
                         setBackgroundColor(AndroidColor.BLACK)
+                        // Remote WebView inspection is enabled only for debug APKs.
+                        WebView.setWebContentsDebuggingEnabled(
+                            (viewContext.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                        )
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
                         settings.mediaPlaybackRequiresUserGesture = true
@@ -444,11 +448,11 @@ fun VidLinkPlayerScreen(
                                 // are still blocked by the main-frame policy below.
                                 if (!request.isForMainFrame && isVidLinkHost(uri)) return false
 
-                                val source = view?.url ?: "https://situla.invalid/"
+                                val source = view?.url ?: "https://situla.vercel.app/"
                                 val type = if (request.isForMainFrame) "document" else "subdocument"
                                 if (BraveAdblock.shouldBlock(uri.toString(), source, type)) return true
                                 if (request.isForMainFrame &&
-                                    !uri.host.equals("situla.invalid", ignoreCase = true)
+                                    !uri.host.equals("situla.vercel.app", ignoreCase = true)
                                 ) return true
                                 return false
                             }
@@ -558,13 +562,13 @@ fun VidLinkPlayerScreen(
                         }
 
                         tag = playerUrl
-                        loadDataWithBaseURL("https://situla.invalid/", wrapperHtml, "text/html", "UTF-8", null)
+                        loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 update = { webView ->
                     if (webView.tag != playerUrl) {
                         webView.tag = playerUrl
-                        webView.loadDataWithBaseURL("https://situla.invalid/", wrapperHtml, "text/html", "UTF-8", null)
+                        webView.loadDataWithBaseURL("https://situla.vercel.app/", wrapperHtml, "text/html", "UTF-8", null)
                     }
                 },
                 onRelease = { webView ->
