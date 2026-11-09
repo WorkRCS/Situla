@@ -476,7 +476,7 @@ export default function SitulaApp() {
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-white/75">
                     {featured.releaseYear && <span>{featured.releaseYear}</span>}
                     {featured.voteAverage > 0 && <span className="flex items-center gap-1 text-[#f1c978]"><Icon name="star" size={13} /> {Number(featured.voteAverage).toFixed(1)}</span>}
-                    {featured.runtime > 0 && <span>{featured.runtime} min</span>}
+                    {featured.runtime > 0 && <span>{formatRuntime(featured.runtime)}</span>}
                     {featured.genres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
                   </div>
                   <p className="mt-4 line-clamp-3 max-w-[520px] text-sm leading-6 text-white/70">{featured.overview || "Discover this movie on Situla."}</p>
