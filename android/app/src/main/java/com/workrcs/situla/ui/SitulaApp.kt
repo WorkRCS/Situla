@@ -62,13 +62,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.workrcs.situla.BuildConfig
 import com.workrcs.situla.data.SitulaDatabase
 import com.workrcs.situla.data.ImportIdsRequest
 import com.workrcs.situla.data.LoginRequest
 import com.workrcs.situla.data.Movie
 import com.workrcs.situla.data.SitulaApi
 import com.workrcs.situla.data.SitulaApiProvider
+import com.workrcs.situla.data.SitulaApiConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -91,7 +91,7 @@ fun SitulaApp(context: Context) {
     var tab by remember { mutableStateOf(Tab.HOME) }
     var selectedMovie by remember { mutableStateOf<Movie?>(null) }
     var playingMovie by remember { mutableStateOf<Movie?>(null) }
-    val api = remember { SitulaApiProvider.create(BuildConfig.API_BASE_URL) }
+    val api = remember { SitulaApiProvider.create(SitulaApiConfig.baseUrl(context)) }
     val database = remember { SitulaDatabase.get(context) }
     var movies by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var searchResults by remember { mutableStateOf<List<Movie>>(emptyList()) }
