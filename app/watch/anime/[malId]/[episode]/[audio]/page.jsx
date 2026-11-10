@@ -1,4 +1,6 @@
+import { notFound } from "next/navigation";
 import SeriesMediaPlayer from "../../../../../components/media-player";
+import { normalizeAnimePlayerRoute } from "../../../../../src/player-urls.js";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,7 @@ export async function generateMetadata({ params }) {
 
 export default async function AnimeEpisodePage({ params }) {
   const { malId, episode, audio } = await params;
-  const subOrDub = audio === "dub" ? "dub" : "sub";
-  return <SeriesMediaPlayer kind="anime" malId={malId} episode={episode} audio={subOrDub} />;
+  const route = normalizeAnimePlayerRoute(malId, episode, audio);
+  if (!route) notFound();
+  return <SeriesMediaPlayer kind="anime" malId={route.malId} episode={route.episode} audio={route.audio} />;
 }
