@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
+import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -227,4 +227,53 @@ test("bottom navigation is visible on touch layouts and hidden on desktop", asyn
   assert.match(css, /@media \(min-width:1101px\)\s*\{\s*\.bottom-nav\s*\{\s*display:none !important;/);
   assert.match(css, /@media \(max-width:599px\)[\s\S]*?\.bottom-nav/);
   assert.match(css, /@media \(min-width:600px\) and \(max-width:1100px\)/);
+});
+
+
+test("Anime VidLink URLs require MAL ID, episode and sub/dub, and request fallback", () => {
+  assert.deepEqual(normalizeAnimePlayerRoute("5", "1", "sub"), { malId: 5, episode: 1, audio: "sub" });
+  assert.deepEqual(normalizeAnimePlayerRoute(5114, 64, "DUB"), { malId: 5114, episode: 64, audio: "dub" });
+  assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("0", "1", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("5", "0", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("5", "1.5", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("5", "1", "raw"), null);
+
+  const sub = new URL(vidlinkAnimeUrl(5, 1, "sub"));
+  assert.equal(sub.origin + sub.pathname, "https://vidlink.pro/anime/5/1/sub");
+  assert.equal(sub.searchParams.get("fallback"), "true");
+  assert.equal(sub.searchParams.get("primaryColor"), "e8b65b");
+  assert.equal(sub.searchParams.get("autoplay"), "false");
+
+  const dub = new URL(vidlinkAnimeUrl(5114, 64, "dub", { startAt: 125 }));
+  assert.equal(dub.pathname, "/anime/5114/64/dub");
+  assert.equal(dub.searchParams.get("fallback"), "true");
+  assert.equal(dub.searchParams.get("startAt"), "125");
+  const noFallback = new URL(vidlinkAnimeUrl(5, 2, "sub", { fallback: false }));
+  assert.equal(noFallback.searchParams.has("fallback"), false);
+  assert.equal(vidlinkAnimeUrl(5, 0, "sub"), null);
+});
+
+test("Anime episode route validates MAL ID, episode and audio, with an in-player alternate audio action", async () => {
+  const page = await read("../app/watch/anime/[malId]/[episode]/[audio]/page.jsx");
+  const player = await read("../app/components/media-player.jsx");
+  assert.match(page, /normalizeAnimePlayerRoute/);
+  assert.match(page, /if \(!route\) notFound\(\)/);
+  assert.match(player, /vidlinkAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio/);
+  assert.match(player, /fallback: true/);
+  assert.match(player, /function tryAlternateAnimeAudio/);
+  assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
+});
+
+test("Anime catalog is a manually maintained MAL list and its seed command makes no external requests", async () => {
+  const { MANUAL_ANIME_CATALOG } = await import("../data/anime-catalog.js");
+  const script = await read("../scripts/seed-anime-manual.js");
+  const pkg = JSON.parse(await read("../package.json"));
+  assert.ok(MANUAL_ANIME_CATALOG.length >= 8);
+  assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
+  assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && item.type === "TV"));
+  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-anime-manual.js");
+  assert.match(script, /AnimeSeries\.updateOne/);
+  assert.match(script, /\$setOnInsert/);
+  assert.doesNotMatch(script, /fetch\(|axios|jikan|tvmaze|themoviedb/i);
 });
