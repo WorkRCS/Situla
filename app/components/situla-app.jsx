@@ -1155,7 +1155,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.map((item) => (
+        {NAV_ITEMS.map((item) => item.id === "search" ? (
+          <button
+            key={item.id}
+            type="button"
+            className="nav-button"
+            onClick={() => setSearchOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={searchOpen}
+          >
+            <Icon name={item.icon} size={20} />
+            <span>{item.label}</span>
+          </button>
+        ) : (
           <Link
             key={item.id}
             href={item.href}
