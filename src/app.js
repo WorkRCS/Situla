@@ -241,14 +241,13 @@ app.get('/api/movies/discover', async (c) => {
     const baseFilter = { imdbId: IMDB_ID, adult: { $ne: true } };
     const facets = {
       featured: [{ $sample: { size: 1 } }],
-      items: [{ $sort: { popularity: -1, releaseDate: -1 } }, { $limit: 40 }],
+      items: [{ $sample: { size: 40 } }],
       total: [{ $count: 'value' }]
     };
     for (const category of MOVIE_CATEGORIES) {
       facets[category.key] = [
         { $match: { genres: category.name } },
-        { $sort: { popularity: -1, releaseDate: -1 } },
-        { $limit: 18 }
+        { $sample: { size: 18 } }
       ];
     }
     const [result] = await Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]);
@@ -361,13 +360,17 @@ app.get('/api/movies', async (c) => {
       ? { score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }
       : { popularity: -1, releaseDate: -1 };
     const randomOrder = c.req.query('random') === 'true';
+    const excludedIds = [...new Set(String(c.req.query('exclude') || '')
+      .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 900);
+    const randomFilter = { ...filter };
+    if (randomOrder && excludedIds.length) {
+      randomFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
+    }
     const [items, total] = await Promise.all([
       randomOrder
         ? Movie.aggregate([
-            { $match: filter },
-            { $sample: { size: Math.min(page * limit, 1000) } },
-            { $skip: (page - 1) * limit },
-            { $limit: limit }
+            { $match: randomFilter },
+            { $sample: { size: limit } }
           ])
         : Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       Movie.countDocuments(filter)
