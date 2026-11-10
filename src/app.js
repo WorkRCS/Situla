@@ -267,7 +267,7 @@ app.get('/api/search', async (c) => {
           { titleJapanese: pattern },
           ...(/^\d+$/.test(query) ? [{ malId: Number(query) }] : [])
         ]
-      }).sort({ score: -1, rank: 1, popularity: 1 }).limit(8).lean()
+      }).select('-episodeGuide -relatedAnime').sort({ score: -1, rank: 1, popularity: 1 }).limit(8).lean()
     ]);
     const items = [
       ...movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
@@ -442,11 +442,12 @@ app.get('/api/anime', async (c) => {
       randomOrder
         ? AnimeSeries.aggregate([
             { $match: filter },
+            { $project: { episodeGuide: 0, relatedAnime: 0 } },
             { $sample: { size: Math.min(page * limit, 1000) } },
             { $skip: (page - 1) * limit },
             { $limit: limit }
           ])
-        : AnimeSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+        : AnimeSeries.find(filter).select('-episodeGuide -relatedAnime').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       AnimeSeries.countDocuments(filter)
     ]);
     return c.json({ items: items.map(animeSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
