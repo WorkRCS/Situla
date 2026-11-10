@@ -59,6 +59,24 @@ function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
   return selected;
 }
 
+const RECENT_CATALOG_ID_LIMIT = 120;
+
+function readRecentCatalogIds(storageKey) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    if (!Array.isArray(saved)) return [];
+    return [...new Set(saved.map((id) => String(id).trim()).filter(Boolean))].slice(-RECENT_CATALOG_ID_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecentCatalogIds(storageKey, ids) {
+  const nextIds = [...new Set([...readRecentCatalogIds(storageKey), ...(Array.isArray(ids) ? ids : [])
+    .map((id) => String(id || "").trim()).filter(Boolean)])].slice(-RECENT_CATALOG_ID_LIMIT);
+  try { localStorage.setItem(storageKey, JSON.stringify(nextIds)); } catch {}
+}
+
 
 function MoviePosterImage({ movie }) {
   const [failed, setFailed] = useState(false);
@@ -426,7 +444,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           const selected = categoryShelves.find((item) => item.name === genre);
           if (selected?.genre) params.set("genre", selected.genre);
         }
-        const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString());
+        const recentKey = tab === "movies" ? "situla:recent-catalog:movies" : "situla:recent-catalog:home";
+        const recentIds = isDiscover ? readRecentCatalogIds(recentKey) : [];
+        const discoverQuery = recentIds.length ? "?exclude=" + encodeURIComponent(recentIds.join(",")) : "";
+        const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" + discoverQuery : "/api/movies?" + params.toString());
         const requestSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
         const response = await fetch(endpoint, { cache: "no-store", signal: requestSignal });
         const payload = await response.json().catch(() => ({}));
@@ -443,6 +464,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         setSearchResults([]);
         setMovies(items);
         if (isDiscover) {
+          rememberRecentCatalogIds(recentKey, [payload.featured?.imdbId, ...items.map((item) => item.imdbId)]);
           const uniqueHeroMovies = [];
           const seenHeroIds = new Set();
           for (const candidate of [payload.featured, ...items]) {
@@ -507,9 +529,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
     const controller = new AbortController();
+    const recentKey = tab === "tv" ? "situla:recent-catalog:tv" : "situla:recent-catalog:anime";
+    const recentIds = readRecentCatalogIds(recentKey);
+    const excludeQuery = recentIds.length ? "&exclude=" + encodeURIComponent(recentIds.join(",")) : "";
     const endpoint = tab === "tv"
-      ? "/api/tv?page=1&limit=40&random=true"
-      : "/api/anime?page=1&limit=40&random=true";
+      ? "/api/tv?page=1&limit=40&random=true" + excludeQuery
+      : "/api/anime?page=1&limit=40&random=true" + excludeQuery;
     async function loadSeries() {
       setLoading(true);
       try {
@@ -518,6 +543,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Series catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
+        rememberRecentCatalogIds(recentKey, items.map((item) => tab === "tv" ? item.tmdbId : item.malId));
         if (tab === "tv") {
           setTvShows(items);
           setCatalogSpotlightItems(items);
