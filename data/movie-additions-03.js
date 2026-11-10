@@ -1,12 +1,9 @@
-// TMDB discovery batch 3: Indian cinema across languages and regions.
+// Cinemeta discovery batch 3: popular drama movies.
 export const MOVIE_DISCOVERY_PART_03 = {
-  key: "indian-cinema",
-  label: "Indian cinema",
-  pages: 14,
-  params: {
-    sort_by: "popularity.desc",
-    with_origin_country: "IN",
-    "vote_count.gte": "30",
-    "with_runtime.gte": "65"
-  }
+  key: "drama",
+  label: "Drama movies",
+  catalogId: "top",
+  genre: "Drama",
+  pages: 12,
+  pageSize: 100
 };
