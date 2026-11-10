@@ -60,14 +60,27 @@ function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
 }
 
 
+function MoviePosterImage({ movie }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [movie.imdbId, movie.posterUrl]);
+  return movie.posterUrl && !failed ? (
+    <img
+      src={movie.posterUrl}
+      alt={movie.title}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  ) : (
+    <div className="poster-fallback"><Icon name="film" size={30} /></div>
+  );
+}
+
 function MovieCard({ movie, onOpen, onSave, saved }) {
   return (
     <article className="movie-card">
       <button type="button" onClick={() => onOpen(movie)} className="block w-full text-left">
         <div className="movie-poster">
-          {movie.posterUrl
-            ? <img src={movie.posterUrl} alt={movie.title} loading="lazy" />
-            : <div className="poster-fallback"><Icon name="film" size={30} /></div>}
+          <MoviePosterImage movie={movie} />
           {movie.voteAverage > 0 && (
             <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
           )}
@@ -150,7 +163,9 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   return (
     <section className="hero-card catalog-spotlight" key={item.tmdbId || item.imdbId || item.malId}>
       {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" onError={(event) => {
-        if (isAnime && item.posterFallbackUrl && event.currentTarget.src !== item.posterFallbackUrl) {
+        if (item.posterUrl && event.currentTarget.src !== item.posterUrl) {
+          event.currentTarget.src = item.posterUrl;
+        } else if (isAnime && item.posterFallbackUrl && event.currentTarget.src !== item.posterFallbackUrl) {
           event.currentTarget.src = item.posterFallbackUrl;
         } else {
           event.currentTarget.style.display = "none";
@@ -393,7 +408,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
-        const isDiscover = tab === "home" && genre === "All";
+        const isDiscover = (tab === "home" && genre === "All") || tab === "movies";
         const params = new URLSearchParams({ page: "1", limit: "40" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
@@ -415,11 +430,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         }
         setSearchResults([]);
         setMovies(items);
-        if (tab === "movies") {
-          const freshSpotlight = chooseFreshSpotlight(items, "situla:spotlight:movies");
-          setCatalogSpotlightItems(items);
-          setCatalogSpotlight(freshSpotlight);
-        }
         if (isDiscover) {
           const uniqueHeroMovies = [];
           const seenHeroIds = new Set();
@@ -429,12 +439,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             seenHeroIds.add(id);
             uniqueHeroMovies.push(candidate);
           }
-          const selectedHero = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:home");
-          const selectedHeroIndex = uniqueHeroMovies.findIndex((item) => item.imdbId === selectedHero?.imdbId);
-          setHeroMovies(uniqueHeroMovies);
-          setHeroIndex(Math.max(0, selectedHeroIndex));
-          setFeaturedMovie(selectedHero || payload.featured || items[0] || null);
           setCategoryShelves(Array.isArray(payload.categories) ? payload.categories : []);
+          if (tab === "movies") {
+            const freshSpotlight = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:movies");
+            setCatalogSpotlightItems(uniqueHeroMovies);
+            setCatalogSpotlight(freshSpotlight || payload.featured || items[0] || null);
+          } else {
+            const selectedHero = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:home");
+            const selectedHeroIndex = uniqueHeroMovies.findIndex((item) => item.imdbId === selectedHero?.imdbId);
+            setHeroMovies(uniqueHeroMovies);
+            setHeroIndex(Math.max(0, selectedHeroIndex));
+            setFeaturedMovie(selectedHero || payload.featured || items[0] || null);
+          }
         } else if (tab === "home" && !featuredMovie && items.length) {
           setFeaturedMovie(items[0]);
         }
@@ -590,16 +606,26 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           const selected = categoryShelves.find((item) => item.name === genre);
           if (selected?.genre) params.set("genre", selected.genre);
         }
+        if (tab !== "search") {
+          params.set("random", "true");
+          params.set("exclude", movies.map((item) => item.imdbId).filter(Boolean).join(","));
+        }
         const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store" });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
         setMovies((current) => {
-          const ids = new Set(current.map((item) => item.tmdbId));
-          return [...current, ...nextItems.filter((item) => !ids.has(item.tmdbId))];
+          const ids = new Set(current.map((item) => String(item.imdbId || "").toLowerCase()));
+          return [...current, ...nextItems.filter((item) => {
+            const id = String(item.imdbId || "").toLowerCase();
+            if (!id || ids.has(id)) return false;
+            ids.add(id);
+            return true;
+          })];
         });
         setMoviesPage(Number(payload.pagination?.page) || nextPage);
         setMoviesTotal(Number(payload.pagination?.total) || moviesTotal);
+        setError("");
       } else if (tab === "tv") {
         const nextPage = tvPage + 1;
         const response = await fetch("/api/tv?page=" + nextPage + "&limit=40", { cache: "no-store" });
