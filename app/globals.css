@@ -1877,3 +1877,384 @@ body { color:#f7f7fa; background:#08090e; }
     transform:none;
   }
 }
+
+
+/* Final responsive UI pass: accessible search trigger, reliable dialog layering,
+   compact watch metadata, and one consistent TV/Anime detail composition. */
+.header-inner {
+  gap:clamp(8px,1.2vw,16px);
+}
+.header-search-wrap {
+  display:flex;
+  flex:0 0 auto;
+  width:auto;
+  min-width:0;
+  max-width:none;
+  margin-left:auto;
+}
+.header-search-trigger {
+  display:inline-flex;
+  width:clamp(184px,17vw,232px);
+  min-width:184px;
+  min-height:42px;
+  align-items:center;
+  justify-content:flex-start;
+  gap:11px;
+  padding:0 16px;
+  border-radius:999px;
+  color:#f0c471;
+  cursor:pointer;
+  text-align:left;
+  white-space:nowrap;
+}
+.header-search-trigger .header-search-label {
+  overflow:hidden;
+  min-width:0;
+  color:#d5d8e0;
+  font-size:12px;
+  font-weight:650;
+  text-overflow:ellipsis;
+}
+.header-search-trigger:hover {
+  border-color:rgba(232,182,91,.58);
+  color:#f7d58b;
+  background:#1b202b;
+}
+.header-search-trigger:focus-visible {
+  outline:2px solid rgba(232,182,91,.82);
+  outline-offset:3px;
+}
+@media (max-width:1100px) {
+  .header-search-wrap { margin-left:auto; }
+  .header-search-trigger {
+    width:42px;
+    min-width:42px;
+    height:42px;
+    min-height:42px;
+    justify-content:center;
+    padding:0;
+    border-radius:50%;
+  }
+  .header-search-trigger .header-search-label { display:none; }
+}
+@media (max-width:620px) {
+  .header-inner { gap:9px; }
+  .header-search-trigger {
+    width:40px;
+    min-width:40px;
+    height:40px;
+    min-height:40px;
+  }
+}
+
+/* The modal is portalled to body, so this layer is no longer trapped by the
+   sticky header's stacking context or covered by the fixed mobile navigation. */
+.search-overlay {
+  position:fixed;
+  z-index:1200;
+  inset:0;
+  width:100vw;
+  min-height:100dvh;
+  align-items:start;
+  justify-items:center;
+  padding:
+    max(18px,env(safe-area-inset-top))
+    max(12px,env(safe-area-inset-right))
+    max(18px,env(safe-area-inset-bottom))
+    max(12px,env(safe-area-inset-left));
+  overscroll-behavior:contain;
+  isolation:isolate;
+}
+.search-dialog {
+  position:relative;
+  z-index:1;
+  margin-top:clamp(8px,4vh,34px);
+}
+.search-results-list {
+  max-height:min(58dvh,520px);
+}
+@media (max-width:620px) {
+  .search-overlay {
+    padding:
+      max(10px,env(safe-area-inset-top))
+      max(9px,env(safe-area-inset-right))
+      max(12px,env(safe-area-inset-bottom))
+      max(9px,env(safe-area-inset-left));
+  }
+  .search-dialog { margin-top:clamp(4px,2vh,16px); }
+  .search-results-list { max-height:min(60dvh,480px); }
+}
+
+/* A compact, readable title lockup over the movie player. */
+.watch-topbar { gap:10px; }
+.watch-topbar .watch-title {
+  display:grid;
+  min-width:0;
+  flex:1 1 auto;
+  gap:2px;
+  align-content:center;
+}
+.watch-title p {
+  margin:0;
+  font-size:9px;
+  line-height:1.15;
+  letter-spacing:.16em;
+}
+.watch-title h1 {
+  max-width: min(66vw,680px);
+  margin:0;
+  overflow:hidden;
+  color:#fff;
+  font-size:clamp(12px,1.05vw,15px);
+  font-weight:750;
+  line-height:1.2;
+  letter-spacing:-.015em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@media (max-width:620px) {
+  .watch-topbar { gap:8px; padding-top:max(10px,env(safe-area-inset-top)); }
+  .watch-topbar .watch-title { gap:1px; }
+  .watch-title p { font-size:8px; letter-spacing:.12em; }
+  .watch-title h1 { max-width:54vw; font-size:12px; line-height:1.15; }
+}
+@media (max-width:360px) {
+  .watch-title h1 { max-width:46vw; font-size:11px; }
+}
+
+/* TV and Anime cards share a balanced information hierarchy. */
+.series-card { min-width:0; }
+.series-card .movie-card button,
+.series-card > button { min-width:0; }
+.series-card-meta {
+  margin-top:4px;
+  overflow:hidden;
+  color:#9297a7;
+  font-size:10px;
+  line-height:1.4;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.series-card-category {
+  margin-top:5px;
+  color:#c1a06a;
+  font-size:9px;
+  line-height:1.35;
+}
+.series-card-description {
+  display:-webkit-box;
+  min-height:0;
+  overflow:hidden;
+  margin-top:6px;
+  color:#9297a7;
+  font-size:10px;
+  line-height:1.55;
+  text-align:left;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+}
+.catalog-grid .series-card h3 {
+  margin-top:8px;
+  font-size:clamp(11px,1.1vw,14px);
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.catalog-grid .series-card .movie-poster { aspect-ratio:2/3; }
+.catalog-grid .series-card-description { min-height:4.6em; }
+@media (max-width:599px) {
+  .catalog-grid .series-card h3 { font-size:11px; }
+  .series-card-meta { font-size:9px; }
+  .series-card-description { font-size:9px; line-height:1.45; -webkit-line-clamp:2; }
+  .catalog-grid .series-card-description { min-height:2.9em; }
+}
+
+/* Shared cinematic detail pages for TV and Anime. */
+.series-detail-page { min-height:100dvh; }
+.series-detail-container {
+  width:min(1240px,100%);
+  margin-inline:auto;
+  padding:clamp(18px,3vw,38px) clamp(12px,3.2vw,36px) 54px !important;
+}
+.series-detail-hero {
+  position:relative;
+  display:flex;
+  min-height:clamp(270px,32vw,420px);
+  align-items:flex-end;
+  overflow:hidden;
+  margin:0 0 clamp(20px,3vw,30px);
+  border:1px solid rgba(232,182,91,.18);
+  border-radius:clamp(16px,2vw,24px);
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 74% 22%,rgba(232,182,91,.13),transparent 46%),
+    linear-gradient(120deg,#17140f,#101116 74%);
+  box-shadow:0 22px 58px rgba(0,0,0,.25);
+}
+.series-detail-hero-image {
+  position:absolute;
+  z-index:-2;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 30%;
+  opacity:.48;
+}
+.series-detail-hero-overlay {
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(5,6,9,.96) 0%,rgba(5,6,9,.77) 48%,rgba(5,6,9,.2) 100%),
+    linear-gradient(0deg,rgba(5,6,9,.92) 0%,transparent 72%);
+}
+.series-detail-hero-content {
+  width:min(900px,100%);
+  padding:clamp(22px,4.4vw,52px);
+}
+.series-detail-eyebrow {
+  margin:0 0 10px;
+  color:#e8b65b;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.2em;
+  line-height:1.4;
+}
+.series-detail-title {
+  max-width:900px;
+  margin:0;
+  color:#fff;
+  font-size:clamp(28px,4.5vw,58px);
+  font-weight:950;
+  line-height:1.02;
+  letter-spacing:-.05em;
+  overflow-wrap:anywhere;
+  text-wrap:balance;
+  text-shadow:0 4px 24px rgba(0,0,0,.34);
+}
+.series-detail-meta {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin-top:16px;
+  color:#d0d3dc;
+  font-size:10px;
+  line-height:1.35;
+}
+.series-detail-meta > span {
+  display:inline-flex;
+  min-height:25px;
+  align-items:center;
+  padding:5px 9px;
+  border:1px solid rgba(255,255,255,.17);
+  border-radius:999px;
+  background:rgba(9,10,15,.5);
+  backdrop-filter:blur(8px);
+}
+.series-detail-layout {
+  display:grid;
+  grid-template-columns:minmax(190px,260px) minmax(0,1fr);
+  align-items:start;
+  gap:clamp(20px,3vw,36px);
+}
+.series-detail-sidebar,.series-detail-main { min-width:0; }
+.series-detail-sidebar { display:grid; align-content:start; gap:14px; }
+.series-detail-poster {
+  width:100%;
+  max-width:260px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:17px;
+  background:#11131b;
+  box-shadow:0 18px 42px rgba(0,0,0,.25);
+}
+.series-detail-poster-image {
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:2/3;
+  object-fit:cover;
+}
+.series-detail-poster-placeholder {
+  display:grid;
+  min-height:300px;
+  place-content:center;
+  justify-items:center;
+  gap:8px;
+  color:#858b9b;
+  font-size:11px;
+}
+.series-detail-genres { display:flex; flex-wrap:wrap; gap:8px; }
+.series-detail-description {
+  max-width:860px;
+  margin:18px 0 0;
+  color:#b5bac7;
+  font-size:13px;
+  line-height:1.85;
+  white-space:pre-line;
+  overflow-wrap:anywhere;
+}
+.series-detail-panel {
+  min-width:0;
+  padding:clamp(14px,2vw,22px);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:18px;
+  background:linear-gradient(145deg,rgba(25,28,38,.92),rgba(14,16,23,.9));
+  box-shadow:0 16px 38px rgba(0,0,0,.16);
+}
+.series-detail-page .series-control { min-width:0; max-width:100%; }
+.series-detail-page .gold-button,
+.series-detail-page .ghost-button { max-width:100%; white-space:normal; }
+@media (min-width:1500px) {
+  .series-detail-container { width:min(1320px,100%); }
+  .series-detail-layout { grid-template-columns:minmax(220px,285px) minmax(0,1fr); gap:42px; }
+  .series-detail-hero { min-height:clamp(360px,27vw,470px); }
+}
+@media (max-width:767px) {
+  .series-detail-container {
+    padding:16px 12px calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+  .series-detail-hero {
+    min-height:clamp(250px,46svh,360px);
+    margin-bottom:18px;
+    border-radius:16px;
+  }
+  .series-detail-hero-image { object-position:58% center; }
+  .series-detail-hero-overlay {
+    background:
+      linear-gradient(0deg,rgba(5,6,9,.98) 0%,rgba(5,6,9,.74) 50%,rgba(5,6,9,.12) 100%),
+      linear-gradient(90deg,rgba(5,6,9,.25),transparent 90%);
+  }
+  .series-detail-hero-content { padding:22px 17px 19px; }
+  .series-detail-title { font-size:clamp(27px,7.8vw,42px); line-height:1.04; }
+  .series-detail-meta { gap:6px; margin-top:12px; font-size:9px; }
+  .series-detail-meta > span { min-height:23px; padding:4px 8px; }
+  .series-detail-layout { grid-template-columns:minmax(0,1fr); gap:20px; }
+  .series-detail-sidebar {
+    grid-template-columns:minmax(108px,34%) minmax(0,1fr);
+    align-items:start;
+    gap:12px;
+  }
+  .series-detail-poster { max-width:180px; border-radius:13px; }
+  .series-detail-poster-placeholder { min-height:160px; }
+  .series-detail-description { margin-top:14px; font-size:12px; line-height:1.75; }
+  .series-detail-panel { padding:14px; border-radius:15px; }
+  .series-detail-page .episode-guide-section { padding:13px; }
+}
+@media (max-width:420px) {
+  .series-detail-container { padding-inline:10px !important; }
+  .series-detail-hero { min-height:250px; }
+  .series-detail-sidebar { grid-template-columns:minmax(96px,31%) minmax(0,1fr); gap:10px; }
+  .series-detail-meta > span { font-size:8px; }
+}
+@media (orientation:landscape) and (max-height:560px) {
+  .series-detail-hero { min-height:220px; }
+  .series-detail-hero-content { padding:18px 24px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .series-detail-page *,
+  .series-card *,
+  .header-search-trigger { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+}
