@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import app, { movieDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
-import { hindiMoviePlayerUrl, vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
+import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
 
 test('admin and crawler API routes are removed', async () => {
   const paths = [
@@ -75,10 +75,11 @@ test('movie DTO exposes only IMDb catalog identity, not a fixed provider mapping
   }
 });
 
-test('TV DTO is keyed by IMDb and embeds seasons without a fixed provider mapping', () => {
+test('TV DTO is keyed by TMDB TV ID while retaining IMDb only as an external reference', () => {
   const dto = tvSeriesDto({
     _id: '507f1f77bcf86cd799439012',
-    imdbId: 'tt0944947',
+    tmdbId: 1399,
+    externalImdbId: 'tt0944947',
     vidlinkId: 1399,
     title: 'Game of Thrones',
     posterUrl: 'https://images.example/got.jpg',
@@ -92,7 +93,10 @@ test('TV DTO is keyed by IMDb and embeds seasons without a fixed provider mappin
     genres: ['Drama'],
     tmdbId: 1399
   });
-  assert.equal(dto.imdbId, 'tt0944947');
+  assert.equal(dto.tmdbId, 1399);
+  assert.equal(dto.tmdbUrl, 'https://www.themoviedb.org/tv/1399');
+  assert.equal(dto.externalImdbId, 'tt0944947');
+  assert.equal(Object.hasOwn(dto, 'imdbId'), false);
   assert.equal(dto.playerAvailable, undefined);
   assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   assert.equal(dto.seasons[0].seasonNumber, 1);
@@ -132,34 +136,36 @@ test('Anime DTO uses MAL ID and no TMDB field', () => {
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
 });
 
-test('Movie and TV schemas require unique IMDb IDs; no TMDB provider paths remain', () => {
+test('Movie schema remains IMDb-keyed while TV schema requires a unique TMDB ID', () => {
   const movieError = new Movie({ title: 'Movie without IMDb ID' }).validateSync();
-  const tvError = new TvSeries({ title: 'TV without IMDb ID' }).validateSync();
+  const tvError = new TvSeries({ title: 'TV without TMDB ID' }).validateSync();
   const animeError = new AnimeSeries({ title: 'Anime without MAL ID' }).validateSync();
   assert.ok(movieError.errors.imdbId);
-  assert.ok(tvError.errors.imdbId);
+  assert.ok(tvError.errors.tmdbId);
   assert.ok(animeError.errors.malId);
   assert.equal(Movie.schema.path('tmdbId'), undefined);
   assert.equal(Movie.schema.path('vidlinkId'), undefined);
-  assert.equal(TvSeries.schema.path('tmdbId'), undefined);
+  assert.equal(TvSeries.schema.path('imdbId'), undefined);
   assert.equal(TvSeries.schema.path('vidlinkId'), undefined);
-  assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
+  assert.ok(TvSeries.schema.indexes().some(([keys, options]) => keys.tmdbId === 1 && options.unique === true));
   assert.ok(Movie.schema.indexes().some(([keys, options]) => keys.imdbId === 1 && options.unique === true));
 });
 
-test('public movie and TV routes reject non-IMDb identifiers before database access', async () => {
+test('public Movie and TV APIs validate their distinct identifier formats', async () => {
   const movie = await app.request('/api/movies/27205');
-  const tv = await app.request('/api/tv/1399');
+  const tv = await app.request('/api/tv/tt0944947');
+  const tvSeason = await app.request('/api/tv/tt0944947/seasons/1');
   const moviePlayer = await app.request('/api/player/movie/tt1375666');
   const tvPlayer = await app.request('/api/player/tv/tt0944947/1/1');
   assert.equal(movie.status, 400);
   assert.equal(tv.status, 400);
+  assert.equal(tvSeason.status, 400);
   assert.equal(moviePlayer.status, 404);
   assert.equal(tvPlayer.status, 404);
 });
 
 
-test('VidLink movie and TV URLs use direct IMDb IDs and Situla gold theme', () => {
+test('VidLink movie URLs remain IMDb-based while TV URLs use numeric TMDB IDs', () => {
   const movieUrl = new URL(vidlinkMovieUrl('tt0848228'));
   assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
   assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
@@ -188,8 +194,8 @@ test('global search returns an empty list for short queries without touching the
   assert.deepEqual(await response.json(), { items: [] });
 });
 
-test('TVmaze importer maps IMDb IDs, full season episodes, images and content filters', async () => {
-  const { mapTvmazeShow, normalizeShowName, stripHtml, CURATED_TV_SHOWS } = await import('../scripts/seed-tv-series.js');
+test('TVmaze importer retains an IMDb cross-reference for TMDB ID resolution and maps episodes', async () => {
+  const { mapTvmazeShow, normalizeShowName, stripHtml, selectTmdbTvId, CURATED_TV_SHOWS } = await import('../scripts/seed-tv-series.js');
   assert.equal(normalizeShowName('Pokémon & Friends'), 'pokemon and friends');
   assert.equal(stripHtml('<p>Hello &amp; welcome</p>'), 'Hello & welcome');
   assert.ok(CURATED_TV_SHOWS.length > 65);
@@ -217,7 +223,13 @@ test('TVmaze importer maps IMDb IDs, full season episodes, images and content fi
     }
   });
   assert.equal(mapped.ok, true);
-  assert.equal(mapped.item.imdbId, 'tt1234567');
+  assert.equal(mapped.item.externalImdbId, 'tt1234567');
+  assert.equal(Object.hasOwn(mapped.item, 'imdbId'), false);
+  assert.equal(selectTmdbTvId([
+    { id: 1234, name: 'Example Show', first_air_date: '2015-01-01' },
+    { id: 9876, name: 'Other Show', first_air_date: '2015-01-01' }
+  ], 'Example Show', '2015-01-01'), 1234);
+  assert.equal(selectTmdbTvId([{ id: 1234, name: 'Different Show' }, { id: 9876, name: 'Another Show' }], 'Example Show'), null);
   assert.equal(mapped.item.metadataSource, 'TVmaze');
   assert.equal(mapped.item.adult, false);
   assert.equal(mapped.item.runtime, 45);
