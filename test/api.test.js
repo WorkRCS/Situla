@@ -92,7 +92,6 @@ test('TV DTO is keyed by TMDB TV ID while retaining IMDb only as an external ref
     seasons: [{ seasonNumber: 1, name: 'Season 1', episodeCount: 10, episodes: [{ episodeNumber: 1, name: 'Winter Is Coming' }] }],
     genres: ['Drama'],
     tmdbId: 1399
-  });
   assert.equal(dto.tmdbId, 1399);
   assert.equal(dto.tmdbUrl, 'https://www.themoviedb.org/tv/1399');
   assert.equal(dto.externalImdbId, 'tt0944947');
@@ -170,11 +169,14 @@ test('VidLink movie URLs remain IMDb-based while TV URLs use numeric TMDB IDs', 
   assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
   assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(movieUrl.searchParams.get('secondaryColor'), '171a23');
-  assert.equal(vidlinkTvUrl('tt0944947', 1, 1), 'https://vidlink.pro/tv/tt0944947/1/1');
+  assert.equal(vidlinkTvUrl(1399, 1, 1), 'https://vidlink.pro/tv/1399/1/1');
+  assert.equal(vidlinkTvUrl('1399', 0, 1), 'https://vidlink.pro/tv/1399/0/1');
   assert.equal(vidlinkMovieUrl('24428'), null);
-  assert.equal(vidlinkTvUrl('1399', 1, 1), null);
-  assert.equal(vidlinkTvUrl('tt0944947', -1, 1), null);
-  assert.equal(vidlinkTvUrl('tt0944947', 1, 0), null);
+  assert.equal(vidlinkTvUrl('tt0944947', 1, 1), null);
+  assert.equal(vidlinkTvUrl('1399', -1, 1), null);
+  assert.equal(vidlinkTvUrl('1399', 1, 0), null);
+  assert.deepEqual(normalizeTvPlayerRoute('1399', '1', '1'), { tmdbId: 1399, season: 1, episode: 1 });
+  assert.equal(normalizeTvPlayerRoute('tt0944947', '1', '1'), null);
 });
 
 test('Hindi movie player URL receives the same validated IMDb ID and gold theme', () => {
