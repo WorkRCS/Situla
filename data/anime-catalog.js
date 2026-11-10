@@ -2128,24 +2128,27 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Kubo-san wa Mob wo Yurusanai",
     "titleEnglish": "Kubo Won't Let Me Be Invisible",
     "titleJapanese": "久保さんは僕を許さない",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1818/132330l.jpg",
+    "synopsis": "Junta Shiraishi is a high school student with one simple goal—to enjoy his youth. However, achieving this goal is not so straightforward since Shiraishi is effectively invisible to his peers; even his teachers routinely fail to notice his presence. In fact, there is a rumor circulating that whoever manages to spot him will receive good luck. \n\nBut there is one person who notices Shiraishi's presence without fail. Seated right next to him, Nagisa Kubo is determined not to let him quietly fade into the background. Unfortunately for him, this means that Shiraishi finds himself in some peculiar situations, all orchestrated by Kubo. Despite this, Kubo's playful antics might just be the catalyst needed to spark the thrilling youth that Shiraishi longs for.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1818/132330l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/rgDzXjc5Ps0?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-10",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "24 min per ep",
     "score": 7.54,
-    "scoredBy": 104805,
-    "rank": 1992,
-    "popularity": 1093,
+    "scoredBy": 107939,
+    "rank": 2052,
+    "popularity": 1101,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Love Status Quo",
+      "Romance",
+      "School",
+      "Seinen"
     ],
     "themes": [
       "Love Status Quo",
@@ -2154,14 +2157,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1818/132330.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1818/132330l.webp",
+    "malUrl": "https://myanimelist.net/anime/51815"
   },
   {
     "malId": 56352,
     "title": "Loop 7-kaime no Akuyaku Reijou wa, Moto Tekikoku de Jiyuu Kimama na Hanayome Seikatsu wo Mankitsu suru",
     "titleEnglish": "7th Time Loop: The Villainess Enjoys a Carefree Life Married to Her Worst Enemy!",
     "titleJapanese": "ループ7回目の悪役令嬢は、元敵国で自由気ままな花嫁生活を満喫する",
-    "synopsis": "",
+    "synopsis": "Rishe Irmgard Weitzner finds herself in a familiar situation: her fiancé is publicly breaking off their engagement, and her ducal family is about to disown her in shame. However, Rishe is not distraught; she has already had six chances to rebuild her life and chase a different passion each time. But she would always get swept up in a war and die, so now she wishes for her seventh reincarnation to be easygoing and uneventful.\n\nWhat Rishe does not take into account is the presence of Arnold Hein, the crown prince of the Galkhein Kingdom. He is destined to usurp the throne and become a tyrant who starts a large-scale invasion of neighboring countries. To make their encounter worse, Arnold is the one who killed Rishe in her previous life. That is why it is all the more shocking when he proposes to Rishe on the spot. In pursuit of her desired life, Rishe must consider accepting Arnold's proposal and discover the reasons behind his brutal actions to stop the war from ever happening.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1533/140617l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Cw0J_9_bwYc?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-07",
@@ -2169,47 +2175,53 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.54,
-    "scoredBy": 124146,
-    "rank": 1993,
-    "popularity": 1184,
+    "scoredBy": 130038,
+    "rank": 2053,
+    "popularity": 1155,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
-      "Romance"
+      "Romance",
+      "Time Travel"
     ],
     "themes": [
       "Time Travel",
       "Villainess"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1533/140617.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1533/140617l.jpg",
+    "malUrl": "https://myanimelist.net/anime/56352"
   },
   {
     "malId": 52093,
     "title": "Trigun Stampede",
     "titleEnglish": "Trigun Stampede",
     "titleJapanese": "TRIGUN STAMPEDE",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1426/129194l.jpg",
+    "synopsis": "On the planet Noman's Land, reporters Meryl Stryfe and Roberto De Niro traverse the desert in search of the infamous outlaw Vash the Stampede. But the man they find near the desolate town of Jeneora Rock is a far cry from the lethal terrorist they expect. In reality, Vash is a passive and carefree drifter; he is a proponent of peace, beloved by the residents of the town. His inaccurate reputation actually stems from the widespread atrocities committed by his twin brother Millions Knives. Still, Vash is dubbed \"The Humanoid Typhoon'' due to the tendency for violent chaos to follow in his wake.\n\nChaos soon arrives in the form of bounty hunters seeking the high price on Vash's head, and their violent pursuit poses great danger to the town and its precious power plant. Thanks to his gunslinging prowess, Vash is able to resist most of these nefarious forces. Yet he must soon face off against the ultimate evil: the unstoppable destructive power of his malevolent brother.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1426/129194l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/KlJZJWt7fpA?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-07",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.81,
-    "scoredBy": 91757,
-    "rank": 1144,
-    "popularity": 1198,
+    "score": 7.79,
+    "scoredBy": 93952,
+    "rank": 1225,
+    "popularity": 1205,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
+      "Adult Cast",
       "Adventure",
-      "Sci-Fi"
+      "Sci-Fi",
+      "Shounen"
     ],
     "themes": [
       "Adult Cast"
@@ -2217,44 +2229,52 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1426/129194.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1426/129194l.webp",
+    "malUrl": "https://myanimelist.net/anime/52093"
   },
   {
     "malId": 59160,
     "title": "Wind Breaker Season 2",
     "titleEnglish": "Wind Breaker Season 2",
     "titleJapanese": "WIND BREAKER Season 2",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1526/148873l.jpg",
+    "synopsis": "Ever since Haruka Sakura joined Furin High School, where its students call themselves Bofurin and protect the town of Makochi, he has gained new friends despite his initial skepticism. Now starting to learn how to fight alongside his classmates and slowly growing out of his solitary past, Sakura has become the grade captain of the first-years.\n\nSakura's skills are put to the test when he and his classmates are faced with KEEL—a delinquent group known for its ruthless violence and coercion. While KEEL seems to be another rowdy group at first glance, their sudden appearance and strength in numbers might just be hiding a greater evil behind it. With all the odds against the Bofurin members, Sakura must accept that recognizing his shortcomings and receiving help from his upperclassmen will be necessary to preserve the peace in Makochi.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1526/148873l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/qaR2_4tYhq8?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-04-04",
     "releaseYear": 2025,
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.63,
-    "scoredBy": 110782,
-    "rank": 1655,
-    "popularity": 1205,
+    "scoredBy": 118545,
+    "rank": 1710,
+    "popularity": 1165,
     "status": "Finished Airing",
     "season": "spring 2025",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
-      "Action"
+      "Action",
+      "Delinquents",
+      "School"
     ],
     "themes": [
       "Delinquents",
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1526/148873.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1526/148873l.webp",
+    "malUrl": "https://myanimelist.net/anime/59160"
   },
   {
     "malId": 54968,
     "title": "Giji Harem",
     "titleEnglish": "Pseudo Harem",
     "titleJapanese": "疑似ハーレム",
-    "synopsis": "",
+    "synopsis": "Eiji Kitahama has a dream shared by many high school guys: to be popular and have a harem of girls fawning over him. Luckily for him, his new junior in the drama club, Rin Nanakura, has decided to help him realize this wish. Using her impressive acting abilities, she takes on many personalities, from teasing to calm and collected, to play characters in Eiji's simulated harem.\n\nAs her connection with Eiji deepens, Rin expands her repertoire, quickly swapping between characters while enjoying high school life together in the club. Through her acting, the real Rin Nanakura tries her best to win Eiji's heart.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1607/143547l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/g_59WnHpSPY?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-05",
@@ -2262,16 +2282,19 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.82,
-    "scoredBy": 99035,
-    "rank": 1104,
-    "popularity": 1218,
+    "scoredBy": 104831,
+    "rank": 1132,
+    "popularity": 1190,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Love Status Quo",
+      "Romance",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "Love Status Quo",
@@ -2280,14 +2303,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1607/143547.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1607/143547l.jpg",
+    "malUrl": "https://myanimelist.net/anime/54968"
   },
   {
     "malId": 52736,
     "title": "Tensei Oujo to Tensai Reijou no Mahou Kakumei",
     "titleEnglish": "The Magical Revolution of the Reincarnated Princess and the Genius Young Lady",
     "titleJapanese": "転生王女と天才令嬢の魔法革命",
-    "synopsis": "",
+    "synopsis": "Princess Anisphia \"Anis\" Wynn Palletia has always dreamed of flying through the sky, even though the people of her kingdom consider it a silly ambition. Also at odds with her goal is the fact that Anis is incapable of using magic despite her noble status. Refusing to give up so easily, she renounces her right to the throne, and focuses on developing \"magicology\" by combining various resources with knowledge from her previous life on Earth.\n\nDue to Anis' nature, responsibility for the kingdom's future is passed onto her younger brother, Algard. Pushed into a political marriage with Euphyllia Magenta, a girl he hardly knows, Algard rebels by spending more time with a commoner girl than his fiancée. After Euphyllia tries to intervene, Algard publicly calls off their marriage and denounces his ex-fiancée as a bully.\n\nAfter crashing into the banquet where Algard makes the announcement, Anis rescues Euphyllia on the flying broom she is testing. She decides to make Euphyllia her assistant, which the other girl reluctantly agrees to. Although their partnership appears random at first, Anis has an ulterior motive for wanting Euphyllia's company.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1053/129004l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/vQPp6laLo0E?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-04",
@@ -2295,30 +2321,35 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.46,
-    "scoredBy": 110715,
-    "rank": 2341,
-    "popularity": 1226,
+    "scoredBy": 113207,
+    "rank": 2419,
+    "popularity": 1224,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Fantasy",
-      "Girls Love"
+      "Girls Love",
+      "Isekai",
+      "Reincarnation"
     ],
     "themes": [
       "Isekai",
       "Reincarnation"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1053/129004.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1053/129004l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52736"
   },
   {
     "malId": 51648,
     "title": "Nozomanu Fushi no Boukensha",
     "titleEnglish": "The Unwanted Undead Adventurer",
     "titleJapanese": "望まぬ不死の冒険者",
-    "synopsis": "",
+    "synopsis": "While exploring a labyrinth, Rentt Faina, an adventurer with lots of experience but little to show for it, is killed by a dragon upon discovering its lair. Shockingly, he wakes up to find himself turned into a skeleton, the lowest class of undead monsters. As Rentt fights against the other monsters of the labyrinth, he discovers that slaying them gains him experience towards higher stages of undead evolution—even ones with flesh! With this revelation in hand, Rentt obtains a new objective in his undeath: keep evolving in the hope of eventually becoming a vampire, the highest form of undead that is nearly indistinguishable from human beings.\n\nDespite being forced to hide his past identity and monstrous nature under an unremovable mask, Rentt manages to return to a semblance of his former life. Granted shelter by Lorraine Vivier, an elite researcher and retired adventurer, Rentt assumes her surname and starts over from scratch as a rookie. Determined to pursue his childhood dream and become a mithril-class adventurer, Rentt must be cautious not to disclose his new bodily circumstances, lest the adventurers’ guild seek to exterminate the monster he has become.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1008/140287l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/XEaW9p7LXvc?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-08",
@@ -2326,13 +2357,13 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.43,
-    "scoredBy": 121244,
-    "rank": 2471,
-    "popularity": 1239,
+    "scoredBy": 125758,
+    "rank": 2556,
+    "popularity": 1217,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Action",
       "Adventure",
@@ -2340,14 +2371,17 @@ export const MANUAL_ANIME_CATALOG = [
     ],
     "themes": [],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1008/140287.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1008/140287l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51648"
   },
   {
     "malId": 52955,
     "title": "Mahoutsukai no Yome Season 2",
     "titleEnglish": "The Ancient Magus' Bride Season 2",
     "titleJapanese": "魔法使いの嫁 SEASON2",
-    "synopsis": "",
+    "synopsis": "Apprentice mage Chise Hatori is invited to enroll at the College, a prestigious learning institution for sorcerers, to examine and look for a way to remove the curses she bears. Despite the reluctance of her groom, Elias Ainsworth, Chise accepts the proposal, as she believes attending the school might help her minimize her self-sacrificing tendencies.\n\nFrom the get-go, Chise grabs the attention of her classmates and professors alike, who have never seen a mage in action before. However, there is a sinister plot brewing behind the College's back, and the young mage will have to determine who is friend or foe in order to put a stop to it.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1532/135155l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Pb8O8SKcb94?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-06",
@@ -2355,17 +2389,21 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "24 min per ep",
     "score": 7.77,
-    "scoredBy": 76753,
-    "rank": 1241,
-    "popularity": 1284,
+    "scoredBy": 78892,
+    "rank": 1277,
+    "popularity": 1288,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Drama",
       "Fantasy",
-      "Romance"
+      "Mythology",
+      "Romance",
+      "School",
+      "Shounen",
+      "Urban Fantasy"
     ],
     "themes": [
       "Mythology",
@@ -2375,14 +2413,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1532/135155.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1532/135155l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52955"
   },
   {
     "malId": 54724,
     "title": "Nige Jouzu no Wakagimi",
     "titleEnglish": "The Elusive Samurai",
     "titleJapanese": "逃げ上手の若君",
-    "synopsis": "",
+    "synopsis": "Tokiyuki Houjou, a carefree eight-year-old noble, is content with the serene life in Kamakura and shows little regard for the serious responsibilities that come with his eventually succeeding his father as the next shogun. Instead of dedicating himself to rigorous training in swordsmanship or archery, Tokiyuki excels in the art of evasion, skillfully dodging his advisors and discovering perfect hiding spots. However, his peaceful existence is shattered when a sudden coup brutally wipes out his clan.\n\nOverwhelmed with guilt for being the sole survivor, Tokiyuki contemplates joining his family in death. However, his fate takes an abrupt turn when the enigmatic priest Yorishige Suwa suddenly shoves him onto a battlefield. Yorishige, who prophesies that Tokiyuki will one day become a great hero, leaves the boy with no choice but to navigate his way free of enemy soldiers. As Tokiyuki struggles to survive against these foes, he finds a new thrill in raising the stakes of his usual hide-and-seek games.\n\nWith a renewed sense of purpose and the promise of powerful allies from Yorishige, Tokiyuki vows to avenge his family—not through his capability to fight, but through his extraordinary talent for running away.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1386/140401l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/JjOLjAB0bcI?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-06",
@@ -2390,16 +2431,19 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.78,
-    "scoredBy": 85730,
-    "rank": 1213,
-    "popularity": 1352,
+    "scoredBy": 90554,
+    "rank": 1251,
+    "popularity": 1314,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Adventure",
-      "Comedy"
+      "Comedy",
+      "Historical",
+      "Samurai",
+      "Shounen"
     ],
     "themes": [
       "Historical",
@@ -2408,14 +2452,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1386/140401.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1386/140401l.jpg",
+    "malUrl": "https://myanimelist.net/anime/54724"
   },
   {
     "malId": 54722,
     "title": "Mahou Shoujo ni Akogarete",
     "titleEnglish": "Gushing over Magical Girls",
     "titleJapanese": "魔法少女にあこがれて",
-    "synopsis": "",
+    "synopsis": "A team of three magical girls known as Tres Magia protects the town where Utena Hiiragi lives. Like many others, Utena loves these magical girls who valiantly fight in the name of justice. One day, a mysterious black mascot character appears before Utena and grants her the opportunity of a lifetime: a chance to transform into a magical girl.\n\nHowever, the offer is not what it seems, as Utena has been recruited for an evil organization to fight the magical girls she has always admired. Utena is then forced to confront Tres Magia in battle; but instead of feeling remorse, she unexpectedly finds pleasure in inflicting pain on the magical girls. Completely giving in to her desires, Utena embraces her role as a villain, slowly transforming her adoration for magical girls into a new sadistic obsession.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1525/139345l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/LCaj7BiyDI4?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-03",
@@ -2423,47 +2470,53 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "23 min per ep",
     "score": 7.6,
-    "scoredBy": 95986,
-    "rank": 1764,
-    "popularity": 1359,
+    "scoredBy": 99308,
+    "rank": 1809,
+    "popularity": 1342,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Action",
       "Comedy",
+      "Ecchi",
       "Girls Love",
-      "Ecchi"
+      "Mahou Shoujo"
     ],
     "themes": [
       "Mahou Shoujo"
     ],
     "demographics": [],
-    "rating": "R+ - Mild Nudity"
+    "rating": "r+",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1525/139345.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1525/139345l.jpg",
+    "malUrl": "https://myanimelist.net/anime/54722"
   },
   {
     "malId": 52308,
     "title": "Kanojo ga Koushaku-tei ni Itta Riyuu",
     "titleEnglish": "Why Raeliana Ended up at the Duke's Mansion",
     "titleJapanese": "彼女が公爵邸に行った理由",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1109/130452l.jpg",
+    "synopsis": "When, after her sudden death, Rinko Hanasaki is reborn as Raeliana McMillan, she is not sure whether to curse her luck. Raeliana was a minor character in a novel Rinko read, and as the eldest daughter of a nouveau-riche baron, she led a carefree life until her unfortunate demise at the hands of her fiancé, Lord Francis Brooks. To avoid her destined fate, Raeliana is determined to end her engagement with Francis.\n\nHowever, when Francis refuses to break things off, Raeliana decides to seek help from someone of higher standing and approaches Duke Noah Wynknight—the novel's male protagonist. Using her knowledge of the plot, Raeliana captures the duke's interest by proposing a deal: she will not expose his secrets if Noah agrees to act as her fiancé. Little does she know that getting involved with a duke who only shows his true colors around her may lead to more than she bargained for.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1109/130452l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/MtpZJTTJEjA?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-10",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.53,
-    "scoredBy": 94131,
-    "rank": 2027,
-    "popularity": 1401,
+    "scoredBy": 97690,
+    "rank": 2091,
+    "popularity": 1380,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Fantasy",
+      "Isekai",
+      "Reincarnation",
       "Romance"
     ],
     "themes": [
@@ -2471,14 +2524,17 @@ export const MANUAL_ANIME_CATALOG = [
       "Reincarnation"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1109/130452.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1109/130452l.webp",
+    "malUrl": "https://myanimelist.net/anime/52308"
   },
   {
     "malId": 52816,
     "title": "Majo to Yajuu",
     "titleEnglish": "The Witch and the Beast",
     "titleJapanese": "魔女と野獣",
-    "synopsis": "",
+    "synopsis": "Cursed by a witch, the feral and tempestuous Guideau tenaciously searches for the culprit so she can exact revenge. To this end, she joins the Order of Magical Resonance, an organization that deals with everything connected to magic. The Order agrees to work with Guideau in return for her help solving the myriad of magic-related cases occurring across the world.\n\nThe Order's suave and mysterious mage Ashaf accompanies Guideau for the sake of successfully completing missions. As the pair traverses the land in search of that unknown witch, their experience with the fantastical world of magic grows ever more peculiar the further they advance in their journey.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1380/139745l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/fixrPjPnOw4?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-12",
@@ -2486,16 +2542,19 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "24 min per ep",
     "score": 7.46,
-    "scoredBy": 70316,
-    "rank": 2325,
-    "popularity": 1448,
+    "scoredBy": 72783,
+    "rank": 2397,
+    "popularity": 1437,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Fantasy"
+      "Adult Cast",
+      "Fantasy",
+      "Gore",
+      "Seinen"
     ],
     "themes": [
       "Adult Cast",
@@ -2504,7 +2563,10 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1380/139745.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1380/139745l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52816"
   },
   {
     "malId": 51678,
