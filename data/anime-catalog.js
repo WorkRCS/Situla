@@ -1,6 +1,5 @@
-// Static manually curated MAL catalogue. No Anime crawler or API runs at seed time.
-// The 11 original starter entries are retained, with 70 additional TV anime records.
-// Only factual catalogue fields are kept; long synopsis text is intentionally omitted.
+// Static MAL catalogue enriched from exact MAL-ID metadata snapshots.
+// Runtime seeding reads this file only and never calls external metadata APIs.
 export const MANUAL_ANIME_CATALOG = [
   {
     "malId": 1,
