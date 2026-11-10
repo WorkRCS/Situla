@@ -1275,53 +1275,59 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken",
     "titleEnglish": "The Angel Next Door Spoils Me Rotten",
     "titleJapanese": "お隣の天使様にいつの間にか駄目人間にされていた件",
-    "synopsis": "",
+    "synopsis": "Mahiru Shiina is worthy of her nickname \"Angel\": she is a divine beauty loved by all, and she excels in both academics and athletics. Shiina lives in an entirely different world from Amane Fujimiya, her next-door neighbor. Despite living so close together, they have never spoken once. But their silence is broken when Fujimiya spots Shiina gloomily sitting on a swing amidst a heavy rainstorm and lends her his umbrella. \n\nWhen Fujimiya catches a cold the next day, Shiina wishes to return the favor for the umbrella by nursing him back to health. Believing that this would be their first and last interaction, he silently appreciates her kindness. However, Shiina—who cannot help but worry about Fujimiya's lack of tidiness and proper nutrition—begins to cook and clean for him. As the unlikely pair spend time together in Fujimiya's apartment, they explore the true nature of their relationship and the gentle emotions that emerge from it.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1240/133638l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/IUq59ARXtdg?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-07",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.85,
-    "scoredBy": 250173,
-    "rank": 1036,
-    "popularity": 581,
+    "score": 7.84,
+    "scoredBy": 262966,
+    "rank": 1088,
+    "popularity": 563,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
-      "Romance"
+      "Romance",
+      "School"
     ],
     "themes": [
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1240/133638.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1240/133638l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50739"
   },
   {
     "malId": 52578,
     "title": "Boku no Kokoro no Yabai Yatsu",
     "titleEnglish": "The Dangers in My Heart",
     "titleJapanese": "僕の心のヤバイやつ",
-    "synopsis": "",
+    "synopsis": "Kyoutarou Ichikawa may look like a shy and reserved middle school student, but deep within his heart is a bloodthirsty killer. His ultimate desire is to see his classmate Anna Yamada's beautiful face writhing in pain before he ends her life. But this fantasy may never come to fruition, as Ichikawa starts to see an entirely different side to Yamada.\n\nOften seeking refuge in the library, Ichikawa frequently runs into Yamada. It is during these encounters that Ichikawa realizes his model classmate is actually an airhead who can never read the room. As they spend more time together, the boy cannot help but feel not only a sense of endearment toward the very girl he wishes to murder but also a desire to protect her at all costs. Is it possible that this sudden change in Ichikawa's perspective could lead to something more?",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1545/133887l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/1x6BnBAOwaY?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-02",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 8.2,
-    "scoredBy": 234076,
-    "rank": 437,
-    "popularity": 594,
+    "score": 8.19,
+    "scoredBy": 243411,
+    "rank": 466,
+    "popularity": 580,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Romance",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "School"
@@ -1329,31 +1335,37 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1545/133887.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1545/133887l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52578"
   },
   {
     "malId": 50608,
     "title": "Tokyo Revengers: Seiya Kessen-hen",
     "titleEnglish": "Tokyo Revengers: Christmas Showdown",
     "titleJapanese": "東京リベンジャーズ 聖夜決戦編",
-    "synopsis": "",
+    "synopsis": "In spite of his best time-leaping efforts, Takemichi Hanagaki continuously fails to prevent the present-day death of Hinata Tachibana, his adolescent love. The adult Takemichi grapples with grief and the ramifications of the Tokyo Manji gang's criminal empire—an unintended product of his timeline meddling. Though the gang once operated under the idealistic Manjirou \"Mikey\" Sano, it has now been taken over by the malicious Tetta Kisaki and, as a result, has abandoned its original optimistic intent.\n\nDespite feeling hopeless, Takemichi travels to the past once again to investigate Black Dragon, a rival motorcycle gang whose actions ultimately lead to Hinata's demise. There, he meets the young Hakkai Shiba, a fellow gang member whose older brother, Taiju, tyrannically rules Black Dragon. When Taiju brutally beats Takemichi in a one-sided street brawl, Hakkai attempts to withdraw from Tokyo Manji in apology—an act that Takemichi must prevent to spare Hakkai a grim future.\n\nThrough a shared tragedy, Takemichi bonds with Chifuyu Matsuno, establishing a close comradery both boys desperately need. With Chifuyu on his side, Takemichi works to unravel the fates of Black Dragon's members, fighting to create a happy future for his loved ones.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1773/132313l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/hfj7HaTbMSQ?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-08",
     "releaseYear": 2023,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.62,
-    "scoredBy": 197056,
-    "rank": 1695,
-    "popularity": 622,
+    "score": 7.61,
+    "scoredBy": 203049,
+    "rank": 1783,
+    "popularity": 620,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Drama"
+      "Delinquents",
+      "Drama",
+      "Shounen",
+      "Time Travel"
     ],
     "themes": [
       "Delinquents",
@@ -1362,31 +1374,36 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1773/132313.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1773/132313l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50608"
   },
   {
     "malId": 58059,
     "title": "Tsue to Tsurugi no Wistoria",
     "titleEnglish": "Wistoria: Wand and Sword",
     "titleJapanese": "杖と剣のウィストリア",
-    "synopsis": "",
+    "synopsis": "When humanity was oppressed by mysterious foes known as the Celestial Hosts, five exceptional mages joined forces to defeat them. In fear that these formidable enemies would return, the five most powerful mages, known as the Magia Vander, built a magical dome and a tower to contain them. Since then, the five strongest mages of every generation are tasked with monitoring the dome from the top of the Wizard's Tower.\n\nInspired by this story, childhood friends Will Serfort and Elfaria Albis Serfort promised each other that they would climb to the top of the Wizard's Tower. However, now a sixth-year student at Regarden Magic Academy, Will's future looks bleak. Although Elfaria managed to join the ranks of the Magia Vander five years prior thanks to her unparalleled magical power, Will has no magical abilities whatsoever, attracting the ire of teachers and students alike.\n\nHowever, blessed with an exceptional physique, Will is able to slay monsters in the labyrinth and prevail against skilled magicians with the only aid of his sword and a few magical items. Determined to climb the Wizard's Tower at all cost, Will is determined to not let anyone or anything prevent him from keeping the promise he made to Elfaria.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1281/144104l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/xR6hV_dVHIc?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-07",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.86,
-    "scoredBy": 213364,
-    "rank": 1021,
-    "popularity": 680,
+    "score": 7.85,
+    "scoredBy": 234215,
+    "rank": 1067,
+    "popularity": 640,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Fantasy"
+      "Fantasy",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "School"
@@ -1394,42 +1411,48 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1281/144104.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1281/144104l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58059"
   },
   {
     "malId": 51958,
     "title": "Kono Subarashii Sekai ni Bakuen wo!",
     "titleEnglish": "KonoSuba: An Explosion on This Wonderful World!",
     "titleJapanese": "この素晴らしい世界に爆焔を！",
-    "synopsis": "",
+    "synopsis": "Megumin is a young and passionate wizard from the Crimson Demon Village, a remote community of mages with red eyes and a flair for the dramatic. She has devoted her life to mastering explosion magic, a powerful but impractical spell that leaves her drained of mana and unable to move for the rest of the day. Regardless, she refuses to learn any other skills.\n\nAlong with her childhood friend and self-proclaimed rival, Yunyun, Megumin enrolls in the Red Prison: a prestigious academy for Crimson Demon magic users. There, she learns more about the secrets and history of her clan, as well as the threats and challenges they must face. As she polishes her power at the Red Prison with the help of her loyal familiar Chomusuke and her adorable little sister Komekko, Megumin aims to become the greatest explosion wizard of all time!",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1626/135844l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/IN5XdlB0x0U?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-06",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.52,
-    "scoredBy": 171154,
-    "rank": 2076,
-    "popularity": 693,
+    "score": 7.53,
+    "scoredBy": 176064,
+    "rank": 2093,
+    "popularity": 689,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Comedy",
       "Fantasy"
     ],
     "themes": [],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1626/135844.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1626/135844l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51958"
   },
   {
     "malId": 50330,
     "title": "Bungou Stray Dogs 4th Season",
     "titleEnglish": "Bungo Stray Dogs 4",
     "titleJapanese": "文豪ストレイドッグス",
-    "synopsis": "",
+    "synopsis": "No longer concerned with military affairs, Yukichi Fukuzawa intends to act as a lone bodyguard-for-hire, making use of his deadly swordsmanship. However, things are not going as planned for his freelance business, and that is when he crosses paths with a mouthy boy named Ranpo Edogawa. While their initial interactions are intertwined with a bizarre murder mystery, the aftermath prompts the formation of the Armed Detective Agency.\n\nPresently, Ranpo finds himself chasing down a gifted individual with the dangerous ability to execute the perfect crime. But as the great detective unravels the case, he soon discovers an elaborate plot to obliterate the Agency in its entirety.\n\nAlthough forewarned of the trap, the Agency continue their pursuit of the criminals, only to end up framed for the crime themselves. Now branded as wanted terrorists, the remaining members must find a way to prove their innocence—even if they must turn to sworn enemies for assistance.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1263/132759l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/z9ZhVooqA-Y?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-04",
@@ -1437,16 +1460,21 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "23 min per ep",
     "score": 8.41,
-    "scoredBy": 151089,
-    "rank": 217,
-    "popularity": 762,
+    "scoredBy": 155625,
+    "rank": 222,
+    "popularity": 757,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Mystery"
+      "Adult Cast",
+      "Detective",
+      "Mystery",
+      "Organized Crime",
+      "Seinen",
+      "Super Power"
     ],
     "themes": [
       "Adult Cast",
@@ -1457,61 +1485,71 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1263/132759.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1263/132759l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50330"
   },
   {
     "malId": 53411,
     "title": "Buddy Daddies",
     "titleEnglish": "",
     "titleJapanese": "Buddy Daddies",
-    "synopsis": "",
+    "synopsis": "On Christmas Eve, four-year-old Miri Unasaka arrives in Tokyo completely alone, in search of her father. The bright lights and merry atmosphere guide Miri to a big hotel and a man with a delicious-looking cake. However, the child has just unknowingly walked into the center of an elaborate, foolproof plan for assassinating a dangerous mafia boss.\n\nProfessional assassins Kazuki Kurusu and Rei Suwa live together, fleeing memories of their grim childhoods and avoiding emotional connections. When their mission goes awry and they end up bringing Miri home, there is only one reasonable thing to do: return Miri to her mother. But the girl's innocent laugh and pure worldview quickly enamor her to Kazuki, who secretly enjoys playing a parent, and it is not long before Rei's impenetrable heart makes room for Miri.\n\nMiri's every move is unpredictable, and Kazuki and Rei find raising an energetic child harder than any of their missions. Although it presents a great risk to their careers, Kazuki and Rei—both assuming the affectionate nickname \"papa\"—decide to provide Miri with a normal childhood despite all the odds stacked against them.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1553/133767l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/jt_k3CE3-PM?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-07",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "24 min per ep",
-    "score": 8.1,
-    "scoredBy": 164012,
-    "rank": 588,
-    "popularity": 765,
+    "score": 8.09,
+    "scoredBy": 168751,
+    "rank": 618,
+    "popularity": 761,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Original",
+    "source": "original",
     "genres": [
       "Action",
-      "Comedy"
+      "Childcare",
+      "Comedy",
+      "Organized Crime"
     ],
     "themes": [
       "Childcare",
       "Organized Crime"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1553/133767.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1553/133767l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53411"
   },
   {
     "malId": 55866,
     "title": "Yubisaki to Renren",
     "titleEnglish": "A Sign of Affection",
     "titleJapanese": "ゆびさきと恋々",
-    "synopsis": "",
+    "synopsis": "For hearing-impaired university student Yuki Itose, silence has been a natural part of life since birth. Her world is small and isolated; she commutes to campus, interacts with her best friend Rin Fujishiro, and communicates through writing and text messages—a lifestyle that offers little to no change. One day, during her commute, Yuki meets fellow student Itsuomi Nagi, a multilingual travel enthusiast and friend of Rin. When Itsuomi learns of Yuki's condition, he takes it in stride, moving Yuki's heart. From this one simple gesture, Yuki and Itsuomi's lives start changing day by day as they let each other into their own worlds.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1478/140828l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/XDGIzU0D_Pg?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-06",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 8.19,
-    "scoredBy": 163915,
-    "rank": 467,
-    "popularity": 784,
+    "score": 8.18,
+    "scoredBy": 171637,
+    "rank": 506,
+    "popularity": 765,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Romance"
+      "Adult Cast",
+      "Romance",
+      "Shoujo"
     ],
     "themes": [
       "Adult Cast"
@@ -1519,30 +1557,35 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shoujo"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1478/140828.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1478/140828l.jpg",
+    "malUrl": "https://myanimelist.net/anime/55866"
   },
   {
     "malId": 50416,
     "title": "Skip to Loafer",
     "titleEnglish": "Skip and Loafer",
     "titleJapanese": "スキップとローファー",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1518/138730l.jpg",
+    "synopsis": "In order to pursue her dream of bringing positive changes to Japan, Mitsumi Iwakura leaves her countryside town to attend a prestigious high school in the hustle and bustle of Tokyo. As she has already mapped a clear life plan, she has absolute confidence that there will be zero mishaps from then onwards.\n\nDespite her ambitious promise, the country girl ends up running late on the first day when she gets lost on her way to school. Fortunately, she meets a fellow first-year student, Sousuke Shima, who is in the same situation and offers to go with her. They eventually make it to school, but the misfortunes do not end there, as Mitsumi leaves an unfavorable first impression in front of her classmates.\n\nNevertheless, the class soon takes notice of her friendship with Sousuke despite their opposing personalities. Only time will tell whether Mitsumi will be able to forge fruitful relationships with her classmates, and she will certainly not be alone.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1518/138730l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/szo6BsaiJ3Y?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-04",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 8.1,
-    "scoredBy": 161973,
-    "rank": 595,
-    "popularity": 806,
+    "scoredBy": 166745,
+    "rank": 614,
+    "popularity": 787,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Drama"
+      "Drama",
+      "School",
+      "Seinen"
     ],
     "themes": [
       "School"
@@ -1550,77 +1593,88 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1518/138730.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1518/138730l.webp",
+    "malUrl": "https://myanimelist.net/anime/50416"
   },
   {
     "malId": 53446,
     "title": "Tondemo Skill de Isekai Hourou Meshi",
     "titleEnglish": "Campfire Cooking in Another World with My Absurd Skill",
     "titleJapanese": "とんでもスキルで異世界放浪メシ",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1661/131889l.jpg",
+    "synopsis": "Salaryman Tsuyoshi Mukouda is accidentally summoned as a hero to the Kingdom of Reijseger in another world to help defend against their enemies. Wary of the royal family's true intentions, Mukouda is able to talk his way out of the situation due to his non-combat skill, \"Online Supermarket,\" which is deemed useless.\n\nHowever, this power proves to be anything but useless. With this ability, Mukouda is able to cheaply purchase food products and utensils from Japan—most of which are considered luxuries in this world. As Mukouda cooks up a storm using his ability, he catches the eye of the fearsome mythical wolf Fel. The legendary beast swiftly negotiates a contract to become Mukouda's familiar, unable to resist the delicious dishes. With Fel by his side, Mukouda travels the world, earning his keep as an adventurer and merchant all the while enjoying delectable meals.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1661/131889l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/uLezuU0GL6Q?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-11",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.63,
-    "scoredBy": 186450,
-    "rank": 1653,
-    "popularity": 814,
+    "scoredBy": 193239,
+    "rank": 1709,
+    "popularity": 793,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Adventure",
       "Comedy",
       "Fantasy",
-      "Gourmet"
+      "Gourmet",
+      "Isekai"
     ],
     "themes": [
       "Isekai"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1661/131889.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1661/131889l.webp",
+    "malUrl": "https://myanimelist.net/anime/53446"
   },
   {
     "malId": 57524,
     "title": "Make Heroine ga Oosugiru!",
     "titleEnglish": "Makeine: Too Many Losing Heroines!",
     "titleJapanese": "負けヒロインが多すぎる！",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1332/143513l.jpg",
+    "synopsis": "Despite not understanding much about fleeting teen romance, first-year high school student Kazuhiko Nukumizu still wonders how he would react if his life were to be turned into a love story. Regardless, as a self-proclaimed \"background character,\" Nukumizu is satisfied continuing his life as an introvert with a negligible social life. However, he suddenly finds himself too close to the spotlight when he witnesses his popular classmate Anna Yanami be rejected by her childhood friend in the middle of a family restaurant. \n\nWhile Nukumizu wishes he could just forget what he saw and move on, Anna ends up forcefully confiding herself in Nukumizu, lamenting her status as a childhood friend fated to have her beloved stolen. As he becomes dragged into Anna's situation, Nukumizu soon gets caught up in the relationship drama of two more girls: Lemon Yakishio, an outgoing member of the track and field club; and Chika Komari, a shy member of the literature club. Now thrust out of his comfort zone, Nukumizu finds himself a major character in the lives of too many losing heroines.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1332/143513l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/uytJ6_KTCZI?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-14",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "24 min per ep",
-    "score": 8.07,
-    "scoredBy": 179537,
-    "rank": 640,
-    "popularity": 828,
+    "score": 8.06,
+    "scoredBy": 188013,
+    "rank": 670,
+    "popularity": 798,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Award Winning",
       "Comedy",
-      "Romance"
+      "Romance",
+      "School"
     ],
     "themes": [
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1332/143513.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1332/143513l.webp",
+    "malUrl": "https://myanimelist.net/anime/57524"
   },
   {
     "malId": 51105,
     "title": "NieR:Automata Ver1.1a",
     "titleEnglish": "NieR:Automata Ver1.1a",
     "titleJapanese": "NieR:Automata Ver1.1a",
-    "synopsis": "",
+    "synopsis": "In a post-apocalyptic world overrun by alien-crafted \"Machine Lifeforms,\" humanity is preparing for its last stand. Forced to retreat to the Moon for safety, humans are pinning their hopes on a group of man-made androids known as YoRHa soldiers. Led by the all-purpose battle android YoRHa 2-gou B-gata \"2B,\" the group will fight to take control of the Earth back from its invaders.\n\nAs war against the machines rages on, the YoRHa slowly begin to see the first shards of truth underlying the brutal conflict. Facing the harsh reality before her, the unwavering warrior 2B starts to question her very existence and just how much she must sacrifice for the sake of humanity.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1669/150616l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Se-H5iXKdDw?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-08",
@@ -1628,13 +1682,13 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.56,
-    "scoredBy": 97409,
-    "rank": 1913,
-    "popularity": 829,
+    "scoredBy": 99744,
+    "rank": 1968,
+    "popularity": 834,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Game",
+    "source": "game",
     "genres": [
       "Action",
       "Fantasy",
@@ -1642,7 +1696,10 @@ export const MANUAL_ANIME_CATALOG = [
     ],
     "themes": [],
     "demographics": [],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1669/150616.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1669/150616l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51105"
   },
   {
     "malId": 49889,
