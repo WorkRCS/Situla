@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,12 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+private fun releaseWebView(view: WebView) {
+    (view.parent as? ViewGroup)?.removeView(view)
+    runCatching { view.stopLoading() }
+    runCatching { view.destroy() }
 }
 
 /**
@@ -133,6 +140,7 @@ fun SitulaApp(context: Context) {
         onDispose { ProcessLifecycleOwner.get().lifecycle.removeObserver(observer) }
     }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    var webViewGeneration by remember { mutableStateOf(0) }
     var fullScreenView by remember { mutableStateOf<View?>(null) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
@@ -161,6 +169,7 @@ fun SitulaApp(context: Context) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+      key(webViewGeneration) {
       AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { viewContext ->
@@ -233,6 +242,23 @@ fun SitulaApp(context: Context) {
                         val script = url?.let(NetworkAdBlocker::cosmeticScriptFor) ?: return
                         view?.evaluateJavascript(script, null)
                     }
+
+                    override fun onRenderProcessGone(
+                        view: WebView,
+                        detail: android.webkit.RenderProcessGoneDetail
+                    ): Boolean {
+                        android.util.Log.e(
+                            "SitulaWebView",
+                            "Renderer exited (crashed=${detail.didCrash()}, priority=${detail.rendererPriorityAtExit()}); rebuilding WebView."
+                        )
+                        if (webView === view) webView = null
+                        exitFullScreen()
+                        releaseWebView(view)
+                        webViewGeneration += 1
+                        // Returning true is required to keep a renderer crash from
+                        // terminating the host app. Compose creates a fresh WebView.
+                        return true
+                    }
                 }
 
                 webChromeClient = object : WebChromeClient() {
@@ -301,10 +327,10 @@ fun SitulaApp(context: Context) {
         onRelease = { view ->
             if (webView === view) webView = null
             exitFullScreen()
-            view.stopLoading()
-            view.destroy()
+            releaseWebView(view)
         }
       )
+      }
 
       Button(
           onClick = { showVpnSettings = true },
