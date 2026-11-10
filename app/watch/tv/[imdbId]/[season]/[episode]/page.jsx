@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import SeriesMediaPlayer from "../../../../../components/media-player";
-import { normalizeTvPlayerRoute } from "../../../../../src/player-urls.js";
+import { normalizeTvPlayerRoute } from "../../../../../../src/player-urls.js";
 
 export const dynamic = "force-dynamic";
 
