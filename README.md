@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. The existing 70 IMDb-keyed Movie records remain curated locally; a separate five-part Cinemeta discovery seed adds 500 new, fully validated Movie records using IMDb IDs as the only Movie catalog keys. Anime additions are committed in part files. TV candidates are committed locally; the explicit TV seed verifies descriptions, seasons, episodes and artwork against TVmaze before writing to MongoDB.
+Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. The canonical AI-assisted discovery, source, metadata validation, artwork, and insert-only seed procedure is documented in [CATALOG_CRAWLING_POLICY.md](CATALOG_CRAWLING_POLICY.md); future catalog additions must follow that policy. The existing 70 IMDb-keyed Movie records remain curated locally; a separate five-part Cinemeta discovery seed adds 500 new, fully validated Movie records using IMDb IDs as the only Movie catalog keys. Anime additions are committed in part files. TV candidates are committed locally; the explicit TV seed verifies descriptions, seasons, episodes and artwork against TVmaze before writing to MongoDB.
 
 ## Identifiers and playback
 
@@ -69,11 +69,14 @@ The Movie seed requires only `MONGODB_URI` and `MONGODB_DB_NAME` in `.env`. Meta
 
 ### Movie and TV seeds
 
-The Movie command first inserts any missing entries from the original 70-record static Movie pack using insert-only semantics, then adds the 500 complete Cinemeta-verified IMDb-keyed additions. The TV seed separately prepares 200 new TV additions and inserts them in insert-only mode. Like the Anime additions seed, the new TV seed never updates existing TV documents; the previous 70 static TV records are left untouched. Neither seed alters Anime:
+The Movie command first inserts any missing entries from the original 70-record static Movie pack using insert-only semantics, then adds the 500 complete Cinemeta-verified IMDb-keyed additions. The TV seed separately prepares 200 new TV additions and inserts them in insert-only mode. The Anime seed inserts its 200 curated MAL-ID additions. All three seeds are insert-only and leave existing catalog records untouched. To seed all three, run `npm run seed:catalog`:
 
 ```sh
 npm run seed:movies
 npm run seed:tv
+npm run seed:anime
+# or run all three catalog seeds in order:
+npm run seed:catalog
 ```
 
 All seed/audit commands require MongoDB credentials and database network access. `npm run seed:movies` additionally needs outbound HTTPS access to `v3-cinemeta.strem.io` and the Cinemeta artwork hosts. It does not connect to TMDb. `npm run seed:tv` needs outbound HTTPS access to TVmaze and its image hosts. Before writing anything, the TV seed requires an exact normalized title and premiere-year match, a synopsis of at least 80 characters, at least five titled episodes, consistent unique season/episode numbers, a reachable poster and at least 80% reachable episode stills. The entire 200-record TV target is preflighted before its insert begins; if there are not enough valid records, the TV additions seed stops without writing. A separate landscape backdrop is stored only when one is supplied and independently reachable; the poster is never reused as a fake backdrop. Missing or broken episode stills are stored as null, but a series is accepted only when at least 80% of its episode stills are reachable. TVmaze metadata is credited by a source link on the detail page and follows TVmaze's CC BY-SA terms. `npm run dev` never runs a seed or cleanup automatically.
