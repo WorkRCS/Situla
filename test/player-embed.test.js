@@ -5,7 +5,7 @@ import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTv
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("TV episode routes normalize valid IMDb IDs and reject unsafe season or episode params", () => {
+test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or episode params", () => {
   assert.deepEqual(normalizeTvPlayerRoute("1399", "2", "8"), {
     tmdbId: 1399,
     season: 2,
@@ -90,8 +90,10 @@ test("Situla homepage hero rotates through live discovery movies every three sec
 test("catalog pages do not render aggregate movie, series, saved-list or history counts", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const anime = await read("../app/anime/[malId]/detail.jsx");
-  const tv = await read("../app/tv/[imdbId]/detail.jsx");
+  const tv = await read("../app/tv/[tmdbId]/detail.jsx");
 
+  assert.match(tv, /TV SERIES · TMDB/);
+  assert.doesNotMatch(tv, /TV SERIES · IMDb/);
   assert.doesNotMatch(app, /\{movies\.length\}\s*\/\s*\{/);
   assert.doesNotMatch(app, /\{tvShows\.length\}\s*\/\s*\{/);
   assert.doesNotMatch(app, /\{animeShows\.length\}\s*\/\s*\{/);
