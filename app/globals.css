@@ -1722,3 +1722,145 @@ body { color:#f7f7fa; background:#08090e; }
   .bottom-nav { display:none !important; }
   .app-shell { padding-bottom:0; }
 }
+
+
+/* Catalog performance: defer paint for off-screen shelves and cards on smaller devices. */
+.netflix-shelf {
+  content-visibility:auto;
+  contain-intrinsic-size:auto 360px;
+}
+.catalog-grid > .movie-card {
+  content-visibility:auto;
+  contain-intrinsic-size:auto 330px;
+}
+.movie-poster img,.suggestion-item img {
+  decoding:async;
+}
+
+/* Mixed movie / TV / anime search dialog. Avoid heavy blur/backdrop filters for low-end devices. */
+.search-overlay {
+  position:fixed;
+  z-index:200;
+  inset:0;
+  display:grid;
+  place-items:start center;
+  overflow-y:auto;
+  padding:clamp(14px,5vh,48px) 16px max(14px,env(safe-area-inset-bottom));
+  background:rgba(3,4,7,.82);
+}
+.search-dialog {
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  width:min(720px,100%);
+  max-height:min(84dvh,760px);
+  margin-top:clamp(10px,3vh,28px);
+  padding:18px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:18px;
+  background:#11141c;
+  box-shadow:0 24px 70px rgba(0,0,0,.55);
+}
+.search-dialog-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.search-dialog-heading span {
+  color:#d4aa62;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+.search-dialog-heading h2 {
+  margin:4px 0 0;
+  color:#f6f7fb;
+  font-size:18px;
+  font-weight:850;
+}
+.search-dialog-close {
+  display:grid;
+  flex:none;
+  width:38px;
+  height:38px;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;
+  color:#f4f5f8;
+  background:#1b202b;
+}
+.search-dialog-input {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:48px;
+  padding:0 13px;
+  border:1px solid rgba(232,182,91,.36);
+  border-radius:12px;
+  color:#d9aa5f;
+  background:#090b11;
+}
+.search-dialog-input input {
+  width:100%;
+  min-width:0;
+  border:0;
+  outline:0;
+  color:#f7f7fa;
+  background:transparent;
+  font:inherit;
+  font-size:14px;
+}
+.search-dialog-input input::placeholder { color:#778092; }
+.search-dialog-input button {
+  display:grid;
+  flex:none;
+  width:30px;
+  height:30px;
+  place-items:center;
+  color:#9aa2b2;
+}
+.search-results-caption {
+  color:#8e96a6;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+.search-results-list {
+  display:grid;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding-right:3px;
+}
+.search-dialog-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.08);
+  color:#9297a7;
+  font-size:11px;
+}
+.search-dialog-footer .ghost-button {
+  min-height:36px;
+  padding:7px 12px;
+  font-size:11px;
+}
+@media(max-width:620px) {
+  .search-overlay { padding:10px 9px max(12px,env(safe-area-inset-bottom)); }
+  .search-dialog {
+    width:100%;
+    max-height:88dvh;
+    margin-top:3vh;
+    padding:14px;
+    border-radius:15px;
+  }
+  .search-dialog-heading h2 { font-size:16px; }
+  .search-dialog-input input { font-size:13px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .search-overlay,.search-dialog,.search-dialog * { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
+}
