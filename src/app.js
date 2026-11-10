@@ -127,7 +127,10 @@ export function animeSeriesDto(anime) {
     synopsis: anime.synopsis || '',
     posterUrl: anime.posterUrl || null,
     posterFallbackUrl: anime.posterFallbackUrl || null,
-    backdropUrl: anime.backdropUrl || anime.posterUrl || null,
+    backdropUrl: anime.backdropUrl || anime.bannerUrl || anime.posterUrl || null,
+    bannerUrl: anime.bannerUrl || anime.backdropUrl || null,
+    sourceUrl: anime.sourceUrl || '',
+    metadataSource: anime.metadataSource || '',
     trailerUrl: anime.trailerUrl || null,
     airedFrom: anime.airedFrom || null,
     releaseYear: anime.releaseYear || null,
@@ -144,6 +147,32 @@ export function animeSeriesDto(anime) {
     genres: Array.isArray(anime.genres) ? anime.genres : [],
     themes: Array.isArray(anime.themes) ? anime.themes : [],
     demographics: Array.isArray(anime.demographics) ? anime.demographics : [],
+    studios: Array.isArray(anime.studios) ? anime.studios : [],
+    producers: Array.isArray(anime.producers) ? anime.producers : [],
+    episodeGuide: Array.isArray(anime.episodeGuide) ? anime.episodeGuide.map((episode) => ({
+      episodeNumber: Number(episode.episodeNumber),
+      absoluteEpisodeNumber: episode.absoluteEpisodeNumber ?? null,
+      seasonNumber: Number(episode.seasonNumber) || 1,
+      title: episode.title || '',
+      titleJapanese: episode.titleJapanese || '',
+      overview: episode.overview || '',
+      airDate: episode.airDate || null,
+      runtime: episode.runtime || null,
+      imageUrl: episode.imageUrl || null,
+      tvdbEpisodeId: episode.tvdbEpisodeId || null
+    })) : [],
+    relatedAnime: Array.isArray(anime.relatedAnime) ? anime.relatedAnime.map((item) => ({
+      malId: Number(item.malId),
+      title: item.title || '',
+      relationType: item.relationType || 'RELATED',
+      episodes: item.episodes ?? null,
+      seasonYear: item.seasonYear ?? null,
+      posterUrl: item.posterUrl || null
+    })) : [],
+    nextAiringEpisode: anime.nextAiringEpisode ? {
+      episode: Number(anime.nextAiringEpisode.episode) || null,
+      airDate: anime.nextAiringEpisode.airDate || null
+    } : null,
     rating: anime.rating || ''
   };
 }
