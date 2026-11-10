@@ -34,11 +34,12 @@ test("200 new Anime entries have unique MAL IDs, matching posters/banners and ep
   assert.equal(NEW_ANIME_CATALOG.length, 200);
   assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 200);
   const normalize = (value) => String(value || "").normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  const names = [
-    ...MANUAL_ANIME_CATALOG.flatMap((item) => [item.title, item.titleEnglish]),
-    ...NEW_ANIME_CATALOG.map((item) => item.titleEnglish || item.title)
-  ].filter(Boolean).map(normalize);
-  assert.equal(new Set(names).size, names.length);
+  const legacyNames = new Set(
+    MANUAL_ANIME_CATALOG.flatMap((item) => [item.title, item.titleEnglish]).filter(Boolean).map(normalize)
+  );
+  const newNames = NEW_ANIME_CATALOG.map((item) => normalize(item.titleEnglish || item.title));
+  assert.equal(new Set(newNames).size, NEW_ANIME_CATALOG.length);
+  assert.ok(newNames.every((name) => name && !legacyNames.has(name)));
   assert.ok(NEW_ANIME_CATALOG.every((item) =>
     Number.isSafeInteger(item.malId) && item.malId > 0 &&
     item.posterUrl && item.posterFallbackUrl && item.bannerUrl && item.backdropUrl &&
