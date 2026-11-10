@@ -457,6 +457,7 @@ export async function seedMovieAdditions() {
           failures.push("TMDB " + candidate.id + " (missing IMDb cross-reference or required metadata/artwork)");
           continue;
         }
+        if (newRecords.length >= targetRemaining) continue;
         const key = titleYearKey(record.title, record.releaseYear);
         if (occupiedIds.has(record.imdbId) || newIds.has(record.imdbId) ||
             occupiedTitleYears.has(key) || newTitleYears.has(key)) continue;
