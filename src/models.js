@@ -103,7 +103,6 @@ const animeSeriesSchema = new mongoose.Schema({
   rating: { type: String, default: '' }
 }, { timestamps: true, versionKey: false, strict: true });
 
-animeSeriesSchema.index({ malId: 1 }, { unique: true });
 animeSeriesSchema.index({ type: 1, rank: 1, score: -1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
