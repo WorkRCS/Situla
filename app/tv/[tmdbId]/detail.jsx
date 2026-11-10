@@ -97,8 +97,8 @@ export default function TvSeriesExperience({ tmdbId }) {
   }
 
   return (
-    <main className="app-shell min-h-screen">
-      <div className="mx-auto max-w-[1080px] px-4 py-6 md:px-8 md:py-10">
+    <main className="app-shell min-h-screen series-detail-page tv-detail-page">
+      <div className="series-detail-container mx-auto max-w-[1180px] px-4 py-6 md:px-8 md:py-10">
         <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back"><i className="bi bi-arrow-left" aria-hidden="true" /></button>
         {loading ? (
           <div className="empty-panel">Loading TV series…</div>
@@ -106,22 +106,27 @@ export default function TvSeriesExperience({ tmdbId }) {
           <div className="empty-panel"><h1 className="font-bold text-white">TV series unavailable</h1><p className="mt-2 text-sm">{error}</p></div>
         ) : series ? (
           <>
-          {series.backdropUrl && (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
-              <img src={series.backdropUrl} alt={series.title + " backdrop"} className="h-36 w-full object-cover md:h-52" />
-            </div>
-          )}
-          <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-            <div className="overflow-hidden rounded-2xl bg-[#11131b]">
-              {series.posterUrl && <img src={series.posterUrl} alt={series.title} className="w-full object-cover" />}
-            </div>
-            <section>
-              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">TV SERIES · TMDB {series.tmdbId}</p>
-              <h1 className="mt-2 text-3xl font-black text-white">{series.title}</h1>
-              <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
+          <section className="series-detail-hero">
+            {(series.backdropUrl || series.posterUrl) && (
+              <img
+                src={series.backdropUrl || series.posterUrl}
+                alt=""
+                aria-hidden="true"
+                className="series-detail-hero-image"
+                onError={(event) => {
+                  if (series.posterUrl && event.currentTarget.src !== series.posterUrl) event.currentTarget.src = series.posterUrl;
+                  else event.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            <div className="series-detail-hero-overlay" />
+            <div className="series-detail-hero-content">
+              <p className="series-detail-eyebrow">TV SERIES · TMDB {series.tmdbId}</p>
+              <h1 className="series-detail-title">{series.title}</h1>
+              <div className="series-detail-meta">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
+                {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)} rating</span>}
                 {series.runtime > 0 && <span>{series.runtime} min / episode</span>}
-                {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)} TVmaze rating</span>}
                 {series.numberOfSeasons > 0 && <span>{series.numberOfSeasons} seasons</span>}
                 {series.numberOfEpisodes > 0 && <span>{series.numberOfEpisodes} episodes</span>}
                 {series.certification && <span>{series.certification}</span>}
@@ -129,11 +134,22 @@ export default function TvSeriesExperience({ tmdbId }) {
                 {series.country && <span>{series.country}</span>}
                 {series.adult === false && <span className="catalog-policy-pill">Curated Situla catalog</span>}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
+            </div>
+          </section>
+          <div className="series-detail-layout">
+            <aside className="series-detail-sidebar">
+              <div className="series-detail-poster">
+                {series.posterUrl
+                  ? <img src={series.posterUrl} alt={series.title} className="series-detail-poster-image" loading="eager" />
+                  : <div className="series-detail-poster-placeholder"><i className="bi bi-image" aria-hidden="true" /><span>Poster unavailable</span></div>}
+              </div>
+            </aside>
+            <section className="series-detail-main">
+              <div className="series-detail-genres">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
               {Array.isArray(series.creators) && series.creators.length > 0 && <p className="mt-3 text-xs text-[#9297a7]">Created by {series.creators.join(", ")}</p>}
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-[#b5bac7]">{series.overview || "No description available."}</p>
+              <p className="series-detail-description">{series.overview || "No description available."}</p>
 
-              <div className="mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
+              <div className="series-detail-panel mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold text-white">Choose season and episode</h2>
                 {hasEpisodeGuide ? (
                   <>
