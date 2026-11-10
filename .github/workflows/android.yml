@@ -32,6 +32,27 @@ jobs:
       - name: Assemble debug APK using the checked-in Gradle Wrapper
         working-directory: android
         run: ./gradlew --no-daemon :app:assembleDebug --stacktrace --info
+      - name: Smoke test app launch in Android Emulator
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am force-stop com.workrcs.situla
+            adb shell am start -W -n com.workrcs.situla/.MainActivity
+            sleep 20
+            if ! adb shell pidof com.workrcs.situla >/dev/null; then
+              echo "Situla process exited during the launch smoke test."
+              adb logcat -d -v threadtime
+              adb shell dumpsys activity exit-info com.workrcs.situla || true
+              exit 1
+            fi
+            echo "Situla stayed alive for 20 seconds after launch."
+            adb logcat -d -v threadtime | grep -E "FATAL EXCEPTION|Fatal signal|AndroidRuntime|SitulaStartup|SitulaWebView" || true
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
