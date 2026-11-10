@@ -1,0 +1,53 @@
+name: seed-tv-series
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/seed-tv-series.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: situla-tv-series-seed
+  cancel-in-progress: false
+
+jobs:
+  seed-tv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
+      TMDB_API_READ_ACCESS_TOKEN: ${{ secrets.TMDB_API_READ_ACCESS_TOKEN }}
+      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate TV-only seed credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$MONGODB_URI" || -z "$MONGODB_DB_NAME" ]]; then
+            echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets before running the TV seed."
+            exit 1
+          fi
+          if [[ -z "$TMDB_API_READ_ACCESS_TOKEN" && -z "$TMDB_API_KEY" ]]; then
+            echo "::error::Add TMDB_API_READ_ACCESS_TOKEN or TMDB_API_KEY as a GitHub Actions secret before running the TV seed."
+            exit 1
+          fi
+          echo "Credentials are present. Only scripts/seed-tv-series.js will run."
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Seed curated TV series only
+        run: npm run seed:tv
