@@ -188,3 +188,11 @@ test("AnimeSeries declares its unique MAL index only once", async () => {
   assert.match(models, /malId: \{ type: Number, required: true, unique: true, min: 1 \}/);
   assert.doesNotMatch(models, /animeSeriesSchema\.index\(\{\s*malId:\s*1\s*\},\s*\{\s*unique:\s*true\s*\}\)/);
 });
+
+
+test("bottom navigation is visible on touch layouts and hidden on desktop", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /@media \(min-width:1101px\)\s*\{\s*\.bottom-nav\s*\{\s*display:none !important;/);
+  assert.match(css, /@media \(max-width:599px\)[\s\S]*?\.bottom-nav/);
+  assert.match(css, /@media \(min-width:600px\) and \(max-width:1100px\)/);
+});
