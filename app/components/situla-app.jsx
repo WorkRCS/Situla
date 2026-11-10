@@ -93,7 +93,10 @@ function SeriesCard({ item, kind, onOpen }) {
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
-  const meta = isTv ? "TV series" : "Anime series";
+  const meta = isTv
+    ? [year, item.runtime ? item.runtime + " min / ep" : "TV series"].filter(Boolean).join(" · ")
+    : [year, "Anime series"].filter(Boolean).join(" · ");
+  const category = (item.genres || []).slice(0, 2).join(" · ");
   return (
     <article className="movie-card">
       <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
@@ -106,7 +109,8 @@ function SeriesCard({ item, kind, onOpen }) {
           )}
         </div>
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
-        <p className="mt-1 text-[11px] text-[#858b9b]">{year ? year + " · " : ""}{meta}</p>
+        <p className="mt-1 text-[11px] text-[#858b9b]">{meta}</p>
+        {category && <p className="series-card-category">{category}</p>}
       </button>
     </article>
   );
@@ -894,7 +898,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         {tab === "search" && (
           <section className="pb-8">
             <div className="section-heading">
-              <div><span>FIND YOUR NEXT MOVIE</span><h1 className="mt-1 text-2xl font-black">Search</h1></div>
+              <div><span>FIND YOUR NEXT WATCH</span><h1 className="mt-1 text-2xl font-black">Search</h1></div>
             </div>
             {loading ? (
               <SkeletonGrid count={12} />
