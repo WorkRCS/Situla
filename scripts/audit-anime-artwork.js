@@ -60,10 +60,17 @@ export async function auditAnimeArtwork({ apply = process.argv.includes("--apply
     const posterUrl = item.posterUrl;
     const bannerUrl = item.bannerUrl || item.backdropUrl;
     const posterPromise = probeImageUrl(posterUrl);
-    const bannerPromise = bannerUrl && bannerUrl === posterUrl
-      ? posterPromise
-      : probeImageUrl(bannerUrl);
-    const [posterOk, bannerOk] = await Promise.all([posterPromise, bannerPromise]);
+    const backdropUrl = item.backdropUrl;
+    const bannerPromise = bannerUrl && bannerUrl !== posterUrl
+      ? probeImageUrl(bannerUrl)
+      : Promise.resolve(false);
+    const backdropPromise = backdropUrl && backdropUrl !== posterUrl && backdropUrl !== bannerUrl
+      ? probeImageUrl(backdropUrl)
+      : Promise.resolve(false);
+    const [posterOk, bannerImageOk, backdropImageOk] = await Promise.all([
+      posterPromise, bannerPromise, backdropPromise
+    ]);
+    const bannerOk = bannerImageOk || backdropImageOk;
     return { item, posterOk, bannerOk };
   });
 
