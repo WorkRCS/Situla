@@ -3,16 +3,20 @@ const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
 
 // Normalize route params before they are used by Server or Client Components.
-export function normalizeTvPlayerRoute(imdbId, season, episode) {
-  const id = String(imdbId || "").trim().toLowerCase();
-  const seasonNumber = Number(season);
-  const episodeNumber = Number(episode);
+export function normalizeTvPlayerRoute(tmdbId, season, episode) {
+  const id = String(tmdbId ?? "").trim();
+  const seasonText = String(season ?? "").trim();
+  const episodeText = String(episode ?? "").trim();
+  if (!TMDB_TV_ID.test(id)) return null;
 
-  if (!IMDB_TITLE_ID.test(id)) return null;
-  if (!Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
-  if (!Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
+  const tmdbNumber = Number(id);
+  const seasonNumber = Number(seasonText);
+  const episodeNumber = Number(episodeText);
+  if (!Number.isSafeInteger(tmdbNumber) || tmdbNumber < 1) return null;
+  if (!/^\\d+$/.test(seasonText) || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
+  if (!/^\\d+$/.test(episodeText) || !Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
 
-  return { imdbId: id, season: seasonNumber, episode: episodeNumber };
+  return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
 
 // Match Situla's warm-gold player controls on both Movie providers.
@@ -42,11 +46,10 @@ export function vidlinkMovieUrl(imdbId) {
   return withMovieTheme(new URL(VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(id))).toString();
 }
 
-export function vidlinkTvUrl(imdbId, season, episode) {
-  const route = normalizeTvPlayerRoute(imdbId, season, episode);
+export function vidlinkTvUrl(tmdbId, season, episode) {
+  const route = normalizeTvPlayerRoute(tmdbId, season, episode);
   if (!route) return null;
-  return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(route.imdbId) + "/" +
-    route.season + "/" + route.episode;
+  return VIDLINK_ORIGIN + "/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode;
 }
 
 export function hindiMoviePlayerUrl(imdbId) {
