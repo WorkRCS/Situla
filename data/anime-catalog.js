@@ -2573,7 +2573,7 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Oniichan wa Oshimai!",
     "titleEnglish": "Onimai: I'm Now Your Sister!",
     "titleJapanese": "お兄ちゃんはおしまい！",
-    "synopsis": "",
+    "synopsis": "Self-professed \"home security guard\" Mahiro Oyama has not left his home in years, secluding himself in his room playing erotic visual novels. This depraved lifestyle causes his prodigious sister, Mihari, to worry about his well-being. In hopes of solving this problem, she devises a plan to rehabilitate him back to normalcy.\n\nThe first part of Mihari's plan is to concoct a medicine that changes her brother's biological constitution into a bona fide female, much to Mahiro's vehement dismay. Stuck in this predicament, Mahiro has no choice but to live out his life as a cute girl until the effect wears off—if it ever does.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1058/131632l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/L0GbDAXQbfs?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-05",
@@ -2581,15 +2581,19 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.64,
-    "scoredBy": 91898,
-    "rank": 1619,
-    "popularity": 1456,
+    "scoredBy": 94725,
+    "rank": 1667,
+    "popularity": 1444,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Comedy"
+      "CGDCT",
+      "Comedy",
+      "Magical Sex Shift",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "CGDCT",
@@ -2599,31 +2603,38 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1058/131632.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1058/131632l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51678"
   },
   {
     "malId": 57616,
     "title": "Kimi no Koto ga Daidaidaidaidaisuki na 100-nin no Kanojo 2nd Season",
     "titleEnglish": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You Season 2",
     "titleJapanese": "君のことが大大大大大好きな100人の彼女 2期",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1093/145470l.jpg",
+    "synopsis": "Ever since Rentarou Aijou found out that he would meet a total of one hundred soulmates in high school, his life has been anything but boring. Now with six girlfriends—each with their own unique quirks—Rentarou has never been happier.\n\nThe group expands once again when Rentarou meets Kurumi Haraga, a girl with a never-ending appetite; and Mei Meido, the maid of the Hanazono family. As he encounters more of his soulmates, Rentarou has to juggle ways to date them all, since failure results in a grim fate. Fortunately, Rentarou has no shortage of love to give to each of his girlfriends!",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1093/145470l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/PoZVtpW5vjQ?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-12",
     "releaseYear": 2025,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.87,
-    "scoredBy": 88372,
-    "rank": 991,
-    "popularity": 1526,
+    "score": 7.86,
+    "scoredBy": 98071,
+    "rank": 1038,
+    "popularity": 1450,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Harem",
+      "Parody",
+      "Romance",
+      "School",
+      "Seinen"
     ],
     "themes": [
       "Harem",
@@ -2633,30 +2644,35 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1093/145470.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1093/145470l.webp",
+    "malUrl": "https://myanimelist.net/anime/57616"
   },
   {
     "malId": 60593,
     "title": "Vigilante: Boku no Hero Academia Illegals",
     "titleEnglish": "My Hero Academia: Vigilantes",
     "titleJapanese": "ヴィジランテ -僕のヒーローアカデミア ILLEGALS-",
-    "synopsis": "",
+    "synopsis": "In a world filled with superpowered Quirk users, college student Kouichi Haimawari's dream is to become a hero just like the ones he so admires. Unfortunately for him, he finds out that there is only so much he can do with a sliding ability that gives him about as much speed as a bicycle. Thus, he is drawn to extra-legal, simpler work and takes on various local tasks beyond the grasp of the police and licensed heroes.\n\nHowever, a chance encounter with two misfits, a brash brawler vigilante who goes by Knuckleduster and the online sensation Pop☆Step, gives Kouichi the opportunity he has always dreamed about. With a dangerous new Quirk-enhancing drug turning ordinary people into instant villains, Kouichi finds himself accompanying the two in a quest to stop the drug from spreading. As the trio tries to get to the bottom of the case, the chaotic team looks to put a stop to wrongdoers that go overlooked by the law.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1538/148604l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/84F2-8QExiY?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-04-07",
     "releaseYear": 2025,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.58,
-    "scoredBy": 78026,
-    "rank": 1847,
-    "popularity": 1549,
+    "score": 7.56,
+    "scoredBy": 82621,
+    "rank": 1978,
+    "popularity": 1518,
     "status": "Finished Airing",
     "season": "spring 2025",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Action"
+      "Action",
+      "Shounen",
+      "Super Power"
     ],
     "themes": [
       "Super Power"
@@ -2664,44 +2680,51 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1538/148604.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1538/148604l.jpg",
+    "malUrl": "https://myanimelist.net/anime/60593"
   },
   {
     "malId": 58502,
     "title": "Zenshuu.",
     "titleEnglish": "Zenshu",
     "titleJapanese": "全修。",
-    "synopsis": "",
+    "synopsis": "Since Natsuko Hirose became a professional animator, she has quickly risen to stardom and even debuted as the director of her own anime series. Everyone expects her next project to be another masterpiece; but Natsuko struggles to meet deadlines, micromanaging every aspect of the work until one day, she collapses from food poisoning.\n\nWhen Natsuko wakes up, she finds herself in an unfamiliar place, immediately pursued by a monster called a Void. However, she is saved just in time by the members of the honored Nine Soldiers: Luke Braveheart, Memmeln, QJ, and Unio. Natsuko is suspicious at first, but soon realizes that she has been summoned to the world of her favorite childhood movie—A Tale of Perishing. As familiar events begin to line up, she seeks to avert the tragic outcome of the upcoming Void invasion.\n\nMuch to her surprise, Natsuko gains the power to turn her drawings into reality when her animation peg bar lights up. She begins eliminating the Voids as they come, changing the story and joining the Nine Soldiers. Using her new ability and vast knowledge of the movie, Natsuko wants to change the events to her desire and find a way back home.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1003/146841l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/tt_ci57IszQ?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-05",
     "releaseYear": 2025,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.57,
-    "scoredBy": 73448,
-    "rank": 1893,
-    "popularity": 1572,
+    "score": 7.56,
+    "scoredBy": 76923,
+    "rank": 1983,
+    "popularity": 1541,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Original",
+    "source": "original",
     "genres": [
       "Action",
-      "Fantasy"
+      "Fantasy",
+      "Isekai"
     ],
     "themes": [
       "Isekai"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1003/146841.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1003/146841l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58502"
   },
   {
     "malId": 49785,
     "title": "Fairy Tail: 100-nen Quest",
     "titleEnglish": "Fairy Tail: 100 Years Quest",
     "titleJapanese": "FAIRY TAIL 100年クエスト",
-    "synopsis": "",
+    "synopsis": "For over one hundred years, a special quest has been waiting for a wizard skilled enough to complete it. On the northern continent of Guiltina, there are five immensely powerful Dragon Gods who possess great destructive force that can only be quelled by sealing them away. Natsu Dragneel and his friends from the Fairy Tail guild—Lucy Heartfilia, Gray Fullbuster, Erza Scarlet, Wendy Marvell, and the exceeds Happy and Charlés—consider this the perfect challenge to take on.\n\nThe Fairy Tail mages are not the only ones searching for the Dragon Gods. Diabolos, a guild exclusive for \"Dragon Eaters,\" seeks to enhance their Dragon Slayer magic by devouring the dragons. Meanwhile, Fairy Tail's newest addition, Touka, appears to be hiding something sinister from her new companions—and her secrets may bring disaster to the guild while its strongest wizards are away.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1087/144083l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/EYrJDrCBVAE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-07",
@@ -2709,30 +2732,34 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 25,
     "duration": "23 min per ep",
     "score": 7.6,
-    "scoredBy": 44488,
-    "rank": 1748,
-    "popularity": 1586,
+    "scoredBy": 46633,
+    "rank": 1797,
+    "popularity": 1583,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Action",
       "Adventure",
-      "Fantasy"
+      "Fantasy",
+      "Shounen"
     ],
     "themes": [],
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1087/144083.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1087/144083l.jpg",
+    "malUrl": "https://myanimelist.net/anime/49785"
   },
   {
     "malId": 53865,
     "title": "Yozakura-san Chi no Daisakusen",
     "titleEnglish": "Mission: Yozakura Family",
     "titleJapanese": "夜桜さんちの大作戦",
-    "synopsis": "",
+    "synopsis": "After losing his entire family in a car crash, Taiyou Asano tries to pull away from his childhood friend, Mutsumi Yozakura, but she assures him she is not going anywhere. Nevertheless, Taiyou becomes socially awkward, struggling to make friends at school despite the efforts of his persistent classmates.\n\nOne day, the vice principal calls Taiyou to his office, only to begin threatening the boy's life. Taiyou is swept away by a stranger and eventually awakens to Mutsumi, who introduces him to her siblings—a family of spies who harbor superhuman abilities. Every generation produces one ordinary human who becomes the family head. Mutsumi is one of these, and the family's mission is to protect her with their lives. \n\nThe vice principal's real name is Kyoichiro Yozakura, and he is the eldest son of the family. As Kyouichiro believes that Taiyou is a threat to Mutsumi's life, the only way to keep both Taiyou and Mutsumi safe is for them to get married; the family has a rule that prevents them from killing within the Yozakura household. Though at first reluctant, Taiyou agrees in order to protect Mutsumi. Now he must train as a Yozakura spy to ward off the constant threats on the lives of both Mutsumi and himself.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1674/143715l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/xT3AryUklAk?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-07",
@@ -2740,46 +2767,54 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 27,
     "duration": "24 min per ep",
     "score": 7.58,
-    "scoredBy": 52270,
-    "rank": 1851,
-    "popularity": 1635,
+    "scoredBy": 55475,
+    "rank": 1909,
+    "popularity": 1601,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Comedy"
+      "Comedy",
+      "Shounen"
     ],
     "themes": [],
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1674/143715.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1674/143715l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53865"
   },
   {
     "malId": 53802,
     "title": "2.5-jigen no Ririsa",
     "titleEnglish": "2.5 Dimensional Seduction",
     "titleJapanese": "2.5次元の誘惑",
-    "synopsis": "",
+    "synopsis": "After a disastrous romantic confession, Masamune Okumura finds solace in the fictional world of anime and manga. Now a second-year high school student and the president of the Manga Research Club, Masamune spends a peaceful existence watching the adventures of the angel Liliel, his favorite character.\n\nIn the beginning of the academic year, Masamune’s life is turned upside down when he meets first-year student Ririsa Amano, a passionate cosplay practitioner. Despite Masamune's initial reluctance, the determined young woman manages to convince him to become her personal photographer for the production of a collection dedicated to their common favorite character: Liliel.\n\nAs Masamune enthusiastically discovers the world of cosplay and photo editing, he is unexpectedly reunited with his childhood friend Mikari Tachibana, who has become a model in the hope of impressing her beloved upperclassman. Realizing that modeling is not enough to intrigue the hopeless otaku, Mikari decides to join the club and become a cosplayer herself, all to finally have a chance at winning Masamune's heart. However, Masamune's love for fictional characters may not be capable of extending to those who impersonate them.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1779/143584l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/qZw4qxjKOiU?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-05",
     "releaseYear": 2024,
     "episodes": 24,
     "duration": "24 min per ep",
-    "score": 7.41,
-    "scoredBy": 55923,
-    "rank": 2540,
-    "popularity": 1658,
+    "score": 7.4,
+    "scoredBy": 59022,
+    "rank": 2670,
+    "popularity": 1632,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Ecchi"
+      "Ecchi",
+      "Harem",
+      "Otaku Culture",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "Harem",
@@ -2789,59 +2824,67 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1779/143584.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1779/143584l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53802"
   },
   {
     "malId": 52657,
     "title": "Ousama Ranking: Yuuki no Takarabako",
     "titleEnglish": "Ranking of Kings: The Treasure Chest of Courage",
     "titleJapanese": "王様ランキング 勇気の宝箱",
-    "synopsis": "",
+    "synopsis": "\"A treasure chest of unspoken courage is opened.\"\n\nThe special is described as a collection of shorts, showing past instances of courage and personal growth by the cast of Ousama Ranking. \n\n(Source: Ranking of Kings Wiki)",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1897/131615l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/TmyUZkQpSOE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-14",
     "releaseYear": 2023,
     "episodes": 10,
     "duration": "22 min per ep",
-    "score": 7.41,
-    "scoredBy": 49179,
-    "rank": 2566,
-    "popularity": 1666,
+    "score": 7.42,
+    "scoredBy": 50629,
+    "rank": 2600,
+    "popularity": 1669,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Adventure",
       "Fantasy"
     ],
     "themes": [],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1897/131615.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1897/131615l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52657"
   },
   {
     "malId": 56701,
     "title": "Watashi no Shiawase na Kekkon 2nd Season",
     "titleEnglish": "My Happy Marriage Season 2",
     "titleJapanese": "わたしの幸せな結婚",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1946/146770l.jpg",
+    "synopsis": "Following the awakening of her Dream-Sight ability, Miyo Saimori reunites with her fiancé, Kiyoka Kudou, the captain of the special forces protecting the country against ill-intended individuals gifted with exceptional powers. However, the couple's blissful life is suddenly interrupted when Takaihito, the top contender for the imperial throne, sends Kiyoka on a dangerous mission.\n\nTraveling with Miyo to the remote household of his parents, Kiyoka must investigate unusual reports of demons in the region. Meanwhile, Miyo tries to gain the approbation of her callous mother-in-law, Fuyu, who refuses to recognize her as a family member.\n\nAfter Kiyoka repels an attack by the Gifted Communion, a subversive sect of special abilities wielders, he returns to the capital alongside his fiancée. As the looming threat against the imperial authority intensifies, Kiyoka must thwart the Gifted Communion's plans to protect Miyo and everyone he holds dear.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1946/146770l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/ZifkkwGBegE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-06",
     "releaseYear": 2025,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.41,
-    "scoredBy": 54452,
-    "rank": 2587,
-    "popularity": 1728,
+    "score": 7.42,
+    "scoredBy": 58486,
+    "rank": 2611,
+    "popularity": 1699,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Novel",
+    "source": "novel",
     "genres": [
+      "Adult Cast",
       "Drama",
       "Fantasy",
+      "Historical",
       "Romance"
     ],
     "themes": [
@@ -2849,6 +2892,9 @@ export const MANUAL_ANIME_CATALOG = [
       "Historical"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1946/146770.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1946/146770l.webp",
+    "malUrl": "https://myanimelist.net/anime/56701"
   }
 ];
