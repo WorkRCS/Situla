@@ -361,7 +361,7 @@ app.get('/api/tv/:tmdbId/seasons/:seasonNumber', async (c) => {
   const tmdbIdText = String(c.req.param('tmdbId') || '');
   const tmdbId = Number(tmdbIdText);
   const seasonNumber = Number(c.req.param('seasonNumber'));
-  if (!/^[0-9]{1,12}$/.test(tmdbIdText) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
+  if (!/^[0-9]{1,12}$/.test(tmdbIdText) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
       !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) {
     return c.json({ error: 'Invalid TMDB series or season ID.' }, 400);
   }
