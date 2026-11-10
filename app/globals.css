@@ -1706,3 +1706,12 @@ body { color:#f7f7fa; background:#08090e; }
   .series-player-actions { width:100%; justify-content:flex-end; margin-left:46px; }
   .series-player-guide,.series-player-next { min-height:34px; }
 }
+
+.series-card-category {
+  margin-top:3px;
+  overflow:hidden;
+  color:#a6a8b2;
+  font-size:9px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
