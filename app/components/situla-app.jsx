@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
@@ -150,11 +151,12 @@ function SeriesCard({ item, kind, onOpen }) {
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
   const meta = isTv
-    ? [year, item.runtime ? item.runtime + " min / ep" : "TV series"].filter(Boolean).join(" · ")
-    : [year, "Anime series"].filter(Boolean).join(" · ");
+    ? [year, item.runtime ? item.runtime + " min / ep" : "TV series", item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "", item.numberOfEpisodes ? item.numberOfEpisodes + " eps" : ""].filter(Boolean).join(" · ")
+    : [year, item.episodes ? item.episodes + " episodes" : "Anime series"].filter(Boolean).join(" · ");
   const category = (item.genres || []).slice(0, 2).join(" · ");
+  const synopsis = isTv ? item.overview : item.synopsis;
   return (
-    <article className="movie-card">
+    <article className={"movie-card series-card series-card-" + kind}>
       <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
         <div className="movie-poster">
           <SeriesPosterImage item={item} title={title} />
@@ -163,9 +165,9 @@ function SeriesCard({ item, kind, onOpen }) {
           )}
         </div>
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
-        <p className="mt-1 text-[11px] text-[#858b9b]">{meta}</p>
+        <p className="series-card-meta">{meta}</p>
         {category && <p className="series-card-category">{category}</p>}
-        {!isTv && item.synopsis && <p className="mt-1 line-clamp-3 text-[10px] leading-4 text-[#9297a7]">{item.synopsis}</p>}
+        {synopsis && <p className="series-card-description">{synopsis}</p>}
       </button>
     </article>
   );
@@ -821,14 +823,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ))}
           </nav>
           <div className="header-search-wrap">
-            <label className="header-search search-box" aria-label="Search catalog">
+            <button
+              type="button"
+              className="header-search search-box header-search-trigger"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search movies, TV series and anime"
+              aria-haspopup="dialog"
+              aria-expanded={searchOpen}
+            >
               <BootstrapIcon icon="search" size={18} />
-              <input value={query} readOnly onClick={() => setSearchOpen(true)} onFocus={() => setSearchOpen(true)} placeholder="Search movies, TV series & anime…" aria-label="Open mixed catalog search" />
-              {query && <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setQuery(""); setSuggestions([]); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
-            </label>
+              <span className="header-search-label">Search movies, TV & anime</span>
+            </button>
           </div>
-          {searchOpen && (
-            <div className="search-overlay" role="presentation" onMouseDown={(event) => {
+
+              </section>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {searchOpen && typeof document !== "undefined" && createPortal(
+        <div className="search-overlay" role="presentation" onMouseDown={(event) => {
               if (event.target === event.currentTarget) setSearchOpen(false);
             }}>
               <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
@@ -885,13 +900,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     </div>
                   </>
                 ) : (
-                  <div className="suggestion-empty">No matching movies, TV series or anime found.</div>
-                )}
-              </section>
-            </div>
-          )}
-        </div>
-      </header>
+                  <div className="suggestion-empty">No matching movies, TV series or anime found.</div>,
+        document.body
+      )}
 
       <div className={tab === "home" ? "home-page-layout" : "mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8"}>
 
