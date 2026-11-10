@@ -27,7 +27,14 @@ test("manual MAL pack keeps the 11 starter Anime and adds at least 70 unique TV 
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0));
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.type === "TV" || item.type === "ONA"));
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.title));
-  assert.ok(MANUAL_ANIME_CATALOG.slice(11).every((item) => item.posterUrl));
+  assert.ok(MANUAL_ANIME_CATALOG.every((item) =>
+    item.posterUrl && item.posterFallbackUrl && item.backdropUrl &&
+    /^https:\/\/cdn\.myanimelist\.net\/images\/anime\//.test(item.posterUrl)
+  ));
+  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.synopsis && item.synopsis.length > 80));
+  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.malUrl === "https://myanimelist.net/anime/" + item.malId));
+  const titles = MANUAL_ANIME_CATALOG.map((item) => (item.titleEnglish || item.title).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim());
+  assert.equal(new Set(titles).size, MANUAL_ANIME_CATALOG.length);
 });
 
 test("one static bulk seeder imports all three catalogs without metadata API calls", async () => {
