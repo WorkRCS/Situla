@@ -59,6 +59,37 @@ export function movieDto(movie) {
   };
 }
 
+export function movieDetailsDto(movie) {
+  return {
+    ...movieDto(movie),
+    tagline: movie.tagline || '',
+    originalLanguage: movie.originalLanguage || '',
+    adult: Boolean(movie.adult),
+    status: movie.status || '',
+    homepage: movie.homepage || '',
+    sourceUrl: movie.sourceUrl || '',
+    metadataSource: movie.metadataSource || '',
+    budget: Number(movie.budget) || 0,
+    revenue: Number(movie.revenue) || 0,
+    productionCompanies: Array.isArray(movie.productionCompanies) ? movie.productionCompanies : [],
+    productionCountries: Array.isArray(movie.productionCountries) ? movie.productionCountries : [],
+    spokenLanguages: Array.isArray(movie.spokenLanguages) ? movie.spokenLanguages : [],
+    cast: Array.isArray(movie.cast) ? movie.cast.map((person) => ({
+      name: person.name || '',
+      character: person.character || '',
+      profileUrl: person.profileUrl || null
+    })) : [],
+    directors: Array.isArray(movie.directors) ? movie.directors : [],
+    writers: Array.isArray(movie.writers) ? movie.writers : [],
+    trailerUrl: movie.trailerUrl || '',
+    collection: movie.collection ? {
+      name: movie.collection.name || '',
+      posterUrl: movie.collection.posterUrl || null,
+      backdropUrl: movie.collection.backdropUrl || null
+    } : null
+  };
+}
+
 export function tvSeriesDto(series) {
   const tmdbId = Number(series.tmdbId) || null;
   return {
@@ -355,7 +386,7 @@ app.get('/api/movies/:imdbId', async (c) => {
     await connectDatabase();
     const movie = await Movie.findOne({ imdbId }).lean();
     if (!movie) return c.json({ error: 'Movie not found.' }, 404);
-    return c.json({ item: movieDto(movie) });
+    return c.json({ item: movieDetailsDto(movie) });
   } catch (error) {
     console.error('IMDb movie detail read failed:', error.message);
     return c.json({ error: 'Movie details are temporarily unavailable.' }, 503);
