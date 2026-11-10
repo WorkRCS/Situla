@@ -6,7 +6,7 @@ The Android application is a native WebView shell for the hosted Situla website.
 
 - Android Gradle Plugin and Gradle configuration are in this directory.
 - CI builds a debug APK with `gradle --no-daemon :app:assembleDebug`. The Android workflow uses JDK 17; the Brave JNI bridge Kotlin sources are compiled by the app's own Kotlin plugin.
-- The Gradle Wrapper pins Gradle 9.8.2 to the direct official distribution host `https://downloads.gradle.org` and verifies the ZIP with Gradle's published SHA-256 checksum. The wrapper download timeout is set to two minutes per attempt.
+- The Gradle Wrapper is checked in completely (`gradlew`, `gradlew.bat`, and the Gradle 9.8.2 wrapper JAR). It downloads the exact Gradle 9.8.2 binary ZIP from the Aliyun public mirror because some networks cannot reach the upstream Gradle download host. The ZIP is verified against Gradle's independently published SHA-256 checksum before use. Downloads use a two-minute timeout and three retries.
 - If the Gradle download still reports `ConnectException` or `Connection timed out`, this is generally a machine/network/proxy connection issue rather than an invalid version string. Check that HTTPS access to `downloads.gradle.org` is allowed. If your network requires a proxy, configure it in your user-level Gradle properties file (`%USERPROFILE%\.gradle\gradle.properties` on Windows), not in this repository. Example (replace the host and port with values supplied by your network administrator):
 
   ```properties
