@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. Movies and anime remain manually maintained; the TV catalogue uses TMDB numeric IDs and has an idempotent TVmaze metadata/episode-guide importer that runs automatically before the development server starts.
+Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. Movies and anime remain manually maintained; the TV catalogue uses TMDB numeric IDs and has an idempotent TVmaze metadata/episode-guide importer that is run separately from the development server.
 
 ## Identifiers and playback
 
@@ -18,10 +18,10 @@ Movie watch pages keep the optional Hindi player switch using the path-based IMD
 3. Set `MONGODB_URI` and `MONGODB_DB_NAME`.
 4. Set either `TMDB_API_READ_ACCESS_TOKEN` (preferred) or `TMDB_API_KEY` in `.env`. TMDB credentials are used only server-side to resolve TVmaze's IMDb cross-reference into a numeric TMDB TV ID.
 5. Run `npm install`.
-6. Run `npm run dev`. Its `predev` hook runs `npm run seed:tv`; this first migrates legacy TV IMDb IDs to TMDB IDs, then imports/updates the curated TV catalogue as needed.
-6. Open `http://localhost:3000` and check `/api/health`.
+6. Run `npm run dev` to start only the local Next.js website at `http://localhost:3000`. This command does not connect to MongoDB or run any seed/migration task.
+7. Open `http://localhost:3000` and check `/api/health`.
 
-To run the TV importer manually:
+To import or update the TV catalogue, run the crawler separately (it requires MongoDB and TMDB credentials in `.env`):
 
 ```sh
 npm run seed:tv
@@ -37,8 +37,6 @@ The importer requires MongoDB settings, one TMDB credential, and internet access
 
 ## Existing database migration
 
-## Existing database migration
-
 Back up MongoDB before running a migration. For an existing Situla database that still stores TV series by IMDb ID, run:
 
 ```sh
@@ -47,7 +45,7 @@ npm run migrate:tv-tmdb
 
 The migration uses each legacy TV record's IMDb reference to ask TMDB for the matching TV result. It adds the numeric `tmdbId`, keeps the prior value as `externalImdbId`, and removes the obsolete TV `imdbId` primary-key field. Existing poster data, episode guides, seasons, and playback progress on the device are preserved. Movie documents and Anime/MAL IDs are not changed. Records that cannot be confidently matched are left untouched and reported as unresolved; they will not appear in the TMDB-keyed TV API until corrected.
 
-The `npm run seed:tv` command also performs this migration automatically before importing TV metadata. The migration is idempotent and can be run more than once.
+The `npm run seed:tv` command performs this migration automatically before importing TV metadata. Starting the website with `npm run dev` does not run this migration or the crawler. The migration is idempotent and can be run more than once.
 
 The existing poster files may still be hosted on the old image CDN; this migration stores them as direct URLs but does not re-host the image bytes. To remove that CDN host too, manually replace poster/backdrop URLs with images hosted on your own storage.
 
