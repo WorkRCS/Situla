@@ -50,18 +50,18 @@ npm run audit:anime:apply
 npm run seed:anime
 ```
 
-The cleanup deletes only Anime documents that have neither a usable poster nor a usable banner/backdrop. A record with at least one valid artwork image is retained. The new-only seed then inserts the curated additions whose MAL ID and title are not already in the collection. It uses $setOnInsert; it does not update or replace existing Anime records.
+The cleanup deletes only Anime documents that have neither a usable poster nor a usable banner/backdrop. A record with at least one valid artwork image is retained. The new-only seed then inserts the curated additions whose MAL ID and title are not already in the collection. It uses insertMany in insert-only mode; it does not update or replace existing Anime records.
 
 ### Movie and TV static seeds
 
-The Movie seed is offline and add-only; the TV seed separately verifies and writes 200 new TV series plus any available metadata refreshes for the existing TV pack. Neither seed alters Anime:
+The Movie seed is offline and add-only. The TV seed prepares 200 new TV additions from the candidate pack, then inserts them in insert-only mode. Like the Anime additions seed, it never updates existing TV documents; the previous 70 static TV records are left untouched. Neither seed alters Anime:
 
 ```sh
 npm run seed:movies
 npm run seed:tv
 ```
 
-All seed/audit commands require MONGODB_URI and MONGODB_DB_NAME in .env plus database network access. `npm run seed:tv` additionally needs outbound HTTPS access to TVmaze and its image host; no TMDB API key is required. Before saving, the TV seed validates the poster/backdrop response and every episode still it uses. Missing episode stills are stored as null so the UI shows a placeholder instead of a broken image. TVmaze metadata is credited by a source link on the detail page and follows TVmaze's CC BY-SA terms. `npm run dev` never runs a seed or cleanup automatically.
+All seed/audit commands require MONGODB_URI and MONGODB_DB_NAME in .env plus database network access. `npm run seed:tv` additionally needs outbound HTTPS access to TVmaze and its image hosts; no TMDB API key is required. Before writing anything, the TV seed requires an exact normalized title and premiere-year match, a synopsis of at least 80 characters, at least five titled episodes, consistent unique season/episode numbers, a reachable poster and at least 80% reachable episode stills. The entire 200-record target is preflighted before the insert begins; if there are not enough valid records, the seed stops without writing. A separate landscape backdrop is stored only when one is supplied and independently reachable; the poster is never reused as a fake backdrop. Missing episode stills are rejected during preflight rather than silently saved as null. TVmaze metadata is credited by a source link on the detail page and follows TVmaze's CC BY-SA terms. `npm run dev` never runs a seed or cleanup automatically.
 
 
 ## Legacy TV identifier migration
