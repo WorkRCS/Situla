@@ -311,7 +311,7 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
 
   console.log("Situla TV seed: preparing " + TARGET_SERIES + "+ curated series from TVmaze.");
   for (const name of CURATED_TV_SHOWS) {
-    if (existing + imported >= TARGET_SERIES) break;
+    if (!force && existing + imported >= TARGET_SERIES) break;
     try {
       const searchResult = await findCuratedShow(name);
       if (!searchResult) {
