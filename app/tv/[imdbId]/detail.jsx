@@ -98,6 +98,8 @@ export default function TvSeriesExperience({ imdbId }) {
                 {series.releaseYear && <span>{series.releaseYear}</span>}
                 {series.runtime > 0 && <span>{series.runtime} min / episode</span>}
                 {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)} TVmaze rating</span>}
+                {series.numberOfSeasons > 0 && <span>{series.numberOfSeasons} seasons</span>}
+                {series.numberOfEpisodes > 0 && <span>{series.numberOfEpisodes} episodes</span>}
                 {series.certification && <span>{series.certification}</span>}
                 {series.adult === false && <span className="catalog-policy-pill">Situla catalog screened</span>}
               </div>
