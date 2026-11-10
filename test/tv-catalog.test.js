@@ -137,7 +137,7 @@ test("TV database validator enforces consistent totals, unique episodes and 80% 
   assert.equal(validateTvSeriesRecord(record), true);
 
   const tooFewStills = structuredClone(record);
-  tooFewStills.seasons[1].episodes[3].stillUrl = null;
+  tooFewStills.seasons[1].episodes[2].stillUrl = null;
   assert.throws(() => validateTvSeriesRecord(tooFewStills), /still coverage/);
 
   const duplicateEpisode = structuredClone(record);
