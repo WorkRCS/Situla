@@ -223,7 +223,7 @@ export function mapTmdbMovie(details, candidate = {}) {
     directors,
     writers,
     trailerUrl: trailer?.key ? "https://www.youtube.com/watch?v=" + encodeURIComponent(trailer.key) : "",
-    collection: collection ? {
+    collectionInfo: collection ? {
       name: String(collection.name || "").trim(),
       posterUrl: tmdbImageUrl(collection.poster_path, "w500"),
       backdropUrl: tmdbImageUrl(collection.backdrop_path, "original")
