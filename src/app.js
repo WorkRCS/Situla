@@ -222,11 +222,11 @@ app.get('/api/search', async (c) => {
     const [movies, shows, anime] = await Promise.all([
       Movie.find({
         adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^\\d+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
       }).sort({ popularity: -1, releaseDate: -1 }).limit(8).lean(),
       TvSeries.find({
         adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^\\d+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
       }).sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
       AnimeSeries.find({
         type: { $in: ['TV', 'ONA'] },
@@ -335,7 +335,7 @@ app.get('/api/tv', async (c) => {
     const filter = { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } };
     if (/^\\d+$/.test(query) && Number(query) > 0) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
-    const sort = query && !IMDB_ID.test(query)
+    const sort = query && !(/^\\d+$/.test(query) && Number(query) > 0)
       ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
       : { popularity: -1, firstAirDate: -1 };
     const randomOrder = c.req.query('random') === 'true';
