@@ -1,0 +1,101 @@
+import "dotenv/config";
+import mongoose from "mongoose";
+import { connectDatabase } from "../src/db.js";
+import { AnimeSeries } from "../src/models.js";
+import { NEW_ANIME_CATALOG } from "../data/anime-additions.js";
+
+function normalizeTitle(value) {
+  return String(value || "").normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+function validHttps(value) {
+  try { return new URL(value).protocol === "https:"; } catch { return false; }
+}
+
+export function validateNewAnime(records = NEW_ANIME_CATALOG) {
+  if (!Array.isArray(records) || records.length !== 200) {
+    throw new Error("Expected exactly 200 curated new Anime records.");
+  }
+  const ids = new Set();
+  const titles = new Set();
+  for (const item of records) {
+    if (!Number.isSafeInteger(item?.malId) || item.malId < 1) throw new Error("Invalid MAL ID.");
+    if (ids.has(item.malId)) throw new Error("Duplicate MAL ID: " + item.malId);
+    ids.add(item.malId);
+    const title = normalizeTitle(item.titleEnglish || item.title);
+    if (!title || titles.has(title)) throw new Error("Duplicate/empty Anime title: " + item.malId);
+    titles.add(title);
+    if (!item.title || !item.titleEnglish || String(item.synopsis || "").trim().length < 80) {
+      throw new Error("Anime title or synopsis missing for MAL " + item.malId);
+    }
+    if (!validHttps(item.posterUrl) || !validHttps(item.bannerUrl)) {
+      throw new Error("Poster/banner missing for MAL " + item.malId);
+    }
+    if (item.malUrl !== "https://myanimelist.net/anime/" + item.malId) {
+      throw new Error("Incorrect canonical MAL URL for MAL " + item.malId);
+    }
+    if (!Array.isArray(item.episodeGuide) || item.episodeGuide.length < 5) {
+      throw new Error("Episode guide missing for MAL " + item.malId);
+    }
+    const guideKeys = new Set();
+    let stills = 0;
+    for (const episode of item.episodeGuide) {
+      const key = Number(episode.seasonNumber) + ":" + Number(episode.episodeNumber);
+      if (!Number.isSafeInteger(episode.episodeNumber) || episode.episodeNumber < 1 || !episode.title) {
+        throw new Error("Invalid episode guide entry for MAL " + item.malId);
+      }
+      if (guideKeys.has(key)) throw new Error("Duplicate season/episode " + key + " for MAL " + item.malId);
+      guideKeys.add(key);
+      if (validHttps(episode.imageUrl)) stills += 1;
+    }
+    if (stills / item.episodeGuide.length < 0.8) throw new Error("Insufficient episode artwork for MAL " + item.malId);
+  }
+}
+
+export async function seedAnimeAdditions() {
+  validateNewAnime();
+  if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
+    throw new Error("Set MONGODB_URI and MONGODB_DB_NAME in .env first.");
+  }
+
+  await connectDatabase();
+  const existing = await AnimeSeries.find({})
+    .select("malId title titleEnglish")
+    .lean();
+  const existingIds = new Set(existing.map((item) => Number(item.malId)));
+  const existingTitles = new Set(existing.flatMap((item) => [item.title, item.titleEnglish]).filter(Boolean).map(normalizeTitle));
+
+  const newRecords = NEW_ANIME_CATALOG.filter((item) => {
+    const title = normalizeTitle(item.titleEnglish || item.title);
+    return !existingIds.has(item.malId) && !existingTitles.has(title);
+  });
+  const skipped = NEW_ANIME_CATALOG.length - newRecords.length;
+
+  if (!newRecords.length) {
+    console.log("No new Anime to insert. Existing MAL IDs/titles were left untouched.");
+    return { inserted: 0, skipped, total: await AnimeSeries.countDocuments() };
+  }
+
+  const operations = newRecords.map((record) => ({
+    updateOne: {
+      filter: { malId: record.malId },
+      update: { $setOnInsert: record },
+      upsert: true
+    }
+  }));
+  const result = await AnimeSeries.bulkWrite(operations, { ordered: false });
+  const inserted = Number(result.upsertedCount || 0);
+  const total = await AnimeSeries.countDocuments();
+  console.log("New Anime inserted:", inserted);
+  console.log("Existing MAL IDs/titles skipped without update:", skipped + (newRecords.length - inserted));
+  console.log("Anime collection total:", total);
+  return { inserted, skipped: skipped + (newRecords.length - inserted), total };
+}
+
+seedAnimeAdditions()
+  .catch((error) => {
+    console.error("Anime additions seed failed:", error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await mongoose.disconnect().catch(() => {});
+  });
