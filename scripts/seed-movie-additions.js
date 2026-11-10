@@ -342,8 +342,8 @@ async function fetchDiscoveryCandidates() {
   const partResults = await Promise.all(MOVIE_DISCOVERY_PARTS.map(async (part) => {
     const found = [];
     const seen = new Set();
+    let skip = 0;
     for (let page = 0; page < part.pages; page += 1) {
-      const skip = page * part.pageSize;
       const payload = await cinemetaRequest(cinemetaCatalogUrl(part, skip));
       const items = Array.isArray(payload?.metas) ? payload.metas : [];
       if (!items.length) break;
@@ -354,7 +354,8 @@ async function fetchDiscoveryCandidates() {
         found.push({ ...item, id: imdbId, imdbId, discoveryPart: part.key });
       }
       console.log("  " + part.label + " · page " + (page + 1) + " · " + items.length + " candidates");
-      if (items.length < part.pageSize) break;
+      // Move by the actual batch length so smaller catalog pages do not create gaps.
+      skip += items.length;
     }
     return found;
   }));
