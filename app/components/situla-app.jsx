@@ -989,6 +989,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
                 <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies, TMDB IDs for TV series, and MAL IDs for anime playback.</p>
+                <p className="mt-3 text-[10px] leading-5 text-[#73798a]">This product uses the <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB API</a> but is not endorsed or certified by TMDB.</p>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
