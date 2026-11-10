@@ -4,7 +4,9 @@ import { readFile } from "node:fs/promises";
 import { STATIC_MOVIES } from "../data/movie-catalog.js";
 import { MOVIE_ADDITION_TARGET, MOVIE_DISCOVERY_PARTS } from "../data/movie-additions.js";
 import {
-  mapTmdbMovie,
+  cinemetaCatalogUrl,
+  cinemetaMetaUrl,
+  mapCinemetaMovie,
   normalizeImdbId,
   normalizeMovieTitle,
   stripMovieMarkup,
@@ -13,57 +15,42 @@ import {
 
 function fixture() {
   return {
-    id: 1234,
-    title: "Example Film",
-    original_title: "Example Original Film",
-    overview: "<p>A complete example synopsis with enough detail to exceed eighty characters and explain the premise clearly.</p>",
-    tagline: "A test tagline",
-    poster_path: "/poster.jpg",
-    backdrop_path: "/backdrop.jpg",
-    release_date: "2020-01-02",
-    runtime: 111,
-    original_language: "en",
-    adult: false,
-    status: "Released",
-    homepage: "https://example.com",
-    budget: 1000000,
-    revenue: 2000000,
-    vote_average: 7.8,
-    vote_count: 500,
-    popularity: 25,
-    genres: [{ id: 18, name: "Drama" }],
-    production_companies: [{ name: "Example Studios" }],
-    production_countries: [{ name: "United States" }],
-    spoken_languages: [{ english_name: "English", iso_639_1: "en" }],
-    external_ids: { imdb_id: "tt1234567" },
-    credits: {
-      cast: [
-        { name: "Lead Actor", character: "Alex", profile_path: "/person.jpg" },
-        { name: "Supporting Actor", character: "Sam", profile_path: null }
-      ],
-      crew: [
-        { name: "Example Director", job: "Director" },
-        { name: "Example Writer", job: "Screenplay" }
-      ]
-    },
-    keywords: { keywords: [{ name: "friendship" }] },
-    videos: { results: [{ site: "YouTube", type: "Trailer", official: true, key: "abc123" }] },
-    release_dates: { results: [{ iso_3166_1: "US", release_dates: [{ certification: "PG-13" }] }] },
-    belongs_to_collection: {
-      name: "Example Collection",
-      poster_path: "/collection-poster.jpg",
-      backdrop_path: "/collection-backdrop.jpg"
-    },
-    images: { posters: [], backdrops: [] }
+    id: "tt1234567",
+    imdb_id: "tt1234567",
+    type: "movie",
+    name: "Example Film",
+    originalTitle: "Example Original Film",
+    description: "<p>A complete example synopsis with enough detail to exceed eighty characters and explain the premise clearly.</p>",
+    poster: "https://images.metahub.space/poster/medium/tt1234567/img",
+    background: "https://images.metahub.space/background/medium/tt1234567/img",
+    releaseInfo: "2020",
+    released: "2020-01-02T00:00:00.000Z",
+    year: 2020,
+    runtime: "1h 51min",
+    language: "English",
+    country: "United States",
+    imdbRating: "7.8",
+    imdbVotes: "12,345",
+    genres: ["Drama"],
+    cast: ["Lead Actor", "Supporting Actor"],
+    director: ["Example Director"],
+    writer: ["Example Writer"],
+    trailers: [{ type: "Trailer", source: "abc123xyz" }]
   };
 }
 
-test("five discovery parts provide the exact 500-movie target without a single fixed provider ID", () => {
+test("five Cinemeta discovery parts provide the exact 500-movie target using IMDb catalogue IDs", () => {
   assert.equal(MOVIE_ADDITION_TARGET, 500);
   assert.equal(MOVIE_DISCOVERY_PARTS.length, 5);
   assert.equal(new Set(MOVIE_DISCOVERY_PARTS.map((part) => part.key)).size, 5);
-  assert.ok(MOVIE_DISCOVERY_PARTS.every((part) => part.pages >= 10));
+  assert.ok(MOVIE_DISCOVERY_PARTS.every((part) => part.pages >= 8 && part.pageSize >= 50 && part.catalogId));
   assert.equal(new Set(STATIC_MOVIES.map((item) => item.imdbId)).size, STATIC_MOVIES.length);
+  assert.equal(cinemetaCatalogUrl(MOVIE_DISCOVERY_PARTS[0], 0),
+    "https://v3-cinemeta.strem.io/catalog/movie/top.json");
+  assert.equal(cinemetaCatalogUrl({ catalogId: "top", genre: "Drama" }, 100),
+    "https://v3-cinemeta.strem.io/catalog/movie/top/genre=Drama/skip=100.json");
+  assert.equal(cinemetaMetaUrl("TT1234567"),
+    "https://v3-cinemeta.strem.io/meta/movie/tt1234567.json");
 });
 
 test("IMDb IDs normalize to the canonical IMDb title key", () => {
@@ -75,40 +62,48 @@ test("IMDb IDs normalize to the canonical IMDb title key", () => {
   assert.equal(stripMovieMarkup("<p>A &amp; B</p>"), "A & B");
 });
 
-test("TMDB detail mapper preserves full movie details while using IMDb ID as the only catalog key", () => {
-  const movie = mapTmdbMovie(fixture(), { id: 1234 });
+test("Cinemeta mapper preserves details while using the IMDb ID as the only catalog key", () => {
+  const movie = mapCinemetaMovie(fixture());
   assert.ok(movie);
   assert.equal(movie.imdbId, "tt1234567");
   assert.equal(movie.title, "Example Film");
   assert.equal(movie.originalTitle, "Example Original Film");
   assert.ok(movie.overview.length > 80);
-  assert.equal(movie.posterUrl, "https://image.tmdb.org/t/p/w500/poster.jpg");
-  assert.equal(movie.backdropUrl, "https://image.tmdb.org/t/p/original/backdrop.jpg");
+  assert.equal(movie.posterUrl, "https://images.metahub.space/poster/medium/tt1234567/img");
+  assert.equal(movie.backdropUrl, "https://images.metahub.space/background/medium/tt1234567/img");
   assert.equal(movie.runtime, 111);
   assert.equal(movie.releaseYear, 2020);
+  assert.equal(movie.releaseDate, "2020-01-02");
   assert.deepEqual(movie.genres, ["Drama"]);
-  assert.deepEqual(movie.productionCompanies, ["Example Studios"]);
+  assert.deepEqual(movie.productionCompanies, []);
   assert.deepEqual(movie.productionCountries, ["United States"]);
+  assert.deepEqual(movie.spokenLanguages, ["English"]);
   assert.equal(movie.cast[0].name, "Lead Actor");
   assert.deepEqual(movie.directors, ["Example Director"]);
   assert.deepEqual(movie.writers, ["Example Writer"]);
-  assert.equal(movie.trailerUrl, "https://www.youtube.com/watch?v=abc123");
-  assert.equal(movie.collectionInfo.name, "Example Collection");
-  assert.equal(movie.sourceUrl, "https://www.themoviedb.org/movie/1234");
-  assert.equal(validateMovieRecord({ ...movie, posterUrl: movie.posterUrl, backdropUrl: movie.backdropUrl }), true);
+  assert.equal(movie.trailerUrl, "https://www.youtube.com/watch?v=abc123xyz");
+  assert.equal(movie.sourceUrl, "https://www.imdb.com/title/tt1234567/");
+  assert.equal(movie.metadataSource, "Cinemeta API");
+  assert.equal(validateMovieRecord(movie), true);
   assert.equal(Object.hasOwn(movie, "tmdbId"), false);
 });
 
-test("movie validator rejects missing artwork, description, credits and adult content", () => {
-  const movie = mapTmdbMovie(fixture(), { id: 1234 });
+test("Cinemeta mapper rejects adult titles and malformed IMDb IDs", () => {
+  assert.equal(mapCinemetaMovie({ ...fixture(), adult: true }), null);
+  assert.equal(mapCinemetaMovie({ ...fixture(), genres: ["Hentai"] }), null);
+  assert.equal(mapCinemetaMovie({ ...fixture(), id: "12345", imdb_id: "12345" }), null);
+  assert.equal(mapCinemetaMovie({ ...fixture(), type: "series" }), null);
+});
+
+test("movie validator rejects missing core fields and invalid artwork", () => {
+  const movie = mapCinemetaMovie(fixture());
   assert.throws(() => validateMovieRecord({ ...movie, posterUrl: null }), /poster/);
   assert.throws(() => validateMovieRecord({ ...movie, backdropUrl: null }), /banner\/backdrop/);
   assert.throws(() => validateMovieRecord({ ...movie, overview: "Short." }), /synopsis/);
   assert.throws(() => validateMovieRecord({ ...movie, directors: [] }), /director credit/);
-  assert.throws(() => validateMovieRecord({ ...movie, productionCompanies: [] }), /production company/);
-  assert.throws(() => validateMovieRecord({ ...movie, adult: true }), /Adult content/);
-  assert.equal(mapTmdbMovie({ ...fixture(), adult: true }, { id: 1234 }), null);
-  assert.equal(mapTmdbMovie({ ...fixture(), external_ids: { imdb_id: null } }, { id: 1234 }), null);
+  assert.throws(() => validateMovieRecord({ ...movie, cast: [] }), /credited cast/);
+  assert.throws(() => validateMovieRecord({ ...movie, releaseYear: null }), /release year/);
+  assert.equal(validateMovieRecord({ ...movie, productionCompanies: [], productionCountries: [] }), true);
 });
 
 test("Movies grid refreshes with random discovery and paginates by IMDb ID without duplicate results", async () => {
@@ -126,17 +121,22 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
 });
 
-test("Movie additions seeder is insert-only and verifies all required fields before writing", async () => {
+test("Movie additions seeder uses Cinemeta, validates before insert, and never contacts TMDB", async () => {
   const script = await readFile(new URL("../scripts/seed-movie-additions.js", import.meta.url), "utf8");
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+  const workflow = await readFile(new URL("../.github/workflows/seed-tv-series.yml", import.meta.url), "utf8");
   assert.equal(pkg.scripts["seed:movie-additions"], "node scripts/seed-movie-additions.js");
   assert.equal(pkg.scripts["check:movies"], "node --test test/movie-catalog.test.js");
   assert.match(pkg.scripts["seed:movies"], /seed-static-catalog\.js --movies.*seed:movie-additions/);
+  assert.match(script, /https:\/\/v3-cinemeta\.strem\.io/);
   assert.match(script, /Movie\.insertMany\(newRecords/);
   assert.match(script, /existingAdditionCount/);
   assert.match(script, /verifyRemoteImage/);
   assert.match(script, /validateMovieRecord/);
+  assert.match(script, /metadataSource: \{ \$in: LEGACY_METADATA_SOURCES \}/);
+  assert.doesNotMatch(script, /api\.themoviedb\.org|TMDB_API_READ_ACCESS_TOKEN|TMDB_API_KEY/);
+  assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
   assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
   assert.match(api, /randomOrder/);
   assert.match(api, /\$sample: \{ size: 40 \}/);
