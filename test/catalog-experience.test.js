@@ -21,6 +21,9 @@ test("TV and Anime load-more requests exclude already visible canonical IDs", as
   assert.match(app, /exclude: animeShows\.map\(\(item\) => item\.malId\)/);
   assert.match(app, /current\.map\(\(item\) => Number\(item\.tmdbId\)\)/);
   assert.match(app, /current\.map\(\(item\) => Number\(item\.malId\)\)/);
+  assert.match(app, /rememberRecentCatalogIds\("situla:recent-catalog:tv", nextItems\.map\(\(item\) => item\.tmdbId\)\)/);
+  assert.match(app, /rememberRecentCatalogIds\("situla:recent-catalog:anime", nextItems\.map\(\(item\) => item\.malId\)\)/);
+  assert.match(app, /rememberRecentCatalogIds\(recentKey, nextItems\.map\(\(item\) => item\.imdbId\)\)/);
   assert.doesNotMatch(app, /current\.map\(\(item\) => item\.imdbId\)/);
   assert.match(api, /randomFilter\.tmdbId = \{ \$nin: excludedIds, \$type: 'number', \$gt: 0 \}/);
   assert.match(api, /randomFilter\.malId = \{ \$nin: excludedIds, \$type: 'number', \$gt: 0 \}/);
