@@ -21,7 +21,7 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
   return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
 
-// Match Situla's warm-gold player controls on both Movie providers.
+// Shared Situla warm-gold player theme for Movie and TV VidLink embeds.
 // No mute parameter is added: playback remains under the provider's normal
 // user-initiated audio controls, with the iframe autoplay permission retained.
 // Anime playback uses the provider's MyAnimeList ID, one-based episode number,
@@ -91,7 +91,7 @@ export function vidlinkMovieUrl(imdbId) {
 export function vidlinkTvUrl(tmdbId, season, episode) {
   const route = normalizeTvPlayerRoute(tmdbId, season, episode);
   if (!route) return null;
-  return VIDLINK_ORIGIN + "/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode;
+  return withMovieTheme(new URL(VIDLINK_ORIGIN + "/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode)).toString();
 }
 
 export function hindiMoviePlayerUrl(imdbId) {
