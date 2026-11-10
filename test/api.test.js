@@ -98,6 +98,10 @@ test('TV DTO is keyed by IMDb and embeds seasons without a fixed provider mappin
   assert.equal(dto.seasons[0].seasonNumber, 1);
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
   assert.equal(dto.posterUrl, 'https://images.example/got.jpg');
+  assert.equal(dto.runtime, null);
+  assert.equal(dto.numberOfSeasons, 1);
+  assert.equal(dto.numberOfEpisodes, 1);
+  assert.equal(dto.adult, false);
 });
 
 test('TV season DTO exposes embedded episode numbers and direct artwork URLs', () => {
@@ -175,4 +179,58 @@ test('Hindi movie player URL receives the same validated IMDb ID and gold theme'
   assert.equal(hindiUrl.searchParams.get('secondaryColor'), '171a23');
   assert.equal(hindiMoviePlayerUrl('24428'), null);
   assert.equal(hindiMoviePlayerUrl('javascript:alert(1)'), null);
+});
+
+
+test('global search returns an empty list for short queries without touching the database', async () => {
+  const response = await app.request('/api/search?q=a');
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { items: [] });
+});
+
+test('TVmaze importer maps IMDb IDs, full season episodes, images and content filters', async () => {
+  const { mapTvmazeShow, normalizeShowName, stripHtml, CURATED_TV_SHOWS } = await import('../scripts/seed-tv-series.js');
+  assert.equal(normalizeShowName('Pokémon & Friends'), 'pokemon and friends');
+  assert.equal(stripHtml('<p>Hello &amp; welcome</p>'), 'Hello & welcome');
+  assert.ok(CURATED_TV_SHOWS.length > 65);
+
+  const mapped = mapTvmazeShow({
+    id: 321,
+    url: 'https://www.tvmaze.com/shows/321/example-show',
+    name: 'Example Show',
+    type: 'Scripted',
+    status: 'Ended',
+    premiered: '2015-01-01',
+    runtime: 44,
+    averageRuntime: 45,
+    weight: 77,
+    rating: { average: 8.4 },
+    genres: ['Drama', 'Mystery'],
+    image: { medium: 'https://images.example/poster-medium.jpg', original: 'https://images.example/poster.jpg' },
+    externals: { imdb: 'tt1234567' },
+    summary: '<p>A short synopsis.</p>',
+    _embedded: {
+      episodes: [
+        { id: 1, season: 1, number: 1, name: 'Pilot', airdate: '2015-01-01', runtime: 45, summary: '<p>First episode.</p>', rating: { average: 8 }, image: { original: 'https://images.example/episode-1.jpg' } },
+        { id: 2, season: 1, number: 2, name: 'The Mystery', airdate: '2015-01-08', runtime: 45, summary: '<p>Second episode.</p>', rating: { average: 8.2 }, image: { medium: 'https://images.example/episode-2.jpg' } }
+      ]
+    }
+  });
+  assert.equal(mapped.ok, true);
+  assert.equal(mapped.item.imdbId, 'tt1234567');
+  assert.equal(mapped.item.metadataSource, 'TVmaze');
+  assert.equal(mapped.item.adult, false);
+  assert.equal(mapped.item.runtime, 45);
+  assert.equal(mapped.item.numberOfEpisodes, 2);
+  assert.equal(mapped.item.seasons[0].episodes[0].stillUrl, 'https://images.example/episode-1.jpg');
+  assert.equal(mapped.item.seasons[0].episodes[1].stillUrl, 'https://images.example/episode-2.jpg');
+
+  const adultGenre = mapTvmazeShow({
+    id: 322, name: 'Adult title', externals: { imdb: 'tt1234568' },
+    image: { original: 'https://images.example/adult.jpg' },
+    rating: { average: 7 }, genres: ['Adult'],
+    _embedded: { episodes: [{ season: 1, number: 1 }, { season: 1, number: 2 }] }
+  });
+  assert.equal(adultGenre.ok, false);
+  assert.equal(adultGenre.reason, 'adult-genre-filter');
 });
