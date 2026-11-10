@@ -72,7 +72,14 @@ export function tvSeriesDto(series) {
     backdropUrl: series.backdropUrl || null,
     firstAirDate: series.firstAirDate || null,
     releaseYear: series.releaseYear || null,
+    runtime: Number(series.runtime) || null,
+    adult: Boolean(series.adult),
+    certification: series.certification || "",
     voteAverage: Number(series.voteAverage) || 0,
+    voteCount: Number(series.voteCount) || 0,
+    popularity: Number(series.popularity) || 0,
+    metadataSource: series.metadataSource || "",
+    sourceUrl: series.sourceUrl || "",
     voteCount: Number(series.voteCount) || 0,
     popularity: Number(series.popularity) || 0,
     genres: Array.isArray(series.genres) ? series.genres : [],
@@ -197,6 +204,51 @@ app.get('/api/movies/discover', async (c) => {
   } catch (error) {
     console.error('Movie discovery feed failed:', error.message);
     return c.json({ error: 'Movie discovery is temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/search', async (c) => {
+  const query = safeText(c.req.query('q'));
+  if (query.length < 2) return c.json({ items: [] });
+  try {
+    await connectDatabase();
+    const escapeRegex = (value) => {
+      let escaped = value;
+      for (const character of ['\\', '.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', '-']) {
+        escaped = escaped.split(character).join('\\' + character);
+      }
+      return escaped;
+    };
+    const pattern = new RegExp(escapeRegex(query), 'i');
+    const id = query.toLowerCase();
+    const [movies, shows, anime] = await Promise.all([
+      Movie.find({
+        adult: { $ne: true },
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
+      }).sort({ popularity: -1, releaseDate: -1 }).limit(8).lean(),
+      TvSeries.find({
+        adult: { $ne: true },
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
+      }).sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
+      AnimeSeries.find({
+        type: { $in: ['TV', 'ONA'] },
+        $or: [
+          { title: pattern },
+          { titleEnglish: pattern },
+          { titleJapanese: pattern },
+          ...(/^\d+$/.test(query) ? [{ malId: Number(query) }] : [])
+        ]
+      }).sort({ score: -1, rank: 1, popularity: 1 }).limit(8).lean()
+    ]);
+    const items = [
+      ...movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
+      ...shows.map((item) => ({ ...tvSeriesDto(item), mediaType: 'tv' })),
+      ...anime.map((item) => ({ ...animeSeriesDto(item), mediaType: 'anime' }))
+    ];
+    return c.json({ items, total: items.length });
+  } catch (error) {
+    console.error('Global title search failed:', error.message);
+    return c.json({ error: 'Search is temporarily unavailable.', items: [] }, 503);
   }
 });
 
