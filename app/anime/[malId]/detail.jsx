@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 function episodeRouteNumber(item) {
-  return Number(item?.absoluteEpisodeNumber) > 0
-    ? Number(item.absoluteEpisodeNumber)
-    : Number(item?.episodeNumber) || 1;
+  return Number(item?.episodeNumber) || 1;
 }
 
 function formatEpisodeMeta(item) {
@@ -271,7 +269,7 @@ export default function AnimeSeriesExperience({ malId }) {
                     <button type="button" className={audio === "dub" ? "gold-button" : "ghost-button"} onClick={() => setAudio("dub")}>English · Dub</button>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <button className="gold-button" disabled={!episodeNumber || Number(episodeNumber) < 1 || (anime.episodes && episodeRouteNumber(selectedEpisode) > anime.episodes)} onClick={() => playAnime()}>
+                    <button className="gold-button" disabled={!episodeNumber || Number(episodeNumber) < 1 || (episodeGuide.length === 0 && anime.episodes && Number(episodeNumber) > anime.episodes)} onClick={() => playAnime()}>
                       <i className="bi bi-play-fill" aria-hidden="true" /> Play episode
                     </button>
                     {nextEpisode && (
