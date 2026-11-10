@@ -48,7 +48,9 @@ test("five Cinemeta discovery parts provide the exact 500-movie target using IMD
   assert.equal(cinemetaCatalogUrl(MOVIE_DISCOVERY_PARTS[0], 0),
     "https://v3-cinemeta.strem.io/catalog/movie/top.json");
   assert.equal(cinemetaCatalogUrl({ catalogId: "top", genre: "Drama" }, 100),
-    "https://v3-cinemeta.strem.io/catalog/movie/top/genre=Drama/skip=100.json");
+    "https://v3-cinemeta.strem.io/catalog/movie/top/genre=Drama&skip=100.json");
+  assert.equal(cinemetaCatalogUrl({ catalogId: "top" }, 100),
+    "https://v3-cinemeta.strem.io/catalog/movie/top/skip=100.json");
   assert.equal(cinemetaMetaUrl("TT1234567"),
     "https://v3-cinemeta.strem.io/meta/movie/tt1234567.json");
 });
