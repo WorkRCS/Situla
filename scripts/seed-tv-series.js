@@ -421,9 +421,8 @@ export async function seedTvSeries() {
   for (const candidate of TV_SERIES_CANDIDATES) {
     if (newRecords.length >= remainingTarget) break;
     const id = Number(candidate.tmdbId);
-    const key = titleYearKey(candidate.title, candidate.firstAirDate);
     if (existingIds.has(id) || titleYearConflicts(existingTitleYears, candidate.title, candidate.firstAirDate) ||
-        seenIds.has(id) || plannedTitleYears.has(key)) continue;
+        seenIds.has(id) || titleYearConflicts(plannedTitleYears, candidate.title, candidate.firstAirDate)) continue;
     seenIds.add(id);
 
     try {
