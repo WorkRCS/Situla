@@ -64,7 +64,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <Script
           id="situla-clean-extension-attributes"
