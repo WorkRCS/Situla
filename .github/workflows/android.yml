@@ -23,17 +23,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Set up Gradle 9.8.2
+      - name: Configure Gradle caching
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.8.2"
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
       - name: Install Android SDK platform and build tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-      - name: Assemble debug APK
+      - name: Assemble debug APK using the checked-in Gradle Wrapper
         working-directory: android
-        run: gradle --no-daemon :app:assembleDebug --stacktrace --info
+        run: ./gradlew --no-daemon :app:assembleDebug --stacktrace --info
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
