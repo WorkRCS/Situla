@@ -114,7 +114,11 @@ object NetworkAdBlocker {
 
     /**
      * Start adblock initialization without delaying WebView creation.
-     * Existing cached filters are activated first; updates happen in the background.
+     *
+     * Important: do not load the JNI library or create the Rust engine from the
+     * WebView factory (main/UI thread). A native-library failure must never stop
+     * the Activity from rendering. The built-in host list is checked directly
+     * while the optional native engine initializes on a worker thread.
      */
     fun initialize(context: Context, websiteUrl: String? = null) {
         websiteUrl?.let { url ->
@@ -123,17 +127,21 @@ object NetworkAdBlocker {
         if (!initializationStarted.compareAndSet(false, true)) return
 
         val appContext = context.applicationContext
-        // Install the small built-in rule set before WebView starts loading pages,
-        // so the first requests do not race the asynchronous filter-list download.
-        if (activeEngine == null) installEngine(appContext, fallbackRules)
-
-        initializationExecutor.execute {
-            try {
-                initializeOnWorker(appContext)
-            } catch (error: Throwable) {
-                Log.w(TAG, "Brave adblock initialization failed; keeping host fallback.", error)
-                initializationStarted.set(false)
+        try {
+            initializationExecutor.execute {
+                try {
+                    if (activeEngine == null) {
+                        installEngine(appContext, fallbackRules)
+                    }
+                    initializeOnWorker(appContext)
+                } catch (error: Throwable) {
+                    Log.w(TAG, "Brave adblock initialization failed; keeping host fallback.", error)
+                    initializationStarted.set(false)
+                }
             }
+        } catch (error: Throwable) {
+            Log.w(TAG, "Brave adblock worker could not be started; keeping host fallback.", error)
+            initializationStarted.set(false)
         }
     }
 
@@ -222,7 +230,7 @@ object NetworkAdBlocker {
         }
 
         if (!runCatching { candidate.loadFilterList(rules) }.getOrDefault(false)) {
-            candidate.close()
+            runCatching { candidate.close() }
             Log.w(TAG, "Brave adblock-rust rejected the filter list.")
             return false
         }
