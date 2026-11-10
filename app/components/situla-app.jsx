@@ -618,7 +618,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8">
+      <div className={tab === "home" ? "home-page-layout" : "mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8"}>
 
 
         {tab === "home" && (
@@ -662,6 +662,60 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </>
             ) : (
               <div className="empty-panel"><Icon name="film" size={32} /><p className="mt-3 font-bold text-white">Your catalog is getting ready</p><p className="mt-2 text-xs">{error || "Approved titles from the Situla API will appear here."}</p></div>
+            )}
+
+            <section className="home-discovery" aria-label="Explore Situla">
+              <div className="home-section-intro">
+                <div>
+                  <span>ONE PLACE. MANY WORLDS.</span>
+                  <h2>Find your next favourite</h2>
+                </div>
+                <p>Pick a path and let the story begin.</p>
+              </div>
+              <div className="home-discovery-grid">
+                <Link href="/movies" className="discovery-card discovery-movies">
+                  <span className="discovery-symbol"><Icon name="film" size={25} /></span>
+                  <span className="discovery-copy"><strong>Movies</strong><small>Big-screen stories, anytime</small></span>
+                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                </Link>
+                <Link href="/tv" className="discovery-card discovery-tv">
+                  <span className="discovery-symbol"><Icon name="tv" size={25} /></span>
+                  <span className="discovery-copy"><strong>TV series</strong><small>Stories that keep unfolding</small></span>
+                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                </Link>
+                <Link href="/anime" className="discovery-card discovery-anime">
+                  <span className="discovery-symbol"><Icon name="play" size={25} /></span>
+                  <span className="discovery-copy"><strong>Anime</strong><small>Step into another world</small></span>
+                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                </Link>
+              </div>
+            </section>
+
+            {heroMovies.length > 1 && (
+              <section className="spotlight-strip" aria-label="Choose a featured movie">
+                <div className="spotlight-strip-heading">
+                  <span>NOW IN THE SPOTLIGHT</span>
+                  <p>More stories to discover</p>
+                </div>
+                <div className="spotlight-strip-track">
+                  {heroMovies.slice(0, 6).map((movie, index) => (
+                    <button
+                      key={movie.imdbId || movie.id}
+                      type="button"
+                      className={"spotlight-chip" + (index === heroIndex ? " active" : "")}
+                      onClick={() => setHeroIndex(index)}
+                      aria-pressed={index === heroIndex}
+                    >
+                      <span className="spotlight-chip-art">
+                        {movie.posterUrl
+                          ? <img src={movie.posterUrl} alt="" loading="lazy" />
+                          : <Icon name="film" size={17} />}
+                      </span>
+                      <span className="spotlight-chip-title">{movie.title}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
             )}
 
             {allGenres.length > 1 && (
