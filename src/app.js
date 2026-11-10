@@ -82,10 +82,10 @@ export function movieDetailsDto(movie) {
     directors: Array.isArray(movie.directors) ? movie.directors : [],
     writers: Array.isArray(movie.writers) ? movie.writers : [],
     trailerUrl: movie.trailerUrl || '',
-    collection: movie.collection ? {
-      name: movie.collection.name || '',
-      posterUrl: movie.collection.posterUrl || null,
-      backdropUrl: movie.collection.backdropUrl || null
+    collection: movie.collectionInfo ? {
+      name: movie.collectionInfo.name || '',
+      posterUrl: movie.collectionInfo.posterUrl || null,
+      backdropUrl: movie.collectionInfo.backdropUrl || null
     } : null
   };
 }
