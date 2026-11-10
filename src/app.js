@@ -226,7 +226,7 @@ app.get('/api/search', async (c) => {
       }).sort({ popularity: -1, releaseDate: -1 }).limit(8).lean(),
       TvSeries.find({
         adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^\\d+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^[0-9]+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
       }).sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
       AnimeSeries.find({
         type: { $in: ['TV', 'ONA'] },
@@ -333,9 +333,9 @@ app.get('/api/tv', async (c) => {
     const { page, limit } = pageOptions(c);
     const query = safeText(c.req.query('q'));
     const filter = { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } };
-    if (/^\\d+$/.test(query) && Number(query) > 0) filter.tmdbId = Number(query);
+    if (/^[0-9]+$/.test(query) && Number(query) > 0) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
-    const sort = query && !(/^\\d+$/.test(query) && Number(query) > 0)
+    const sort = query && !(/^[0-9]+$/.test(query) && Number(query) > 0)
       ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
       : { popularity: -1, firstAirDate: -1 };
     const randomOrder = c.req.query('random') === 'true';
