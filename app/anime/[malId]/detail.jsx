@@ -62,7 +62,6 @@ export default function AnimeSeriesExperience({ malId }) {
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {anime.releaseYear && <span>{anime.releaseYear}</span>}
                 {anime.score > 0 && <span>★ {Number(anime.score).toFixed(2)} MAL</span>}
-                <span>{anime.episodes || "?"} episodes</span>
                 {anime.season && <span>{anime.season}</span>}
                 <span>{anime.status}</span>
               </div>
