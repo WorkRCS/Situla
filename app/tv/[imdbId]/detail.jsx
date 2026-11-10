@@ -101,7 +101,7 @@ export default function TvSeriesExperience({ imdbId }) {
                 {series.numberOfSeasons > 0 && <span>{series.numberOfSeasons} seasons</span>}
                 {series.numberOfEpisodes > 0 && <span>{series.numberOfEpisodes} episodes</span>}
                 {series.certification && <span>{series.certification}</span>}
-                {series.adult === false && <span className="catalog-policy-pill">Situla catalog screened</span>}
+                {series.adult === false && <span className="catalog-policy-pill">Curated Situla catalog</span>}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-[#b5bac7]">{series.overview || "No description available."}</p>
