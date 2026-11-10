@@ -500,7 +500,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   useEffect(() => {
     if (!catalogSpotlight || (tab !== "movies" && tab !== "tv" && tab !== "anime")) return;
-    const idField = tab === "anime" ? "malId" : "imdbId";
+    const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
     const id = catalogSpotlight[idField];
     if (!id) return;
     try { localStorage.setItem("situla:spotlight:" + tab, String(id)); } catch {}
@@ -614,12 +614,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const progress = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
         localStorage.setItem("situla:progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) => item.imdbId !== imdbId) : []));
       } else if (key.startsWith("tv:")) {
-        const [, imdbId, seasonPart, episodePart] = key.split(":");
+        const [, tvId, seasonPart, episodePart] = key.split(":");
         const season = Number(seasonPart?.replace(/^s/, ""));
         const episode = Number(episodePart?.replace(/^e/, ""));
         const progress = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
+        const numericTmdbId = /^[0-9]+$/.test(tvId) ? Number(tvId) : null;
         localStorage.setItem("situla:tv-progress:v1", JSON.stringify(Array.isArray(progress) ? progress.filter((item) =>
-          !(String(item.imdbId).toLowerCase() === imdbId && Number(item.season) === season && Number(item.episode) === episode)
+          !(numericTmdbId
+            ? Number(item.tmdbId) === numericTmdbId
+            : String(item.imdbId || "").toLowerCase() === tvId) ||
+          Number(item.season) !== season || Number(item.episode) !== episode
         ) : []));
       } else if (key.startsWith("anime:")) {
         const [, malId, episodePart, audio] = key.split(":");
@@ -694,7 +698,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 {suggestionsLoading ? (
                   <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
                 ) : suggestions.length ? suggestions.map((item) => (
-                  <button key={item.imdbId || item.malId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openSearchResult(item)}>
+                  <button key={item.mediaType === "tv" ? item.tmdbId : item.imdbId || item.malId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openSearchResult(item)}>
                     {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
                     <span className="suggestion-title"><strong>{item.titleEnglish || item.title}</strong><small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || "Release year unknown"}</small></span>
                     <BootstrapIcon icon="play-fill" size={16} />
