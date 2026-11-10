@@ -294,7 +294,9 @@ test("Anime catalog is a manually curated MAL list and the seed command uses the
   assert.ok(MANUAL_ANIME_CATALOG.length >= 80);
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && ["TV", "ONA"].includes(item.type)));
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-static-catalog.js --anime");
+  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-anime-additions.js");
+  assert.match(await read("../scripts/seed-anime-additions.js"), /AnimeSeries\.insertMany/);
+  assert.doesNotMatch(await read("../scripts/seed-anime-additions.js"), /bulkWrite|updateOne|\$set/);
   assert.match(script, /Model\.bulkWrite/);
   assert.match(script, /\$setOnInsert/);
   assert.doesNotMatch(script, /fetch\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
