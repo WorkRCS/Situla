@@ -87,7 +87,7 @@ The public API remains read-only for catalogue data; there are no public admin o
 
 - Movie IDs and factual catalogue fields are curated from the [IMDb Top 250 public-list dataset](https://github.com/sharmadhiraj/free-json-datasets/blob/master/docs/sports-entertainment/imdb_top_movies.json).
 - The static TV additions use the [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets), which is MIT-licensed. TMDB links identify the corresponding series records.
-- Static Anime additions use the [Anime Stats Tracker seasonal dataset](https://github.com/zyhe16/anime-stats-tracker), which is MIT-licensed. The primary IDs remain MyAnimeList IDs.
+- New Anime candidates are shortlisted from the [Anime Stats Tracker seasonal dataset](https://github.com/zyhe16/anime-stats-tracker), which is MIT-licensed. Exact MAL IDs, title artwork, synopsis, related-season ordering and per-episode still metadata are curated from the [Anime Mapper static records](https://github.com/subhajeetch-fl/anime-mapper), which is MIT-licensed. The poster/banner/still images remain external references and are not re-hosted by Situla.
 - Some previously imported TV records retain TVmaze-sourced metadata and episode guides. Their TVmaze source links and existing guide remain intact.
 - Poster images are stored as external image URLs; Situla does not re-host those image files.
 - In the About section, Situla displays the TMDB notice: “This product uses the TMDB API but is not endorsed or certified by TMDB.”
