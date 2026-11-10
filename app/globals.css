@@ -2258,3 +2258,33 @@ body { color:#f7f7fa; background:#08090e; }
   .series-card *,
   .header-search-trigger { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
 }
+
+
+/* Listing-page framing and the TV poster's compact mobile treatment. */
+.catalog-page-layout {
+  width:min(1600px,100%);
+  padding-bottom:clamp(28px,4vw,54px);
+}
+.catalog-page-layout > section > .section-heading {
+  margin-bottom:clamp(16px,2vw,23px);
+}
+.tv-catalog-page .catalog-spotlight,
+.anime-catalog-page .catalog-spotlight {
+  margin-bottom:clamp(20px,2.6vw,30px);
+}
+.tv-catalog-page .series-card-description,
+.anime-catalog-page .series-card-description {
+  color:#9da3b2;
+}
+@media (max-width:767px) {
+  .tv-detail-page .series-detail-sidebar {
+    display:flex;
+    align-items:flex-start;
+  }
+  .tv-detail-page .series-detail-poster {
+    width:min(42vw,172px);
+  }
+}
+@media (min-width:1101px) {
+  .catalog-page-layout { padding-bottom:52px; }
+}
