@@ -173,7 +173,9 @@ fun SitulaApp(context: Context) {
       AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { viewContext ->
-            NetworkAdBlocker.initialize(appContext, SITULA_WEBSITE_URL)
+            // Keep the first app launch independent from optional Rust/JNI
+            // adblock initialization. The home screen still uses the built-in
+            // blocked-domain rules; advanced filters initialize when the player opens.
             WebView(viewContext).apply {
                 webView = this
                 setBackgroundColor(AndroidColor.rgb(8, 9, 14))
