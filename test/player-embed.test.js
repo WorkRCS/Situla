@@ -82,3 +82,28 @@ test("landing page exposes primary navigation and cinematic responsive hero styl
   assert.match(css, /\.hero-progress-fill/);
   assert.match(css, /@media \(max-width: 620px\)/);
 });
+
+
+test("Situla landing keeps the original gold palette and uses a distinct discovery layout", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+
+  assert.match(app, /className=\{tab === "home" \? "home-page-layout"/);
+  assert.match(app, /className="home-discovery"/);
+  assert.match(app, /className="discovery-card discovery-movies"/);
+  assert.match(app, /className="discovery-card discovery-tv"/);
+  assert.match(app, /className="discovery-card discovery-anime"/);
+  assert.match(app, /className="spotlight-strip"/);
+  assert.match(css, /--accent:#e8b65b/);
+  assert.match(css, /#f7d58b/);
+  assert.doesNotMatch(css, /#55b8ff|#69c7ff|#2388ee/);
+  assert.match(css, /\.home-discovery-grid/);
+  assert.match(css, /\.spotlight-chip\.active/);
+});
+
+test("home page auto-advances and lets visitors select a spotlight title", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /onClick=\{\(\) => setHeroIndex\(index\)\}/);
+  assert.match(app, /aria-pressed=\{index === heroIndex\}/);
+});
