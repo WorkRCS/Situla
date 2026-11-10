@@ -106,9 +106,11 @@ export default function TvSeriesExperience({ tmdbId }) {
           <div className="empty-panel"><h1 className="font-bold text-white">TV series unavailable</h1><p className="mt-2 text-sm">{error}</p></div>
         ) : series ? (
           <>
-          <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
-            {series.backdropUrl && <img src={series.backdropUrl} alt={series.title + " backdrop"} className="h-36 w-full object-cover md:h-52" />}
-          </div>
+          {series.backdropUrl && (
+            <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
+              <img src={series.backdropUrl} alt={series.title + " backdrop"} className="h-36 w-full object-cover md:h-52" />
+            </div>
+          )}
           <div className="grid gap-6 md:grid-cols-[260px_1fr]">
             <div className="overflow-hidden rounded-2xl bg-[#11131b]">
               {series.posterUrl && <img src={series.posterUrl} alt={series.title} className="w-full object-cover" />}
