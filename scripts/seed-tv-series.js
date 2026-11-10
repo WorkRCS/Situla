@@ -202,7 +202,7 @@ export function selectTmdbTvId(results, expectedTitle, firstAirDate = null) {
 
 export async function resolveTmdbTvId(externalImdbId, expectedTitle, firstAirDate = null) {
   const imdbId = String(externalImdbId || "").trim().toLowerCase();
-  if (!/^tt\\d{5,12}$/.test(imdbId)) return null;
+  if (!/^tt[0-9]{5,12}$/.test(imdbId)) return null;
   const result = await tmdbRequest("/find/" + encodeURIComponent(imdbId) + "?external_source=imdb_id");
   return selectTmdbTvId(result?.tv_results, expectedTitle, firstAirDate);
 }
