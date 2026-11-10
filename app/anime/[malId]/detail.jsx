@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 export default function AnimeSeriesExperience({ malId }) {
   const router = useRouter();
   const [anime, setAnime] = useState(null);
+  const [posterSource, setPosterSource] = useState("");
+  const [posterFailed, setPosterFailed] = useState(false);
   const [episode, setEpisode] = useState("1");
   const [audio, setAudio] = useState("sub");
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,8 @@ export default function AnimeSeriesExperience({ malId }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Anime series not found.");
         setAnime(payload.item);
+        setPosterSource(payload.item.posterUrl || "");
+        setPosterFailed(false);
         try {
           const last = JSON.parse(localStorage.getItem("situla:anime-last-episode:v1") || "{}");
           if (Number(last.malId) === Number(malId)) {
@@ -51,10 +55,49 @@ export default function AnimeSeriesExperience({ malId }) {
         ) : error ? (
           <div className="empty-panel"><h1 className="font-bold text-white">Anime unavailable</h1><p className="mt-2 text-sm">{error}</p></div>
         ) : anime ? (
-          <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-            <div className="overflow-hidden rounded-2xl bg-[#11131b]">
-              {anime.posterUrl && <img src={anime.posterUrl} alt={anime.title} className="w-full object-cover" />}
+          <>
+            <div className="relative mb-6 min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-[#11131b] md:min-h-[280px]">
+              {(anime.backdropUrl || anime.posterUrl) && (
+                <img
+                  src={anime.backdropUrl || anime.posterUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover opacity-35"
+                  onError={(event) => { event.currentTarget.style.display = "none"; }}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#08090d] via-[#08090de8] to-[#08090d66]" />
+              <div className="relative z-10 flex min-h-[220px] items-end p-5 md:min-h-[280px] md:p-8">
+                <div>
+                  <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">SITULA ANIME · MAL {anime.malId}</p>
+                  <h2 className="mt-2 max-w-3xl text-2xl font-black text-white md:text-4xl">{anime.titleEnglish || anime.title}</h2>
+                  {anime.titleJapanese && <p className="mt-2 text-sm text-[#c5c9d3]">{anime.titleJapanese}</p>}
+                </div>
+              </div>
             </div>
+            <div className="grid gap-6 md:grid-cols-[260px_1fr]">
+              <div className="overflow-hidden rounded-2xl bg-[#11131b]">
+                {!posterFailed && (posterSource || anime.posterUrl) ? (
+                  <img
+                    src={posterSource || anime.posterUrl}
+                    alt={anime.titleEnglish || anime.title}
+                    className="w-full object-cover"
+                    loading="eager"
+                    onError={() => {
+                      if (anime.posterFallbackUrl && posterSource !== anime.posterFallbackUrl) {
+                        setPosterSource(anime.posterFallbackUrl);
+                      } else {
+                        setPosterFailed(true);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex min-h-[340px] flex-col items-center justify-center gap-3 text-[#777e8e]">
+                    <i className="bi bi-image text-3xl" aria-hidden="true" />
+                    <span className="text-xs">Poster unavailable</span>
+                  </div>
+                )}
+              </div>
             <section>
               <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">ANIME SERIES · MAL {anime.malId}</p>
               <h1 className="mt-2 text-3xl font-black text-white">{anime.titleEnglish || anime.title}</h1>
@@ -81,7 +124,11 @@ export default function AnimeSeriesExperience({ malId }) {
                 <button className="gold-button mt-5" disabled={!episode || Number(episode) < 1 || (anime.episodes && Number(episode) > anime.episodes)} onClick={playAnime}><i className="bi bi-play-fill" aria-hidden="true" /> Play anime</button>
               </div>
             </section>
-          </div>
+              <p className="mt-5 text-xs text-[#9297a7]">
+                <a href={anime.malUrl || ("https://myanimelist.net/anime/" + anime.malId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">Open this exact title on MyAnimeList ↗</a>
+              </p>
+            </div>
+          </>
         ) : null}
       </div>
     </main>
