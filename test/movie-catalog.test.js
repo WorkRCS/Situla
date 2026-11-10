@@ -114,7 +114,7 @@ test("movie validator rejects missing artwork, description, credits and adult co
 test("Movies grid refreshes with random discovery and paginates by IMDb ID without duplicate results", async () => {
   const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
   const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
-  assert.match(app, /const isDiscover = \(\(tab === "home" && genre === "All"\) \|\| tab === "movies"\)/);
+  assert.match(app, /const isDiscover = \(tab === "home" && genre === "All"\) \|\| tab === "movies"/);
   assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
   assert.match(app, /params\.set\("random", "true"\)/);
   assert.match(app, /params\.set\("exclude", movies\.map\(\(item\) => item\.imdbId\)/);
