@@ -227,14 +227,14 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber) ||
       Number(a.episodeNumber) - Number(b.episodeNumber));
   const currentAnimeGuideIndex = animeEpisodeGuide.findIndex((item) =>
-    Number(item.absoluteEpisodeNumber || item.episodeNumber) === Number(animeRoute?.episode)
+    Number(item.episodeNumber) === Number(animeRoute?.episode)
   );
   const nextAnimeGuideEntry = currentAnimeGuideIndex >= 0
     ? animeEpisodeGuide[currentAnimeGuideIndex + 1] || null
     : null;
   const nextAnimeEpisode = kind === "anime" && animeRoute
     ? (nextAnimeGuideEntry
-      ? Number(nextAnimeGuideEntry.absoluteEpisodeNumber || nextAnimeGuideEntry.episodeNumber)
+      ? Number(nextAnimeGuideEntry.episodeNumber)
       : (!animeEpisodeGuide.length && Number(seriesInfo?.episodes) > animeRoute.episode ? animeRoute.episode + 1 : null))
     : null;
 
