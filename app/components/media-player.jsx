@@ -6,9 +6,9 @@ import { normalizeTvPlayerRoute, vidlinkTvUrl } from "../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
-export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode, audio }) {
+export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
   const router = useRouter();
-  const tvRoute = kind === "tv" ? normalizeTvPlayerRoute(imdbId, season, episode) : null;
+  const tvRoute = kind === "tv" ? normalizeTvPlayerRoute(tmdbId, season, episode) : null;
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
   const [seriesInfo, setSeriesInfo] = useState(null);
@@ -28,7 +28,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
     }
 
     const endpoint = kind === "tv"
-      ? "/api/tv/" + encodeURIComponent(tvRoute.imdbId)
+      ? "/api/tv/" + encodeURIComponent(tvRoute.tmdbId)
       : "/api/anime/" + encodeURIComponent(malId);
 
     fetch(endpoint, { cache: "no-store", signal: controller.signal })
@@ -45,8 +45,19 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
         setPosterUrl(typeof payload.item.posterUrl === "string" ? payload.item.posterUrl : null);
         if (kind === "tv") {
           setSeriesInfo({
-            seasons: Array.isArray(payload.item.seasons) ? payload.item.seasons : []
+            seasons: Array.isArray(payload.item.seasons) ? payload.item.seasons : [],
+            externalImdbId: payload.item.externalImdbId || null
           });
+          try {
+            const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
+            const legacyProgress = Array.isArray(saved) ? saved.find((item) =>
+              item && String(item.imdbId || "").toLowerCase() === String(payload.item.externalImdbId || "").toLowerCase() &&
+              Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
+            ) : null;
+            if (legacyProgress && Number.isFinite(Number(legacyProgress.watched))) {
+              setStartAt(Math.max(0, Math.floor(Number(legacyProgress.watched))));
+            }
+          } catch {}
         }
         setMetadataError("");
         setCatalogVerified(true);
@@ -61,21 +72,21 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
       });
 
     return () => controller.abort();
-  }, [kind, imdbId, malId, tvRoute?.imdbId]);
+  }, [kind, tmdbId, malId, season, episode, tvRoute?.tmdbId]);
 
   useEffect(() => {
     try {
       const key = kind === "tv" ? "situla:tv-progress:v1" : "situla:anime-progress:v1";
       const saved = JSON.parse(localStorage.getItem(key) || "[]");
       const entry = Array.isArray(saved) ? saved.find((item) => item && typeof item === "object" && (kind === "tv"
-        ? String(item.imdbId || "").toLowerCase() === String(imdbId || "").toLowerCase() && Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
+        ? Number(item.tmdbId) === Number(tmdbId) && Number(item.season) === Number(season) && Number(item.episode) === Number(episode)
         : Number(item.malId) === Number(malId) && Number(item.episode) === Number(episode) && item.audio === (audio || "sub")
       )) : null;
       setStartAt(entry && Number.isFinite(Number(entry.watched)) ? Math.max(0, Math.floor(Number(entry.watched))) : 0);
     } catch {
       setStartAt(0);
     }
-  }, [kind, imdbId, malId, season, episode, audio]);
+  }, [kind, tmdbId, malId, season, episode, audio]);
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
@@ -115,13 +126,14 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
         if (!Number.isFinite(watched) || watched < 0) return;
         const updatedAt = Date.now();
         const mediaKey = kind === "tv"
-          ? "tv:" + tvRoute.imdbId + ":s" + tvRoute.season + ":e" + tvRoute.episode
+          ? "tv:" + tvRoute.tmdbId + ":s" + tvRoute.season + ":e" + tvRoute.episode
           : "anime:" + malId + ":e" + episode + ":" + (audio || "sub");
         const historyEntry = {
           key: mediaKey,
           mediaType: kind,
-          mediaId: kind === "tv" ? tvRoute.imdbId : String(malId),
-          imdbId: kind === "tv" ? tvRoute.imdbId : null,
+          mediaId: kind === "tv" ? String(tvRoute.tmdbId) : String(malId),
+          tmdbId: kind === "tv" ? tvRoute.tmdbId : null,
+          imdbId: null,
           title,
           posterUrl,
           season: kind === "tv" ? tvRoute.season : null,
@@ -139,7 +151,8 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
           const key = "situla:tv-progress:v1";
           const current = JSON.parse(localStorage.getItem(key) || "[]");
           const matchesEpisode = (item) =>
-            String(item?.imdbId || "").toLowerCase() === tvRoute.imdbId &&
+            (Number(item?.tmdbId) === tvRoute.tmdbId ||
+              String(item?.imdbId || "").toLowerCase() === String(seriesInfo?.externalImdbId || "").toLowerCase()) &&
             Number(item?.season) === tvRoute.season &&
             Number(item?.episode) === tvRoute.episode;
           if (eventName === "ended") {
@@ -147,7 +160,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
             return;
           }
           const entry = {
-            imdbId: tvRoute.imdbId,
+            tmdbId: tvRoute.tmdbId,
             title,
             posterUrl,
             season: tvRoute.season,
@@ -179,7 +192,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
     };
     window.addEventListener("message", onPlayerMessage);
     return () => window.removeEventListener("message", onPlayerMessage);
-  }, [kind, imdbId, malId, season, episode, audio, title, posterUrl, tvRoute?.imdbId, tvRoute?.season, tvRoute?.episode]);
+  }, [kind, tmdbId, malId, season, episode, audio, title, posterUrl, tvRoute?.tmdbId, tvRoute?.season, tvRoute?.episode, seriesInfo?.externalImdbId]);
 
   const tvSeasons = (Array.isArray(seriesInfo?.seasons) ? seriesInfo.seasons : [])
     .filter((item) => item && Number(item.episodeCount) > 0 && Number(item.seasonNumber) > 0)
@@ -198,13 +211,13 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
 
   function playNextEpisode() {
     if (!nextEpisode || !tvRoute || kind !== "tv") return;
-    router.push("/watch/tv/" + encodeURIComponent(tvRoute.imdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
+    router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
   }
 
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified || !tvRoute) return null;
-      return vidlinkTvUrl(tvRoute.imdbId, tvRoute.season, tvRoute.episode);
+      return vidlinkTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode);
     }
     const params = new URLSearchParams({
       primaryColor: "e8b65b",
@@ -257,7 +270,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
           <button
             type="button"
             className="series-player-guide"
-            onClick={() => tvRoute && router.push("/tv/" + encodeURIComponent(tvRoute.imdbId))}
+            onClick={() => tvRoute && router.push("/tv/" + encodeURIComponent(tvRoute.tmdbId))}
             disabled={!tvRoute}
           >Episode guide</button>
           <button type="button" className="series-player-next" onClick={playNextEpisode} disabled={!nextEpisode || !catalogVerified}>
