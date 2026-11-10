@@ -1032,14 +1032,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div><span>EXPLORE THE CATALOG</span><h1 className="mt-1 text-2xl font-black">Movies</h1></div>
             </div>
             {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(catalogSpotlight.imdbId)} />}
-            {loading ? (
+            {loading && !movies.length ? (
               <SkeletonGrid count={12} />
+            ) : movies.length ? (
+              <>
+                <div className="catalog-grid">
+                  {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
+                </div>
+                {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing movies…</p>}
+                {error && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+              </>
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Movie catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
-            ) : movies.length ? (
-              <div className="catalog-grid">
-                {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
-              </div>
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No movies published yet</p><p className="mt-2 text-xs">Movies in the Situla catalog will appear here.</p></div>
             )}
@@ -1053,14 +1057,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
             </div>
             {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="tv" onWatch={openTvSeries} />}
-            {loading ? (
+            {loading && !tvShows.length ? (
               <SkeletonGrid count={12} />
+            ) : tvShows.length ? (
+              <>
+                <div className="catalog-grid">
+                  {tvShows.map((item) => <SeriesCard key={item.tmdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
+                </div>
+                {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing TV series…</p>}
+                {error && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+              </>
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
-            ) : tvShows.length ? (
-              <div className="catalog-grid">
-                {tvShows.map((item) => <SeriesCard key={item.tmdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
-              </div>
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with TMDB IDs to the database.</p></div>
             )}
@@ -1074,14 +1082,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
             </div>
             {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="anime" onWatch={openAnimeSeries} />}
-            {loading ? (
+            {loading && !animeShows.length ? (
               <SkeletonGrid count={12} />
+            ) : animeShows.length ? (
+              <>
+                <div className="catalog-grid">
+                  {animeShows.map((item) => <SeriesCard key={item.malId} item={item} kind="anime" onOpen={openAnimeSeries} />)}
+                </div>
+                {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing Anime…</p>}
+                {error && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+              </>
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Anime catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
-            ) : animeShows.length ? (
-              <div className="catalog-grid">
-                {animeShows.map((item) => <SeriesCard key={item.malId} item={item} kind="anime" onOpen={openAnimeSeries} />)}
-              </div>
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Add curated anime records to the database.</p></div>
             )}
