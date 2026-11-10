@@ -2,6 +2,19 @@ const VIDLINK_ORIGIN = "https://vidlink.pro";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
 
+// Normalize route params before they are used by Server or Client Components.
+export function normalizeTvPlayerRoute(imdbId, season, episode) {
+  const id = String(imdbId || "").trim().toLowerCase();
+  const seasonNumber = Number(season);
+  const episodeNumber = Number(episode);
+
+  if (!IMDB_TITLE_ID.test(id)) return null;
+  if (!Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
+  if (!Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
+
+  return { imdbId: id, season: seasonNumber, episode: episodeNumber };
+}
+
 // Match Situla's warm-gold player controls on both Movie providers.
 // No mute parameter is added: playback remains under the provider's normal
 // user-initiated audio controls, with the iframe autoplay permission retained.
@@ -30,14 +43,10 @@ export function vidlinkMovieUrl(imdbId) {
 }
 
 export function vidlinkTvUrl(imdbId, season, episode) {
-  const id = String(imdbId || "").trim().toLowerCase();
-  const seasonNumber = Number(season);
-  const episodeNumber = Number(episode);
-  if (!IMDB_TITLE_ID.test(id)) return null;
-  if (!Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
-  if (!Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
-  return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(id) + "/" +
-    seasonNumber + "/" + episodeNumber;
+  const route = normalizeTvPlayerRoute(imdbId, season, episode);
+  if (!route) return null;
+  return VIDLINK_ORIGIN + "/tv/" + encodeURIComponent(route.imdbId) + "/" +
+    route.season + "/" + route.episode;
 }
 
 export function hindiMoviePlayerUrl(imdbId) {
