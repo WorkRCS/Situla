@@ -97,13 +97,14 @@ test("both Movie providers use Situla gold controls without a mute override", ()
 });
 
 
-test("Situla homepage hero rotates through live discovery movies every ten seconds", async () => {
+test("Situla homepage hero rotates through mixed media discovery every three seconds", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /setHeroMovies\(uniqueHeroMovies\)/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
-  assert.match(app, /heroMovies\[heroIndex % heroMovies\.length\]/);
-  assert.match(app, /Previous featured movie/);
-  assert.match(app, /Next featured movie/);
+  assert.match(app, /setHeroMovies\(homeMoviePicks\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /homeHeroItems\[heroIndex % Math\.max\(1, homeHeroItems\.length\)\]/);
+  assert.match(app, /Previous featured title/);
+  assert.match(app, /Next featured title/);
+  assert.match(app, /onMouseEnter=\{\(\) => setHeroPaused\(true\)\}/);
 });
 
 test("catalog pages do not render aggregate movie, series, saved-list or history counts", async () => {
@@ -175,14 +176,18 @@ test("watch history renders an accessible progress meter inside each history car
   assert.match(headless, /ui-card/);
 });
 
-test("Movies, TV and Anime choose a different spotlight on refresh and rotate it", async () => {
+test("home and catalog spotlights refresh and rotate across all media types", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:home"\)/);
+  assert.match(app, /chooseFreshSpotlight\(homeHeroItems, "situla:spotlight:home", "heroId"\)/);
   assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
+  assert.match(app, /mixHomeSpotlight\(\{/);
+  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=24&random=true"/);
+  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=24&random=true"/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
+  assert.match(app, /\}, 10000\)/);
 });
 
 test("Situla header keeps the logo with the name, and the theme switch is removed", async () => {

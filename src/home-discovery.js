@@ -17,7 +17,8 @@ export function toHomeSpotlight(item, mediaType) {
 
   const title = mediaType === "anime" ? (item.titleEnglish || item.title) : item.title;
   const date = item.releaseDate || item.firstAirDate || item.airedFrom || "";
-  const heroYear = Number(item.releaseYear) || (String(date).slice(0, 4) || "");
+  const dateYear = Number(String(date).slice(0, 4)) || "";
+  const heroYear = Number(item.releaseYear) || dateYear;
   const heroPoster = item.posterUrl || item.posterFallbackUrl || null;
 
   return {
