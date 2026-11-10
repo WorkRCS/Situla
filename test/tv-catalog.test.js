@@ -147,6 +147,10 @@ test("TV database validator enforces consistent totals, unique episodes and 80% 
   duplicateEpisode.seasons[1].episodes[1].episodeNumber = 1;
   assert.throws(() => validateTvSeriesRecord(duplicateEpisode), /duplicate or untitled episode/);
 
+  const skippedEpisode = structuredClone(record);
+  skippedEpisode.seasons[1].episodes[2].episodeNumber = 8;
+  assert.throws(() => validateTvSeriesRecord(skippedEpisode), /Non-contiguous episode numbering/);
+
   const wrongTotal = structuredClone(record);
   wrongTotal.numberOfEpisodes += 1;
   assert.throws(() => validateTvSeriesRecord(wrongTotal), /Episode total does not match/);
