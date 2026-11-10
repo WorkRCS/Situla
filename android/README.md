@@ -6,6 +6,17 @@ The Android application is a native WebView shell for the hosted Situla website.
 
 - Android Gradle Plugin and Gradle configuration are in this directory.
 - CI builds a debug APK with `gradle --no-daemon :app:assembleDebug`. The Android workflow uses JDK 17; the Brave JNI bridge Kotlin sources are compiled by the app's own Kotlin plugin.
+- The Gradle Wrapper pins Gradle 9.8.2 to the direct official distribution host `https://downloads.gradle.org` and verifies the ZIP with Gradle's published SHA-256 checksum. It retries failed downloads three times and waits up to two minutes per attempt.
+- If the Gradle download still reports `ConnectException` or `Connection timed out`, this is generally a machine/network/proxy connection issue rather than an invalid version string. Check that HTTPS access to `downloads.gradle.org` is allowed. If your network requires a proxy, configure it in your user-level Gradle properties file (`%USERPROFILE%\\.gradle\\gradle.properties` on Windows), not in this repository. Example (replace the host and port with values supplied by your network administrator):
+
+  ```properties
+  systemProp.https.proxyHost=proxy.example.com
+  systemProp.https.proxyPort=8080
+  systemProp.http.proxyHost=proxy.example.com
+  systemProp.http.proxyPort=8080
+  ```
+
+  Do not commit proxy credentials or personal proxy settings to Git. You can also use Android Studio's **Settings → Appearance & Behavior → System Settings → HTTP Proxy** when the IDE itself needs a proxy.
 - The WebView loads the hosted Situla website configured in `SitulaApp.kt`. The current Android URL is `https://situla-five.vercel.app/`; `SitulaApp.kt`, Gradle fallback, and the adblocker's default first-party host are kept in sync. The Brave filter engine starts with built-in fallback rules before the page is loaded, then loads EasyList, EasyPrivacy, uBlock Origin ads/privacy filters, Brave-specific/Android-specific rules, Brave regional first-party rules (including Indian site cosmetics), and Brave Unbreak rules, refreshing them every 12 hours.
 
 ## Catalog IDs and playback
