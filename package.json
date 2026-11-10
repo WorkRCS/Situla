@@ -17,11 +17,13 @@
     "migrate:tv-tmdb": "node scripts/migrate-tv-tmdb-ids.js",
     "seed:anime": "node scripts/seed-anime-additions.js",
     "seed:catalog": "npm run seed:movies && npm run seed:tv",
-    "seed:movies": "node scripts/seed-static-catalog.js --movies",
+    "seed:movies": "node scripts/seed-static-catalog.js --movies && npm run seed:movie-additions",
     "check:anime": "node scripts/check-anime-additions.js",
     "audit:anime": "node scripts/audit-anime-artwork.js",
     "audit:anime:apply": "node scripts/audit-anime-artwork.js --apply",
-    "check:tv": "node --test test/tv-catalog.test.js"
+    "check:tv": "node --test test/tv-catalog.test.js",
+    "seed:movie-additions": "node scripts/seed-movie-additions.js",
+    "check:movies": "node --test test/movie-catalog.test.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
