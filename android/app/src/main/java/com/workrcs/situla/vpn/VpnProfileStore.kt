@@ -6,10 +6,23 @@ import java.io.File
 object VpnProfileStore {
     val regions = listOf("Singapore", "Malaysia", "Japan", "Germany", "Netherlands", "Poland")
     private const val PREFERENCES = "situla_vpn_preferences"
+    private const val STARTUP_SAFE_DEFAULTS_KEY = "startup_safe_defaults_v1"
 
-    fun autoConnectEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-            .getBoolean("auto_connect_enabled", false)
+    fun autoConnectEnabled(context: Context): Boolean {
+        val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+        // One-time migration: older builds defaulted auto-connect to enabled.
+        // Reset that launch-time behavior so a stale VPN profile cannot prevent
+        // the app from opening after an update. Users can opt in again in settings.
+        if (!preferences.getBoolean(STARTUP_SAFE_DEFAULTS_KEY, false)) {
+            preferences.edit()
+                .putBoolean("auto_connect_enabled", false)
+                .putBoolean("auto_rotate_enabled", false)
+                .putBoolean(STARTUP_SAFE_DEFAULTS_KEY, true)
+                .apply()
+            return false
+        }
+        return preferences.getBoolean("auto_connect_enabled", false)
+    }
 
     fun autoConnectRegion(context: Context): String? =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
