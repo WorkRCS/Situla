@@ -87,6 +87,29 @@ function MovieCard({ movie, onOpen, onSave, saved }) {
   );
 }
 
+function SeriesPosterImage({ item, title }) {
+  const sources = [...new Set([item.posterUrl, item.posterFallbackUrl].filter((value) =>
+    typeof value === "string" && /^https:\/\/cdn\.myanimelist\.net\/images\/anime\//.test(value)
+  ))];
+  const [sourceIndex, setSourceIndex] = useState(0);
+
+  useEffect(() => {
+    setSourceIndex(0);
+  }, [item.malId, item.tmdbId, item.posterUrl, item.posterFallbackUrl]);
+
+  const source = sources[sourceIndex];
+  return source ? (
+    <img
+      src={source}
+      alt={title}
+      loading="lazy"
+      onError={() => setSourceIndex((current) => current + 1)}
+    />
+  ) : (
+    <div className="poster-fallback"><Icon name="film" size={30} /></div>
+  );
+}
+
 
 function SeriesCard({ item, kind, onOpen }) {
   const isTv = kind === "tv";
@@ -101,9 +124,7 @@ function SeriesCard({ item, kind, onOpen }) {
     <article className="movie-card">
       <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
         <div className="movie-poster">
-          {item.posterUrl
-            ? <img src={item.posterUrl} alt={title} loading="lazy" />
-            : <div className="poster-fallback"><Icon name="film" size={30} /></div>}
+          <SeriesPosterImage item={item} title={title} />
           {rating > 0 && (
             <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
           )}
@@ -127,7 +148,13 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   const kicker = isTv ? "A SERIES TO GET LOST IN" : isAnime ? "ANOTHER WORLD AWAITS" : "FEATURED MOVIE";
   return (
     <section className="hero-card catalog-spotlight" key={item.tmdbId || item.imdbId || item.malId}>
-      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" />}
+      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" onError={(event) => {
+        if (isAnime && item.posterFallbackUrl && event.currentTarget.src !== item.posterFallbackUrl) {
+          event.currentTarget.src = item.posterFallbackUrl;
+        } else {
+          event.currentTarget.style.display = "none";
+        }
+      }} />}
       <div className="hero-content">
         <div className="hero-eyebrow"><span className="hero-live-dot" /> {kicker}</div>
         <p className="hero-kicker">Picked for your next watch</p>
