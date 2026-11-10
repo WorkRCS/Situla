@@ -218,8 +218,13 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     : null;
 
   function playNextEpisode() {
-    if (!nextEpisode || !tvRoute || kind !== "tv") return;
+    if (!nextEpisode || !tvRoute || kind !== "tv" || !catalogVerified) return;
     router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
+  }
+
+  function playNextSeason() {
+    if (!nextSeason || !tvRoute || kind !== "tv" || !catalogVerified) return;
+    router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + Number(nextSeason.seasonNumber) + "/1");
   }
 
   const animeEpisodeGuide = (Array.isArray(seriesInfo?.episodeGuide) ? seriesInfo.episodeGuide : [])
@@ -316,6 +321,9 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           >Episode guide</button>
           <button type="button" className="series-player-next" onClick={playNextEpisode} disabled={!nextEpisode || !catalogVerified}>
             Next episode <i className="bi bi-skip-forward-fill" aria-hidden="true" />
+          </button>
+          <button type="button" className="series-player-guide" onClick={playNextSeason} disabled={!nextSeason || !catalogVerified}>
+            Next season <i className="bi bi-chevron-double-right" aria-hidden="true" />
           </button>
         </div>}
       </header>

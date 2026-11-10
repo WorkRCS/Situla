@@ -1,4 +1,4 @@
-name: seed-static-catalog
+name: seed-tv-and-static-catalog
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ concurrency:
 jobs:
   seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     env:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
       MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
@@ -45,7 +45,7 @@ jobs:
             echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets."
             exit 1
           fi
-          echo "MongoDB credentials are present. No metadata APIs or crawlers will run."
+          echo "MongoDB credentials are present. TV seed verifies public TVmaze metadata and artwork before writing; no video files or stream URLs are imported."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund

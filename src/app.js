@@ -83,6 +83,10 @@ export function tvSeriesDto(series) {
     keywords: Array.isArray(series.keywords) ? series.keywords : [],
     metadataSource: series.metadataSource || '',
     sourceUrl: series.sourceUrl || '',
+    referenceUrl: series.referenceUrl || '',
+    network: series.network || '',
+    country: series.country || '',
+    creators: Array.isArray(series.creators) ? series.creators : [],
     numberOfSeasons: Number(series.numberOfSeasons) || (series.seasons || []).filter((season) => Number(season.seasonNumber) > 0).length,
     numberOfEpisodes: Number(series.numberOfEpisodes) || (series.seasons || []).reduce((sum, season) => sum + (Number(season.episodeCount) || 0), 0),
     seasons: (series.seasons || []).map((season) => ({
@@ -258,7 +262,7 @@ app.get('/api/search', async (c) => {
       TvSeries.find({
         adult: { $ne: true },
         $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^[0-9]+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
-      }).sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
+      }).select('-seasons.episodes').sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
       AnimeSeries.find({
         type: { $in: ['TV', 'ONA'] },
         $or: [
@@ -376,9 +380,10 @@ app.get('/api/tv', async (c) => {
             { $match: filter },
             { $sample: { size: Math.min(page * limit, 1000) } },
             { $skip: (page - 1) * limit },
-            { $limit: limit }
+            { $limit: limit },
+            { $project: { 'seasons.episodes': 0 } }
           ])
-        : TvSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+        : TvSeries.find(filter).select('-seasons.episodes').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       TvSeries.countDocuments(filter)
     ]);
     return c.json({ items: items.map(tvSeriesDto), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
@@ -417,7 +422,7 @@ app.get('/api/tv/:tmdbId', async (c) => {
   }
   try {
     await connectDatabase();
-    const item = await TvSeries.findOne({ tmdbId }).lean();
+    const item = await TvSeries.findOne({ tmdbId }).select('-seasons.episodes').lean();
     if (!item) return c.json({ error: 'TV series not found.' }, 404);
     return c.json({ item: tvSeriesDto(item) });
   } catch (error) {

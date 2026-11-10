@@ -105,6 +105,10 @@ export default function TvSeriesExperience({ tmdbId }) {
         ) : error && !series ? (
           <div className="empty-panel"><h1 className="font-bold text-white">TV series unavailable</h1><p className="mt-2 text-sm">{error}</p></div>
         ) : series ? (
+          <>
+          <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
+            {series.backdropUrl && <img src={series.backdropUrl} alt={series.title + " backdrop"} className="h-36 w-full object-cover md:h-52" />}
+          </div>
           <div className="grid gap-6 md:grid-cols-[260px_1fr]">
             <div className="overflow-hidden rounded-2xl bg-[#11131b]">
               {series.posterUrl && <img src={series.posterUrl} alt={series.title} className="w-full object-cover" />}
@@ -119,9 +123,12 @@ export default function TvSeriesExperience({ tmdbId }) {
                 {series.numberOfSeasons > 0 && <span>{series.numberOfSeasons} seasons</span>}
                 {series.numberOfEpisodes > 0 && <span>{series.numberOfEpisodes} episodes</span>}
                 {series.certification && <span>{series.certification}</span>}
+                {series.network && <span>{series.network}</span>}
+                {series.country && <span>{series.country}</span>}
                 {series.adult === false && <span className="catalog-policy-pill">Curated Situla catalog</span>}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
+              {Array.isArray(series.creators) && series.creators.length > 0 && <p className="mt-3 text-xs text-[#9297a7]">Created by {series.creators.join(", ")}</p>}
               <p className="mt-5 max-w-2xl text-sm leading-7 text-[#b5bac7]">{series.overview || "No description available."}</p>
 
               <div className="mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
@@ -203,9 +210,10 @@ export default function TvSeriesExperience({ tmdbId }) {
                 )}
               </div>}
 
-              <p className="mt-5 text-[10px] text-[#9297a7]">Series ID: <a href={series.tmdbUrl || ("https://www.themoviedb.org/tv/" + series.tmdbId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB {series.tmdbId}</a>{series.externalImdbId && <> · IMDb reference: <a href={"https://www.imdb.com/title/" + series.externalImdbId + "/"} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.externalImdbId}</a></>}{series.sourceUrl && <> · Catalogue source: <a href={series.sourceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.metadataSource === "TVmaze" ? "TVmaze" : "TMDB"}</a></>}</p>
+              <p className="mt-5 text-[10px] text-[#9297a7]">Series ID: <a href={series.tmdbUrl || ("https://www.themoviedb.org/tv/" + series.tmdbId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB {series.tmdbId}</a>{series.externalImdbId && <> · IMDb reference: <a href={"https://www.imdb.com/title/" + series.externalImdbId + "/"} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.externalImdbId}</a></>}{series.sourceUrl && <> · Catalogue source: <a href={series.sourceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.metadataSource === "TVmaze" ? "TVmaze" : "TMDB"}</a></>}{series.referenceUrl && <> · Curated reference: <a href={series.referenceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">Open source</a></>}</p>
             </section>
           </div>
+          </>
         ) : null}
       </div>
     </main>

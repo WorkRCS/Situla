@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. Movie, TV and Anime catalog additions are curated in the repository as static data; the normal seed commands do not run crawlers or call IMDb, TMDB, TVmaze or MAL APIs.
+Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. Movie and Anime additions are committed static data. TV seed candidates and TMDB IDs are committed locally; the explicit TV seed command verifies show descriptions, seasons, episodes and artwork against TVmaze before writing to MongoDB.
 
 ## Identifiers and playback
 
@@ -22,10 +22,11 @@ The provider controls stream availability, resolution and audio tracks. Situla d
 
 ## Static catalogue seed
 
-Movies and TV retain their separate static lists and identifier providers. Anime now has its own **new-only MAL seed**:
+Movies and TV retain separate identifiers. Anime has its own **new-only MAL seed**, and TV has a verified **200-new-series seed**:
 
 - Movies: IMDb IDs in data/movie-catalog.js.
-- TV Series: numeric TMDB IDs in data/tv-catalog.js.
+- Existing TV Series: numeric TMDB IDs in data/tv-catalog.js.
+- New TV candidates: more than 200 unique TMDB IDs in data/tv-additions.js; the seed accepts exactly 200 only after exact title/year matching, complete synopsis/episode-guide checks, adult-genre filtering and artwork validation.
 - Existing/legacy Anime: MAL IDs in data/anime-catalog.js; this list is not re-seeded or updated by the Anime additions command.
 - New Anime: 200 MAL-ID matched entries in data/anime-additions-01.js through data/anime-additions-16.js, aggregated by data/anime-additions.js.
 
@@ -53,14 +54,14 @@ The cleanup deletes only Anime documents that have neither a usable poster nor a
 
 ### Movie and TV static seeds
 
-The general static seed command is limited to Movies and TV. It cannot alter Anime:
+The Movie seed is offline and add-only; the TV seed separately verifies and writes 200 new TV series plus any available metadata refreshes for the existing TV pack. Neither seed alters Anime:
 
 ```sh
 npm run seed:movies
 npm run seed:tv
 ```
 
-All seed/audit commands require MONGODB_URI and MONGODB_DB_NAME in .env, plus database network access. They read committed static data and do not call IMDb, TMDB, MAL, TVmaze or other metadata APIs at run time. npm run dev never runs a seed or cleanup automatically.
+All seed/audit commands require MONGODB_URI and MONGODB_DB_NAME in .env plus database network access. `npm run seed:tv` additionally needs outbound HTTPS access to TVmaze and its image host; no TMDB API key is required. Before saving, the TV seed validates the poster/backdrop response and every episode still it uses. Missing episode stills are stored as null so the UI shows a placeholder instead of a broken image. TVmaze metadata is credited by a source link on the detail page and follows TVmaze's CC BY-SA terms. `npm run dev` never runs a seed or cleanup automatically.
 
 
 ## Legacy TV identifier migration
@@ -86,7 +87,7 @@ The public API remains read-only for catalogue data; there are no public admin o
 ## Metadata sources and limitations
 
 - Movie IDs and factual catalogue fields are curated from the [IMDb Top 250 public-list dataset](https://github.com/sharmadhiraj/free-json-datasets/blob/master/docs/sports-entertainment/imdb_top_movies.json).
-- The static TV additions use the [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets), which is MIT-licensed. TMDB links identify the corresponding series records.
+- TV candidate IDs, premiere dates, posters and season/episode totals use the [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets), which is MIT-licensed. The TV seed matches titles and premiere years against [TVmaze](https://www.tvmaze.com/api), then adds the full TVmaze synopsis and available episode-guide metadata with attribution links.
 - New Anime candidates are shortlisted from the [Anime Stats Tracker seasonal dataset](https://github.com/zyhe16/anime-stats-tracker), which is MIT-licensed. Exact MAL IDs, title artwork, synopsis, related-season ordering and per-episode still metadata are curated from the [Anime Mapper static records](https://github.com/subhajeetch-fl/anime-mapper), which is MIT-licensed. The poster/banner/still images remain external references and are not re-hosted by Situla.
 - Some previously imported TV records retain TVmaze-sourced metadata and episode guides. Their TVmaze source links and existing guide remain intact.
 - Poster images are stored as external image URLs; Situla does not re-host those image files.

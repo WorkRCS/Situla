@@ -306,3 +306,14 @@ test("Anime catalog is a manually curated MAL list and the seed command uses the
   assert.match(script, /\$setOnInsert/);
   assert.doesNotMatch(script, /fetch\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
 });
+
+
+test("TV player exposes working Next Episode and Next Season navigation from verified season metadata", async () => {
+  const player = await read("../app/components/media-player.jsx");
+  assert.match(player, /function playNextEpisode\(\)/);
+  assert.match(player, /function playNextSeason\(\)/);
+  assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\) \+ "\/" \+ Number\(nextSeason\.seasonNumber\) \+ "\/1"\)/);
+  assert.match(player, /Next episode[\s\S]*?disabled=\{!nextEpisode \|\| !catalogVerified\}/);
+  assert.match(player, /Next season[\s\S]*?disabled=\{!nextSeason \|\| !catalogVerified\}/);
+  assert.match(player, /episodeCount\) > 0 && Number\(item\.seasonNumber\) > 0/);
+});
