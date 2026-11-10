@@ -63,3 +63,50 @@ test("seed:catalog runs all three catalog seed commands", async () => {
   assert.equal(pkg.scripts["seed:catalog"],
     "npm run seed:movies && npm run seed:tv && npm run seed:anime");
 });
+
+test("search is rendered above the app through a body portal and uses responsive header controls", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /import \{ createPortal \} from "react-dom"/);
+  assert.ok(app.indexOf("createPortal(") > app.indexOf("</header>"));
+  assert.match(app, /createPortal\([\s\S]*document\.body/);
+  assert.match(app, /className="header-search search-box header-search-trigger"/);
+  assert.match(app, /aria-haspopup="dialog"/);
+  assert.doesNotMatch(app, /<label className="header-search search-box"/);
+  assert.match(css, /@media \(max-width:1100px\)[\s\S]*?\.header-search-trigger[\s\S]*?header-search-label \{ display:none; \}/);
+  assert.match(css, /\.search-overlay \{[\s\S]*?z-index:1200/);
+});
+
+test("watch title lockup has compact spacing and a restrained responsive size", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /\.watch-topbar \.watch-title \{[\s\S]*?gap:2px/);
+  assert.match(css, /\.watch-title h1 \{[\s\S]*?margin:0;[\s\S]*?font-size:clamp\(12px,1\.05vw,15px\)/);
+  assert.match(css, /@media \(max-width:620px\)[\s\S]*?\.watch-title h1 \{[\s\S]*?font-size:12px/);
+});
+
+test("TV and Anime detail pages share the adaptive cinematic detail system", async () => {
+  const tv = await read("../app/tv/[tmdbId]/detail.jsx");
+  const anime = await read("../app/anime/[malId]/detail.jsx");
+  const css = await read("../app/globals.css");
+  for (const source of [tv, anime]) {
+    assert.match(source, /series-detail-page/);
+    assert.match(source, /series-detail-hero/);
+    assert.match(source, /series-detail-layout/);
+    assert.match(source, /series-detail-poster/);
+    assert.match(source, /series-detail-description/);
+    assert.match(source, /series-detail-panel/);
+  }
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?\.series-detail-layout \{ grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(css, /@media \(min-width:1500px\)/);
+  assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)/);
+});
+
+test("TV and Anime catalogue cards expose concise metadata and descriptions", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind\}/);
+  assert.match(app, /const synopsis = isTv \? item\.overview : item\.synopsis/);
+  assert.match(app, /series-card-description/);
+  assert.match(css, /\.series-card-description[\s\S]*?-webkit-line-clamp:3/);
+  assert.match(app, /catalog-page-layout/);
+});
