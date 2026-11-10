@@ -9,7 +9,7 @@ object VpnProfileStore {
 
     fun autoConnectEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-            .getBoolean("auto_connect_enabled", true)
+            .getBoolean("auto_connect_enabled", false)
 
     fun autoConnectRegion(context: Context): String? =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
@@ -62,7 +62,7 @@ object VpnProfileStore {
 
     fun autoRotateEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-            .getBoolean("auto_rotate_enabled", true)
+            .getBoolean("auto_rotate_enabled", false)
 
     fun setAutoRotateEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
