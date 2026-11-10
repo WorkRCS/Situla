@@ -214,6 +214,10 @@ export function validateTvSeriesRecord(record) {
     }
   }
 
+  const orderedRegularSeasons = [...seasonNumbers].filter((number) => number > 0).sort((a, b) => a - b);
+  if (orderedRegularSeasons.some((number, index) => number !== index + 1)) {
+    fail("Non-contiguous season numbering");
+  }
   if (regularSeasonCount < 1 || Number(record.numberOfSeasons) !== regularSeasonCount) {
     fail("Season total does not match the guide");
   }
