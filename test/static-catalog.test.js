@@ -87,8 +87,8 @@ test("Anime additions are seeded only for new MAL IDs/titles and never update ol
   assert.match(script, /NEW_ANIME_CATALOG/);
   assert.match(script, /existingIds/);
   assert.match(script, /existingTitles/);
-  assert.match(script, /\$setOnInsert/);
-  assert.doesNotMatch(script, /\$set\s*:/);
+  assert.match(script, /AnimeSeries\.insertMany/);
+  assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
   assert.doesNotMatch(script, /\bfetch\s*\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
   assert.doesNotMatch(staticSeed, /AnimeSeries|MANUAL_ANIME_CATALOG|--anime/);
   assert.match(staticSeed, /STATIC_MOVIES/);
