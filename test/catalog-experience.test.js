@@ -52,7 +52,7 @@ test("catalog loading is bounded and off-screen image/grid work is deferred", as
   assert.match(app, /loadMoreLock\.current/);
   assert.match(app, /loading="lazy"/);
   assert.match(app, /decoding="async"/);
-  assert.match(css, /content-visibility:auto/);
+  assert.match(css, /\.catalog-grid > \* \{[\s\S]*?content-visibility:auto/);
   assert.match(css, /prefers-reduced-motion:reduce/);
   assert.match(app, /document\.visibilityState !== "visible"/);
   assert.match(app, /\}, 10000\)/);
