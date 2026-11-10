@@ -224,11 +224,14 @@ test('TVmaze importer matches exact candidate titles and maps verified season/ep
     genres: ['Drama', 'Mystery'],
     image: { medium: 'https://images.example/poster-medium.jpg', original: 'https://images.example/poster.jpg' },
     externals: { imdb: 'tt1234567' },
-    summary: '<p>This is a sufficiently detailed example synopsis for the importer test.</p>',
+    summary: '<p>This is a sufficiently detailed example synopsis for the importer test and it contains enough descriptive text to pass the extended catalogue quality check.</p>',
     _embedded: {
       episodes: [
         { id: 1, season: 1, number: 1, name: 'Pilot', airdate: '2015-01-01', runtime: 45, summary: '<p>First episode.</p>', rating: { average: 8 }, image: { original: 'https://images.example/episode-1.jpg' } },
-        { id: 2, season: 1, number: 2, name: 'The Mystery', airdate: '2015-01-08', runtime: 45, summary: '<p>Second episode.</p>', rating: { average: 8.2 }, image: { medium: 'https://images.example/episode-2.jpg' } }
+        { id: 2, season: 1, number: 2, name: 'The Mystery', airdate: '2015-01-08', runtime: 45, summary: '<p>Second episode.</p>', rating: { average: 8.2 }, image: { medium: 'https://images.example/episode-2.jpg' } },
+        { id: 3, season: 1, number: 3, name: 'The Discovery', airdate: '2015-01-15', runtime: 44, summary: '<p>Third episode.</p>', image: { original: 'https://images.example/episode-3.jpg' } },
+        { id: 4, season: 1, number: 4, name: 'The Secret', airdate: '2015-01-22', runtime: 44, summary: '<p>Fourth episode.</p>', image: { original: 'https://images.example/episode-4.jpg' } },
+        { id: 5, season: 1, number: 5, name: 'The Finale', airdate: '2015-01-29', runtime: 46, summary: '<p>Fifth episode.</p>', image: { original: 'https://images.example/episode-5.jpg' } }
       ]
     }
   };
@@ -241,7 +244,7 @@ test('TVmaze importer matches exact candidate titles and maps verified season/ep
   assert.equal(mapped.metadataSource, 'TVmaze');
   assert.equal(mapped.adult, false);
   assert.equal(mapped.runtime, 45);
-  assert.equal(mapped.numberOfEpisodes, 2);
+  assert.equal(mapped.numberOfEpisodes, 5);
   assert.equal(mapped.numberOfSeasons, 1);
   assert.equal(mapped.seasons[0].episodes[0].stillUrl, 'https://images.example/episode-1.jpg');
   assert.equal(mapped.seasons[0].episodes[1].stillUrl, 'https://images.example/episode-2.jpg');
