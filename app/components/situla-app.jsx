@@ -249,6 +249,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [heroMovies, setHeroMovies] = useState([]);
   const [heroIndex, setHeroIndex] = useState(0);
   const [catalogSpotlight, setCatalogSpotlight] = useState(null);
+  const [catalogSpotlightItems, setCatalogSpotlightItems] = useState([]);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -368,7 +369,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
         setMovies(items);
-        if (tab === "movies") setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:movies"));
+        if (tab === "movies") {
+          const freshSpotlight = chooseFreshSpotlight(items, "situla:spotlight:movies");
+          setCatalogSpotlightItems(items);
+          setCatalogSpotlight(freshSpotlight);
+        }
         if (isDiscover) {
           const uniqueHeroMovies = [];
           const seenHeroIds = new Set();
@@ -436,11 +441,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const items = Array.isArray(payload.items) ? payload.items : [];
         if (tab === "tv") {
           setTvShows(items);
+          setCatalogSpotlightItems(items);
           setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:tv"));
           setTvPage(Number(payload.pagination?.page) || 1);
           setTvTotal(Number(payload.pagination?.total) || items.length);
         } else {
           setAnimeShows(items);
+          setCatalogSpotlightItems(items);
           setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:anime", "malId"));
           setAnimePage(Number(payload.pagination?.page) || 1);
           setAnimeTotal(Number(payload.pagination?.total) || items.length);
@@ -459,6 +466,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     loadSeries();
     return () => controller.abort();
   }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "movies" && tab !== "tv" && tab !== "anime") return;
+    if (catalogSpotlightItems.length < 2) return;
+    const interval = window.setInterval(() => {
+      setCatalogSpotlight((current) => {
+        const idField = tab === "anime" ? "malId" : "imdbId";
+        const currentIndex = catalogSpotlightItems.findIndex((item) => String(item[idField]) === String(current?.[idField]));
+        return catalogSpotlightItems[(currentIndex + 1 + catalogSpotlightItems.length) % catalogSpotlightItems.length];
+      });
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [tab, catalogSpotlightItems]);
+
+  useEffect(() => {
+    if (!catalogSpotlight || (tab !== "movies" && tab !== "tv" && tab !== "anime")) return;
+    const idField = tab === "anime" ? "malId" : "imdbId";
+    const id = catalogSpotlight[idField];
+    if (!id) return;
+    try { localStorage.setItem("situla:spotlight:" + tab, String(id)); } catch {}
+  }, [tab, catalogSpotlight]);
 
   const allGenres = useMemo(() => ["All", ...categoryShelves.map((item) => item.name)], [categoryShelves]);
 
