@@ -17,7 +17,10 @@ test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or e
   assert.equal(normalizeTvPlayerRoute("1399", "2", "0"), null);
   assert.equal(normalizeTvPlayerRoute("1399", "1.5", "2"), null);
   assert.equal(normalizeTvPlayerRoute("999999999999999999", "2", "2"), null);
-  assert.equal(vidlinkTvUrl("1399", "2", "8"), "https://vidlink.pro/tv/1399/2/8");
+  const tv = new URL(vidlinkTvUrl("1399", "2", "8"));
+  assert.equal(tv.origin + tv.pathname, "https://vidlink.pro/tv/1399/2/8");
+  assert.equal(tv.searchParams.get("primaryColor"), "e8b65b");
+  assert.equal(tv.searchParams.get("secondaryColor"), "171a23");
   assert.equal(vidlinkTvUrl("tt1234567", "2", "8"), null);
 });
 
