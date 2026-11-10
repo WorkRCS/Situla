@@ -126,7 +126,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   const genres = Array.isArray(item.genres) ? item.genres.slice(0, 2) : [];
   const kicker = isTv ? "A SERIES TO GET LOST IN" : isAnime ? "ANOTHER WORLD AWAITS" : "FEATURED MOVIE";
   return (
-    <section className="hero-card catalog-spotlight" key={item.imdbId || item.malId}>
+    <section className="hero-card catalog-spotlight" key={item.tmdbId || item.imdbId || item.malId}>
       {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" />}
       <div className="hero-content">
         <div className="hero-eyebrow"><span className="hero-live-dot" /> {kicker}</div>
@@ -460,7 +460,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (tab === "tv") {
           setTvShows(items);
           setCatalogSpotlightItems(items);
-          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:tv"));
+          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:tv", "tmdbId"));
           setTvPage(Number(payload.pagination?.page) || 1);
           setTvTotal(Number(payload.pagination?.total) || items.length);
         } else {
@@ -490,7 +490,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (catalogSpotlightItems.length < 2) return;
     const interval = window.setInterval(() => {
       setCatalogSpotlight((current) => {
-        const idField = tab === "anime" ? "malId" : "imdbId";
+        const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
         const currentIndex = catalogSpotlightItems.findIndex((item) => String(item[idField]) === String(current?.[idField]));
         return catalogSpotlightItems[(currentIndex + 1 + catalogSpotlightItems.length) % catalogSpotlightItems.length];
       });
@@ -532,7 +532,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }
 
   function openTvSeries(series) {
-    router.push("/tv/" + encodeURIComponent(series.imdbId));
+    const tmdbId = Number(series?.tmdbId);
+    if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) {
+      setError("This TV series has no valid TMDB ID. Refresh the catalog and open it again.");
+      return;
+    }
+    router.push("/tv/" + tmdbId);
   }
 
   function openAnimeSeries(series) {
@@ -562,8 +567,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
         setMovies((current) => {
-          const ids = new Set(current.map((item) => item.imdbId));
-          return [...current, ...nextItems.filter((item) => !ids.has(item.imdbId))];
+          const ids = new Set(current.map((item) => item.tmdbId));
+          return [...current, ...nextItems.filter((item) => !ids.has(item.tmdbId))];
         });
         setMoviesPage(Number(payload.pagination?.page) || nextPage);
         setMoviesTotal(Number(payload.pagination?.total) || moviesTotal);
@@ -865,10 +870,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : tvShows.length ? (
               <div className="catalog-grid">
-                {tvShows.map((item) => <SeriesCard key={item.imdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
+                {tvShows.map((item) => <SeriesCard key={item.tmdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
               </div>
             ) : (
-              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with IMDb IDs to the database.</p></div>
+              <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with TMDB IDs to the database.</p></div>
             )}
             {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </section>
@@ -908,7 +913,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div className="catalog-grid">
                 {searchResults.map((item) => item.mediaType === "movie"
                   ? <MovieCard key={item.imdbId} movie={item} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(item.imdbId)} />
-                  : <SeriesCard key={item.imdbId || item.malId} item={item} kind={item.mediaType} onOpen={item.mediaType === "tv" ? openTvSeries : openAnimeSeries} />
+                  : <SeriesCard key={item.mediaType === "tv" ? item.tmdbId : item.malId} item={item} kind={item.mediaType} onOpen={item.mediaType === "tv" ? openTvSeries : openAnimeSeries} />
                 )}
               </div>
             ) : (
@@ -979,7 +984,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </Card>
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies and TV, and MAL IDs for anime playback.</p>
+                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies, TMDB IDs for TV series, and MAL IDs for anime playback.</p>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
@@ -987,7 +992,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
-          SITULA · DISCOVER MORE · IMDb
+          SITULA · DISCOVER MORE
         </footer>
       </div>
 
