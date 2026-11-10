@@ -53,7 +53,8 @@ const tvSeasonSchema = new mongoose.Schema({
 }, { _id: false, versionKey: false });
 
 const tvSeriesSchema = new mongoose.Schema({
-  imdbId: imdbIdField,
+  tmdbId: { type: Number, required: true, min: 1 },
+  externalImdbId: { type: String, trim: true, lowercase: true, match: /^tt\\d{5,12}$/, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
@@ -78,7 +79,8 @@ const tvSeriesSchema = new mongoose.Schema({
   seasons: { type: [tvSeasonSchema], default: [] }
 }, { timestamps: true, versionKey: false, strict: true });
 
-tvSeriesSchema.index({ imdbId: 1 }, { unique: true });
+tvSeriesSchema.index({ tmdbId: 1 }, { unique: true, partialFilterExpression: { tmdbId: { $type: "number" } } });
+tvSeriesSchema.index({ externalImdbId: 1 }, { sparse: true });
 tvSeriesSchema.index({ popularity: -1, firstAirDate: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
