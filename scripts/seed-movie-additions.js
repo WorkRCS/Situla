@@ -155,8 +155,9 @@ export function cinemetaCatalogUrl(part, skip = 0) {
   const segments = [];
   if (part.genre) segments.push("genre=" + encodeURIComponent(part.genre));
   if (skip > 0) segments.push("skip=" + Math.max(0, Math.floor(skip)));
+  // Stremio encodes multiple extra parameters in one path segment, joined with "&".
   return CINEMETA_API + "/catalog/movie/" + encodeURIComponent(part.catalogId || "top") +
-    (segments.length ? "/" + segments.join("/") : "") + ".json";
+    (segments.length ? "/" + segments.join("&") : "") + ".json";
 }
 
 export function cinemetaMetaUrl(imdbId) {
