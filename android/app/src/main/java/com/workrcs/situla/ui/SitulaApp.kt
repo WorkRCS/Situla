@@ -249,7 +249,7 @@ fun SitulaApp(context: Context) {
                     ): Boolean {
                         android.util.Log.e(
                             "SitulaWebView",
-                            "Renderer exited (crashed=${detail.didCrash()}, priority=${detail.rendererPriorityAtExit()}); rebuilding WebView."
+                            "Renderer exited (crashed=${detail.didCrash()}); rebuilding WebView."
                         )
                         if (webView === view) webView = null
                         exitFullScreen()
