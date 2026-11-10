@@ -144,6 +144,8 @@ test('Android startup isolates optional native/VPN work and recovers crashed Web
 
   assert.ok(wrapper.includes('override fun onRenderProcessGone('));
   assert.ok(wrapper.includes('key(webViewGeneration)'));
+  assert.doesNotMatch(wrapper, /NetworkAdBlocker\\.initialize\\(/);
+  assert.ok(player.includes('NetworkAdBlocker.initialize('));
   assert.ok(player.includes('override fun onRenderProcessGone('));
   assert.ok(player.includes('key(playerWebViewGeneration)'));
 
