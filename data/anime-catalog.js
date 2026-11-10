@@ -374,23 +374,25 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Kimetsu no Yaiba: Katanakaji no Sato-hen",
     "titleEnglish": "Demon Slayer: Kimetsu no Yaiba Swordsmith Village Arc",
     "titleJapanese": "鬼滅の刃 刀鍛冶の里編",
-    "synopsis": "",
+    "synopsis": "For centuries, the Demon Slayer Corps has sacredly kept the location of Swordsmith Village a secret. As the village of the greatest forgers, it provides Demon Slayers with the finest weapons, which allow them to fight night-crawling fiends and ensure the safety of humans. After his sword was chipped and deemed useless, Tanjirou Kamado, along with his precious little sister Nezuko, is escorted to the village to receive a new one.\n\nMeanwhile, the death of an Upper Rank Demon disturbs the idle order in the demon world. As Tanjirou becomes acquainted with Mist Hashira Muichirou Tokitou and Love Hashira Mitsuri Kanroji, ferocious powers creep from the shadows and threaten to shatter the Demon Slayers' greatest line of defense.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1765/135099l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/a9tq0aS5Zu8?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-09",
     "releaseYear": 2023,
     "episodes": 11,
     "duration": "28 min per ep",
-    "score": 8.15,
-    "scoredBy": 686770,
-    "rank": 514,
-    "popularity": 159,
+    "score": 8.14,
+    "scoredBy": 708436,
+    "rank": 546,
+    "popularity": 153,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
+      "Historical",
+      "Shounen",
       "Supernatural"
     ],
     "themes": [
@@ -399,31 +401,37 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1765/135099.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1765/135099l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51019"
   },
   {
     "malId": 52034,
     "title": "[Oshi no Ko]",
     "titleEnglish": "[Oshi No Ko]",
     "titleJapanese": "【推しの子】",
-    "synopsis": "",
+    "synopsis": "In the entertainment world, celebrities often show exaggerated versions of themselves to the public, concealing their true thoughts and struggles beneath elaborate lies. Fans buy into these fabrications, showering their idols with undying love and support, until something breaks the illusion. Sixteen-year-old rising star Ai Hoshino of pop idol group B Komachi has the world captivated; however, when she announces a hiatus due to health concerns, the news causes many to become worried.\n\nAs a huge fan of Ai, gynecologist Gorou Amemiya cheers her on from his countryside medical practice, wishing he could meet her in person one day. His wish comes true when Ai shows up at his hospital—not sick, but pregnant with twins! While the doctor promises Ai to safely deliver her children, he wonders if this encounter with the idol will forever change the nature of his relationship with her.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1812/134736l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/1yXa8MAmocQ?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-12",
     "releaseYear": 2023,
     "episodes": 11,
     "duration": "30 min per ep",
-    "score": 8.53,
-    "scoredBy": 628579,
-    "rank": 147,
-    "popularity": 175,
+    "score": 8.52,
+    "scoredBy": 645408,
+    "rank": 156,
+    "popularity": 173,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Award Winning",
-      "Drama"
+      "Drama",
+      "Reincarnation",
+      "Seinen",
+      "Showbiz"
     ],
     "themes": [
       "Reincarnation",
@@ -432,14 +440,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1812/134736.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1812/134736l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52034"
   },
   {
     "malId": 46569,
     "title": "Jigokuraku",
     "titleEnglish": "Hell's Paradise",
     "titleJapanese": "地獄楽",
-    "synopsis": "",
+    "synopsis": "Sentenced to death, ninja Gabimaru the Hollow finds himself apathetic. After leading a blood-soaked life, Gabimaru believes he deserves to die. However, every attempt to execute him inexplicably fails. Finally, Sagiri Yamada Asaemon, a fledgling member of a famed executioner clan, is asked to take Gabimaru's life; yet Sagiri makes no move to kill him as requested.\n\nInsisting that Gabimaru will not die because of his love for his wife, Sagiri instead offers him the chance to obtain a full pardon for his crimes. If he can travel to the island of Shinsekyo and obtain the Elixir of Life—which supposedly grants immortality—and bring it back for the shogun, then his freedom will be assured.\n\nBut of the many who have traveled to Shinsekyo in search of the mythical Elixir, not a single person has returned sound of mind, if at all. Though unaware of the numerous dangers ahead, Gabimaru decides to accept the offer—alongside ten other death row convicts—in hope that he and his wife may finally live in peace.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1075/131925l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/fsW0fU1hobQ?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-01",
@@ -447,16 +458,20 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "24 min per ep",
     "score": 8.08,
-    "scoredBy": 535774,
-    "rank": 617,
-    "popularity": 204,
+    "scoredBy": 555518,
+    "rank": 640,
+    "popularity": 199,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Adventure",
+      "Gore",
+      "Historical",
+      "Samurai",
+      "Shounen",
       "Supernatural"
     ],
     "themes": [
@@ -467,14 +482,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1075/131925.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1075/131925l.jpg",
+    "malUrl": "https://myanimelist.net/anime/46569"
   },
   {
     "malId": 49387,
     "title": "Vinland Saga Season 2",
     "titleEnglish": "Vinland Saga Season 2",
     "titleJapanese": "ヴィンランド・サガ SEASON2",
-    "synopsis": "",
+    "synopsis": "After his father's death and the destruction of his village at the hands of English raiders, Einar wishes for a peaceful life with his family on their newly rebuilt farms. However, fate has other plans: his village is invaded once again. Einar watches helplessly as the marauding Danes burn his lands and slaughter his family. The invaders capture Einar and take him back to Denmark as a slave. \n\nEinar clings to his mother's final words to survive. He is purchased by Ketil, a kind slave owner and landlord who promises that Einar can regain his freedom in return for working in the fields. Soon, Einar encounters his new partner in farm cultivation—Thorfinn, a dejected and melancholic slave. As Einar and Thorfinn work together toward their freedom, they are haunted by both sins of the past and the ploys of the present. Yet they carry on, grasping for a glimmer of hope, redemption, and peace in a world that is nothing but unjust and unforgiving.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/jBetoIlnDIM?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-10",
@@ -482,17 +500,20 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 24,
     "duration": "25 min per ep",
     "score": 8.83,
-    "scoredBy": 494398,
-    "rank": 34,
-    "popularity": 251,
+    "scoredBy": 516819,
+    "rank": 35,
+    "popularity": 241,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Adventure",
-      "Drama"
+      "Drama",
+      "Gore",
+      "Historical",
+      "Seinen"
     ],
     "themes": [
       "Gore",
@@ -501,32 +522,39 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1170/124312.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
+    "malUrl": "https://myanimelist.net/anime/49387"
   },
   {
     "malId": 52211,
     "title": "Mashle",
     "titleEnglish": "Mashle: Magic and Muscles",
     "titleJapanese": "マッシュル-MASHLE-",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1218/135107l.jpg",
+    "synopsis": "In this magical world, one is easily identified as having magical abilities by a distinctive mark on their face. Those unable to practice magic are swiftly exterminated to maintain the magical integrity of society. However, deep within a forest lies an anomaly in Mash Burnedead, who can be found pumping iron with one arm and lifting a cream puff with the other. This aloof boy with superhuman strength—but no magical abilities—leads a quiet life with his father, far removed from society.\n\nMash's peace is soon disturbed when the authorities discover his lack of magical powers. They issue him an ultimatum: compete to become a Divine Visionary, which would force everyone to accept him, or be persecuted forever. To protect his family, he enrolls in the prestigious Easton Magic Academy, which only the most elite and gifted students are allowed to attend. Now, Mash must overcome his shortcomings as a magic-less being and surpass the other students—relying solely on his muscles.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1218/135107l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Hbz4shbCPCA?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-08",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.61,
-    "scoredBy": 454221,
-    "rank": 1720,
-    "popularity": 283,
+    "score": 7.6,
+    "scoredBy": 469537,
+    "rank": 1810,
+    "popularity": 280,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Comedy",
-      "Fantasy"
+      "Fantasy",
+      "Gag Humor",
+      "Parody",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "Gag Humor",
@@ -536,62 +564,72 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1218/135107.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1218/135107l.webp",
+    "malUrl": "https://myanimelist.net/anime/52211"
   },
   {
     "malId": 58567,
     "title": "Ore dake Level Up na Ken Season 2: Arise from the Shadow",
     "titleEnglish": "Solo Leveling Season 2: Arise from the Shadow",
     "titleJapanese": "俺だけレベルアップな件 Season 2 -Arise from the Shadow-",
-    "synopsis": "",
+    "synopsis": "Sung Jin-Woo, dubbed the weakest hunter of all mankind, grows stronger by the day with the supernatural powers he has gained. However, keeping his skills hidden becomes more difficult as dungeon-related incidents pile up around him.\n\nWhen Jin-Woo and a few other low-ranked hunters are the only survivors of a dungeon that turns out to be a bigger challenge than initially expected, he draws attention once again, and hunter guilds take an increased interest in him. Meanwhile, a strange hunter who has been lost for ten years returns with a dire warning about an upcoming catastrophic event. As the calamity looms closer, Jin-Woo must continue leveling up to make sure nothing stops him from reaching his ultimate goal—saving the life of his mother.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1448/147351l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/GDMXGzjJzS4?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-05",
     "releaseYear": 2025,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 8.52,
-    "scoredBy": 513391,
-    "rank": 152,
-    "popularity": 291,
+    "score": 8.49,
+    "scoredBy": 543037,
+    "rank": 172,
+    "popularity": 273,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Action",
+      "Adult Cast",
       "Adventure",
-      "Fantasy"
+      "Fantasy",
+      "Urban Fantasy"
     ],
     "themes": [
       "Adult Cast",
       "Urban Fantasy"
     ],
     "demographics": [],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1448/147351.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1448/147351l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58567"
   },
   {
     "malId": 55701,
     "title": "Kimetsu no Yaiba: Hashira Geiko-hen",
     "titleEnglish": "Demon Slayer: Kimetsu no Yaiba Hashira Training Arc",
     "titleJapanese": "鬼滅の刃 柱稽古編",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1565/142711l.jpg",
+    "synopsis": "After a series of mighty clashes with Upper Rank Demons, the Ubuyashiki clan prepares for one last battle with the hellish forces of Muzan Kibutsuji. In order to finally defeat the Demon leader once and for all, the clan devises a training camp for the Demon Slayer Corps, one led by the remaining Hashira—the most elite warriors in the organization. Each Hashira forms a specialized exercise that will hone both their own abilities and the skills of the ordinary soldiers.\n\nTanjirou Kamado, a boy at the heart of the brewing conflict, recovers from wounds received in a recent fight. While his half-Demon sister Nezuko is studied by researchers like Shinobu Kochou, Tanjirou embarks to train with the Hashira, seeking mastery in each of their assigned areas of expertise to be best prepared for the coming war—skills vital to Tanjirou, as he has vowed to be the very warrior who will eliminate Muzan for good.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1565/142711l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Tf31dGdlWxE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-05-12",
     "releaseYear": 2024,
     "episodes": 8,
     "duration": "29 min per ep",
-    "score": 8.01,
-    "scoredBy": 462826,
-    "rank": 726,
-    "popularity": 295,
+    "score": 7.99,
+    "scoredBy": 486586,
+    "rank": 786,
+    "popularity": 285,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
+      "Historical",
+      "Shounen",
       "Supernatural"
     ],
     "themes": [
@@ -600,32 +638,39 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1565/142711.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1565/142711l.webp",
+    "malUrl": "https://myanimelist.net/anime/55701"
   },
   {
     "malId": 52588,
     "title": "Kaijuu 8-gou",
     "titleEnglish": "Kaiju No. 8",
     "titleJapanese": "怪獣8号",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1370/140362l.jpg",
+    "synopsis": "After the destruction of their hometown, childhood friends Kafka Hibino and Mina Ashiro make a pact to become officers in the Defense Force—a militarized organization tasked with protecting Japan from colossal monsters known as \"kaijuu.\" Decades later, the 32-year-old Kafka has all but given up on his dreams of heroism. Instead, he cleans up the remains of the slaughtered kaijuu after they are defeated by valiant soldiers—including Mina, who has successfully achieved their shared goal.\n\nUpon meeting his new coworker, Reno Ichikawa, Kafka faces a mirror of his past self: an ambitious young man whose one desire is to fight as a member of the Defense Force. Unfortunately, the two are soon involved in a freak encounter with a rogue kaijuu. Though Kafka demonstrates his innate heroic nature and rescues Reno from certain doom, he is left gravely injured.\n\nWhile both men recover in a hospital, Kafka is seemingly attacked by another one of the beasts. As a result, he gains the ability to transform into a humanoid kaijuu with the strength and powers of the massive monsters menacing Japan. Dubbed \"Kaijuu No. 8\" by the military, Kafka resolves to use his newfound gifts for the greater good. Tied together by mutual respect, Kafka and Reno set out to join warriors like Mina at the forefront of the Defense Force.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1370/140362l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/7n_mFVPeApw?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-13",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 8.2,
-    "scoredBy": 428421,
-    "rank": 443,
-    "popularity": 315,
+    "score": 8.19,
+    "scoredBy": 445096,
+    "rank": 472,
+    "popularity": 307,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
+      "Adult Cast",
       "Fantasy",
-      "Sci-Fi"
+      "Military",
+      "Sci-Fi",
+      "Shounen",
+      "Urban Fantasy"
     ],
     "themes": [
       "Adult Cast",
@@ -635,14 +680,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1370/140362.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1370/140362l.webp",
+    "malUrl": "https://myanimelist.net/anime/52588"
   },
   {
     "malId": 53393,
     "title": "Tengoku Daimakyou",
     "titleEnglish": "Heavenly Delusion",
     "titleJapanese": "天国大魔境",
-    "synopsis": "",
+    "synopsis": "Fifteen years ago, disaster struck human civilization, and now dangerous man-eating monsters roam the ravaged lands, posing an existential threat to the remaining survivors. Amid this turmoil, an isolated facility shelters children and nurtures them in peace. However, as a few among them find out about the world beyond the narrow periphery of their nursery's walls, their curiosity about it slowly grows.\n\nMeanwhile, in the outside world, young survivors Maru and Kiruko band together to search for a special place called Heaven, each for their own reasons. Carrying past burdens and tragic secrets, the two hope to find answers to the cruelty they have experienced in their lives and in the world, which still remains in tatters.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1121/133132l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/62_aXZGkG3E?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-01",
@@ -650,30 +698,34 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "23 min per ep",
     "score": 8.2,
-    "scoredBy": 295971,
-    "rank": 452,
-    "popularity": 392,
+    "scoredBy": 304084,
+    "rank": 461,
+    "popularity": 386,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Adventure",
       "Mystery",
-      "Sci-Fi"
+      "Sci-Fi",
+      "Seinen"
     ],
     "themes": [],
     "demographics": [
       "Seinen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1121/133132.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1121/133132l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53393"
   },
   {
     "malId": 48549,
     "title": "Dr. Stone: New World",
     "titleEnglish": "",
     "titleJapanese": "Dr.STONE NEW WORLD",
-    "synopsis": "",
+    "synopsis": "With the ambitious Ryuusui Nanami on board, Senkuu Ishigami and his team are almost ready to sail the seas and reach the other side of the world—where the bizarre green light that petrified humanity originated. Thanks to the revival of a skillful chef, enough food is being prepared for the entire crew, and the incredible reinvention of the GPS promises to ensure safety on the open sea.\n\nPreparations for the upcoming journey progress swimmingly until Senkuu receives an eerie message from a mysterious source. More driven than ever, the scientist sets out to explore the new world and discover what it can offer for his scientific cause. Though the uncharted territories may hide unkind surprises, Senkuu, with a little help from science, is ready to take on any challenge.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1316/136268l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/bITRcLr4xR8?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-06",
@@ -681,87 +733,100 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 11,
     "duration": "24 min per ep",
     "score": 8.14,
-    "scoredBy": 298818,
-    "rank": 520,
-    "popularity": 410,
+    "scoredBy": 311020,
+    "rank": 540,
+    "popularity": 401,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Adventure",
-      "Comedy"
+      "Comedy",
+      "Shounen"
     ],
     "themes": [],
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1316/136268.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1316/136268l.jpg",
+    "malUrl": "https://myanimelist.net/anime/48549"
   },
   {
     "malId": 52701,
     "title": "Dungeon Meshi",
     "titleEnglish": "Delicious in Dungeon",
     "titleJapanese": "ダンジョン飯",
-    "synopsis": "",
+    "synopsis": "Adventuring knight Laios Touden leads a small party through a seemingly endless dungeon, a subterranean maze full of dangerous monsters and precarious traps. Through the use of advanced magic, an explorer can sometimes be resurrected, allowing them to learn from past mistakes and give traversing the dungeon another go. However, when a powerful dragon eats Falin, Laios' spellcasting sister, she sends her brother and his companions back to the beginning to save them from permanent ends.\n\nThough strapped for cash and equipment, Laios resolves to fight his way through the dungeon and rescue Falin before she can be digested by the dragon. Despite some of Laios' allies abandoning him, two remain by his side: elven mage Marcille Donato and halfling locksmith Chilchuck Tims. Due to their lack of funds, the party faces the daunting prospect of starving before being able to complete their quest. However, they find salvation in Senshi, a dwarven warrior with a penchant for cooking and safely eating defeated monsters.\n\nWith Senshi's culinary expertise, Laios and his companions struggle through the dungeon while learning about gourmet dining—and each other—along the way.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1711/142478l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/MUJFsL_rE6E?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-04",
     "releaseYear": 2024,
     "episodes": 24,
     "duration": "25 min per ep",
-    "score": 8.59,
-    "scoredBy": 307365,
-    "rank": 115,
-    "popularity": 423,
+    "score": 8.58,
+    "scoredBy": 323076,
+    "rank": 123,
+    "popularity": 410,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Adventure",
       "Comedy",
       "Fantasy",
-      "Gourmet"
+      "Gourmet",
+      "Seinen"
     ],
     "themes": [],
     "demographics": [
       "Seinen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1711/142478.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1711/142478l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52701"
   },
   {
     "malId": 55888,
     "title": "Mushoku Tensei II: Isekai Ittara Honki Dasu Part 2",
     "titleEnglish": "Mushoku Tensei: Jobless Reincarnation Season 2 Part 2",
     "titleJapanese": "無職転生 II ～異世界行ったら本気だす～ (第2クール)",
-    "synopsis": "",
+    "synopsis": "Following the faceless god Hitogami's advice seems to have worked wonders for Rudeus Greyrat. After enrolling into the University of Magic as he was told, Rudeus reunites with his childhood friend Sylphiette, who put a valiant effort into curing his condition. The two grow ever closer together and decide to host a wedding party, inviting the friends they have made over the years to announce and formalize their relationship.\n\nFor all his recent blessings, however, Rudeus' troubles are far from over. The research he is helping Shizuka Nanahoshi conduct hits a bottleneck, sending her into a deep slump much like he experienced in his previous life. Furthermore, a letter from his father, Paul, brings complications to Rudeus' relationships, and Sylphiette still knows next to nothing about his real background. In the face of these issues, Rudeus will have to apply the lessons he has learned in this new world to navigate through the challenges that come with living a life to its fullest.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1876/141251l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/L5broLUI1m4?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-08",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 8.38,
-    "scoredBy": 339052,
-    "rank": 249,
-    "popularity": 433,
+    "score": 8.36,
+    "scoredBy": 370107,
+    "rank": 279,
+    "popularity": 407,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Adventure",
       "Drama",
       "Fantasy",
-      "Ecchi"
+      "Isekai",
+      "Reincarnation",
+      "School"
     ],
     "themes": [
       "Isekai",
       "Reincarnation"
     ],
     "demographics": [],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1876/141251.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1876/141251l.jpg",
+    "malUrl": "https://myanimelist.net/anime/55888"
   },
   {
     "malId": 49458,
