@@ -525,10 +525,6 @@ export { migrateLegacyTvIds };
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isDirectRun) {
-  seedTvSeries().catch((error) => {
-    console.error("Situla TV seed failed:", error.message);
-    process.exitCode = 1;
-  }).finally(async () => {
-    await mongoose.disconnect().catch(() => {});
-  });
+  console.error("The legacy TVmaze crawler is disabled. Use `npm run seed:tv` to import the committed static TMDB TV catalogue.");
+  process.exitCode = 1;
 }
