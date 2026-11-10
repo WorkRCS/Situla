@@ -175,3 +175,16 @@ test("React UI stack uses Headless UI and local shadcn primitives without import
   assert.match(badge, /badgeVariants/);
   assert.doesNotMatch(app, /from ["']bits-ui["']/);
 });
+
+
+test("catalog spotlight component is declared at module scope for every catalogue route", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.ok(app.indexOf("function CatalogSpotlight") < app.indexOf("function MovieShelf"));
+  assert.match(app, /function CatalogSpotlight\([\s\S]*?return \([\s\S]*?catalog-spotlight/);
+});
+
+test("AnimeSeries declares its unique MAL index only once", async () => {
+  const models = await read("../src/models.js");
+  assert.match(models, /malId: \{ type: Number, required: true, unique: true, min: 1 \}/);
+  assert.doesNotMatch(models, /animeSeriesSchema\.index\(\{\s*malId:\s*1\s*\},\s*\{\s*unique:\s*true\s*\}\)/);
+});
