@@ -215,8 +215,24 @@ async function migrateLegacyTvIds({ connected = false } = {}) {
   if (!connected) await connectDatabase();
 
   const collection = TvSeries.collection;
+
+  // Remove the previous non-sparse unique IMDb index before unsetting legacy
+  // TV imdbId values; otherwise MongoDB would allow only one missing/null key.
+  const indexes = await collection.indexes();
+  const legacyImdbIndexes = indexes.filter((index) =>
+    index.name !== "_id_" && index.key && Object.hasOwn(index.key, "imdbId")
+  );
+  for (const index of legacyImdbIndexes) {
+    await collection.dropIndex(index.name);
+  }
+
   const cursor = collection.find(
-    { imdbId: { $type: "string" } },
+    {
+      $or: [
+        { imdbId: { $type: "string" } },
+        { externalImdbId: { $type: "string" }, tmdbId: { $not: { $type: "number" } } }
+      ]
+    },
     { projection: { imdbId: 1, tmdbId: 1, externalImdbId: 1, title: 1, firstAirDate: 1 } }
   );
   let migrated = 0;
@@ -246,7 +262,19 @@ async function migrateLegacyTvIds({ connected = false } = {}) {
       console.warn("  ! " + (legacy.title || externalImdbId) + ": " + error.message);
     }
   }
-  return { migrated, skipped, configured: true };
+
+  // Recreate the primary unique index using numeric TMDB TV IDs only.
+  await collection.createIndex(
+    { tmdbId: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { tmdbId: { $type: "number" } },
+      name: "tmdbId_1"
+    }
+  );
+  await collection.createIndex({ externalImdbId: 1 }, { sparse: true, name: "externalImdbId_1" });
+
+  return { migrated, skipped, configured: true, legacyIndexesRemoved: legacyImdbIndexes.length };
 }
 
 
