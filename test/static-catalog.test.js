@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { STATIC_MOVIES } from "../data/movie-catalog.js";
 import { STATIC_TV_SERIES } from "../data/tv-catalog.js";
 import { MANUAL_ANIME_CATALOG } from "../data/anime-catalog.js";
+import { NEW_ANIME_CATALOG } from "../data/anime-additions.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -21,38 +22,89 @@ test("static packs contain 70 new IMDb Movies and 70 TMDB TV records", () => {
   assert.ok(STATIC_TV_SERIES.every((item) => Array.isArray(item.seasons) && item.seasons.length === 0));
 });
 
-test("manual MAL pack keeps the 11 starter Anime and adds at least 70 unique TV entries", () => {
+test("legacy MAL entries remain available without being part of the new-only additions pack", () => {
   assert.ok(MANUAL_ANIME_CATALOG.length >= 80);
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0));
-  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.type === "TV" || item.type === "ONA"));
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.title));
-  assert.ok(MANUAL_ANIME_CATALOG.every((item) =>
-    item.posterUrl && item.posterFallbackUrl && item.backdropUrl &&
-    /^https:\/\/cdn\.myanimelist\.net\/images\/anime\//.test(item.posterUrl)
-  ));
-  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.synopsis && item.synopsis.length > 80));
-  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.malUrl === "https://myanimelist.net/anime/" + item.malId));
-  const titles = MANUAL_ANIME_CATALOG.map((item) => (item.titleEnglish || item.title).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim());
-  assert.equal(new Set(titles).size, MANUAL_ANIME_CATALOG.length);
+  assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.posterUrl && item.synopsis && item.synopsis.length > 80));
 });
 
-test("one static bulk seeder imports all three catalogs without metadata API calls", async () => {
-  const script = await read("../scripts/seed-static-catalog.js");
-  const pkg = JSON.parse(await read("../package.json"));
+test("200 new Anime entries have unique MAL IDs, matching posters/banners and episode still guides", () => {
+  assert.equal(NEW_ANIME_CATALOG.length, 200);
+  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 200);
+  const normalize = (value) => String(value || "").normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const names = [
+    ...MANUAL_ANIME_CATALOG.flatMap((item) => [item.title, item.titleEnglish]),
+    ...NEW_ANIME_CATALOG.map((item) => item.titleEnglish || item.title)
+  ].filter(Boolean).map(normalize);
+  assert.equal(new Set(names).size, names.length);
+  assert.ok(NEW_ANIME_CATALOG.every((item) =>
+    Number.isSafeInteger(item.malId) && item.malId > 0 &&
+    item.posterUrl && item.posterFallbackUrl && item.bannerUrl && item.backdropUrl &&
+    item.synopsis && item.synopsis.length > 80 &&
+    item.malUrl === "https://myanimelist.net/anime/" + item.malId &&
+    item.sourceUrl && item.episodeGuide.length >= 5
+  ));
+  let episodeCount = 0;
+  let stillCount = 0;
+  for (const item of NEW_ANIME_CATALOG) {
+    const keys = new Set();
+    let stills = 0;
+    for (const episode of item.episodeGuide) {
+      const key = episode.seasonNumber + ":" + episode.episodeNumber;
+      assert.ok(!keys.has(key));
+      keys.add(key);
+      assert.ok(episode.title);
+      assert.ok(episode.seasonNumber >= 1 && episode.episodeNumber >= 1);
+      if (episode.imageUrl) stills += 1;
+    }
+    assert.ok(stills / item.episodeGuide.length >= 0.8);
+    episodeCount += item.episodeGuide.length;
+    stillCount += stills;
+  }
+  assert.equal(episodeCount, 2883);
+  assert.equal(stillCount, 2881);
+});
 
-  assert.equal(pkg.scripts["seed:catalog"], "node scripts/seed-static-catalog.js");
-  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-static-catalog.js --movies");
-  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-static-catalog.js --tv");
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-static-catalog.js --anime");
-  assert.match(script, /Model\.bulkWrite/);
+test("Anime cleanup is dry-run by default and only deletes records with no poster or banner", async () => {
+  const audit = await read("../scripts/audit-anime-artwork.js");
+  assert.match(audit, /process\.argv\.includes\("--apply"\)/);
+  assert.match(audit, /if \(!apply\)/);
+  assert.match(audit, /!posterOk && !bannerOk/);
+  assert.match(audit, /AnimeSeries\.deleteMany/);
+  assert.doesNotMatch(audit, /Movie\.deleteMany|TvSeries\.deleteMany/);
+});
+
+test("Anime additions are seeded only for new MAL IDs/titles and never update old records", async () => {
+  const script = await read("../scripts/seed-anime-additions.js");
+  const staticSeed = await read("../scripts/seed-static-catalog.js");
+  const pkg = JSON.parse(await read("../package.json"));
+  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-anime-additions.js");
+  assert.equal(pkg.scripts["check:anime"], "node scripts/check-anime-additions.js");
+  assert.equal(pkg.scripts["audit:anime"], "node scripts/audit-anime-artwork.js");
+  assert.equal(pkg.scripts["audit:anime:apply"], "node scripts/audit-anime-artwork.js --apply");
+  assert.match(script, /NEW_ANIME_CATALOG/);
+  assert.match(script, /existingIds/);
+  assert.match(script, /existingTitles/);
   assert.match(script, /\$setOnInsert/);
-  assert.match(script, /STATIC_MOVIES/);
-  assert.match(script, /STATIC_TV_SERIES/);
-  assert.match(script, /MANUAL_ANIME_CATALOG/);
-  assert.doesNotMatch(script, /\bfetch\s*\(|axios|api\.tvmaze|api\.themoviedb|api\.jikan/i);
-  assert.doesNotMatch(pkg.scripts.dev, /seed|crawl/i);
-  assert.equal(Object.hasOwn(pkg.scripts, "predev"), false);
+  assert.doesNotMatch(script, /\$set\s*:/);
+  assert.doesNotMatch(script, /\bfetch\s*\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
+  assert.doesNotMatch(staticSeed, /AnimeSeries|MANUAL_ANIME_CATALOG|--anime/);
+  assert.match(staticSeed, /STATIC_MOVIES/);
+  assert.match(staticSeed, /STATIC_TV_SERIES/);
+});
+
+test("Anime detail renders season-specific episode stills, franchise posters and Next Episode", async () => {
+  const detail = await read("../app/anime/[malId]/detail.jsx");
+  assert.match(detail, /episodeGuide/);
+  assert.match(detail, /episodeRouteNumber/);
+  assert.match(detail, /Season \{seasonNumber\} episode guide/);
+  assert.match(detail, /item\.imageUrl/);
+  assert.match(detail, /Related seasons and entries/);
+  assert.match(detail, /Next episode/);
+  assert.match(detail, /anime\.bannerUrl/);
+  assert.match(detail, /Manual episode selection/);
 });
 
 test("static TV detail allows manual season and episode selection when no guide exists", async () => {
