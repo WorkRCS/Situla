@@ -74,17 +74,15 @@ export function tvSeriesDto(series) {
     releaseYear: series.releaseYear || null,
     runtime: Number(series.runtime) || null,
     adult: Boolean(series.adult),
-    certification: series.certification || "",
+    certification: series.certification || '',
     voteAverage: Number(series.voteAverage) || 0,
-    voteCount: Number(series.voteCount) || 0,
-    popularity: Number(series.popularity) || 0,
-    metadataSource: series.metadataSource || "",
-    sourceUrl: series.sourceUrl || "",
     voteCount: Number(series.voteCount) || 0,
     popularity: Number(series.popularity) || 0,
     genres: Array.isArray(series.genres) ? series.genres : [],
     keywords: Array.isArray(series.keywords) ? series.keywords : [],
-    numberOfSeasons: Number(series.numberOfSeasons) || (series.seasons || []).length,
+    metadataSource: series.metadataSource || '',
+    sourceUrl: series.sourceUrl || '',
+    numberOfSeasons: Number(series.numberOfSeasons) || (series.seasons || []).filter((season) => Number(season.seasonNumber) > 0).length,
     numberOfEpisodes: Number(series.numberOfEpisodes) || (series.seasons || []).reduce((sum, season) => sum + (Number(season.episodeCount) || 0), 0),
     seasons: (series.seasons || []).map((season) => ({
       seasonNumber: season.seasonNumber,
@@ -93,8 +91,7 @@ export function tvSeriesDto(series) {
       episodeCount: Number(season.episodeCount) || (season.episodes || []).length,
       posterUrl: season.posterUrl || null
     })),
-    status: series.status || '',
-    certification: series.certification || ''
+    status: series.status || ''
   };
 }
 
