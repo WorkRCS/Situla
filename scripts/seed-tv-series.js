@@ -204,6 +204,14 @@ export function validateTvSeriesRecord(record) {
       }
       totalEpisodes += 1;
     }
+
+    // Next Episode navigation advances by +1; regular seasons must therefore be contiguous.
+    if (seasonNumber > 0) {
+      const orderedNumbers = [...episodeNumbers].sort((a, b) => a - b);
+      if (orderedNumbers.some((number, index) => number !== index + 1)) {
+        fail("Non-contiguous episode numbering in season " + seasonNumber);
+      }
+    }
   }
 
   if (regularSeasonCount < 1 || Number(record.numberOfSeasons) !== regularSeasonCount) {
