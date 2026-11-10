@@ -240,6 +240,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const tab = view;
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [genre, setGenre] = useState("All");
@@ -334,7 +335,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const timer = window.setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const response = await fetch("/api/movies/suggestions?q=" + encodeURIComponent(value), {
+        const response = await fetch("/api/search?q=" + encodeURIComponent(value), {
           cache: "no-store",
           signal: controller.signal
         });
@@ -367,11 +368,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           const selected = categoryShelves.find((item) => item.name === genre);
           if (selected?.genre) params.set("genre", selected.genre);
         }
-        const endpoint = isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString();
+        const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString());
         const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
+        if (tab === "search") {
+          setSearchResults(items);
+          setMovies([]);
+          setMoviesPage(1);
+          setMoviesTotal(items.length);
+          setError("");
+          return;
+        }
+        setSearchResults([]);
         setMovies(items);
         if (tab === "movies") {
           const freshSpotlight = chooseFreshSpotlight(items, "situla:spotlight:movies");
@@ -508,6 +518,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
     setSearchOpen(false);
     router.push("/watch/" + encodeURIComponent(imdbId));
+  }
+
+  function openSearchResult(item) {
+    setSearchOpen(false);
+    if (item.mediaType === "tv") return openTvSeries(item);
+    if (item.mediaType === "anime") return openAnimeSeries(item);
+    return openMovie(item);
   }
 
   function openTvSeries(series) {
@@ -660,20 +677,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   router.push("/search" + (query.trim() ? "?q=" + encodeURIComponent(query.trim()) : ""));
                 }
                 if (event.key === "Escape") setSearchOpen(false);
-              }} placeholder="Search by movie title…" aria-label="Search movie titles" />
+              }} placeholder="Search movies, TV series & anime…" aria-label="Search all Situla titles" />
               {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
             </label>
             {searchOpen && query.trim().length >= 2 && (
               <div className="suggestion-panel" role="listbox" aria-label="Matching movie titles">
                 {suggestionsLoading ? (
                   <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
-                ) : suggestions.length ? suggestions.map((movie) => (
-                  <button key={movie.imdbId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openMovie(movie)}>
-                    {movie.posterUrl ? <img src={movie.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
-                    <span className="suggestion-title"><strong>{movie.title}</strong><small>{movie.releaseYear || "Movie"} · {movie.originalTitle && movie.originalTitle !== movie.title ? movie.originalTitle : "Play movie"}</small></span>
+                ) : suggestions.length ? suggestions.map((item) => (
+                  <button key={item.imdbId || item.malId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openSearchResult(item)}>
+                    {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
+                    <span className="suggestion-title"><strong>{item.titleEnglish || item.title}</strong><small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || "Release year unknown"}</small></span>
                     <BootstrapIcon icon="play-fill" size={16} />
                   </button>
-                )) : <div className="suggestion-empty">No matching movie titles found.</div>}
+                )) : <div className="suggestion-empty">No matching movies, TV series or anime found.</div>}
               </div>
             )}
           </div>
@@ -883,14 +900,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <SkeletonGrid count={12} />
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Search unavailable</p><p className="mt-2 text-xs">{error}</p></div>
-            ) : movies.length ? (
+            ) : searchResults.length ? (
               <div className="catalog-grid">
-                {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
+                {searchResults.map((item) => item.mediaType === "movie"
+                  ? <MovieCard key={item.imdbId} movie={item} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(item.imdbId)} />
+                  : <SeriesCard key={item.imdbId || item.malId} item={item} kind={item.mediaType} onOpen={item.mediaType === "tv" ? openTvSeries : openAnimeSeries} />
+                )}
               </div>
             ) : (
-              <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No movies found" : "Search the catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Type a movie title, keyword or year above."}</p></div>
+              <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No matching titles found" : "Search the full catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Search movies, TV series and anime together."}</p></div>
             )}
-            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more results"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </section>
         )}
 
