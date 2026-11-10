@@ -53,20 +53,51 @@ function validateCatalog({ label, idField, records }) {
 }
 
 async function upsertCatalog({ label, Model, idField, records }) {
-  const operations = records.map((record) => ({
-    updateOne: {
-      filter: { [idField]: idField === "imdbId" ? record[idField].toLowerCase() : Number(record[idField]) },
-      update: { $setOnInsert: { ...record } },
-      upsert: true
+  const animeMetadataFields = [
+    "title", "titleEnglish", "titleJapanese", "synopsis", "posterUrl",
+    "posterFallbackUrl", "backdropUrl", "malUrl", "airedFrom", "releaseYear",
+    "episodes", "duration", "score", "scoredBy", "rank", "popularity",
+    "status", "season", "type", "source", "genres", "rating"
+  ];
+  const operations = records.map((record) => {
+    const id = idField === "imdbId" ? record[idField].toLowerCase() : Number(record[idField]);
+    if (label !== "Anime") {
+      return {
+        updateOne: {
+          filter: { [idField]: id },
+          update: { $setOnInsert: { ...record } },
+          upsert: true
+        }
+      };
     }
-  }));
+
+    // MAL IDs are canonical for Anime. Refresh only the matching record's
+    // curated metadata; $setOnInsert carries additional catalogue fields.
+    // Unique malId index + this ID filter prevent duplicate Anime documents.
+    const set = Object.fromEntries(animeMetadataFields
+      .filter((field) => record[field] !== undefined)
+      .map((field) => [field, record[field]]));
+    const setOnInsert = Object.fromEntries(Object.entries(record)
+      .filter(([field]) => !animeMetadataFields.includes(field)));
+
+    return {
+      updateOne: {
+        filter: { [idField]: id },
+        update: { $set: set, $setOnInsert: setOnInsert },
+        upsert: true
+      }
+    };
+  });
 
   const result = await Model.bulkWrite(operations, { ordered: false });
   const total = await Model.countDocuments();
   const added = Number(result.upsertedCount || 0);
   const alreadyPresent = records.length - added;
-  console.log(label + ": " + added + " added, " + alreadyPresent + " already existed; " + total + " total in collection.");
-  return { added, alreadyPresent, total };
+  const refreshed = label === "Anime" ? Number(result.modifiedCount || 0) : 0;
+  console.log(label + ": " + added + " added, " + alreadyPresent + " already existed" +
+    (refreshed ? ", " + refreshed + " metadata records refreshed" : "") +
+    "; " + total + " total in collection.");
+  return { added, alreadyPresent, refreshed, total };
 }
 
 export async function seedStaticCatalog() {
