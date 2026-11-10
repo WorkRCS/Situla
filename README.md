@@ -40,7 +40,7 @@ npm run check:anime
 npm run audit:anime
 ```
 
-The first command validates the static pack, ID/title uniqueness, posters, banners and episode guide coverage. The artwork audit is a **dry run** and reports existing Anime records with no usable poster or banner/backdrop. It does not delete anything.
+The first command validates the static pack, ID/title uniqueness, posters, banners and episode guide coverage. The artwork audit is a **dry run** and reports existing Anime records with no usable poster or banner/backdrop. It does not delete anything. It writes the full checked-title and image URL list to reports/anime-artwork-audit.json for review.
 
 After reviewing the audit report, apply the cleanup:
 
