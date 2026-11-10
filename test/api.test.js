@@ -99,8 +99,8 @@ test('TV DTO is keyed by IMDb and embeds seasons without a fixed provider mappin
   assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
   assert.equal(dto.posterUrl, 'https://images.example/got.jpg');
   assert.equal(dto.runtime, null);
-  assert.equal(dto.numberOfSeasons, 1);
-  assert.equal(dto.numberOfEpisodes, 1);
+  assert.equal(dto.numberOfSeasons, 8);
+  assert.equal(dto.numberOfEpisodes, 73);
   assert.equal(dto.adult, false);
 });
 
