@@ -6,9 +6,11 @@ import { connectDatabase } from "../src/db.js";
 import { Movie } from "../src/models.js";
 import { MOVIE_ADDITION_TARGET, MOVIE_DISCOVERY_PARTS } from "../data/movie-additions.js";
 
-const TMDB_API = "https://api.themoviedb.org/3";
-const TMDB_IMAGE = "https://image.tmdb.org/t/p";
+const CINEMETA_API = String(process.env.CINEMETA_API_BASE || "https://v3-cinemeta.strem.io").replace(/\/$/, "");
+const METAHUB_IMAGES = "https://images.metahub.space";
 const USER_AGENT = "Situla-Movie-Catalog/1.0 (https://github.com/WorkRCS/Situla)";
+const METADATA_SOURCE = "Cinemeta API";
+const LEGACY_METADATA_SOURCES = [METADATA_SOURCE, "TMDB API"];
 const MIN_OVERVIEW_LENGTH = 80;
 const MIN_CAST_MEMBERS = 1;
 const imageValidationCache = new Map();
@@ -44,11 +46,6 @@ export function stripMovieMarkup(value) {
     .slice(0, 5000);
 }
 
-export function tmdbImageUrl(path, size = "original") {
-  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) return null;
-  return TMDB_IMAGE + "/" + size + path;
-}
-
 function safeHttpsUrl(value) {
   try {
     const url = new URL(String(value || ""));
@@ -62,8 +59,203 @@ function titleYearKey(title, year) {
   return normalizeMovieTitle(title) + "|" + String(year || "");
 }
 
-function getTmdbToken() {
-  return String(process.env.TMDB_API_READ_ACCESS_TOKEN || "").trim();
+function toStringList(value) {
+  const values = Array.isArray(value) ? value : (typeof value === "string" ? [value] : []);
+  return [...new Set(values.flatMap((item) => {
+    const text = typeof item === "string"
+      ? item
+      : String(item?.name || item?.title || item?.value || "").trim();
+    return text.split(/[,;|]/).map((entry) => entry.trim()).filter(Boolean);
+  }))];
+}
+
+function toCastList(value) {
+  const values = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  return values.map((person) => {
+    if (typeof person === "string") {
+      return { name: person.trim(), character: "", profileUrl: null };
+    }
+    return {
+      name: String(person?.name || person?.title || "").trim(),
+      character: String(person?.character || person?.role || "").trim(),
+      profileUrl: safeHttpsUrl(person?.profileUrl || person?.profile || person?.image)
+    };
+  }).filter((person) => {
+    if (!person.name || seen.has(person.name.toLowerCase())) return false;
+    seen.add(person.name.toLowerCase());
+    return true;
+  }).slice(0, 12);
+}
+
+function parseRuntimeMinutes(value) {
+  if (Number.isFinite(Number(value)) && Number(value) > 0) return Math.round(Number(value));
+  const text = String(value || "").toLowerCase().trim();
+  if (!text) return null;
+  const hours = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/);
+  const minutes = text.match(/(\d+)\s*(?:m|min|mins|minute|minutes)\b/);
+  if (hours || minutes) {
+    const total = Math.round((Number(hours?.[1] || 0) * 60) + Number(minutes?.[1] || 0));
+    return total > 0 ? total : null;
+  }
+  const simple = text.match(/^(\d{1,3})(?:\s*(?:minutes?|mins?|m))?$/);
+  return simple ? Number(simple[1]) : null;
+}
+
+function parseReleaseDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() + 1 !== month || parsed.getUTCDate() !== day) {
+    return null;
+  }
+  return match[1] + "-" + match[2] + "-" + match[3];
+}
+
+function parseReleaseYear(meta) {
+  const explicit = Number(meta?.year);
+  if (Number.isSafeInteger(explicit) && explicit >= 1870 && explicit <= new Date().getUTCFullYear() + 2) {
+    return explicit;
+  }
+  const source = String(meta?.releaseInfo || meta?.released || "");
+  const match = source.match(/(?:^|\D)(18\d{2}|19\d{2}|20\d{2}|21\d{2})(?:\D|$)/);
+  return match ? Number(match[1]) : null;
+}
+
+function parseRating(value) {
+  const rating = Number.parseFloat(String(value || "").replace(",", "."));
+  return Number.isFinite(rating) ? Math.max(0, Math.min(10, rating)) : 0;
+}
+
+function parseCount(value) {
+  const count = Number.parseInt(String(value || "").replace(/[^\d]/g, ""), 10);
+  return Number.isFinite(count) && count > 0 ? count : 0;
+}
+
+function trailerUrl(meta) {
+  const trailers = [
+    ...(Array.isArray(meta?.trailers) ? meta.trailers : []),
+    ...(Array.isArray(meta?.videos) ? meta.videos : [])
+  ];
+  const trailer = trailers.find((item) => /trailer/i.test(String(item?.type || item?.name || ""))) ||
+    trailers.find((item) => item?.source || item?.key || item?.url);
+  const source = String(trailer?.source || trailer?.key || trailer?.url || meta?.trailer || "").trim();
+  if (!source) return "";
+  const direct = safeHttpsUrl(source);
+  if (direct) return direct;
+  return /^[a-zA-Z0-9_-]{6,}$/.test(source)
+    ? "https://www.youtube.com/watch?v=" + encodeURIComponent(source)
+    : "";
+}
+
+export function cinemetaCatalogUrl(part, skip = 0) {
+  const segments = [];
+  if (part.genre) segments.push("genre=" + encodeURIComponent(part.genre));
+  if (skip > 0) segments.push("skip=" + Math.max(0, Math.floor(skip)));
+  return CINEMETA_API + "/catalog/movie/" + encodeURIComponent(part.catalogId || "top") +
+    (segments.length ? "/" + segments.join("/") : "") + ".json";
+}
+
+export function cinemetaMetaUrl(imdbId) {
+  const id = normalizeImdbId(imdbId);
+  if (!id) throw new Error("A valid IMDb title ID is required for Cinemeta metadata lookup.");
+  return CINEMETA_API + "/meta/movie/" + id + ".json";
+}
+
+export function mapCinemetaMovie(details, candidate = {}) {
+  const imdbId = normalizeImdbId(details?.imdb_id || details?.imdbId || details?.id || candidate?.imdbId || candidate?.id);
+  if (!imdbId || details?.type && details.type !== "movie") return null;
+
+  const genres = toStringList(details.genres?.length ? details.genres : details.genre);
+  const adult = details.adult === true || details.isAdult === true ||
+    genres.some((genre) => DISALLOWED_GENRES.has(genre.toLowerCase().trim()));
+  if (adult) return null;
+
+  const title = String(details.name || details.title || candidate?.name || "").trim();
+  const originalTitle = String(details.originalTitle || details.originalName || details.original_title || title).trim();
+  const overview = stripMovieMarkup(details.description || details.overview || "");
+  const releaseDate = parseReleaseDate(details.released || details.releaseDate || details.release_date || "");
+  const releaseYear = parseReleaseYear(details) || (releaseDate ? Number(releaseDate.slice(0, 4)) : null);
+  const runtime = parseRuntimeMinutes(details.runtime);
+  const languageValues = toStringList(details.originalLanguage || details.language || details.languages);
+  const countryValues = toStringList(details.productionCountries || details.production_countries || details.country || details.countries);
+  const companyValues = toStringList(details.productionCompanies || details.production_companies || details.productionCompany);
+  const cast = toCastList(details.cast || details.actors);
+  const directors = toStringList(details.directors || details.director);
+  const writers = toStringList(details.writers || details.writer);
+  const imdbRating = parseRating(details.imdbRating || details.voteAverage || details.rating);
+  const posterFallback = METAHUB_IMAGES + "/poster/medium/" + imdbId + "/img";
+  const backdropFallback = METAHUB_IMAGES + "/background/medium/" + imdbId + "/img";
+  const collection = details.collection || details.belongs_to_collection || null;
+
+  return {
+    imdbId,
+    title,
+    originalTitle,
+    overview,
+    tagline: String(details.tagline || "").trim(),
+    posterUrl: safeHttpsUrl(details.poster) || posterFallback,
+    posterCandidates: [...new Set([details.poster, posterFallback].map(safeHttpsUrl).filter(Boolean))],
+    backdropUrl: safeHttpsUrl(details.background || details.backdrop) || backdropFallback,
+    backdropCandidates: [...new Set([details.background, details.backdrop, backdropFallback].map(safeHttpsUrl).filter(Boolean))],
+    releaseDate,
+    releaseYear,
+    runtime,
+    originalLanguage: languageValues[0] || "",
+    genres,
+    keywords: toStringList(details.keywords).slice(0, 30),
+    certification: String(details.certification || details.contentRating || "").trim(),
+    voteAverage: imdbRating,
+    voteCount: parseCount(details.imdbVotes || details.voteCount),
+    popularity: 0,
+    adult: false,
+    status: String(details.status || "").trim(),
+    budget: Number(details.budget) > 0 ? Number(details.budget) : 0,
+    revenue: Number(details.revenue) > 0 ? Number(details.revenue) : 0,
+    homepage: safeHttpsUrl(details.website || details.homepage) || "",
+    productionCompanies: companyValues,
+    productionCountries: countryValues,
+    spokenLanguages: languageValues,
+    cast,
+    directors,
+    writers,
+    trailerUrl: trailerUrl(details),
+    collectionInfo: collection ? {
+      name: String(collection.name || "").trim(),
+      posterUrl: safeHttpsUrl(collection.poster || collection.posterUrl),
+      backdropUrl: safeHttpsUrl(collection.background || collection.backdropUrl)
+    } : null,
+    metadataSource: METADATA_SOURCE,
+    sourceUrl: "https://www.imdb.com/title/" + imdbId + "/"
+  };
+}
+
+export function validateMovieRecord(record) {
+  const fail = (message) => { throw new Error(message + " (" + (record?.imdbId || "unknown IMDb ID") + ")"); };
+  const imdbId = normalizeImdbId(record?.imdbId);
+  if (!imdbId) fail("Missing or invalid IMDb ID");
+  if (!String(record?.title || "").trim()) fail("Missing title");
+  if (!String(record?.originalTitle || "").trim()) fail("Missing original title");
+  if (String(record?.overview || "").trim().length < MIN_OVERVIEW_LENGTH) fail("Missing or too-short synopsis");
+  if (!safeHttpsUrl(record?.posterUrl)) fail("Missing or invalid poster");
+  if (!safeHttpsUrl(record?.backdropUrl)) fail("Missing or invalid landscape banner/backdrop");
+  if (!Number.isSafeInteger(Number(record?.releaseYear)) || Number(record.releaseYear) < 1870) fail("Missing or invalid release year");
+  if (record?.releaseDate && !parseReleaseDate(record.releaseDate)) fail("Invalid release date");
+  if (!Number.isFinite(Number(record?.runtime)) || Number(record.runtime) <= 0) fail("Missing or invalid runtime");
+  if (!Array.isArray(record?.genres) || !record.genres.length ||
+      record.genres.some((genre) => DISALLOWED_GENRES.has(String(genre).toLowerCase().trim()))) {
+    fail("Missing or disallowed genres");
+  }
+  if (!Array.isArray(record?.cast) || record.cast.length < MIN_CAST_MEMBERS) fail("Missing credited cast");
+  if (!Array.isArray(record?.directors) || !record.directors.length) fail("Missing director credit");
+  if (record?.adult === true) fail("Adult content is not allowed");
+  if (String(record?.sourceUrl || "") !== "https://www.imdb.com/title/" + imdbId + "/") {
+    fail("Missing IMDb source link");
+  }
+  return true;
 }
 
 async function acquireRequestSlot() {
@@ -77,31 +269,21 @@ async function acquireRequestSlot() {
   release();
 }
 
-function tmdbUrl(path) {
-  const url = new URL(TMDB_API + path);
-  if (!getTmdbToken()) {
-    const key = String(process.env.TMDB_API_KEY || "").trim();
-    if (key) url.searchParams.set("api_key", key);
-  }
-  return url;
-}
-
-async function tmdbRequest(path, attempt = 0) {
+async function cinemetaRequest(url, attempt = 0) {
   await acquireRequestSlot();
   let response;
   try {
-    const headers = { Accept: "application/json", "User-Agent": USER_AGENT };
-    if (getTmdbToken()) headers.Authorization = "Bearer " + getTmdbToken();
-    response = await fetch(tmdbUrl(path), {
-      headers,
+    response = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      redirect: "follow",
       signal: AbortSignal.timeout(20000)
     });
   } catch (error) {
     if (attempt < 3) {
       await sleep(1000 * (attempt + 1));
-      return tmdbRequest(path, attempt + 1);
+      return cinemetaRequest(url, attempt + 1);
     }
-    throw error;
+    throw new Error("Cinemeta network request failed: " + error.message);
   }
 
   if ((response.status === 429 || response.status >= 500) && attempt < 6) {
@@ -110,153 +292,13 @@ async function tmdbRequest(path, attempt = 0) {
       ? Math.min(retry * 1000, 30000)
       : Math.min(1000 * (2 ** attempt), 20000);
     await sleep(retryMs);
-    return tmdbRequest(path, attempt + 1);
+    return cinemetaRequest(url, attempt + 1);
   }
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error("TMDB returned HTTP " + response.status + (detail ? ": " + detail.slice(0, 180) : ""));
+    throw new Error("Cinemeta returned HTTP " + response.status + (detail ? ": " + detail.slice(0, 180) : ""));
   }
   return response.json();
-}
-
-export function mapTmdbMovie(details, candidate = {}) {
-  const imdbId = normalizeImdbId(details?.external_ids?.imdb_id);
-  if (!imdbId || details?.adult === true) return null;
-
-  const title = String(details.title || "").trim();
-  const originalTitle = String(details.original_title || title).trim();
-  const overview = stripMovieMarkup(details.overview || "");
-  const releaseDate = /^\d{4}-\d{2}-\d{2}$/.test(String(details.release_date || ""))
-    ? details.release_date : null;
-  const releaseYear = releaseDate ? Number(releaseDate.slice(0, 4)) : null;
-  const runtime = Number(details.runtime) > 0 ? Number(details.runtime) : null;
-  const originalLanguage = String(details.original_language || "").trim().toLowerCase();
-
-  const genres = Array.isArray(details.genres)
-    ? details.genres.map((item) => String(item?.name || "").trim()).filter(Boolean)
-    : [];
-  const productionCompanies = Array.isArray(details.production_companies)
-    ? details.production_companies.map((item) => String(item?.name || "").trim()).filter(Boolean)
-    : [];
-  const productionCountries = Array.isArray(details.production_countries)
-    ? details.production_countries.map((item) => String(item?.name || "").trim()).filter(Boolean)
-    : [];
-  const spokenLanguages = Array.isArray(details.spoken_languages)
-    ? details.spoken_languages.map((item) => String(item?.english_name || item?.name || item?.iso_639_1 || "").trim()).filter(Boolean)
-    : (originalLanguage ? [originalLanguage] : []);
-
-  const credits = details.credits || {};
-  const cast = Array.isArray(credits.cast) ? credits.cast.slice(0, 12).map((person) => ({
-    name: String(person?.name || "").trim(),
-    character: String(person?.character || "").trim(),
-    profileUrl: tmdbImageUrl(person?.profile_path, "w185")
-  })).filter((person) => person.name) : [];
-  const directors = Array.isArray(credits.crew)
-    ? [...new Set(credits.crew.filter((person) => String(person?.job || "").toLowerCase() === "director")
-      .map((person) => String(person?.name || "").trim()).filter(Boolean))]
-    : [];
-  const writers = Array.isArray(credits.crew)
-    ? [...new Set(credits.crew.filter((person) =>
-      ["writer", "screenplay", "story"].includes(String(person?.job || "").toLowerCase()))
-      .map((person) => String(person?.name || "").trim()).filter(Boolean))]
-    : [];
-
-  const keywordItems = details.keywords?.keywords || details.keywords?.results || [];
-  const keywords = Array.isArray(keywordItems)
-    ? keywordItems.map((item) => String(item?.name || "").trim()).filter(Boolean).slice(0, 30)
-    : [];
-
-  const videoItems = Array.isArray(details.videos?.results) ? details.videos.results : [];
-  const trailer = videoItems.find((item) =>
-    item?.site === "YouTube" && item?.type === "Trailer" && item?.official && item?.key
-  ) || videoItems.find((item) => item?.site === "YouTube" && item?.type === "Trailer" && item?.key);
-  const releaseDateGroups = Array.isArray(details.release_dates?.results) ? details.release_dates.results : [];
-  const usRelease = releaseDateGroups.find((item) => item.iso_3166_1 === "US") ||
-    releaseDateGroups.find((item) => item.iso_3166_1 === "IN");
-  const certification = String(usRelease?.release_dates?.find((item) => item.certification)?.certification || "").trim();
-
-  const posters = [
-    details.poster_path,
-    ...(Array.isArray(details.images?.posters) ? details.images.posters
-      .slice().sort((a, b) => Number(b.vote_average || 0) - Number(a.vote_average || 0))
-      .map((image) => image.file_path) : []),
-    candidate.poster_path
-  ].filter(Boolean);
-  const backdrops = [
-    details.backdrop_path,
-    ...(Array.isArray(details.images?.backdrops) ? details.images.backdrops
-      .slice().sort((a, b) => Number(b.vote_average || 0) - Number(a.vote_average || 0))
-      .map((image) => image.file_path) : []),
-    candidate.backdrop_path
-  ].filter(Boolean);
-
-  const collection = details.belongs_to_collection;
-  return {
-    imdbId,
-    title,
-    originalTitle,
-    overview,
-    tagline: String(details.tagline || "").trim(),
-    posterUrl: tmdbImageUrl(posters[0], "w500"),
-    posterCandidates: [...new Set(posters.map((path) => tmdbImageUrl(path, "w500")).filter(Boolean))],
-    backdropUrl: tmdbImageUrl(backdrops[0], "original"),
-    backdropCandidates: [...new Set(backdrops.map((path) => tmdbImageUrl(path, "original")).filter(Boolean))],
-    releaseDate,
-    releaseYear,
-    runtime,
-    originalLanguage,
-    genres,
-    keywords,
-    certification,
-    voteAverage: Math.max(0, Math.min(10, Number(details.vote_average) || 0)),
-    voteCount: Math.max(0, Number(details.vote_count) || 0),
-    popularity: Math.max(0, Number(details.popularity) || 0),
-    adult: false,
-    status: String(details.status || ""),
-    budget: Math.max(0, Number(details.budget) || 0),
-    revenue: Math.max(0, Number(details.revenue) || 0),
-    homepage: safeHttpsUrl(details.homepage) || "",
-    productionCompanies,
-    productionCountries,
-    spokenLanguages,
-    cast,
-    directors,
-    writers,
-    trailerUrl: trailer?.key ? "https://www.youtube.com/watch?v=" + encodeURIComponent(trailer.key) : "",
-    collectionInfo: collection ? {
-      name: String(collection.name || "").trim(),
-      posterUrl: tmdbImageUrl(collection.poster_path, "w500"),
-      backdropUrl: tmdbImageUrl(collection.backdrop_path, "original")
-    } : null,
-    metadataSource: "TMDB API",
-    sourceUrl: "https://www.themoviedb.org/movie/" + Number(details.id)
-  };
-}
-
-export function validateMovieRecord(record) {
-  const fail = (message) => { throw new Error(message + " (" + (record?.imdbId || "unknown IMDb ID") + ")"); };
-  if (!normalizeImdbId(record?.imdbId)) fail("Missing or invalid IMDb ID");
-  if (!String(record?.title || "").trim()) fail("Missing title");
-  if (!String(record?.originalTitle || "").trim()) fail("Missing original title");
-  if (String(record?.overview || "").trim().length < MIN_OVERVIEW_LENGTH) fail("Missing or too-short synopsis");
-  if (!safeHttpsUrl(record?.posterUrl)) fail("Missing or invalid poster");
-  if (!safeHttpsUrl(record?.backdropUrl)) fail("Missing or invalid landscape banner/backdrop");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(record?.releaseDate || ""))) fail("Missing or invalid release date");
-  if (!Number.isSafeInteger(Number(record?.releaseYear)) || Number(record.releaseYear) < 1870) fail("Missing or invalid release year");
-  if (!Number.isFinite(Number(record?.runtime)) || Number(record.runtime) <= 0) fail("Missing or invalid runtime");
-  if (!String(record?.originalLanguage || "").trim()) fail("Missing original language");
-  if (!Array.isArray(record?.genres) || !record.genres.length ||
-      record.genres.some((genre) => DISALLOWED_GENRES.has(String(genre).toLowerCase().trim()))) {
-    fail("Missing or disallowed genres");
-  }
-  if (!Array.isArray(record?.productionCompanies) || !record.productionCompanies.length) fail("Missing production company");
-  if (!Array.isArray(record?.productionCountries) || !record.productionCountries.length) fail("Missing production country");
-  if (!Array.isArray(record?.spokenLanguages) || !record.spokenLanguages.length) fail("Missing spoken language");
-  if (!Array.isArray(record?.cast) || record.cast.length < MIN_CAST_MEMBERS) fail("Missing credited cast");
-  if (!Array.isArray(record?.directors) || !record.directors.length) fail("Missing director credit");
-  if (record?.adult === true) fail("Adult content is not allowed");
-  if (!String(record?.sourceUrl || "").startsWith("https://www.themoviedb.org/movie/")) fail("Missing TMDB source attribution");
-  return true;
 }
 
 async function verifyRemoteImage(value) {
@@ -296,47 +338,28 @@ async function verifyRemoteImage(value) {
   return check;
 }
 
-async function mapWithConcurrency(items, concurrency, mapper) {
-  const output = new Array(items.length);
-  let cursor = 0;
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (true) {
-      const index = cursor++;
-      if (index >= items.length) return;
-      output[index] = await mapper(items[index], index);
-    }
-  }));
-  return output;
-}
-
 async function fetchDiscoveryCandidates() {
   const partResults = await Promise.all(MOVIE_DISCOVERY_PARTS.map(async (part) => {
     const found = [];
     const seen = new Set();
-    for (let page = 1; page <= part.pages; page += 1) {
-      const params = new URLSearchParams({
-        include_adult: "false",
-        include_video: "false",
-        language: "en-US",
-        page: String(page),
-        ...part.params
-      });
-      const payload = await tmdbRequest("/discover/movie?" + params.toString());
-      const items = Array.isArray(payload?.results) ? payload.results : [];
+    for (let page = 0; page < part.pages; page += 1) {
+      const skip = page * part.pageSize;
+      const payload = await cinemetaRequest(cinemetaCatalogUrl(part, skip));
+      const items = Array.isArray(payload?.metas) ? payload.metas : [];
       if (!items.length) break;
       for (const item of items) {
-        const id = Number(item?.id);
-        if (!Number.isSafeInteger(id) || id < 1 || item.adult === true || seen.has(id)) continue;
-        seen.add(id);
-        found.push({ ...item, discoveryPart: part.key });
+        const imdbId = normalizeImdbId(item?.imdb_id || item?.id);
+        if (!imdbId || item?.type && item.type !== "movie" || item?.adult === true || seen.has(imdbId)) continue;
+        seen.add(imdbId);
+        found.push({ ...item, id: imdbId, imdbId, discoveryPart: part.key });
       }
-      console.log("  " + part.label + " · page " + page + " · " + items.length + " candidates");
-      if (page >= Number(payload.total_pages || part.pages)) break;
+      console.log("  " + part.label + " · page " + (page + 1) + " · " + items.length + " candidates");
+      if (items.length < part.pageSize) break;
     }
     return found;
   }));
 
-  // Interleave the five source parts so the final 500 are not drawn from one ranking alone.
+  // Interleave the five provider catalogues so one genre/ranking cannot dominate the pack.
   const ordered = [];
   const cursors = partResults.map(() => 0);
   let hasItems = true;
@@ -354,8 +377,8 @@ async function fetchDiscoveryCandidates() {
 
   const seenIds = new Set();
   return ordered.filter((candidate) => {
-    if (seenIds.has(Number(candidate.id))) return false;
-    seenIds.add(Number(candidate.id));
+    if (seenIds.has(candidate.imdbId)) return false;
+    seenIds.add(candidate.imdbId);
     return true;
   });
 }
@@ -365,20 +388,16 @@ function firstValidImageUrl(urls) {
 }
 
 async function prepareMovie(candidate) {
-  const details = await tmdbRequest(
-    "/movie/" + Number(candidate.id) +
-    "?language=en-US&include_image_language=en%2Cnull&append_to_response=external_ids,images,credits,keywords,release_dates,videos"
-  );
-  if (!details || details.adult === true) return null;
+  const response = await cinemetaRequest(cinemetaMetaUrl(candidate.imdbId));
+  const details = response?.meta;
+  if (!details) return null;
 
-  const mapped = mapTmdbMovie(details, candidate);
-  if (!mapped) return null;
-  if (!mapped.releaseDate || mapped.releaseDate > new Date().toISOString().slice(0, 10)) return null;
+  const mapped = mapCinemetaMovie(details, candidate);
+  if (!mapped || !mapped.releaseYear || mapped.releaseYear > new Date().getUTCFullYear() ||
+      mapped.releaseDate && mapped.releaseDate > new Date().toISOString().slice(0, 10)) return null;
 
-  const posters = firstValidImageUrl(mapped.posterCandidates);
-  const backdrops = firstValidImageUrl(mapped.backdropCandidates);
   let posterUrl = null;
-  for (const url of posters) {
+  for (const url of firstValidImageUrl(mapped.posterCandidates)) {
     if (await verifyRemoteImage(url)) {
       posterUrl = url;
       break;
@@ -387,7 +406,7 @@ async function prepareMovie(candidate) {
   if (!posterUrl) return null;
 
   let backdropUrl = null;
-  for (const url of backdrops) {
+  for (const url of firstValidImageUrl(mapped.backdropCandidates)) {
     if (await verifyRemoteImage(url)) {
       backdropUrl = url;
       break;
@@ -395,11 +414,7 @@ async function prepareMovie(candidate) {
   }
   if (!backdropUrl) return null;
 
-  const record = {
-    ...mapped,
-    posterUrl,
-    backdropUrl
-  };
+  const record = { ...mapped, posterUrl, backdropUrl };
   delete record.posterCandidates;
   delete record.backdropCandidates;
   validateMovieRecord(record);
@@ -416,22 +431,22 @@ export async function seedMovieAdditions() {
   if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
     throw new Error("Set MONGODB_URI and MONGODB_DB_NAME before running the movie seed.");
   }
-  if (!getTmdbToken() && !String(process.env.TMDB_API_KEY || "").trim()) {
-    throw new Error("Set TMDB_API_READ_ACCESS_TOKEN (recommended) or TMDB_API_KEY before running the movie seed.");
-  }
   if (!Array.isArray(MOVIE_DISCOVERY_PARTS) || MOVIE_DISCOVERY_PARTS.length !== 5 ||
-      MOVIE_DISCOVERY_PARTS.some((part) => !part.key || !Number.isSafeInteger(part.pages) || part.pages < 1)) {
-    throw new Error("Movie discovery must contain five valid part files.");
+      MOVIE_DISCOVERY_PARTS.some((part) => !part.key || !part.catalogId ||
+        !Number.isSafeInteger(part.pages) || part.pages < 1 ||
+        !Number.isSafeInteger(part.pageSize) || part.pageSize < 1)) {
+    throw new Error("Movie discovery must contain five valid Cinemeta catalogue parts.");
   }
 
   await connectDatabase();
+  const additionQuery = { metadataSource: { $in: LEGACY_METADATA_SOURCES } };
   const [existing, existingAdditionCount] = await Promise.all([
     Movie.find({}).select("imdbId title originalTitle releaseYear").lean(),
-    Movie.countDocuments({ metadataSource: "TMDB API" })
+    Movie.countDocuments(additionQuery)
   ]);
   const targetRemaining = Math.max(0, MOVIE_ADDITION_TARGET - existingAdditionCount);
   if (!targetRemaining) {
-    console.log("Movie additions already complete: " + existingAdditionCount + " TMDB-enriched movies are present.");
+    console.log("Movie additions already complete: " + existingAdditionCount + " verified IMDb-keyed additions are present.");
     return { inserted: 0, existingAdditions: existingAdditionCount, total: await Movie.countDocuments() };
   }
 
@@ -439,7 +454,8 @@ export async function seedMovieAdditions() {
   const occupiedTitleYears = new Set(existing.flatMap((item) =>
     [item.title, item.originalTitle].filter(Boolean).map((title) => titleYearKey(title, item.releaseYear))
   ));
-  console.log("Movie seed: preparing " + targetRemaining + " complete, unique IMDb-keyed records from five TMDB discovery parts.");
+  console.log("Movie seed: preparing " + targetRemaining +
+    " complete, unique IMDb-keyed records from five public Cinemeta catalogue parts.");
 
   const candidates = await fetchDiscoveryCandidates();
   const newRecords = [];
@@ -453,10 +469,11 @@ export async function seedMovieAdditions() {
       const index = cursor++;
       if (index >= candidates.length) return;
       const candidate = candidates[index];
+      if (occupiedIds.has(candidate.imdbId) || newIds.has(candidate.imdbId)) continue;
       try {
         const record = await prepareMovie(candidate);
         if (!record) {
-          failures.push("TMDB " + candidate.id + " (missing IMDb cross-reference or required metadata/artwork)");
+          failures.push(candidate.imdbId + " (missing required metadata or validated artwork)");
           continue;
         }
         if (newRecords.length >= targetRemaining) continue;
@@ -471,19 +488,20 @@ export async function seedMovieAdditions() {
         newRecords.push(record);
         console.log("  ✓ " + record.title + " (" + record.releaseYear + ") · " + record.imdbId);
       } catch (error) {
-        failures.push("TMDB " + candidate.id + " (" + error.message + ")");
+        failures.push(candidate.imdbId + " (" + error.message + ")");
       }
     }
   }));
 
   if (newRecords.length !== targetRemaining) {
     throw new Error("Movie seed preflight stopped before database writes: verified " + newRecords.length +
-      " of " + targetRemaining + " required films. Each record needs a valid unique IMDb ID, full title/original title, " +
-      "an 80+ character synopsis, verified poster and landscape banner, date, runtime, genres, production company/country, " +
-      "cast and director credits. Candidate failures: " + failures.slice(0, 15).join("; "));
+      " of " + targetRemaining + " required films. Each record needs a unique IMDb ID, title/original title, " +
+      "an 80+ character synopsis, verified poster and landscape banner, release year, runtime, genre, cast and director. " +
+      "Optional release date, language, company, country, tagline and trailer fields are stored when Cinemeta provides them. " +
+      "Candidate failures: " + failures.slice(0, 15).join("; "));
   }
 
-  // Insert-only, like the Anime additions seed. Existing Movie records are never updated or replaced.
+  // Insert-only: never update or replace existing Movie documents.
   let insertedDocuments = [];
   try {
     insertedDocuments = await Movie.insertMany(newRecords, { ordered: false });
@@ -500,7 +518,7 @@ export async function seedMovieAdditions() {
   const insertedIds = insertedDocuments.map((item) => normalizeImdbId(item.imdbId)).filter(Boolean);
   const saved = insertedIds.length
     ? await Movie.find({ imdbId: { $in: insertedIds } })
-      .select("imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime originalLanguage genres productionCompanies productionCountries spokenLanguages cast directors adult sourceUrl metadataSource")
+      .select("imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime genres cast directors adult sourceUrl metadataSource")
       .lean()
     : [];
   const savedById = new Map(saved.map((item) => [normalizeImdbId(item.imdbId), item]));
@@ -519,9 +537,9 @@ export async function seedMovieAdditions() {
   }
 
   const total = await Movie.countDocuments();
-  const additionCount = await Movie.countDocuments({ metadataSource: "TMDB API" });
+  const additionCount = await Movie.countDocuments(additionQuery);
   console.log("Movie seed complete: " + saved.length + " records inserted; " +
-    additionCount + "/" + MOVIE_ADDITION_TARGET + " TMDB movie additions present; " + total + " total movies.");
+    additionCount + "/" + MOVIE_ADDITION_TARGET + " new IMDb-keyed additions present; " + total + " total movies.");
   if (additionCount !== MOVIE_ADDITION_TARGET) {
     throw new Error("Movie additions are currently " + additionCount + "/" + MOVIE_ADDITION_TARGET +
       ". Re-run npm run seed:movie-additions to safely fill the remaining IMDb IDs.");
@@ -529,7 +547,7 @@ export async function seedMovieAdditions() {
   return { inserted: saved.length, additionsPresent: additionCount, total };
 }
 
-export { MIN_OVERVIEW_LENGTH, MOVIE_ADDITION_TARGET };
+export { MIN_OVERVIEW_LENGTH, MOVIE_ADDITION_TARGET, METADATA_SOURCE };
 const isDirectRun = process.argv[1] &&
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isDirectRun) {
