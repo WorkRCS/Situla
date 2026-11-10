@@ -6,23 +6,24 @@ import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTv
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("TV episode routes normalize valid IMDb IDs and reject unsafe season or episode params", () => {
-  assert.deepEqual(normalizeTvPlayerRoute("TT1234567", "2", "8"), {
-    imdbId: "tt1234567",
+  assert.deepEqual(normalizeTvPlayerRoute("1399", "2", "8"), {
+    tmdbId: 1399,
     season: 2,
     episode: 8
   });
-  assert.equal(normalizeTvPlayerRoute("1234567", "2", "8"), null);
-  assert.equal(normalizeTvPlayerRoute("tt1234567", "-1", "8"), null);
-  assert.equal(normalizeTvPlayerRoute("tt1234567", "2", "0"), null);
-  assert.equal(normalizeTvPlayerRoute("tt1234567", "1.5", "2"), null);
-  assert.equal(normalizeTvPlayerRoute("tt1234567", "999999999999999999", "2"), null);
-  assert.equal(vidlinkTvUrl("TT1234567", "2", "8"), "https://vidlink.pro/tv/tt1234567/2/8");
-  assert.equal(vidlinkTvUrl("tt1234567", "-1", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("tt1234567", "2", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("0", "2", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("1399", "-1", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("1399", "2", "0"), null);
+  assert.equal(normalizeTvPlayerRoute("1399", "1.5", "2"), null);
+  assert.equal(normalizeTvPlayerRoute("999999999999999999", "2", "2"), null);
+  assert.equal(vidlinkTvUrl("1399", "2", "8"), "https://vidlink.pro/tv/1399/2/8");
+  assert.equal(vidlinkTvUrl("tt1234567", "2", "8"), null);
 });
 
 test("TV episode server route validates params and the player has a route-level recovery boundary", async () => {
-  const page = await read("../app/watch/tv/[imdbId]/[season]/[episode]/page.jsx");
-  const errorBoundary = await read("../app/watch/tv/[imdbId]/[season]/[episode]/error.jsx");
+  const page = await read("../app/watch/tv/[tmdbId]/[season]/[episode]/page.jsx");
+  const errorBoundary = await read("../app/watch/tv/[tmdbId]/[season]/[episode]/error.jsx");
   const player = await read("../app/components/media-player.jsx");
 
   assert.match(page, /normalizeTvPlayerRoute/);
