@@ -811,7 +811,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">TV catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : tvShows.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+              <div className="catalog-grid">
                 {tvShows.map((item) => <SeriesCard key={item.imdbId} item={item} kind="tv" onOpen={openTvSeries} />)}
               </div>
             ) : (
@@ -832,7 +832,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Anime catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : animeShows.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+              <div className="catalog-grid">
                 {animeShows.map((item) => <SeriesCard key={item.malId} item={item} kind="anime" onOpen={openAnimeSeries} />)}
               </div>
             ) : (
@@ -852,7 +852,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Search unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : movies.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+              <div className="catalog-grid">
                 {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
@@ -866,7 +866,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="pb-8">
             <div className="section-heading"><div><span>YOUR COLLECTION</span><h1 className="mt-1 text-2xl font-black">My List</h1></div></div>
             {savedMovies.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+              <div className="catalog-grid">
                 {savedMovies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
