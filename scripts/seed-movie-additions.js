@@ -426,7 +426,7 @@ export async function seedMovieAdditions() {
 
   await connectDatabase();
   const [existing, existingAdditionCount] = await Promise.all([
-    Movie.find({}).select("imdbId title releaseYear").lean(),
+    Movie.find({}).select("imdbId title originalTitle releaseYear").lean(),
     Movie.countDocuments({ metadataSource: "TMDB API" })
   ]);
   const targetRemaining = Math.max(0, MOVIE_ADDITION_TARGET - existingAdditionCount);
@@ -436,7 +436,9 @@ export async function seedMovieAdditions() {
   }
 
   const occupiedIds = new Set(existing.map((item) => normalizeImdbId(item.imdbId)).filter(Boolean));
-  const occupiedTitleYears = new Set(existing.map((item) => titleYearKey(item.title, item.releaseYear)));
+  const occupiedTitleYears = new Set(existing.flatMap((item) =>
+    [item.title, item.originalTitle].filter(Boolean).map((title) => titleYearKey(title, item.releaseYear))
+  ));
   console.log("Movie seed: preparing " + targetRemaining + " complete, unique IMDb-keyed records from five TMDB discovery parts.");
 
   const candidates = await fetchDiscoveryCandidates();
@@ -458,11 +460,14 @@ export async function seedMovieAdditions() {
           continue;
         }
         if (newRecords.length >= targetRemaining) continue;
-        const key = titleYearKey(record.title, record.releaseYear);
+        const titleKeys = [...new Set([record.title, record.originalTitle]
+          .filter(Boolean).map((title) => titleYearKey(title, record.releaseYear)))];
         if (occupiedIds.has(record.imdbId) || newIds.has(record.imdbId) ||
-            occupiedTitleYears.has(key) || newTitleYears.has(key)) continue;
+            titleKeys.some((key) => occupiedTitleYears.has(key) || newTitleYears.has(key))) continue;
         newIds.add(record.imdbId);
-        rememberTitleYear(newTitleYears, record.title, record.releaseYear);
+        for (const title of [record.title, record.originalTitle].filter(Boolean)) {
+          rememberTitleYear(newTitleYears, title, record.releaseYear);
+        }
         newRecords.push(record);
         console.log("  ✓ " + record.title + " (" + record.releaseYear + ") · " + record.imdbId);
       } catch (error) {
@@ -517,6 +522,10 @@ export async function seedMovieAdditions() {
   const additionCount = await Movie.countDocuments({ metadataSource: "TMDB API" });
   console.log("Movie seed complete: " + saved.length + " records inserted; " +
     additionCount + "/" + MOVIE_ADDITION_TARGET + " TMDB movie additions present; " + total + " total movies.");
+  if (additionCount !== MOVIE_ADDITION_TARGET) {
+    throw new Error("Movie additions are currently " + additionCount + "/" + MOVIE_ADDITION_TARGET +
+      ". Re-run npm run seed:movie-additions to safely fill the remaining IMDb IDs.");
+  }
   return { inserted: saved.length, additionsPresent: additionCount, total };
 }
 
