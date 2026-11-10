@@ -16,7 +16,7 @@
     "seed:tv": "node scripts/seed-tv-series.js",
     "migrate:tv-tmdb": "node scripts/migrate-tv-tmdb-ids.js",
     "seed:anime": "node scripts/seed-anime-additions.js",
-    "seed:catalog": "npm run seed:movies && npm run seed:tv",
+    "seed:catalog": "npm run seed:movies && npm run seed:tv && npm run seed:anime",
     "seed:movies": "node scripts/seed-static-catalog.js --movies && npm run seed:movie-additions",
     "check:anime": "node scripts/check-anime-additions.js",
     "audit:anime": "node scripts/audit-anime-artwork.js",
