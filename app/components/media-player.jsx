@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { normalizeAnimePlayerRoute, normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkTvUrl } from "../../src/player-urls.js";
+import { normalizeAnimePlayerRoute } from "../../src/anime-player-route.js";
+import { normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkTvUrl } from "../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
