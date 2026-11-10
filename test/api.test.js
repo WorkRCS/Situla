@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import app, { movieDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
+import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
 import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
 
@@ -72,6 +72,51 @@ test('movie DTO exposes only IMDb catalog identity, not a fixed provider mapping
   assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   for (const forbidden of ['tmdbId', 'tmdbUrl', 'playbackUrl', 'playerUrl', 'embedUrl', 'iframeHtml']) {
     assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must never be returned');
+  }
+});
+
+test('Movie detail DTO exposes the complete enriched metadata while keeping IMDb as its only catalog ID', () => {
+  const dto = movieDetailsDto({
+    _id: '507f1f77bcf86cd799439014',
+    imdbId: 'tt0133093',
+    title: 'The Matrix',
+    originalTitle: 'The Matrix',
+    overview: 'A sufficiently long synopsis for a complete movie detail API response.',
+    posterUrl: 'https://images.example/matrix-poster.jpg',
+    backdropUrl: 'https://images.example/matrix-backdrop.jpg',
+    releaseDate: '1999-03-31',
+    releaseYear: 1999,
+    runtime: 136,
+    originalLanguage: 'en',
+    adult: false,
+    tagline: 'Welcome to the Real World.',
+    productionCompanies: ['Warner Bros.'],
+    productionCountries: ['United States'],
+    spokenLanguages: ['English'],
+    cast: [{ name: 'Keanu Reeves', character: 'Neo', profileUrl: 'https://images.example/keanu.jpg' }],
+    directors: ['Lana Wachowski', 'Lilly Wachowski'],
+    writers: ['Lana Wachowski', 'Lilly Wachowski'],
+    keywords: ['artificial intelligence'],
+    trailerUrl: 'https://www.youtube.com/watch?v=vKQi3bBA1y8',
+    sourceUrl: 'https://www.themoviedb.org/movie/603',
+    metadataSource: 'TMDB API',
+    budget: 63000000,
+    revenue: 463517383,
+    homepage: 'https://www.warnerbros.com/movies/matrix',
+    status: 'Released'
+  });
+  assert.equal(dto.imdbId, 'tt0133093');
+  assert.equal(dto.title, 'The Matrix');
+  assert.ok(dto.overview.length > 40);
+  assert.equal(dto.posterUrl, 'https://images.example/matrix-poster.jpg');
+  assert.equal(dto.backdropUrl, 'https://images.example/matrix-backdrop.jpg');
+  assert.equal(dto.cast[0].name, 'Keanu Reeves');
+  assert.deepEqual(dto.directors, ['Lana Wachowski', 'Lilly Wachowski']);
+  assert.deepEqual(dto.productionCompanies, ['Warner Bros.']);
+  assert.equal(dto.trailerUrl, 'https://www.youtube.com/watch?v=vKQi3bBA1y8');
+  assert.equal(dto.sourceUrl, 'https://www.themoviedb.org/movie/603');
+  for (const forbidden of ['tmdbId', 'tmdbUrl', 'vidlinkId', 'playerUrl']) {
+    assert.equal(Object.hasOwn(dto, forbidden), false, forbidden + ' must not become a Movie catalog key or player URL');
   }
 });
 
