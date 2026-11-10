@@ -99,9 +99,6 @@ export default function AnimeSeriesExperience({ malId }) {
                 )}
               </div>
             <section>
-              <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">ANIME SERIES · MAL {anime.malId}</p>
-              <h1 className="mt-2 text-3xl font-black text-white">{anime.titleEnglish || anime.title}</h1>
-              {anime.titleJapanese && <p className="mt-1 text-sm text-[#9297a7]">{anime.titleJapanese}</p>}
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {anime.releaseYear && <span>{anime.releaseYear}</span>}
                 {anime.score > 0 && <span>★ {Number(anime.score).toFixed(2)} MAL</span>}
@@ -123,10 +120,10 @@ export default function AnimeSeriesExperience({ malId }) {
                 <p className="mt-3 text-xs leading-5 text-[#858b9b]">This title uses its MyAnimeList identifier and can switch audio versions when the selected version is unavailable.</p>
                 <button className="gold-button mt-5" disabled={!episode || Number(episode) < 1 || (anime.episodes && Number(episode) > anime.episodes)} onClick={playAnime}><i className="bi bi-play-fill" aria-hidden="true" /> Play anime</button>
               </div>
-            </section>
               <p className="mt-5 text-xs text-[#9297a7]">
                 <a href={anime.malUrl || ("https://myanimelist.net/anime/" + anime.malId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">Open this exact title on MyAnimeList ↗</a>
               </p>
+            </section>
             </div>
           </>
         ) : null}
