@@ -1566,3 +1566,15 @@ body { color:#f7f7fa; background:#08090e; }
   .catalog-grid,.skeleton-grid { gap:13px 6px; }
   .history-time-labels { display:grid; gap:2px; }
 }
+
+
+/* Final viewport safeguards: tablet nav stays edge-attached, never floated. */
+.bottom-nav {
+  transform:none !important;
+  max-width:none !important;
+  border-left:0 !important;
+  border-right:0 !important;
+}
+.ui-button.gold-button,.ui-button.ghost-button { border-radius:999px; }
+.ui-button.gold-button { min-height:46px; }
+.catalog-spotlight .hero-meta .ui-badge { flex:none; }
