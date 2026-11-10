@@ -100,7 +100,7 @@ test('TV DTO is keyed by TMDB TV ID while retaining IMDb only as an external ref
   assert.equal(dto.playerAvailable, undefined);
   assert.equal(Object.hasOwn(dto, 'vidlinkId'), false);
   assert.equal(dto.seasons[0].seasonNumber, 1);
-  assert.equal(Object.hasOwn(dto, 'tmdbId'), false);
+  assert.equal(Object.hasOwn(dto, 'tmdbId'), true);
   assert.equal(dto.posterUrl, 'https://images.example/got.jpg');
   assert.equal(dto.runtime, null);
   assert.equal(dto.numberOfSeasons, 8);
