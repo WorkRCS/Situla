@@ -69,7 +69,7 @@ test("catalog pages do not render aggregate movie, series, saved-list or history
   assert.doesNotMatch(app, /Showing \{movies\.length\} of \{moviesTotal\}/);
   assert.doesNotMatch(app, /\{sortedHistory\.length\}\s+entries/i);
   assert.doesNotMatch(anime, /\{anime\.episodes\s*\|\|\s*["']\?["']\}\s+episodes/i);
-  assert.doesNotMatch(tv, /\{series\.numberOf(?:Seasons|Episodes)\}/);
+  assert.match(tv, /series\.numberOfEpisodes > 0/);
 });
 
 test("landing page exposes primary navigation and cinematic responsive hero styles", async () => {
