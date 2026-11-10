@@ -5,6 +5,22 @@ import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeTvPlayerRoute,
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
+test("Anime episode route keeps MAL ID, episode and selected audio provider-specific", () => {
+  assert.deepEqual(normalizeAnimePlayerRoute("40748", "1", "sub"), {
+    malId: 40748,
+    episode: 1,
+    audio: "sub"
+  });
+  assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("40748", "0", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("40748", "1.5", "sub"), null);
+  assert.equal(normalizeAnimePlayerRoute("40748", "1", "unknown"), null);
+  const anime = new URL(vidlinkAnimeUrl("40748", "1", "sub"));
+  assert.equal(anime.origin + anime.pathname, "https://vidlink.pro/anime/40748/1/sub");
+  assert.equal(anime.searchParams.get("primaryColor"), "e8b65b");
+  assert.equal(anime.searchParams.get("fallback"), "true");
+});
+
 test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or episode params", () => {
   assert.deepEqual(normalizeTvPlayerRoute("1399", "2", "8"), {
     tmdbId: 1399,
