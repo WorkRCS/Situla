@@ -289,14 +289,19 @@ test("Anime episode route validates MAL ID, episode and audio, with an in-player
 
 test("Anime catalog is a manually curated MAL list and the seed command uses the offline bulk seeder", async () => {
   const { MANUAL_ANIME_CATALOG } = await import("../data/anime-catalog.js");
+  const { NEW_ANIME_CATALOG } = await import("../data/anime-additions.js");
   const script = await read("../scripts/seed-static-catalog.js");
+  const animeSeed = await read("../scripts/seed-anime-additions.js");
   const pkg = JSON.parse(await read("../package.json"));
   assert.ok(MANUAL_ANIME_CATALOG.length >= 80);
+  assert.equal(NEW_ANIME_CATALOG.length, 200);
+  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 200);
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && ["TV", "ONA"].includes(item.type)));
   assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-anime-additions.js");
-  assert.match(await read("../scripts/seed-anime-additions.js"), /AnimeSeries\.insertMany/);
-  assert.doesNotMatch(await read("../scripts/seed-anime-additions.js"), /bulkWrite|updateOne|\$set/);
+  assert.match(animeSeed, /AnimeSeries\.insertMany/);
+  assert.doesNotMatch(animeSeed, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
+  assert.doesNotMatch(script, /AnimeSeries|MANUAL_ANIME_CATALOG|--anime/);
   assert.match(script, /Model\.bulkWrite/);
   assert.match(script, /\$setOnInsert/);
   assert.doesNotMatch(script, /fetch\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
