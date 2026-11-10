@@ -34,6 +34,7 @@ test("global search interleaves Movies, TV series, and Anime", async () => {
   assert.match(app, /role="dialog" aria-modal="true"/);
   assert.match(app, /Mixed results · Movies · TV series · Anime/);
   assert.match(app, /View full search page/);
+  assert.match(app, /onClick=\{\(\) => setSearchOpen\(true\)\}/);
 });
 
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {
@@ -46,6 +47,8 @@ test("catalog loading is bounded and off-screen image/grid work is deferred", as
   assert.match(app, /decoding="async"/);
   assert.match(css, /content-visibility:auto/);
   assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(app, /document\.visibilityState !== "visible"/);
+  assert.match(app, /\}, 10000\)/);
 });
 
 test("seed:catalog runs all three catalog seed commands", async () => {
