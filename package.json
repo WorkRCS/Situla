@@ -14,7 +14,8 @@
     "migrate:imdb-only": "node scripts/migrate-imdb-only.js",
     "audit:imdb-only": "node scripts/audit-imdb-only.js",
     "seed:tv": "node scripts/seed-tv-series.js",
-    "predev": "npm run seed:tv"
+    "predev": "npm run seed:tv",
+    "migrate:tv-tmdb": "node scripts/migrate-tv-tmdb-ids.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
