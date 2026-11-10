@@ -168,8 +168,12 @@ test('VidLink movie URLs remain IMDb-based while TV URLs use numeric TMDB IDs', 
   assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
   assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(movieUrl.searchParams.get('secondaryColor'), '171a23');
-  assert.equal(vidlinkTvUrl(1399, 1, 1), 'https://vidlink.pro/tv/1399/1/1');
-  assert.equal(vidlinkTvUrl('1399', 0, 1), 'https://vidlink.pro/tv/1399/0/1');
+  const tvUrl = new URL(vidlinkTvUrl(1399, 1, 1));
+  assert.equal(tvUrl.origin + tvUrl.pathname, 'https://vidlink.pro/tv/1399/1/1');
+  assert.equal(tvUrl.searchParams.get('primaryColor'), 'e8b65b');
+  assert.equal(tvUrl.searchParams.get('secondaryColor'), '171a23');
+  const tvSpecialUrl = new URL(vidlinkTvUrl('1399', 0, 1));
+  assert.equal(tvSpecialUrl.pathname, '/tv/1399/0/1');
   assert.equal(vidlinkMovieUrl('24428'), null);
   assert.equal(vidlinkTvUrl('tt0944947', 1, 1), null);
   assert.equal(vidlinkTvUrl('1399', -1, 1), null);
