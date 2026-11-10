@@ -1706,7 +1706,7 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Tsuki ga Michibiku Isekai Douchuu 2nd Season",
     "titleEnglish": "Tsukimichi -Moonlit Fantasy- Season 2",
     "titleJapanese": "月が導く異世界道中 第二幕",
-    "synopsis": "",
+    "synopsis": "Despite a rough start, Makoto Misumi's life in another world takes a positive turn when he meets more demihumans who recognize his presence. Now as the leader of a fast-growing demihuman community, Makoto wishes to make human society more accepting of them and thus builds a business showcasing the demihumans' abilities. To extend his reach further, Makoto enrolls at the Rotsgard Academy to learn magic and expand his business venture there.\n\nMeanwhile, the goddess who summoned and forsook Makoto had brought two other people to her world shortly after sending him away, making them heroes of their respective nations. Given enough time, Makoto's path will intertwine with both of these heroes, which may cause the world to take a drastic direction.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1794/142621l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/0DHG0By_iaY?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-08",
@@ -1714,62 +1714,71 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 25,
     "duration": "23 min per ep",
     "score": 7.84,
-    "scoredBy": 162038,
-    "rank": 1066,
-    "popularity": 835,
+    "scoredBy": 168824,
+    "rank": 1095,
+    "popularity": 822,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Action",
       "Adventure",
       "Comedy",
-      "Fantasy"
+      "Fantasy",
+      "Isekai"
     ],
     "themes": [
       "Isekai"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1794/142621.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1794/142621l.jpg",
+    "malUrl": "https://myanimelist.net/anime/49889"
   },
   {
     "malId": 50197,
     "title": "Ijiranaide, Nagatoro-san 2nd Attack",
     "titleEnglish": "Don't Toy with Me, Miss Nagatoro 2nd Attack",
     "titleJapanese": "イジらないで、長瀞さん 2nd Attack",
-    "synopsis": "",
+    "synopsis": "Hayase Nagatoro and Naoto Hachiouji have grown closer: the girl spends more time than ever in the art club room with her senpai. Although he is always on edge, Naoto no longer seems to mind Nagatoro's presence. Time and again, Naoto demonstrates his hidden, cool demeanor, and Nagatoro displays her possessive tendencies. However, they still can not seem to completely close the distance between them. It is clear to everyone else that the pair have feelings for each other.\n\nFor Nagatoro, there is nothing more entertaining than toying with Naoto. But as the girl shows no plans to stop teasing her senpai, it is only a matter of time before they realize how they truly feel.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1902/129579l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/DbTbFCkIdss?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-08",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.43,
-    "scoredBy": 148454,
-    "rank": 2458,
-    "popularity": 837,
+    "score": 7.42,
+    "scoredBy": 152518,
+    "rank": 2589,
+    "popularity": 841,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Love Status Quo",
+      "Romance",
+      "School"
     ],
     "themes": [
       "Love Status Quo",
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1902/129579.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1902/129579l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50197"
   },
   {
     "malId": 49613,
     "title": "Chiyu Mahou no Machigatta Tsukaikata",
     "titleEnglish": "The Wrong Way to Use Healing Magic",
     "titleJapanese": "治癒魔法の間違った使い方",
-    "synopsis": "",
+    "synopsis": "Ken Usato, an ordinary high schooler, wishes for something fantastical to occur in his unremarkable life. Such an opportunity arrives when he is transported to another world alongside Kazuki Ryuusen and Suzune Inukami, two prodigious members of his school's student council. Arriving in Llinger Kingdom, the three are deemed to be the heroes tasked with stopping the impending invasion by the Demon Lord's army. However, this is a misunderstanding—Usato was summoned by accident and, unlike his two friends, is not one of the heroes.\n\nDespite this disheartening revelation, Usato learns that he has an aptitude for the extremely rare healing magic. This catches the attention of Rose, the intimidating captain of the kingdom's Rescue Team, who forcibly takes custody of Usato to mold him into a full-fledged healer. As he undergoes grueling training under Rose's supervision, Usato resolves to become capable enough to protect his friends from the dangers of this world.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1733/140802l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/WMBLLOa3Ldw?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-06",
@@ -1777,48 +1786,54 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "23 min per ep",
     "score": 7.52,
-    "scoredBy": 179163,
-    "rank": 2056,
-    "popularity": 851,
+    "scoredBy": 187243,
+    "rank": 2125,
+    "popularity": 829,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Action",
       "Adventure",
-      "Fantasy"
+      "Fantasy",
+      "Isekai"
     ],
     "themes": [
       "Isekai"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1733/140802.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1733/140802l.jpg",
+    "malUrl": "https://myanimelist.net/anime/49613"
   },
   {
     "malId": 51818,
     "title": "Enen no Shouboutai: San no Shou",
     "titleEnglish": "Fire Force Season 3",
     "titleJapanese": "炎炎ノ消防隊 参ノ章",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1527/146836l.jpg",
+    "synopsis": "After undergoing Benimaru Shinmon's hellish training, Shinra Kusakabe and Arthur Boyle return to Special Fire Force Company 8. However, there is no time to rest: Captain Akitaru Oubi is arrested by the military police under the influence of the White-Clad cult. Moreover, the White-Clad member Haumea—one of the eight pillars who possess Adolla Burst—has successfully brainwashed the leadership of the Tokyo Empire and infiltrated the heart of the firefighting organization. As a result, Shinra and the rest of the Company 8 squad are branded as rebels after they launch a rescue mission to save their captain and ultimately liberate Tokyo.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1527/146836l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/nz-VCl7yUAw?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-04-05",
     "releaseYear": 2025,
     "episodes": 12,
     "duration": "24 min per ep",
-    "score": 7.72,
-    "scoredBy": 123887,
-    "rank": 1367,
-    "popularity": 870,
+    "score": 7.73,
+    "scoredBy": 134941,
+    "rank": 1384,
+    "popularity": 845,
     "status": "Finished Airing",
     "season": "spring 2025",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Fantasy",
-      "Sci-Fi"
+      "Sci-Fi",
+      "Shounen",
+      "Urban Fantasy"
     ],
     "themes": [
       "Urban Fantasy"
@@ -1826,61 +1841,70 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1527/146836.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1527/146836l.webp",
+    "malUrl": "https://myanimelist.net/anime/51818"
   },
   {
     "malId": 57592,
     "title": "Dr. Stone: Science Future",
     "titleEnglish": "Dr. Stone: Science Future",
     "titleJapanese": "Dr.STONE SCIENCE FUTURE",
-    "synopsis": "",
+    "synopsis": "Having resolved the crisis in the Petrification Kingdom, Senkuu and his companions gear up to deal directly with the mastermind behind the petrification phenomenon—who supposedly resides on the moon. The ambitious spaceship project, however, requires immense manpower and critical resources scattered across the world. Thus, the Kingdom of Science exploration team kick-starts its transcontinental journey on the ship Perseus to gather them all.\n\nEquipped with modern technology and bolstered by the new, capable members in their ranks, the exploration team feels confident about setting sail to their first destination: America. They soon realize that the region now hosts adversaries controlling the resources they need, doing so with scientific technology which rivals and even exceeds their own. In a battle of science versus science, Senkuu and his team must outsmart their rivals if they are to have any chance of ensuring the continued survival and rejuvenation of humanity.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1403/146479l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/zjBQrDy5wLU?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-09",
     "releaseYear": 2025,
     "episodes": 12,
     "duration": "24 min per ep",
-    "score": 8.26,
-    "scoredBy": 156386,
-    "rank": 367,
-    "popularity": 897,
+    "score": 8.25,
+    "scoredBy": 170997,
+    "rank": 390,
+    "popularity": 856,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Adventure",
-      "Comedy"
+      "Comedy",
+      "Shounen"
     ],
     "themes": [],
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1403/146479.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1403/146479l.jpg",
+    "malUrl": "https://myanimelist.net/anime/57592"
   },
   {
     "malId": 55690,
     "title": "Boku no Kokoro no Yabai Yatsu 2nd Season",
     "titleEnglish": "The Dangers in My Heart Season 2",
     "titleJapanese": "僕の心のヤバイやつ 第2期",
-    "synopsis": "",
+    "synopsis": "After an eventful winter break, Kyoutarou Ichikawa and Anna Yamada reunite with a stronger bond. They continue to grow in their own ways, with Yamada taking on more challenging photoshoots and Ichikawa maturing both physically and emotionally as he tackles his affections for Yamada. However, spending time together outside of school allows for their relationship to deepen, and it becomes increasingly difficult to deny their budding romantic feelings.\n\nGrappling with these unexpected and new emotions, Ichikawa and Yamada realize that, with the passage of time, their relationship is bound to change—and they must ultimately decide whether they wish to remain close friends or finally become a couple.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1643/138581l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/DAbLNzr4cC8?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-07",
     "releaseYear": 2024,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 8.68,
-    "scoredBy": 180788,
-    "rank": 73,
-    "popularity": 900,
+    "score": 8.67,
+    "scoredBy": 188890,
+    "rank": 79,
+    "popularity": 880,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Romance",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "School"
@@ -1888,58 +1912,65 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1643/138581.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1643/138581l.jpg",
+    "malUrl": "https://myanimelist.net/anime/55690"
   },
   {
     "malId": 51462,
     "title": "Isekai Nonbiri Nouka",
     "titleEnglish": "Farming Life in Another World",
     "titleJapanese": "異世界のんびり農家",
-    "synopsis": "",
+    "synopsis": "During the final years of his life, Hiraku Machio remained confined to a hospital bed with a terminal illness until he finally passed away. Taking pity on the unfair life he lived, a god decides to reincarnate Hiraku in another world where he can live as he pleases. Wanting to try farming in this new life, he is bestowed with an all-in-one \"Almighty Farming Tool\" that can transform into any useful implement he wishes. Hiraku is then transported to a forest seemingly far from civilization. Here, he plans to build and farm everything from scratch—gradually developing the lifeless area into a thriving new society.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1983/132329l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/iwxPf8SEmEU?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-06",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.52,
-    "scoredBy": 152940,
-    "rank": 2069,
-    "popularity": 935,
+    "score": 7.51,
+    "scoredBy": 159257,
+    "rank": 2179,
+    "popularity": 918,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Fantasy",
+      "Isekai",
       "Slice of Life"
     ],
     "themes": [
       "Isekai"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1983/132329.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1983/132329l.jpg",
+    "malUrl": "https://myanimelist.net/anime/51462"
   },
   {
     "malId": 53111,
     "title": "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka IV: Shin Shou - Yakusai-hen",
     "titleEnglish": "Is It Wrong to Try to Pick Up Girls in a Dungeon? IV Part 2",
     "titleJapanese": "ダンジョンに出会いを求めるのは間違っているだろうかⅣ深章 厄災篇",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1476/128693l.jpg",
+    "synopsis": "Although it was already predicted by his party member Cassandra Illion, a terrible disaster strikes upon Bell Cranel as he falls into the depths of the Dungeon. Wounded, lacking equipment, and secluded from the rest of his party, Bell can only rely on Ryuu Lion, who is in the same situation. Pursued by a monster whose power far exceeds both their skills, the only hope the improvised duo of adventurers has is to safely make it to a monster-free point even deeper in the labyrinth.\n\nMeanwhile, the rest of Bell's party must fight the floor boss that has unexplainably respawned ahead of schedule. As Bell and his friends grapple for survival, they discover that the cruelty of the Dungeon is more boundless than ever.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1476/128693l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/-jqaGpzd4vo?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-07",
     "releaseYear": 2023,
     "episodes": 11,
     "duration": "23 min per ep",
     "score": 8.26,
-    "scoredBy": 158460,
-    "rank": 368,
-    "popularity": 946,
+    "scoredBy": 162780,
+    "rank": 372,
+    "popularity": 942,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Action",
       "Adventure",
@@ -1947,44 +1978,51 @@ export const MANUAL_ANIME_CATALOG = [
     ],
     "themes": [],
     "demographics": [],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1476/128693.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1476/128693l.webp",
+    "malUrl": "https://myanimelist.net/anime/53111"
   },
   {
     "malId": 50307,
     "title": "Tonikaku Kawaii 2nd Season",
     "titleEnglish": "Tonikawa: Over The Moon For You Season 2",
     "titleJapanese": "トニカクカワイイ",
-    "synopsis": "",
+    "synopsis": "In the wake of their first home burning down, Nasa and Tsukasa Yuzaki are seeking temporary shelter at the Arisugawas' bathhouse. Though they have only been married for a short time, their relationship has only become sweeter by the day. Nasa is determined to spend as much time with his wife as possible, basking in the happiness of their marriage.\n\nThe newlyweds find new ways to explore their relationship. From adopting a cat, going to an amusement park, and even watching an impromptu romantic comedy featuring Nasa's former teacher, every day is a new experience. But while Tsukasa continues to meet the people in Nasa's life, Nasa has yet to meet more of Tsukasa's family. Though they appear to be the picture-perfect couple to everyone around them, Nasa begins to wonder if he will ever learn more about his wife's mysterious past.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1996/133361l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/cksQYKGvr6U?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-08",
     "releaseYear": 2023,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.64,
-    "scoredBy": 109460,
-    "rank": 1625,
-    "popularity": 947,
+    "score": 7.65,
+    "scoredBy": 113410,
+    "rank": 1644,
+    "popularity": 944,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Romance",
+      "Shounen"
     ],
     "themes": [],
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1996/133361.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1996/133361l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50307"
   },
   {
     "malId": 50796,
     "title": "Kimi wa Houkago Insomnia",
     "titleEnglish": "Insomniacs After School",
     "titleJapanese": "君は放課後インソムニア",
-    "synopsis": "",
+    "synopsis": "High schooler Ganta Nakami has trouble falling asleep most nights. As a result, he is irritable at school, always searching for an opportunity to find a secluded place to doze off. On the other hand, Isaki Magari is a free spirit who is well liked by her friends, but no one is aware of her sleep disorder. She makes use of the school's abandoned astronomy club observatory as her secret sleeping bunker when she needs to get some shut-eye. \n\nAs fate would have it, Nakami finds Magari napping in the observatory. When Magari discovers that she and Nakami have something in common, she offers to share her secret sleeping spot with her fellow insomniac. As the two find warmth in each other's company, the struggles they face start to become easier to confront.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1402/134007l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/YcgFC0Mf-ME?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-11",
@@ -1992,15 +2030,17 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 13,
     "duration": "23 min per ep",
     "score": 8.08,
-    "scoredBy": 109810,
-    "rank": 618,
-    "popularity": 1009,
+    "scoredBy": 113564,
+    "rank": 641,
+    "popularity": 996,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Romance"
+      "Romance",
+      "School",
+      "Seinen"
     ],
     "themes": [
       "School"
@@ -2008,59 +2048,67 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1402/134007.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1402/134007l.jpg",
+    "malUrl": "https://myanimelist.net/anime/50796"
   },
   {
     "malId": 53516,
     "title": "Tensei shitara Dainana Ouji Datta node, Kimama ni Majutsu wo Kiwamemasu",
     "titleEnglish": "I Was Reincarnated as the 7th Prince so I Can Take My Time Perfecting My Magical Ability",
     "titleJapanese": "転生したら第七王子だったので、気ままに魔術を極めます",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1580/141243l.jpg",
+    "synopsis": "In his past life, Prince Lloyd de Saloum was a commoner who could not become adept at magic, no matter how knowledgeable or obsessed he was about it. Now reincarnated into his current royal lineage, he receives a body with seemingly endless mana, making his desire to master all things arcane attainable. Moreover, as the seventh prince of the kingdom, Lloyd has no claim to the throne, allowing him to nurture his abilities as freely as he wants.\n\nUnfortunately for Lloyd, ancient seals that imprison powerful demons begin to break down and release the horrors within, endangering the peace. With these monstrosities roaming around, Lloyd's overwhelming magical prowess is the ultimate weapon that can neutralize these threats before all things descend to chaos.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1580/141243l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/aK8Gtxw-9bE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-02",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "23 min per ep",
-    "score": 7.41,
-    "scoredBy": 144126,
-    "rank": 2583,
-    "popularity": 1048,
+    "score": 7.4,
+    "scoredBy": 149981,
+    "rank": 2706,
+    "popularity": 1022,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Adventure",
-      "Fantasy"
+      "Fantasy",
+      "Reincarnation"
     ],
     "themes": [
       "Reincarnation"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1580/141243.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1580/141243l.webp",
+    "malUrl": "https://myanimelist.net/anime/53516"
   },
   {
     "malId": 51122,
     "title": "Ookami to Koushinryou: Merchant Meets the Wise Wolf",
     "titleEnglish": "Spice and Wolf: Merchant Meets the Wise Wolf",
     "titleJapanese": "狼と香辛料 MERCHANT MEETS THE WISE WOLF",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1059/142414l.jpg",
+    "synopsis": "With a cartload of fur pelts in tow, traveling merchant Kraft Lawrence stops by the village of Pasloe. According to local folklore, centuries ago, one of the villagers made a promise with the wolf deity Holo, who swore to bless Pasloe with bountiful harvests of wheat. Yet, as time passed, such stories became little more than relics of the past.\n\nAfter quickly finishing his business in the village, Lawrence sets out to his next destination. His journey, however, takes an unexpected turn when he discovers a nude, animal-eared girl sleeping among his pelts. Even more surprisingly, the youthful-looking woman claims to be Holo—the wolf of legend.\n\nHolo wishes to return to her hometown in the north, and though their first encounter is rocky, she convinces Lawrence to accompany her on her travels. In return, she vows to earn her keep, using her quick wits and lifetime of experience to help her newfound companion in his dealings. As they continue their journey, Lawrence and Holo take advantage of whatever economic opportunities they come across, often landing in situations that put both their business skills and their relationship to the test.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1059/142414l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/PUPnNDgRtzo?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-02",
     "releaseYear": 2024,
     "episodes": 25,
     "duration": "23 min per ep",
     "score": 8.13,
-    "scoredBy": 87273,
-    "rank": 550,
-    "popularity": 1073,
+    "scoredBy": 90573,
+    "rank": 570,
+    "popularity": 1060,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
+      "Adult Cast",
       "Adventure",
       "Drama",
       "Romance",
@@ -2070,7 +2118,10 @@ export const MANUAL_ANIME_CATALOG = [
       "Adult Cast"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1059/142414.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1059/142414l.webp",
+    "malUrl": "https://myanimelist.net/anime/51122"
   },
   {
     "malId": 51815,
