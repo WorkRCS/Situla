@@ -144,6 +144,21 @@ For all three catalogs:
 7. **Keep provenance.** Store `sourceUrl`, `referenceUrl`, `metadataSource`, and source IDs where the current model supports them. Keep license/attribution notes in README and on the user-facing detail page where required.
 8. **No copyrighted video scraping or downloads.** Situla stores metadata and external artwork references only. Playback remains handled by the existing player provider; seeders must not fetch, store, proxy, or redistribute movie/episode video files or stream URLs.
 
+## 5. Future complete-content standard requested for Situla additions
+
+The catalog owner has explicitly asked that future additions be complete rather than merely renderable. Apply this stricter standard to **every new batch researched after this policy update**, even where a legacy seeder still has a looser threshold:
+
+- **Movies:** every accepted record must have its own verified portrait poster, verified landscape backdrop, title/original title, real synopsis, release year/date where supplied, runtime, genre, cast and director. The Movie validator already enforces the current core gates.
+- **TV series:** every accepted new series must have a verified portrait poster **and a separate verified landscape backdrop**. The current legacy 200-addition TV pack has no independent `backdropUrl` candidates and the current TV validator permits a missing backdrop; that legacy behavior is not permission to omit banners from future batches. Before adding more TV series, research a real title-matched landscape image for every candidate, store it in the candidate part, and update `validateTvSeriesRecord` and tests to reject a missing or broken backdrop.
+- **TV episodes:** use the complete source episode listing, preserve every season and episode number/title, and reconcile `numberOfSeasons` and `numberOfEpisodes` against that saved guide. For a batch advertised as complete, every episode must have its own reachable still image (100% coverage); do not count the existing 80% legacy threshold as a complete episode pack.
+- **Anime:** every accepted new title must have a separate portrait poster, poster fallback, landscape banner and backdrop, plus a complete verified episode guide for its actual format. Reconcile the saved guide length with the provider's complete episode/season listing. For a batch advertised as complete, every episode must have its own matching reachable still image (100% coverage), not merely the current legacy 80% check.
+- For every catalog, the full target batch must pass all of these checks before the insert starts. If a source cannot provide the required field, search a second compatible source with a matching ID/title/year or reject the candidate. Do not fill fields with guessed text, repeated posters, unrelated stills, fake banners, or placeholder episode names.
+- Update the seeder validator and automated tests **before** writing the new data pack. A policy statement without a matching validator is not enforcement.
+
+**Legacy-data note:** the currently committed TV additions may legitimately have no landscape backdrop and may have up to 20% missing episode stills; the current Anime static check also uses an 80% still-coverage threshold. They must not be described as meeting this new future “complete-content” standard until separately enriched and audited. Existing records must never be silently overwritten during that enrichment; use an explicit, reviewed, separately scoped insert-safe migration/enrichment task.
+
+---
+
 ## 5. Part files, uniqueness, and batch targets
 
 - Store discovery/candidate data in `data/`, not inline in UI components or database route handlers.
