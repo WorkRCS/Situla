@@ -7,14 +7,13 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "test": "node --test",
     "migrate:imdb-only": "node scripts/migrate-imdb-only.js",
     "audit:imdb-only": "node scripts/audit-imdb-only.js",
     "seed:tv": "node scripts/seed-tv-series.js",
-    "predev": "npm run seed:tv",
     "migrate:tv-tmdb": "node scripts/migrate-tv-tmdb-ids.js"
   },
   "dependencies": {
