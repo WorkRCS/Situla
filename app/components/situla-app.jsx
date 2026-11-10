@@ -571,7 +571,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           })[tab] || "DISCOVER MORE"}</p>
           </div>
           <nav className="desktop-nav" aria-label="Primary navigation">
-            {NAV_ITEMS.slice(0, 4).map((item) => (
+            {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
               <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
                 <Icon name={item.icon} size={17} />
                 <span>{item.label}</span>
