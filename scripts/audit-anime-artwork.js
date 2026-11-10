@@ -13,6 +13,39 @@ function validImageUrl(value) {
   }
 }
 
+async function probeImageUrl(value) {
+  if (!validImageUrl(value)) return false;
+  for (const method of ["HEAD", "GET"]) {
+    try {
+      const response = await fetch(value, {
+        method,
+        redirect: "follow",
+        signal: AbortSignal.timeout(5000),
+        headers: { "User-Agent": "SitulaArtworkAudit/1.0" }
+      });
+      const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+      const imageResponse = response.ok &&
+        (!contentType || contentType.startsWith("image/") || contentType === "application/octet-stream");
+      await response.body?.cancel().catch(() => {});
+      if (imageResponse) return true;
+    } catch {}
+  }
+  return false;
+}
+
+async function mapWithLimit(items, limit, mapper) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const index = cursor++;
+      if (index >= items.length) return;
+      results[index] = await mapper(items[index], index);
+    }
+  }));
+  return results;
+}
+
 export async function auditAnimeArtwork({ apply = process.argv.includes("--apply") } = {}) {
   if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
     throw new Error("Set MONGODB_URI and MONGODB_DB_NAME in .env first.");
@@ -23,24 +56,29 @@ export async function auditAnimeArtwork({ apply = process.argv.includes("--apply
     .select("malId title titleEnglish posterUrl bannerUrl backdropUrl")
     .lean();
 
-  const missingPoster = [];
-  const missingBanner = [];
-  const withoutAnyArtwork = [];
+  const imageChecks = await mapWithLimit(records, 16, async (item) => {
+    const posterUrl = item.posterUrl;
+    const bannerUrl = item.bannerUrl || item.backdropUrl;
+    const [posterOk, bannerOk] = await Promise.all([
+      probeImageUrl(posterUrl),
+      bannerUrl && bannerUrl !== posterUrl ? probeImageUrl(bannerUrl) : probeImageUrl(posterUrl)
+    ]);
+    return { item, posterOk, bannerOk };
+  });
 
-  for (const item of records) {
-    const posterOk = validImageUrl(item.posterUrl);
-    const bannerOk = validImageUrl(item.bannerUrl || item.backdropUrl);
-    if (!posterOk) missingPoster.push(item);
-    if (!bannerOk) missingBanner.push(item);
-    // Keep a legacy record when at least its poster OR banner/backdrop is valid.
-    // Delete only records with neither kind of artwork.
-    if (!posterOk && !bannerOk) withoutAnyArtwork.push(item);
-  }
+  const missingPoster = imageChecks.filter((check) => !check.posterOk).map((check) => check.item);
+  const missingBanner = imageChecks.filter((check) => !check.bannerOk).map((check) => check.item);
+  // Keep a legacy record when at least its poster OR banner/backdrop is reachable.
+  // Delete only records where both artwork checks fail.
+  const withoutAnyArtwork = imageChecks
+    .filter((check) => !check.posterOk && !check.bannerOk)
+    .map((check) => check.item);
 
   console.log("Anime artwork audit");
   console.log("Records checked:", records.length);
-  console.log("Poster missing:", missingPoster.length);
-  console.log("Banner missing:", missingBanner.length);
+  console.log("Poster missing/unreachable:", missingPoster.length);
+  console.log("Banner missing/unreachable:", missingBanner.length);
+  console.log("Remote image checks:", records.length, "records (HEAD with GET fallback, max 16 concurrent).");
   console.log("No usable poster AND no usable banner:", withoutAnyArtwork.length);
   console.log("Mode:", apply ? "APPLY" : "DRY RUN");
   for (const item of withoutAnyArtwork.slice(0, 30)) {
