@@ -76,6 +76,7 @@ test("landing page exposes primary navigation and cinematic responsive hero styl
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
   assert.match(app, /className="desktop-nav"/);
+  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)/);
   assert.match(app, /className="hero-content"/);
   assert.match(css, /\.hero-card/);
   assert.match(css, /\.hero-progress-fill/);
