@@ -63,7 +63,10 @@ export default function AnimeSeriesExperience({ malId }) {
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover opacity-35"
-                  onError={(event) => { event.currentTarget.style.display = "none"; }}
+                  onError={(event) => {
+                    if (anime.posterFallbackUrl && event.currentTarget.src !== anime.posterFallbackUrl) event.currentTarget.src = anime.posterFallbackUrl;
+                    else event.currentTarget.style.display = "none";
+                  }}
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-r from-[#08090d] via-[#08090de8] to-[#08090d66]" />
