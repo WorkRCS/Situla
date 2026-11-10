@@ -1446,7 +1446,7 @@ body { color:#f7f7fa; background:#08090e; }
   grid-template-columns:repeat(3,minmax(0,1fr));
   gap:16px 10px;
 }
-.catalog-grid > .movie-card {
+.catalog-grid > * {
   width:100%;
   min-width:0;
   flex:initial;
