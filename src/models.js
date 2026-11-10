@@ -52,7 +52,7 @@ const movieSchema = new mongoose.Schema({
   directors: { type: [String], default: [] },
   writers: { type: [String], default: [] },
   trailerUrl: { type: String, default: '' },
-  collection: { type: movieCollectionSchema, default: null }
+  collectionInfo: { type: movieCollectionSchema, default: null }
 }, { timestamps: true, versionKey: false, strict: true });
 
 movieSchema.index({ imdbId: 1 }, { unique: true });
