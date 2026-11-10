@@ -151,6 +151,10 @@ test("TV database validator enforces consistent totals, unique episodes and 80% 
   skippedEpisode.seasons[1].episodes[2].episodeNumber = 8;
   assert.throws(() => validateTvSeriesRecord(skippedEpisode), /Non-contiguous episode numbering/);
 
+  const skippedSeason = structuredClone(record);
+  skippedSeason.seasons[1].seasonNumber = 2;
+  assert.throws(() => validateTvSeriesRecord(skippedSeason), /Non-contiguous season numbering/);
+
   const wrongTotal = structuredClone(record);
   wrongTotal.numberOfEpisodes += 1;
   assert.throws(() => validateTvSeriesRecord(wrongTotal), /Episode total does not match/);
