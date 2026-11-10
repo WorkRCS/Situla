@@ -303,11 +303,22 @@ app.get('/api/search', async (c) => {
         ]
       }).select('-episodeGuide -relatedAnime').sort({ score: -1, rank: 1, popularity: 1 }).limit(8).lean()
     ]);
-    const items = [
-      ...movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
-      ...shows.map((item) => ({ ...tvSeriesDto(item), mediaType: 'tv' })),
-      ...anime.map((item) => ({ ...animeSeriesDto(item), mediaType: 'anime' }))
+    // Keep all media types visible near the top of the search window.
+    // Shuffle the group order on each round instead of returning three category blocks.
+    const groups = [
+      movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
+      shows.map((item) => ({ ...tvSeriesDto(item), mediaType: 'tv' })),
+      anime.map((item) => ({ ...animeSeriesDto(item), mediaType: 'anime' }))
     ];
+    const items = [];
+    while (groups.some((group) => group.length)) {
+      const activeGroups = groups.filter((group) => group.length);
+      for (let index = activeGroups.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [activeGroups[index], activeGroups[swapIndex]] = [activeGroups[swapIndex], activeGroups[index]];
+      }
+      for (const group of activeGroups) items.push(group.shift());
+    }
     return c.json({ items, total: items.length });
   } catch (error) {
     console.error('Global title search failed:', error.message);
@@ -408,13 +419,15 @@ app.get('/api/tv', async (c) => {
       ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
       : { popularity: -1, firstAirDate: -1 };
     const randomOrder = c.req.query('random') === 'true';
+    const excludedIds = [...new Set(String(c.req.query('exclude') || '')
+      .split(',').map((value) => value.trim()).filter((value) => /^[0-9]{1,12}$/.test(value)).map(Number))].slice(0, 900);
+    const randomFilter = { ...filter };
+    if (randomOrder && excludedIds.length) randomFilter.tmdbId = { $nin: excludedIds, $type: 'number', $gt: 0 };
     const [items, total] = await Promise.all([
       randomOrder
         ? TvSeries.aggregate([
-            { $match: filter },
-            { $sample: { size: Math.min(page * limit, 1000) } },
-            { $skip: (page - 1) * limit },
-            { $limit: limit },
+            { $match: randomFilter },
+            { $sample: { size: limit } },
             { $project: { 'seasons.episodes': 0 } }
           ])
         : TvSeries.find(filter).select('-seasons.episodes').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
@@ -477,14 +490,16 @@ app.get('/api/anime', async (c) => {
       ? { score: { $meta: 'textScore' }, rank: 1, popularity: 1 }
       : { rank: 1, score: -1, popularity: 1 };
     const randomOrder = c.req.query('random') === 'true';
+    const excludedIds = [...new Set(String(c.req.query('exclude') || '')
+      .split(',').map((value) => value.trim()).filter((value) => /^[0-9]{1,12}$/.test(value)).map(Number))].slice(0, 900);
+    const randomFilter = { ...filter };
+    if (randomOrder && excludedIds.length) randomFilter.malId = { $nin: excludedIds, $type: 'number', $gt: 0 };
     const [items, total] = await Promise.all([
       randomOrder
         ? AnimeSeries.aggregate([
-            { $match: filter },
-            { $project: { episodeGuide: 0, relatedAnime: 0 } },
-            { $sample: { size: Math.min(page * limit, 1000) } },
-            { $skip: (page - 1) * limit },
-            { $limit: limit }
+            { $match: randomFilter },
+            { $sample: { size: limit } },
+            { $project: { episodeGuide: 0, relatedAnime: 0 } }
           ])
         : AnimeSeries.find(filter).select('-episodeGuide -relatedAnime').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       AnimeSeries.countDocuments(filter)
