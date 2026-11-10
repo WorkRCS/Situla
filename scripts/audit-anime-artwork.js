@@ -1,5 +1,6 @@
 import "dotenv/config";
 import mongoose from "mongoose";
+import { mkdir, writeFile } from "node:fs/promises";
 import { connectDatabase } from "../src/db.js";
 import { AnimeSeries } from "../src/models.js";
 
@@ -81,6 +82,27 @@ export async function auditAnimeArtwork({ apply = process.argv.includes("--apply
   const withoutAnyArtwork = imageChecks
     .filter((check) => !check.posterOk && !check.bannerOk)
     .map((check) => check.item);
+  const auditReport = {
+    generatedAt: new Date().toISOString(),
+    mode: apply ? "apply" : "dry-run",
+    checked: records.length,
+    posterMissingOrUnreachable: missingPoster.map((item) => ({
+      malId: item.malId, title: item.titleEnglish || item.title, posterUrl: item.posterUrl || null
+    })),
+    bannerAndBackdropMissingOrUnreachable: missingBanner.map((item) => ({
+      malId: item.malId, title: item.titleEnglish || item.title,
+      bannerUrl: item.bannerUrl || null, backdropUrl: item.backdropUrl || null
+    })),
+    noUsableArtwork: withoutAnyArtwork.map((item) => ({
+      malId: item.malId, title: item.titleEnglish || item.title,
+      posterUrl: item.posterUrl || null,
+      bannerUrl: item.bannerUrl || null,
+      backdropUrl: item.backdropUrl || null
+    }))
+  };
+  await mkdir("reports", { recursive: true });
+  await writeFile("reports/anime-artwork-audit.json", JSON.stringify(auditReport, null, 2) + "\\n", "utf8");
+  console.log("Full audit report saved to reports/anime-artwork-audit.json");
 
   console.log("Anime artwork audit");
   console.log("Records checked:", records.length);
