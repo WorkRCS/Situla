@@ -95,17 +95,32 @@ fun SitulaApp(context: Context) {
     }
 
     LaunchedEffect(appContext) {
-        if (VpnProfileStore.autoConnectEnabled(appContext)) {
-            val region = VpnProfileStore.preferredAvailableRegion(appContext)
-            val profile = region?.let { VpnProfileStore.load(appContext, it) }
-            if (region != null && profile != null) {
+        // Automatic VPN startup is opt-in. Never let a stale or invalid saved
+        // WireGuard profile prevent the main app/WebView from opening.
+        val profile = runCatching {
+            if (!VpnProfileStore.autoConnectEnabled(appContext)) {
+                null
+            } else {
+                val region = VpnProfileStore.preferredAvailableRegion(appContext)
+                val config = region?.let { VpnProfileStore.load(appContext, it) }
+                if (region != null && !config.isNullOrBlank()) region to config else null
+            }
+        }.onFailure {
+            android.util.Log.w("SitulaStartup", "Saved VPN profile could not be loaded; continuing without auto-connect.", it)
+        }.getOrNull()
+
+        if (profile != null) {
+            runCatching {
                 val permission = VpnService.prepare(appContext)
                 if (permission == null) {
-                    connectAutoProfile(region to profile)
+                    connectAutoProfile(profile)
                 } else {
-                    pendingAutoConnect = region to profile
+                    pendingAutoConnect = profile
                     vpnPermissionLauncher.launch(permission)
                 }
+            }.onFailure {
+                pendingAutoConnect = null
+                android.util.Log.w("SitulaStartup", "Automatic VPN startup failed; continuing with Situla.", it)
             }
         }
     }
