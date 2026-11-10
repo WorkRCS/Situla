@@ -6,6 +6,7 @@ import { connectDatabase } from "../src/db.js";
 import { TvSeries } from "../src/models.js";
 
 const TVMAZE_API = "https://api.tvmaze.com";
+const TMDB_API = "https://api.themoviedb.org/3";
 const TARGET_SERIES = 65;
 const FORCE_REFRESH = process.env.SEED_TV_FORCE === "true";
 const REQUEST_INTERVAL_MS = 520;
@@ -131,8 +132,123 @@ export const CURATED_TV_SHOWS = [
 
 const DISALLOWED_GENRES = new Set(["adult", "erotica", "pornographic", "hentai"]);
 let nextRequestAt = 0;
+let nextTmdbRequestAt = 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function hasTmdbCredentials() {
+  return Boolean(process.env.TMDB_API_READ_ACCESS_TOKEN || process.env.TMDB_API_KEY);
+}
+
+async function tmdbRequest(path, attempt = 0) {
+  const token = String(process.env.TMDB_API_READ_ACCESS_TOKEN || "").trim();
+  const apiKey = String(process.env.TMDB_API_KEY || "").trim();
+  if (!token && !apiKey) throw new Error("Set TMDB_API_READ_ACCESS_TOKEN or TMDB_API_KEY to resolve TV IDs.");
+
+  const wait = Math.max(0, nextTmdbRequestAt - Date.now());
+  if (wait) await sleep(wait);
+  nextTmdbRequestAt = Date.now() + 260;
+
+  const url = new URL(TMDB_API + path);
+  const headers = { Accept: "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+  else url.searchParams.set("api_key", apiKey);
+
+  let response;
+  try {
+    response = await fetch(url, { headers, signal: AbortSignal.timeout(20000) });
+  } catch (error) {
+    if (attempt < 3) {
+      await sleep(1000 * (attempt + 1));
+      return tmdbRequest(path, attempt + 1);
+    }
+    throw error;
+  }
+
+  if ((response.status === 429 || response.status >= 500) && attempt < 5) {
+    const retryAfter = Number(response.headers.get("retry-after"));
+    const delay = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1000, 30000)
+      : Math.min(1000 * (2 ** attempt), 15000);
+    await sleep(delay);
+    return tmdbRequest(path, attempt + 1);
+  }
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("TMDB returned HTTP " + response.status + " for the TV ID lookup.");
+  return response.json();
+}
+
+export function selectTmdbTvId(results, expectedTitle, firstAirDate = null) {
+  const valid = (Array.isArray(results) ? results : []).filter((item) =>
+    Number.isSafeInteger(Number(item?.id)) && Number(item.id) > 0
+  );
+  if (!valid.length) return null;
+
+  const expected = normalizeShowName(expectedTitle);
+  const exact = valid.filter((item) =>
+    normalizeShowName(item?.name) === expected ||
+    normalizeShowName(item?.original_name) === expected
+  );
+  const candidates = exact.length ? exact : valid;
+  if (candidates.length === 1) return Number(candidates[0].id);
+
+  const year = String(firstAirDate || "").slice(0, 4);
+  if (year) {
+    const yearMatches = candidates.filter((item) => String(item?.first_air_date || "").slice(0, 4) === year);
+    if (yearMatches.length === 1) return Number(yearMatches[0].id);
+  }
+  return null;
+}
+
+export async function resolveTmdbTvId(externalImdbId, expectedTitle, firstAirDate = null) {
+  const imdbId = String(externalImdbId || "").trim().toLowerCase();
+  if (!/^tt\\d{5,12}$/.test(imdbId)) return null;
+  const result = await tmdbRequest("/find/" + encodeURIComponent(imdbId) + "?external_source=imdb_id");
+  return selectTmdbTvId(result?.tv_results, expectedTitle, firstAirDate);
+}
+
+async function migrateLegacyTvIds({ connected = false } = {}) {
+  if (!hasTmdbCredentials()) {
+    console.warn("TV ID migration skipped: configure TMDB_API_READ_ACCESS_TOKEN or TMDB_API_KEY.");
+    return { migrated: 0, skipped: 0, configured: false };
+  }
+  if (!connected) await connectDatabase();
+
+  const collection = TvSeries.collection;
+  const cursor = collection.find(
+    { imdbId: { $type: "string" } },
+    { projection: { imdbId: 1, tmdbId: 1, externalImdbId: 1, title: 1, firstAirDate: 1 } }
+  );
+  let migrated = 0;
+  let skipped = 0;
+  for await (const legacy of cursor) {
+    const externalImdbId = String(legacy.externalImdbId || legacy.imdbId || "").trim().toLowerCase();
+    try {
+      const tmdbId = Number.isSafeInteger(Number(legacy.tmdbId)) && Number(legacy.tmdbId) > 0
+        ? Number(legacy.tmdbId)
+        : await resolveTmdbTvId(externalImdbId, legacy.title, legacy.firstAirDate);
+      if (!tmdbId) {
+        skipped += 1;
+        console.warn("  ! Could not resolve TMDB TV ID for " + (legacy.title || externalImdbId));
+        continue;
+      }
+      await collection.updateOne(
+        { _id: legacy._id },
+        {
+          $set: { tmdbId, externalImdbId },
+          $unset: { imdbId: "" }
+        }
+      );
+      migrated += 1;
+      console.log("  ✓ Migrated " + (legacy.title || "TV series") + " → TMDB " + tmdbId);
+    } catch (error) {
+      skipped += 1;
+      console.warn("  ! " + (legacy.title || externalImdbId) + ": " + error.message);
+    }
+  }
+  return { migrated, skipped, configured: true };
+}
+
 
 export function normalizeShowName(value) {
   return String(value || "")
@@ -232,7 +348,7 @@ function buildSeasonRecords(episodes, fallbackPoster) {
 
 export function mapTvmazeShow(show) {
   const episodes = show?._embedded?.episodes;
-  const imdbId = String(show?.externals?.imdb || "").trim().toLowerCase();
+  const externalImdbId = String(show?.externals?.imdb || "").trim().toLowerCase();
   const image = show?.image?.original || show?.image?.medium || null;
   const rating = Number(show?.rating?.average) || 0;
   const genres = Array.isArray(show?.genres)
@@ -256,7 +372,7 @@ export function mapTvmazeShow(show) {
   return {
     ok: true,
     item: {
-      imdbId,
+      externalImdbId,
       title: String(show.name).trim(),
       originalTitle: String(show.name).trim(),
       overview: stripHtml(show.summary),
@@ -297,8 +413,14 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
     console.warn("TV seed skipped: set MONGODB_URI and MONGODB_DB_NAME in .env to import the curated TV catalog.");
     return { imported: 0, total: 0, skipped: 0, configured: false };
   }
+  if (!hasTmdbCredentials()) {
+    console.warn("TV seed skipped: set TMDB_API_READ_ACCESS_TOKEN or TMDB_API_KEY. VidLink TV playback requires TMDB TV IDs.");
+    return { imported: 0, total: 0, skipped: 0, configured: false };
+  }
   await connectDatabase();
-  const existing = await TvSeries.countDocuments({ metadataSource: "TVmaze" });
+  const migration = await migrateLegacyTvIds({ connected: true });
+  console.log("TV ID migration complete: " + migration.migrated + " migrated, " + migration.skipped + " unresolved.");
+  const existing = await TvSeries.countDocuments({ metadataSource: "TVmaze", tmdbId: { $type: "number", $gt: 0 } });
   if (!force && existing >= TARGET_SERIES) {
     console.log("Situla TV seed is already complete (" + existing + " TVmaze series).");
     return { imported: 0, total: existing, skipped: 0 };
@@ -309,7 +431,7 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
   const failures = [];
   const seen = new Set();
 
-  console.log("Situla TV seed: preparing " + TARGET_SERIES + "+ curated series from TVmaze.");
+  console.log("Situla TV seed: preparing " + TARGET_SERIES + "+ curated series with TMDB IDs and TVmaze episode metadata.");
   for (const name of CURATED_TV_SHOWS) {
     if (!force && existing + imported >= TARGET_SERIES) break;
     try {
@@ -331,18 +453,25 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
         failures.push(name + " (" + mapped.reason + ")");
         continue;
       }
-      if (seen.has(mapped.item.imdbId)) {
+      const tmdbId = await resolveTmdbTvId(mapped.item.externalImdbId, mapped.item.title, mapped.item.firstAirDate);
+      if (!tmdbId) {
+        skipped += 1;
+        failures.push(name + " (no matching TMDB TV ID)");
+        continue;
+      }
+      if (seen.has(tmdbId)) {
         skipped += 1;
         continue;
       }
-      seen.add(mapped.item.imdbId);
-      await TvSeries.updateOne(
-        { imdbId: mapped.item.imdbId },
-        { $set: mapped.item },
-        { upsert: true, runValidators: true }
+      seen.add(tmdbId);
+      const item = { ...mapped.item, tmdbId };
+      await TvSeries.collection.updateOne(
+        { tmdbId },
+        { $set: item, $unset: { imdbId: "" } },
+        { upsert: true }
       );
       imported += 1;
-      console.log("  ✓ " + mapped.item.title + " · " + mapped.item.imdbId + " · " + mapped.item.numberOfEpisodes + " episodes");
+      console.log("  ✓ " + item.title + " · TMDB " + tmdbId + " · " + item.numberOfEpisodes + " episodes");
     } catch (error) {
       skipped += 1;
       failures.push(name + " (" + error.message + ")");
@@ -350,14 +479,16 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
     }
   }
 
-  const total = await TvSeries.countDocuments({ metadataSource: "TVmaze" });
-  console.log("Situla TV seed complete: " + total + " curated series, " + imported + " added/updated, " + skipped + " skipped.");
+  const total = await TvSeries.countDocuments({ metadataSource: "TVmaze", tmdbId: { $type: "number", $gt: 0 } });
+  console.log("Situla TV seed complete: " + total + " TMDB-keyed curated series, " + imported + " added/updated, " + skipped + " skipped.");
   if (failures.length) console.log("Skipped candidates: " + failures.join("; "));
   if (total < TARGET_SERIES) {
     throw new Error("TV seed imported only " + total + " of the required " + TARGET_SERIES + " series. Check the network and TVmaze response, then run npm run seed:tv again.");
   }
   return { imported, total, skipped };
 }
+
+export { migrateLegacyTvIds };
 
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isDirectRun) {
