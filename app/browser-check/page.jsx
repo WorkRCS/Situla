@@ -19,7 +19,7 @@ function safeReturnPath(value) {
 }
 
 export default function BrowserCheckPage() {
-  const [message, setMessage] = useState("Checking browser support…");
+  const [message, setMessage] = useState("Checking Brave Browser…");
 
   useEffect(() => {
     let active = true;
@@ -40,9 +40,7 @@ export default function BrowserCheckPage() {
       if (!active) return;
 
       if (!isBrave) {
-        setMessage(
-          "Situla is available only in Brave Browser or the existing Situla Android app."
-        );
+        setMessage("Situla is available only in Brave Browser. Please open this website in Brave.");
         return;
       }
 
