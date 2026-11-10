@@ -218,7 +218,12 @@ async function migrateLegacyTvIds({ connected = false } = {}) {
 
   // Remove the previous non-sparse unique IMDb index before unsetting legacy
   // TV imdbId values; otherwise MongoDB would allow only one missing/null key.
-  const indexes = await collection.indexes();
+  let indexes = [];
+  try {
+    indexes = await collection.indexes();
+  } catch (error) {
+    if (error.codeName !== "NamespaceNotFound" && error.code !== 26) throw error;
+  }
   const legacyImdbIndexes = indexes.filter((index) =>
     index.name !== "_id_" && index.key && Object.hasOwn(index.key, "imdbId")
   );
