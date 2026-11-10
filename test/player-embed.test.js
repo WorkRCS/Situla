@@ -97,10 +97,10 @@ test("both Movie providers use Situla gold controls without a mute override", ()
 });
 
 
-test("Situla homepage hero rotates through live discovery movies every three seconds", async () => {
+test("Situla homepage hero rotates through live discovery movies every ten seconds", async () => {
   const app = await read("../app/components/situla-app.jsx");
   assert.match(app, /setHeroMovies\(uniqueHeroMovies\)/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
   assert.match(app, /heroMovies\[heroIndex % heroMovies\.length\]/);
   assert.match(app, /Previous featured movie/);
   assert.match(app, /Next featured movie/);
@@ -154,7 +154,7 @@ test("Situla landing keeps the original gold palette and uses a distinct discove
 
 test("home page auto-advances and lets visitors select a spotlight title", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
   assert.match(app, /onClick=\{\(\) => setHeroIndex\(index\)\}/);
   assert.match(app, /aria-pressed=\{index === heroIndex\}/);
 });
@@ -181,7 +181,7 @@ test("Movies, TV and Anime choose a different spotlight on refresh and rotate it
   assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
 });
 
