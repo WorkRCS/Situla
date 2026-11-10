@@ -843,64 +843,95 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </header>
 
       {searchOpen && typeof document !== "undefined" && createPortal(
-        <div className="search-overlay" role="presentation" onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setSearchOpen(false);
-            }}>
-              <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
-                <div className="search-dialog-heading">
-                  <div>
-                    <span>ALL SITULA CATALOGS</span>
-                    <h2 id="search-dialog-title">Search movies, TV & anime</h2>
-                  </div>
-                  <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search"><BootstrapIcon icon="x-lg" size={19} /></button>
+        <div
+          className="search-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSearchOpen(false);
+          }}
+        >
+          <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
+            <div className="search-dialog-heading">
+              <div>
+                <span>ALL SITULA CATALOGS</span>
+                <h2 id="search-dialog-title">Search movies, TV & anime</h2>
+              </div>
+              <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
+                <BootstrapIcon icon="x-lg" size={19} />
+              </button>
+            </div>
+            <label className="search-dialog-input">
+              <BootstrapIcon icon="search" size={18} />
+              <input
+                autoFocus
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setSearchOpen(false);
+                  if (event.key === "Enter" && query.trim().length >= 2) {
+                    setSearchOpen(false);
+                    router.push("/search?q=" + encodeURIComponent(query.trim()));
+                  }
+                }}
+                placeholder="Type a title, person or IMDb/MAL ID…"
+                aria-label="Search all media types"
+              />
+              {query && (
+                <button type="button" onClick={() => { setQuery(""); setSuggestions([]); }} aria-label="Clear search">
+                  <BootstrapIcon icon="x-lg" size={16} />
+                </button>
+              )}
+            </label>
+            {query.trim().length < 2 ? (
+              <div className="suggestion-empty">Type at least two characters to search across Movies, TV series and Anime.</div>
+            ) : suggestionsLoading ? (
+              <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
+            ) : suggestions.length ? (
+              <>
+                <div className="search-results-caption">Mixed results · Movies · TV series · Anime</div>
+                <div className="search-results-list" role="listbox" aria-label="Mixed search results">
+                  {suggestions.map((item) => {
+                    const identity = item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+                    return (
+                      <button
+                        key={item.mediaType + ":" + identity}
+                        type="button"
+                        className="suggestion-item"
+                        role="option"
+                        aria-selected="false"
+                        onClick={() => openSearchResult(item)}
+                      >
+                        {item.posterUrl
+                          ? <img src={item.posterUrl} alt="" loading="lazy" decoding="async" />
+                          : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
+                        <span className="suggestion-title">
+                          <strong>{item.titleEnglish || item.title}</strong>
+                          <small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "Release year unknown"}</small>
+                        </span>
+                        <BootstrapIcon icon="play-fill" size={16} />
+                      </button>
+                    );
+                  })}
                 </div>
-                <label className="search-dialog-input">
-                  <BootstrapIcon icon="search" size={18} />
-                  <input
-                    autoFocus
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") setSearchOpen(false);
-                      if (event.key === "Enter" && query.trim().length >= 2) {
-                        setSearchOpen(false);
-                        router.push("/search?q=" + encodeURIComponent(query.trim()));
-                      }
+                <div className="search-dialog-footer">
+                  <span>{suggestions.length} mixed catalog matches</span>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => {
+                      setSearchOpen(false);
+                      router.push("/search?q=" + encodeURIComponent(query.trim()));
                     }}
-                    placeholder="Type a title, person or IMDb/MAL ID…"
-                    aria-label="Search all media types"
-                  />
-                  {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
-                </label>
-                {query.trim().length < 2 ? (
-                  <div className="suggestion-empty">Type at least two characters to search across Movies, TV series and Anime.</div>
-                ) : suggestionsLoading ? (
-                  <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
-                ) : suggestions.length ? (
-                  <>
-                    <div className="search-results-caption">Mixed results · Movies · TV series · Anime</div>
-                    <div className="search-results-list" role="listbox" aria-label="Mixed search results">
-                      {suggestions.map((item) => {
-                        const identity = item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
-                        return (
-                          <button key={item.mediaType + ":" + identity} type="button" className="suggestion-item" role="option" aria-selected="false" onClick={() => openSearchResult(item)}>
-                            {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" decoding="async" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
-                            <span className="suggestion-title"><strong>{item.titleEnglish || item.title}</strong><small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "Release year unknown"}</small></span>
-                            <BootstrapIcon icon="play-fill" size={16} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div className="search-dialog-footer">
-                      <span>{suggestions.length} mixed catalog matches</span>
-                      <button type="button" className="ghost-button" onClick={() => {
-                        setSearchOpen(false);
-                        router.push("/search?q=" + encodeURIComponent(query.trim()));
-                      }}>View full search page</button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="suggestion-empty">No matching movies, TV series or anime found.</div>,
+                  >
+                    View full search page
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="suggestion-empty">No matching movies, TV series or anime found.</div>
+            )}
+          </section>
+        </div>,
         document.body
       )}
 
