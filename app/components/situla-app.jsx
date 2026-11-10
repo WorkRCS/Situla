@@ -75,9 +75,7 @@ function SeriesCard({ item, kind, onOpen }) {
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
-  const meta = isTv
-    ? (item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "TV series")
-    : (item.episodes ? item.episodes + " episodes" : "Anime series");
+  const meta = isTv ? "TV series" : "Anime series";
   return (
     <article className="movie-card">
       <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
@@ -140,7 +138,6 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
           {eyebrow && <span>{eyebrow}</span>}
           <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
         </div>
-        <span>{movies.length} TITLES</span>
       </div>
       <div
         ref={rowRef}
@@ -166,7 +163,7 @@ function SkeletonCard() {
 function SkeletonShelf({ title = "Loading titles…" }) {
   return (
     <section className="netflix-shelf skeleton-shelf" aria-label={title}>
-      <div className="section-heading shelf-heading"><h2>{title}</h2><span className="skeleton-label" /></div>
+      <div className="section-heading shelf-heading"><h2>{title}</h2></div>
       <div className="media-row flex gap-4 overflow-hidden">{Array.from({ length: 7 }, (_, index) => <SkeletonCard key={index} />)}</div>
     </section>
   );
@@ -196,6 +193,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [heroMovies, setHeroMovies] = useState([]);
+  const [heroIndex, setHeroIndex] = useState(0);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -345,6 +344,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const items = Array.isArray(payload.items) ? payload.items : [];
         setMovies(items);
         if (isDiscover) {
+          const uniqueHeroMovies = [];
+          const seenHeroIds = new Set();
+          for (const candidate of [payload.featured, ...items]) {
+            const id = String(candidate?.imdbId || candidate?.id || "");
+            if (!id || seenHeroIds.has(id)) continue;
+            seenHeroIds.add(id);
+            uniqueHeroMovies.push(candidate);
+          }
+          setHeroMovies(uniqueHeroMovies);
+          setHeroIndex(0);
           setFeaturedMovie(payload.featured || items[0] || null);
           setCategoryShelves(Array.isArray(payload.categories) ? payload.categories : []);
         } else if (tab === "home" && !featuredMovie && items.length) {
@@ -369,6 +378,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     };
   }, [query, tab, genre]);
 
+
+  useEffect(() => {
+    if (tab !== "home" || heroMovies.length < 2) return;
+    const timer = window.setInterval(() => {
+      setHeroIndex((current) => (current + 1) % heroMovies.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [tab, heroMovies.length]);
 
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
@@ -534,7 +551,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreMovies = moviesPage * 40 < moviesTotal;
   const hasMoreTv = tvPage * 40 < tvTotal;
   const hasMoreAnime = animePage * 40 < animeTotal;
-  const featured = featuredMovie || movies[0];
+  const featured = heroMovies.length ? heroMovies[heroIndex % heroMovies.length] : (featuredMovie || movies[0]);
 
   return (
     <main className="app-shell">
@@ -553,6 +570,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             settings: "APP PREFERENCES"
           })[tab] || "DISCOVER MORE"}</p>
           </div>
+          <nav className="desktop-nav" aria-label="Primary navigation">
+            {NAV_ITEMS.slice(0, 4).map((item) => (
+              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
+                <Icon name={item.icon} size={17} />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
           <div className="header-search-wrap">
             <label className="header-search search-box" aria-label="Search catalog">
               <BootstrapIcon icon="search" size={18} />
@@ -599,27 +624,34 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         {tab === "home" && (
           <>
             {featured ? (
-              <section className="hero-card">
-                {featured.backdropUrl && <img className="hero-image" src={featured.backdropUrl} alt="" fetchPriority="high" />}
-                <div className="relative z-10 flex min-h-[430px] max-w-[660px] flex-col justify-end p-6 pb-7 md:min-h-[510px] md:p-10">
-                  <div className="mb-3 flex items-center gap-2 text-[10px] font-black tracking-[.22em] text-[#f0c471]">
-                    <Icon name="spark" size={14} /> FEATURED ON SITULA
-                  </div>
-                  <h1 className="max-w-[560px] text-4xl font-black leading-[1.03] tracking-[-.05em] text-white md:text-6xl">{featured.title}</h1>
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-white/75">
+              <section className="hero-card" key={featured.imdbId || featured.id}>
+                {(featured.backdropUrl || featured.posterUrl) && <img className="hero-image" src={featured.backdropUrl || featured.posterUrl} alt="" fetchPriority="high" />}
+                <div className="hero-content">
+                  <div className="hero-eyebrow"><span className="hero-live-dot" /> THE SITULA SPOTLIGHT</div>
+                  <p className="hero-kicker">A story worth staying in for</p>
+                  <h1 className="hero-title">{featured.title}</h1>
+                  <div className="hero-meta">
                     {featured.releaseYear && <span>{featured.releaseYear}</span>}
-                    {featured.voteAverage > 0 && <span className="flex items-center gap-1 text-[#f1c978]"><Icon name="star" size={13} /> {Number(featured.voteAverage).toFixed(1)}</span>}
+                    {featured.voteAverage > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(featured.voteAverage).toFixed(1)}</span>}
                     {featured.runtime > 0 && <span>{formatRuntime(featured.runtime)}</span>}
                     {featured.genres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
                   </div>
-                  <p className="mt-4 line-clamp-3 max-w-[520px] text-sm leading-6 text-white/70">{featured.overview || "Discover this movie on Situla."}</p>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button className="gold-button" onClick={() => openMovie(featured)}><Icon name="play" size={17} /> Play now</button>
+                  <p className="hero-description">{featured.overview || "Discover a new favourite on Situla."}</p>
+                  <div className="hero-actions">
+                    <button className="gold-button" onClick={() => openMovie(featured)}><Icon name="play" size={17} /> Watch now</button>
                     <button className="ghost-button" onClick={() => toggleSaved(featured)}>
                       <Icon name={savedIds.has(featured.imdbId) ? "check" : "bookmark"} size={16} />
-                      {savedIds.has(featured.imdbId) ? "In my list" : "My list"}
+                      {savedIds.has(featured.imdbId) ? "In my list" : "Add to my list"}
                     </button>
                   </div>
+                  {heroMovies.length > 1 && <div className="hero-carousel-footer">
+                    <span className="hero-carousel-label">EXPLORE THE SPOTLIGHT</span>
+                    <div className="hero-carousel-controls">
+                      <button type="button" className="hero-arrow" aria-label="Previous featured movie" onClick={() => setHeroIndex((current) => (current - 1 + heroMovies.length) % heroMovies.length)}><BootstrapIcon icon="arrow-left" size={16} /></button>
+                      <span className="hero-progress-track" aria-hidden="true"><span className="hero-progress-fill" key={featured.imdbId || featured.id} /></span>
+                      <button type="button" className="hero-arrow" aria-label="Next featured movie" onClick={() => setHeroIndex((current) => (current + 1) % heroMovies.length)}><BootstrapIcon icon="arrow-right" size={16} /></button>
+                    </div>
+                  </div>}
                 </div>
               </section>
             ) : loading ? (
@@ -659,7 +691,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
-            {moviesTotal > 0 && <p className="mt-3 text-center text-xs text-[#858b9b]">Showing {movies.length} of {moviesTotal} movies</p>}
           </>
         )}
 
@@ -668,7 +699,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>EXPLORE THE CATALOG</span><h1 className="mt-1 text-2xl font-black">Movies</h1></div>
-              <span>{movies.length} / {moviesTotal || movies.length} TITLES</span>
             </div>
             {loading ? (
               <SkeletonGrid count={12} />
@@ -689,7 +719,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
-              <span>{tvShows.length} / {tvTotal || tvShows.length} SHOWS</span>
             </div>
             {loading ? (
               <SkeletonGrid count={12} />
@@ -710,7 +739,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
-              <span>{animeShows.length} / {animeTotal || animeShows.length} SERIES</span>
             </div>
             {loading ? (
               <SkeletonGrid count={12} />
@@ -731,7 +759,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="pb-8">
             <div className="section-heading">
               <div><span>FIND YOUR NEXT MOVIE</span><h1 className="mt-1 text-2xl font-black">Search</h1></div>
-              <span>{movies.length} / {moviesTotal || movies.length} RESULTS</span>
             </div>
             {loading ? (
               <SkeletonGrid count={12} />
@@ -750,7 +777,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
         {tab === "saved" && (
           <section className="pb-8">
-            <div className="section-heading"><div><span>YOUR COLLECTION</span><h1 className="mt-1 text-2xl font-black">My List</h1></div><span>{savedMovies.length} SAVED</span></div>
+            <div className="section-heading"><div><span>YOUR COLLECTION</span><h1 className="mt-1 text-2xl font-black">My List</h1></div></div>
             {savedMovies.length ? (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
                 {savedMovies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
@@ -767,7 +794,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="space-y-3">
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <div><h2 className="font-bold">Watch history</h2><p className="mt-1 text-xs text-[#9297a7]">Saved only on this device · {sortedHistory.length} entries</p></div>
+                  <div><h2 className="font-bold">Watch history</h2><p className="mt-1 text-xs text-[#9297a7]">Saved only on this device</p></div>
                   {sortedHistory.length > 0 && <button type="button" className="history-clear" onClick={clearWatchHistory}><BootstrapIcon icon="trash3" size={15} /> Clear all</button>}
                 </div>
                 {sortedHistory.length ? (
