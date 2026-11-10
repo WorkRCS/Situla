@@ -96,7 +96,10 @@ export default function TvSeriesExperience({ imdbId }) {
               <h1 className="mt-2 text-3xl font-black text-white">{series.title}</h1>
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
-                {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)}</span>}
+                {series.runtime > 0 && <span>{series.runtime} min / episode</span>}
+                {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)} TVmaze rating</span>}
+                {series.certification && <span>{series.certification}</span>}
+                {series.adult === false && <span className="catalog-policy-pill">Situla catalog screened</span>}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-[#b5bac7]">{series.overview || "No description available."}</p>
@@ -118,10 +121,53 @@ export default function TvSeriesExperience({ imdbId }) {
                   </label>
                 </div>
                 {seasonLoading && <p className="mt-3 text-xs text-[#9297a7]">Loading episode list…</p>}
-                {selectedEpisode && <p className="mt-3 text-xs leading-5 text-[#858b9b]">{selectedEpisode.overview}</p>}
+                {selectedEpisode && (
+                  <div className="selected-episode-info mt-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="font-bold text-white">S{seasonNumber} E{selectedEpisode.episodeNumber} · {selectedEpisode.name}</h3>
+                      {selectedEpisode.runtime > 0 && <span className="text-xs text-[#e8b65b]">{selectedEpisode.runtime} min</span>}
+                    </div>
+                    {selectedEpisode.airDate && <p className="mt-1 text-[10px] text-[#9297a7]">First aired {selectedEpisode.airDate}</p>}
+                    <p className="mt-2 text-xs leading-5 text-[#9297a7]">{selectedEpisode.overview || "Episode description unavailable."}</p>
+                  </div>
+                )}
                 {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
                 <button className="gold-button mt-5" disabled={!seasonNumber || !episodeNumber || seasonLoading} onClick={playEpisode}><i className="bi bi-play-fill" aria-hidden="true" /> {resumeEpisode ? "Resume episode" : "Play episode"}</button>
               </div>
+
+              <div className="episode-guide-section mt-7">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[9px] font-black tracking-[.18em] text-[#e8b65b]">EPISODE BY EPISODE</p>
+                    <h2 className="mt-1 text-xl font-black text-white">Episode guide</h2>
+                  </div>
+                  <span className="text-[10px] text-[#9297a7]">{season?.name || "Season " + seasonNumber}</span>
+                </div>
+                {seasonLoading ? <div className="empty-panel">Loading episode guide…</div> : (
+                  <div className="episode-guide-grid">
+                    {episodes.map((item) => (
+                      <button
+                        key={item.episodeNumber}
+                        type="button"
+                        className={"episode-guide-card" + (Number(episodeNumber) === item.episodeNumber ? " active" : "")}
+                        onClick={() => setEpisodeNumber(String(item.episodeNumber))}
+                        aria-pressed={Number(episodeNumber) === item.episodeNumber}
+                      >
+                        {item.stillUrl
+                          ? <img src={item.stillUrl} alt="" loading="lazy" />
+                          : <div className="episode-guide-placeholder"><i className="bi bi-play-circle" aria-hidden="true" /></div>}
+                        <span className="episode-guide-copy">
+                          <strong>E{item.episodeNumber} · {item.name || "Episode " + item.episodeNumber}</strong>
+                          <small>{[item.airDate, item.runtime ? item.runtime + " min" : ""].filter(Boolean).join(" · ")}</small>
+                          <span>{item.overview || "Episode details unavailable."}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {series.sourceUrl && <p className="mt-5 text-[10px] text-[#9297a7]">Series and episode metadata: <a href={series.sourceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TVmaze</a> · IMDb ID: <a href={"https://www.imdb.com/title/" + series.imdbId + "/"} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.imdbId}</a></p>}
             </section>
           </div>
         ) : null}
