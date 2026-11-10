@@ -160,7 +160,7 @@ test("Movies, TV and Anime choose a different spotlight on refresh and rotate it
   const app = await read("../app/components/situla-app.jsx");
   assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:home"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:movies"\)/);
-  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv"\)/);
+  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
