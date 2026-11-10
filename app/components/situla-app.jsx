@@ -835,10 +835,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <span className="header-search-label">Search movies, TV & anime</span>
             </button>
           </div>
-
-              </section>
-            </div>
-          )}
         </div>
       </header>
 
