@@ -13,9 +13,11 @@
     "test": "node --test",
     "migrate:imdb-only": "node scripts/migrate-imdb-only.js",
     "audit:imdb-only": "node scripts/audit-imdb-only.js",
-    "seed:tv": "node scripts/seed-tv-series.js",
+    "seed:tv": "node scripts/seed-static-catalog.js --tv",
     "migrate:tv-tmdb": "node scripts/migrate-tv-tmdb-ids.js",
-    "seed:anime": "node scripts/seed-anime-manual.js"
+    "seed:anime": "node scripts/seed-static-catalog.js --anime",
+    "seed:catalog": "node scripts/seed-static-catalog.js",
+    "seed:movies": "node scripts/seed-static-catalog.js --movies"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
