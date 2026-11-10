@@ -1,0 +1,3238 @@
+// New MAL-ID matched anime batch 09; full episode guide with source still images.
+export const ANIME_ADDITIONS_09 = [
+  {
+    "malId": 53716,
+    "title": "Hirogaru Sky! Precure",
+    "titleEnglish": "Soaring Sky! Pretty Cure",
+    "titleJapanese": "ひろがるスカイ！プリキュア",
+    "synopsis": "A major incident in peaceful Skyland?! The infant princess Ellee-chan has been kidnapped by a monster from the Undergu Empire! A brave girl named Sora follows the princess into a strange hole. It leads her to another world called Sorashido City. Televisions? Bicycles? Are these magical devices?!?! There's no time to be surprised! Sora has to take the princess back to the castle as soon as possible! Flying between two worlds! This is the beginning of a Precure adventure! It's hero time!\n\n(Source: Toei Animation USA)",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1762/135268l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1762/135268l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/157883-u3gE5LKKXwb3.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/157883-u3gE5LKKXwb3.jpg",
+    "malUrl": "https://myanimelist.net/anime/53716",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/053/53716.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2023-02-05T00:00:00+00:00",
+    "releaseYear": 2023,
+    "season": "winter 2023",
+    "episodes": 50,
+    "duration": "24 min per episode",
+    "score": 7.66,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Original",
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Mahou Shoujo",
+      "Magical Girl",
+      "Magic"
+    ],
+    "themes": [],
+    "studios": [
+      "Toei Animation"
+    ],
+    "producers": [
+      "ABC Animation",
+      "ADK Emotions"
+    ],
+    "rating": "G - All Ages",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 603,
+        "title": "Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2004,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx603-sTv5PVWt8FGi.jpg"
+      },
+      {
+        "malId": 1534,
+        "title": "PreCure Splash Star",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2006,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1534-mbnVgJrquBQt.jpg"
+      },
+      {
+        "malId": 1932,
+        "title": "Yes! Precure 5",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2007,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1932-gcO8umGwWn33.jpg"
+      },
+      {
+        "malId": 5684,
+        "title": "Fresh Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2009,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5684-jrSyAbr10ALo.jpg"
+      },
+      {
+        "malId": 7645,
+        "title": "Heartcatch Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2010,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx7645-edk6l2U5ms7z.png"
+      },
+      {
+        "malId": 9893,
+        "title": "Suite Precure♪",
+        "relationType": "ALTERNATIVE",
+        "episodes": 48,
+        "seasonYear": 2011,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx9893-vqhj2M6aR3Bv.jpg"
+      },
+      {
+        "malId": 12191,
+        "title": "Glitter Force",
+        "relationType": "ALTERNATIVE",
+        "episodes": 48,
+        "seasonYear": 2012,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx12191-nWmjNC2appDV.jpg"
+      },
+      {
+        "malId": 16419,
+        "title": "Glitter Force Doki Doki",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2013,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx16419-rWEwkEDnKYQ0.jpg"
+      },
+      {
+        "malId": 21407,
+        "title": "HappinessCharge Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2014,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20577-6MqRE2P5ZBuD.jpg"
+      },
+      {
+        "malId": 28669,
+        "title": "Go! Princess Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2015,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21001-49nYJTr7Wnsu.jpg"
+      },
+      {
+        "malId": 31884,
+        "title": "Witchy Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2016,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21506-hcLdwWKY4uyt.jpg"
+      },
+      {
+        "malId": 34290,
+        "title": "KIRA KIRA☆PRECURE A LA MODE",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2017,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx98059-n1fWRel1JlO7.jpg"
+      },
+      {
+        "malId": 36593,
+        "title": "HUGtto! Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2018,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100661-XT2NWXKklV5T.png"
+      },
+      {
+        "malId": 38578,
+        "title": "Star☆Twinkle Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2019,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx105857-02ruhcNiPGga.jpg"
+      },
+      {
+        "malId": 40610,
+        "title": "Healin' Good Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 45,
+        "seasonYear": 2020,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx112748-UU9yEob7meZj.jpg"
+      },
+      {
+        "malId": 44191,
+        "title": "Tropical-Rouge! Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 46,
+        "seasonYear": 2021,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx126905-dWGjQMt2DUp0.png"
+      },
+      {
+        "malId": 50281,
+        "title": "Delicious Party Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 45,
+        "seasonYear": 2022,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx142080-YQEmfiA8D0Fy.jpg"
+      },
+      {
+        "malId": 57390,
+        "title": "Wonderful Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2024,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx171030-U7zjkqv8pQFq.jpg"
+      },
+      {
+        "malId": 60407,
+        "title": "You and Idol Precure ♪",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2025,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx185073-m4QzzXcEqmvb.png"
+      },
+      {
+        "malId": 63042,
+        "title": "Star Detective Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 51,
+        "seasonYear": 2026,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx202957-fxZGgJTvwXzP.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "I`m a Hero Girl?! Cure Sky to the Rescue!",
+        "titleJapanese": "",
+        "airDate": "2023-02-05",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9479309/screencap/63de5d40c811f.jpg",
+        "tvdbEpisodeId": 9479309
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "A Hero in the House?!",
+        "titleJapanese": "",
+        "airDate": "2023-02-12",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9590046/screencap/63e7194dc445a.jpg",
+        "tvdbEpisodeId": 9590046
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "Hic-hic-homesick! Don`t Cry Ellee-chan!",
+        "titleJapanese": "",
+        "airDate": "2023-02-19",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9590047/screencap/63f07e99efa5c.jpg",
+        "tvdbEpisodeId": 9590047
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "I`m a Hero Girl Too! Cure Prism`s Arrival!",
+        "titleJapanese": "",
+        "airDate": "2023-02-26",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9599822/screencap/644b03164f196.jpg",
+        "tvdbEpisodeId": 9599822
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "Hand in Hand! Our New Attack!",
+        "titleJapanese": "",
+        "airDate": "2023-03-05",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9605683/screencap/644b05a0d3537.jpg",
+        "tvdbEpisodeId": 9605683
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "Tell Me! Sora`s True Feelings",
+        "titleJapanese": "",
+        "airDate": "2023-03-12",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9644000/screencap/644b3570ef1fa.jpg",
+        "tvdbEpisodeId": 9644000
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "Thrilling! The Transfer Student Is a Hero Girl!",
+        "titleJapanese": "",
+        "airDate": "2023-03-19",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9644001/screencap/64153117271d4.jpg",
+        "tvdbEpisodeId": 9644001
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "The Flightless Bird and the Strange Boy",
+        "titleJapanese": "",
+        "airDate": "2023-03-26",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9651153/screencap/647c2982688b7.jpg",
+        "tvdbEpisodeId": 9651153
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "Wings of Courage, Fly Cure Wing!",
+        "titleJapanese": "",
+        "airDate": "2023-04-02",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9658333/screencap/647c2958be082.jpg",
+        "tvdbEpisodeId": 9658333
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "Yum! What`s the Taste of Home?",
+        "titleJapanese": "",
+        "airDate": "2023-04-09",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9658334/screencap/6430dd5c0034c.jpg",
+        "tvdbEpisodeId": 9658334
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "Awkward Pair!? Tsubasa and Ageha",
+        "titleJapanese": "",
+        "airDate": "2023-04-16",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9707100/screencap/643b747706e55.jpg",
+        "tvdbEpisodeId": 9707100
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "Tough! Cure Sky vs. Kabaton",
+        "titleJapanese": "",
+        "airDate": "2023-04-23",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9707101/screencap/64435697e4ab5.jpg",
+        "tvdbEpisodeId": 9707101
+      },
+      {
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 1,
+        "title": "Deliver It! First Present",
+        "titleJapanese": "",
+        "airDate": "2023-04-30",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9707102/screencap/64607a97e8584.jpg",
+        "tvdbEpisodeId": 9707102
+      },
+      {
+        "episodeNumber": 14,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 1,
+        "title": "To Skyland! Reunited with the Person She Admires!",
+        "titleJapanese": "",
+        "airDate": "2023-05-07",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9713294/screencap/6460795fb51b9.jpg",
+        "tvdbEpisodeId": 9713294
+      },
+      {
+        "episodeNumber": 15,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 1,
+        "title": "A Mega Ranborg Explosion? Protect Skyland!",
+        "titleJapanese": "",
+        "airDate": "2023-05-14",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9760931/screencap/646079919d335.jpg",
+        "tvdbEpisodeId": 9760931
+      },
+      {
+        "episodeNumber": 16,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 1,
+        "title": "The Elleetaro Squad Defeats the Ogre!",
+        "titleJapanese": "",
+        "airDate": "2023-05-21",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9760932/screencap/6472847f5e9c0.jpg",
+        "tvdbEpisodeId": 9760932
+      },
+      {
+        "episodeNumber": 17,
+        "absoluteEpisodeNumber": 17,
+        "seasonNumber": 1,
+        "title": "The Great Baton Pass! Mashiro`s Intense Relay",
+        "titleJapanese": "",
+        "airDate": "2023-05-28",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9762032/screencap/64717345a490d.jpg",
+        "tvdbEpisodeId": 9762032
+      },
+      {
+        "episodeNumber": 18,
+        "absoluteEpisodeNumber": 18,
+        "seasonNumber": 1,
+        "title": "Exciting! The Best Nursery School Teacher, Cure Butterfly!",
+        "titleJapanese": "",
+        "airDate": "2023-06-04",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9801714/screencap/647c2895422ee.jpg",
+        "tvdbEpisodeId": 9801714
+      },
+      {
+        "episodeNumber": 19,
+        "absoluteEpisodeNumber": 19,
+        "seasonNumber": 1,
+        "title": "Ageha and Tsubasa Get Colorfully Excited!",
+        "titleJapanese": "",
+        "airDate": "2023-06-11",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9801716/screencap/648f777540824.jpg",
+        "tvdbEpisodeId": 9801716
+      },
+      {
+        "episodeNumber": 20,
+        "absoluteEpisodeNumber": 20,
+        "seasonNumber": 1,
+        "title": "The First Step Towards Mashiro`s Dream",
+        "titleJapanese": "",
+        "airDate": "2023-06-18",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9801719/screencap/648d2869f3fb2.jpg",
+        "tvdbEpisodeId": 9801719
+      },
+      {
+        "episodeNumber": 21,
+        "absoluteEpisodeNumber": 21,
+        "seasonNumber": 1,
+        "title": "Soar! Wings of Knowledge",
+        "titleJapanese": "",
+        "airDate": "2023-06-25",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9801721/screencap/64966645063b1.jpg",
+        "tvdbEpisodeId": 9801721
+      },
+      {
+        "episodeNumber": 22,
+        "absoluteEpisodeNumber": 22,
+        "seasonNumber": 1,
+        "title": "Battamonda`s Final Strategy",
+        "titleJapanese": "",
+        "airDate": "2023-07-02",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9831660/screencap/64a10898ad543.jpg",
+        "tvdbEpisodeId": 9831660
+      },
+      {
+        "episodeNumber": 23,
+        "absoluteEpisodeNumber": 23,
+        "seasonNumber": 1,
+        "title": "Broken Dreams and Renewed Strength!",
+        "titleJapanese": "",
+        "airDate": "2023-07-09",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9831661/screencap/64a8eabc4b8b1.jpg",
+        "tvdbEpisodeId": 9831661
+      },
+      {
+        "episodeNumber": 24,
+        "absoluteEpisodeNumber": 24,
+        "seasonNumber": 1,
+        "title": "Sparkling Morning Star, Ellee-chan`s Secret",
+        "titleJapanese": "",
+        "airDate": "2023-07-16",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9875679/screencap/64b217a2ce858.jpg",
+        "tvdbEpisodeId": 9875679
+      },
+      {
+        "episodeNumber": 25,
+        "absoluteEpisodeNumber": 25,
+        "seasonNumber": 1,
+        "title": "Fun! The Princess Goes to the Zoo!",
+        "titleJapanese": "",
+        "airDate": "2023-07-23",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9875680/screencap/64bb4fcac9872.jpg",
+        "tvdbEpisodeId": 9875680
+      },
+      {
+        "episodeNumber": 26,
+        "absoluteEpisodeNumber": 26,
+        "seasonNumber": 1,
+        "title": "Take Off! Memories Connected by Airplanes",
+        "titleJapanese": "",
+        "airDate": "2023-07-30",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9875681/screencap/64c843650287f.jpg",
+        "tvdbEpisodeId": 9875681
+      },
+      {
+        "episodeNumber": 27,
+        "absoluteEpisodeNumber": 27,
+        "seasonNumber": 1,
+        "title": "A Wild Lesson in the Mirror Pad?!",
+        "titleJapanese": "",
+        "airDate": "2023-08-06",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887427/screencap/64d824f06d72b.jpg",
+        "tvdbEpisodeId": 9887427
+      },
+      {
+        "episodeNumber": 28,
+        "absoluteEpisodeNumber": 28,
+        "seasonNumber": 1,
+        "title": "Ageha`s Exciting Fashion Show!",
+        "titleJapanese": "",
+        "airDate": "2023-08-13",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9933459/screencap/64d70106930fb.jpg",
+        "tvdbEpisodeId": 9933459
+      },
+      {
+        "episodeNumber": 29,
+        "absoluteEpisodeNumber": 29,
+        "seasonNumber": 1,
+        "title": "Sora and the Missing Stuffed Animal",
+        "titleJapanese": "",
+        "airDate": "2023-08-20",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9935163/screencap/64e96f61adb16.jpg",
+        "tvdbEpisodeId": 9935163
+      },
+      {
+        "episodeNumber": 30,
+        "absoluteEpisodeNumber": 30,
+        "seasonNumber": 1,
+        "title": "Soaring Sea! Beach Paradise",
+        "titleJapanese": "",
+        "airDate": "2023-08-27",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9935164/screencap/64eae63b78612.jpg",
+        "tvdbEpisodeId": 9935164
+      },
+      {
+        "episodeNumber": 31,
+        "absoluteEpisodeNumber": 31,
+        "seasonNumber": 1,
+        "title": "A New Threat! Rescue Ellee-chan!",
+        "titleJapanese": "",
+        "airDate": "2023-09-03",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9943886/screencap/6508d5ff7ca4e.jpg",
+        "tvdbEpisodeId": 9943886
+      },
+      {
+        "episodeNumber": 32,
+        "absoluteEpisodeNumber": 32,
+        "seasonNumber": 1,
+        "title": "Big Transformation! Cure Majesty!",
+        "titleJapanese": "",
+        "airDate": "2023-09-10",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9959839/screencap/64f4e08c6e23d.jpg",
+        "tvdbEpisodeId": 9959839
+      },
+      {
+        "episodeNumber": 33,
+        "absoluteEpisodeNumber": 33,
+        "seasonNumber": 1,
+        "title": "Ultimate Power! Majestic Chroniclon",
+        "titleJapanese": "",
+        "airDate": "2023-09-17",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9986248/screencap/6508d373c6ee6.jpg",
+        "tvdbEpisodeId": 9986248
+      },
+      {
+        "episodeNumber": 34,
+        "absoluteEpisodeNumber": 34,
+        "seasonNumber": 1,
+        "title": "Mon-mon! Mashiro and His Return!",
+        "titleJapanese": "",
+        "airDate": "2023-09-24",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9986249/screencap/650e7656b87e7.jpg",
+        "tvdbEpisodeId": 9986249
+      },
+      {
+        "episodeNumber": 35,
+        "absoluteEpisodeNumber": 35,
+        "seasonNumber": 1,
+        "title": "Import Player Sora! Ace and Hero",
+        "titleJapanese": "",
+        "airDate": "2023-10-01",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10007921/screencap/6517bb1bf14c0.jpg",
+        "tvdbEpisodeId": 10007921
+      },
+      {
+        "episodeNumber": 36,
+        "absoluteEpisodeNumber": 36,
+        "seasonNumber": 1,
+        "title": "Ageha Fails at Being the Best Nursery School Teacher?",
+        "titleJapanese": "",
+        "airDate": "2023-10-08",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10007922/screencap/652314a5d1eff.jpg",
+        "tvdbEpisodeId": 10007922
+      },
+      {
+        "episodeNumber": 37,
+        "absoluteEpisodeNumber": 37,
+        "seasonNumber": 1,
+        "title": "Two Friends! The Tree of Memories",
+        "titleJapanese": "",
+        "airDate": "2023-10-15",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10065806/screencap/652cacb6958bf.jpg",
+        "tvdbEpisodeId": 10065806
+      },
+      {
+        "episodeNumber": 38,
+        "absoluteEpisodeNumber": 38,
+        "seasonNumber": 1,
+        "title": "Save the Sky! The Secret of Floating Island",
+        "titleJapanese": "",
+        "airDate": "2023-10-22",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10065807/screencap/65334cc221b51.jpg",
+        "tvdbEpisodeId": 10065807
+      },
+      {
+        "episodeNumber": 39,
+        "absoluteEpisodeNumber": 39,
+        "seasonNumber": 1,
+        "title": "Great Witch Yoyo and the Halloween Party!",
+        "titleJapanese": "",
+        "airDate": "2023-10-29",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10065808/screencap/653c843059bf7.jpg",
+        "tvdbEpisodeId": 10065808
+      },
+      {
+        "episodeNumber": 40,
+        "absoluteEpisodeNumber": 40,
+        "seasonNumber": 1,
+        "title": "Good Fwiends! Ellee`s Wedding!",
+        "titleJapanese": "",
+        "airDate": "2023-11-12",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10113576/screencap/654f182221a40.jpg",
+        "tvdbEpisodeId": 10113576
+      },
+      {
+        "episodeNumber": 41,
+        "absoluteEpisodeNumber": 41,
+        "seasonNumber": 1,
+        "title": "Mashiro and Monda`s Autumn Story",
+        "titleJapanese": "",
+        "airDate": "2023-11-19",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10129452/screencap/65587e253e9c0.jpg",
+        "tvdbEpisodeId": 10129452
+      },
+      {
+        "episodeNumber": 42,
+        "absoluteEpisodeNumber": 42,
+        "seasonNumber": 1,
+        "title": "Overcome Self-Doubt, Naive Hero!",
+        "titleJapanese": "",
+        "airDate": "2023-11-26",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10129453/screencap/6561bcafc4261.jpg",
+        "tvdbEpisodeId": 10129453
+      },
+      {
+        "episodeNumber": 43,
+        "absoluteEpisodeNumber": 43,
+        "seasonNumber": 1,
+        "title": "Prism Shine! Illuminate Your Heart",
+        "titleJapanese": "",
+        "airDate": "2023-12-03",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10135126/screencap/656ad82f5bd87.jpg",
+        "tvdbEpisodeId": 10135126
+      },
+      {
+        "episodeNumber": 44,
+        "absoluteEpisodeNumber": 44,
+        "seasonNumber": 1,
+        "title": "A Grown-Up Princess and the Legendary Precure",
+        "titleJapanese": "",
+        "airDate": "2023-12-10",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10169560/screencap/6573db9c8bede.jpg",
+        "tvdbEpisodeId": 10169560
+      },
+      {
+        "episodeNumber": 45,
+        "absoluteEpisodeNumber": 45,
+        "seasonNumber": 1,
+        "title": "The Gentle Young Lady of the Undergu Empire",
+        "titleJapanese": "",
+        "airDate": "2023-12-17",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10169561/screencap/657d28440e916.jpg",
+        "tvdbEpisodeId": 10169561
+      },
+      {
+        "episodeNumber": 46,
+        "absoluteEpisodeNumber": 46,
+        "seasonNumber": 1,
+        "title": "The Heroes` Christmas",
+        "titleJapanese": "",
+        "airDate": "2023-12-24",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10169562/screencap/6586803c9c86a.jpg",
+        "tvdbEpisodeId": 10169562
+      },
+      {
+        "episodeNumber": 47,
+        "absoluteEpisodeNumber": 47,
+        "seasonNumber": 1,
+        "title": "Good-bye, Morning Star! The Princess Awakens!",
+        "titleJapanese": "",
+        "airDate": "2024-01-07",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10177791/screencap/659902d331fb6.jpg",
+        "tvdbEpisodeId": 10177791
+      },
+      {
+        "episodeNumber": 48,
+        "absoluteEpisodeNumber": 48,
+        "seasonNumber": 1,
+        "title": "Heroes, Protect It! Everyone`s City!",
+        "titleJapanese": "",
+        "airDate": "2024-01-14",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10213594/screencap/65a23aef443f9.jpg",
+        "tvdbEpisodeId": 10213594
+      },
+      {
+        "episodeNumber": 49,
+        "absoluteEpisodeNumber": 49,
+        "seasonNumber": 1,
+        "title": "Cure Sky and the Strongest Power",
+        "titleJapanese": "",
+        "airDate": "2024-01-21",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10213595/screencap/65ab4b5e06b1a.jpg",
+        "tvdbEpisodeId": 10213595
+      },
+      {
+        "episodeNumber": 50,
+        "absoluteEpisodeNumber": 50,
+        "seasonNumber": 1,
+        "title": "Soaring to Infinity! Our World!",
+        "titleJapanese": "",
+        "airDate": "2024-01-28",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10213596/screencap/65b49899b1d14.jpg",
+        "tvdbEpisodeId": 10213596
+      }
+    ]
+  },
+  {
+    "malId": 55973,
+    "title": "30-sai made Doutei da to Mahou Tsukai ni Nareru Rashii",
+    "titleEnglish": "Cherry Magic! Thirty Years of Virginity Can Make You a Wizard?!",
+    "titleJapanese": "30歳まで童貞だと魔法使いになれるらしい",
+    "synopsis": "When mundane office worker Kiyoshi Adachi turns 30 years old, he discovers that he has gained the ability to read minds due simply to remaining a virgin for his entire life. The caveat, however, is that he must make physical contact with a person to know what they are thinking about. Adachi believes there is no real use for this power until he accidentally hears the thoughts of his coworker, Yuuichi Kurosawa.\n\nCharismatic and dependable, Kurosawa is the star of Adachi's team at work, earning praise and admiration from everyone at the office. But deep within, Kurosawa harbors an intense one-sided crush for the gloomy Adachi—a fact that Adachi only learns because of his ability, and knowledge he tries to respectfully disregard. As Kurosawa treats Adachi with kindness and affection he has never experienced before, Adachi finds it increasingly difficult to ignore his coworker's genuine advances.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1762/139690l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1762/139690l.jpg",
+    "bannerUrl": "https://media.kitsu.app/anime/47735/cover_image/5ce8e53c3df3ff656932ed1863d016c2.png",
+    "backdropUrl": "https://media.kitsu.app/anime/47735/cover_image/5ce8e53c3df3ff656932ed1863d016c2.png",
+    "malUrl": "https://myanimelist.net/anime/55973",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/055/55973.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2024-01-11T00:00:00+00:00",
+    "releaseYear": 2024,
+    "season": "winter 2024",
+    "episodes": 12,
+    "duration": "24 min per episode",
+    "score": 7.64,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Boys Love",
+      "Comedy",
+      "Romance",
+      "Slice of Life",
+      "Supernatural",
+      "Super Power",
+      "Shounen Ai",
+      "Working Life",
+      "Josei",
+      "Magic"
+    ],
+    "themes": [],
+    "studios": [
+      "Satelight"
+    ],
+    "producers": [
+      "TV Tokyo",
+      "Square Enix",
+      "Sotsu",
+      "TV Osaka",
+      "DAX Production",
+      "Avex Pictures",
+      "TV Aichi",
+      "BS TV Tokyo",
+      "MAGNET"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "Episode 1",
+        "titleJapanese": "",
+        "airDate": "2024-01-11",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10150278/screencap/659d4568d4407.jpg",
+        "tvdbEpisodeId": 10150278
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Episode 2",
+        "titleJapanese": "",
+        "airDate": "2024-01-18",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233945/screencap/65a872296ae09.jpg",
+        "tvdbEpisodeId": 10233945
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "Episode 3",
+        "titleJapanese": "",
+        "airDate": "2024-01-25",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233946/screencap/65b14a6b27f34.jpg",
+        "tvdbEpisodeId": 10233946
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "Episode 4",
+        "titleJapanese": "",
+        "airDate": "2024-02-01",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233947/screencap/65bba04bccff6.jpg",
+        "tvdbEpisodeId": 10233947
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "Episode 5",
+        "titleJapanese": "",
+        "airDate": "2024-02-08",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233948/screencap/65cabf3bdde81.jpg",
+        "tvdbEpisodeId": 10233948
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "Episode 6",
+        "titleJapanese": "",
+        "airDate": "2024-02-15",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233949/screencap/65d5f1ac3273e.jpg",
+        "tvdbEpisodeId": 10233949
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "Episode 7",
+        "titleJapanese": "",
+        "airDate": "2024-02-22",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233950/screencap/65d5f1c291b3b.jpg",
+        "tvdbEpisodeId": 10233950
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "Episode 8",
+        "titleJapanese": "",
+        "airDate": "2024-02-29",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233951/screencap/65df6f04da5f1.jpg",
+        "tvdbEpisodeId": 10233951
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "Episode 9",
+        "titleJapanese": "",
+        "airDate": "2024-03-07",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233952/screencap/65e9be0c2f0cc.jpg",
+        "tvdbEpisodeId": 10233952
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "Episode 10",
+        "titleJapanese": "",
+        "airDate": "2024-03-14",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233953/screencap/65f2e397bd1b3.jpg",
+        "tvdbEpisodeId": 10233953
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "Episode 11",
+        "titleJapanese": "",
+        "airDate": "2024-03-21",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233954/screencap/65fc215806a38.jpg",
+        "tvdbEpisodeId": 10233954
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "Episode 12",
+        "titleJapanese": "",
+        "airDate": "2024-03-28",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10233955/screencap/66044e2f085dc.jpg",
+        "tvdbEpisodeId": 10233955
+      }
+    ]
+  },
+  {
+    "malId": 51916,
+    "title": "Dekiru Neko wa Kyou mo Yuuutsu",
+    "titleEnglish": "The Masterful Cat Is Depressed Again Today",
+    "titleJapanese": "デキる猫は今日も憂鬱",
+    "synopsis": "The Maine Coon is one of the largest domesticated cat breeds, standing out among other cats for its impressive size and intelligence. But regular salarywoman Saku Fukuzawa has a hard time explaining why her rescued black cat now towers over her. Yukichi is no run-of-the-mill cat; he is a masterful feline who has taken charge of the chores in the Fukuzawa household. While his master rushes to catch the train during the morning rush hour and works late into the night, the giant cat is diligently packing Saku's lunch, cooking her meals, cleaning their home, and buying groceries.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1074/136720l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1074/136720l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/149883-SStEPMi7GSIH.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/149883-SStEPMi7GSIH.jpg",
+    "malUrl": "https://myanimelist.net/anime/51916",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/051/51916.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2023-07-08T00:00:00+00:00",
+    "releaseYear": 2023,
+    "season": "summer 2023",
+    "episodes": 13,
+    "duration": "24 min per episode",
+    "score": 7.63,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Comedy",
+      "Fantasy",
+      "Slice of Life"
+    ],
+    "themes": [],
+    "studios": [
+      "GoHands"
+    ],
+    "producers": [
+      "Frontier Works",
+      "Mainichi Broadcasting System",
+      "Kodansha",
+      "Movic",
+      "Hakuhodo DY Music & Pictures",
+      "DMM.com"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "The Masterful Cat Is Depressed Again Today",
+        "titleJapanese": "",
+        "airDate": "2023-07-08",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9213189/screencap/64a8c592c567c.jpg",
+        "tvdbEpisodeId": 9213189
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "The Masterful Cat Has Grown Big",
+        "titleJapanese": "",
+        "airDate": "2023-07-15",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9886448/screencap/64b02fd319d6e.jpg",
+        "tvdbEpisodeId": 9886448
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Is Good at Giving Care",
+        "titleJapanese": "",
+        "airDate": "2023-07-22",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9886449/screencap/64b02f925ca73.jpg",
+        "tvdbEpisodeId": 9886449
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Goes to the Aquarium",
+        "titleJapanese": "",
+        "airDate": "2023-07-29",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9886450/screencap/64b02ff5b3c24.jpg",
+        "tvdbEpisodeId": 9886450
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Also Goes to Birthday Parties",
+        "titleJapanese": "",
+        "airDate": "2023-08-05",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887050/screencap/64b0302f9d85c.jpg",
+        "tvdbEpisodeId": 9887050
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Is Photogenic",
+        "titleJapanese": "",
+        "airDate": "2023-08-12",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887051/screencap/64c563ea1878b.jpg",
+        "tvdbEpisodeId": 9887051
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Is Able to DIY",
+        "titleJapanese": "",
+        "airDate": "2023-08-19",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887052/screencap/64c565720f28c.jpg",
+        "tvdbEpisodeId": 9887052
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Has a Lot of Worries",
+        "titleJapanese": "",
+        "airDate": "2023-08-31",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887053/screencap/64c565e49dcf6.jpg",
+        "tvdbEpisodeId": 9887053
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Is Popular",
+        "titleJapanese": "",
+        "airDate": "2023-09-02",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887054/screencap/64c566e8deff6.jpg",
+        "tvdbEpisodeId": 9887054
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Can Watch the House?",
+        "titleJapanese": "",
+        "airDate": "2023-09-09",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887055/screencap/64e90b3a527d0.jpg",
+        "tvdbEpisodeId": 9887055
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "A Masterful Cat Also Cares About Health",
+        "titleJapanese": "",
+        "airDate": "2023-09-16",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887056/screencap/64e90be163951.jpg",
+        "tvdbEpisodeId": 9887056
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "The Masterful Cat Runs Away from Home?",
+        "titleJapanese": "",
+        "airDate": "2023-09-23",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887057/screencap/64e90c698c359.jpg",
+        "tvdbEpisodeId": 9887057
+      },
+      {
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 1,
+        "title": "The Masterful Cat Is Depressed Tomorrow as Well",
+        "titleJapanese": "",
+        "airDate": "2023-09-30",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9887058/screencap/64e90ce10db5c.jpg",
+        "tvdbEpisodeId": 9887058
+      }
+    ]
+  },
+  {
+    "malId": 49858,
+    "title": "Shinigami Bocchan to Kuro Maid 2nd Season",
+    "titleEnglish": "The Duke of Death and His Maid Season 2",
+    "titleJapanese": "死神坊ちゃんと黒メイド 第2期",
+    "synopsis": "The duke, full of love and kindness, treads carefully around every living being, be it a tender flower or his seductive maid, Alice Lendrott. Were it not for the devotion Alice shows him and the fondness that grows ever stronger between them, the duke would have barely paid heed to his mother's demand: to either lift the dreadful curse placed upon him or lose his family inheritance. Although the duke has no greed for riches, he yearns to be rid of his frightful powers—which cause all he touches to die—for the sake of those closest to him.\n\nAs the duke, Alice, and their friends enjoy spirited days filled with the ridiculous affairs of the supernatural, the spring deadline looms heavily over them. Nonetheless, the duke refuses to take any shortcuts in this endeavor if it means betraying the trust of his cherished friends.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1078/136947l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1078/136947l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/139435-ceEyUZxCIefX.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/139435-ceEyUZxCIefX.jpg",
+    "malUrl": "https://myanimelist.net/anime/49858",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/049/49858.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2023-07-09T00:00:00+00:00",
+    "releaseYear": 2023,
+    "season": "summer 2023",
+    "episodes": 12,
+    "duration": "24 min per episode",
+    "score": 7.63,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Web manga",
+    "genres": [
+      "Comedy",
+      "Fantasy",
+      "Romance",
+      "Drama",
+      "Supernatural",
+      "Ecchi",
+      "Magic",
+      "Maid",
+      "Mystery"
+    ],
+    "themes": [],
+    "studios": [
+      "J.C.Staff"
+    ],
+    "producers": [
+      "Shogakukan-Shueisha Productions",
+      "Shogakukan Music & Digital Entertainment",
+      "NBCUniversal Entertainment Japan",
+      "BS11",
+      "Shogakukan",
+      "Yomiuri TV Enterprise",
+      "Bandai Spirits"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 47257,
+        "title": "The Duke of Death and His Maid",
+        "relationType": "PREQUEL",
+        "episodes": 12,
+        "seasonYear": 2021,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx129277-ou64knqN2eQT.jpg"
+      },
+      {
+        "malId": 56738,
+        "title": "The Duke of Death and His Maid Season 3",
+        "relationType": "SEQUEL",
+        "episodes": 12,
+        "seasonYear": 2024,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx169584-e9X229cmrh8j.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Magic Pool",
+        "titleJapanese": "",
+        "airDate": "2023-07-09",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9864973/screencap/64ab6eb0146d7.jpg",
+        "tvdbEpisodeId": 9864973
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 2,
+        "title": "The Duke, Golf, and the Mysterious Beauty",
+        "titleJapanese": "",
+        "airDate": "2023-07-16",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889546/screencap/64b49078884ee.jpg",
+        "tvdbEpisodeId": 9889546
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Spectral Bride",
+        "titleJapanese": "",
+        "airDate": "2023-07-23",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889547/screencap/64bdc4735ea1d.jpg",
+        "tvdbEpisodeId": 9889547
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and Circus 101",
+        "titleJapanese": "",
+        "airDate": "2023-07-30",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889548/screencap/64c70f5a67268.jpg",
+        "tvdbEpisodeId": 9889548
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 17,
+        "seasonNumber": 2,
+        "title": "Cuff, Zain, and the Confession",
+        "titleJapanese": "",
+        "airDate": "2023-08-06",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889549/screencap/64d050117b0cc.jpg",
+        "tvdbEpisodeId": 9889549
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 18,
+        "seasonNumber": 2,
+        "title": "The Duke and Everyone`s Daily Life",
+        "titleJapanese": "",
+        "airDate": "2023-08-13",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889550/screencap/64d8ed0030672.jpg",
+        "tvdbEpisodeId": 9889550
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 19,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Encounter in the Witches` World",
+        "titleJapanese": "",
+        "airDate": "2023-08-20",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889551/screencap/64e220b7bba9c.jpg",
+        "tvdbEpisodeId": 9889551
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 20,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Kissing Window",
+        "titleJapanese": "",
+        "airDate": "2023-08-27",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889552/screencap/64eb6e80db3aa.jpg",
+        "tvdbEpisodeId": 9889552
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 21,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Second Anniversary",
+        "titleJapanese": "",
+        "airDate": "2023-09-03",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9889553/screencap/64f511aed44aa.jpg",
+        "tvdbEpisodeId": 9889553
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 22,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Flying Broom",
+        "titleJapanese": "",
+        "airDate": "2023-09-10",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9999244/screencap/64fe4aff09cfb.jpg",
+        "tvdbEpisodeId": 9999244
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 23,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Wizardry School",
+        "titleJapanese": "",
+        "airDate": "2023-09-17",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9999245/screencap/65079c280d8cd.jpg",
+        "tvdbEpisodeId": 9999245
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 24,
+        "seasonNumber": 2,
+        "title": "The Duke, Alice, and the Curse Witch",
+        "titleJapanese": "",
+        "airDate": "2023-09-24",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9999246/screencap/651b09042c06f.jpg",
+        "tvdbEpisodeId": 9999246
+      }
+    ]
+  },
+  {
+    "malId": 57390,
+    "title": "Wonderful Precure!",
+    "titleEnglish": "Wonderful Precure!",
+    "titleJapanese": "わんだふるぷりきゅあ！",
+    "synopsis": "The Wonderful Precure! anime is set in Animal Town, a town where animals and people live together in harmony. Second-year junior high school student Iroha Inukai is best friends with her dog named Komugi. Out for a walk one day, Iroha and Komugi encounter a mysterious creature named Garugaru, who goes on a rampage in the city. Komugi suddenly transforms into a Pretty Cure named Cure Wonderful, to protect Iroha.\n\n(Source: ANN)",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1852/140786l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1852/140786l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/171030-kMlg6k9tGVKJ.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/171030-kMlg6k9tGVKJ.jpg",
+    "malUrl": "https://myanimelist.net/anime/57390",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/057/57390.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2024-02-04T00:00:00+00:00",
+    "releaseYear": 2024,
+    "season": "winter 2024",
+    "episodes": 50,
+    "duration": "24 min per episode",
+    "score": 7.63,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Original",
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Mahou Shoujo",
+      "Shounen",
+      "Henshin",
+      "Magic",
+      "Magical Girl"
+    ],
+    "themes": [],
+    "studios": [
+      "Toei Animation"
+    ],
+    "producers": [
+      "ABC Animation"
+    ],
+    "rating": "G - All Ages",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 966,
+        "title": "Shin Chan",
+        "relationType": "CHARACTER",
+        "episodes": null,
+        "seasonYear": 1992,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b966-QUCdKAk4ls9J.jpg"
+      },
+      {
+        "malId": 603,
+        "title": "Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2004,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx603-sTv5PVWt8FGi.jpg"
+      },
+      {
+        "malId": 1534,
+        "title": "PreCure Splash Star",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2006,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1534-mbnVgJrquBQt.jpg"
+      },
+      {
+        "malId": 1932,
+        "title": "Yes! Precure 5",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2007,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1932-gcO8umGwWn33.jpg"
+      },
+      {
+        "malId": 5684,
+        "title": "Fresh Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2009,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx5684-jrSyAbr10ALo.jpg"
+      },
+      {
+        "malId": 7645,
+        "title": "Heartcatch Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2010,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx7645-edk6l2U5ms7z.png"
+      },
+      {
+        "malId": 9893,
+        "title": "Suite Precure♪",
+        "relationType": "ALTERNATIVE",
+        "episodes": 48,
+        "seasonYear": 2011,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx9893-vqhj2M6aR3Bv.jpg"
+      },
+      {
+        "malId": 12191,
+        "title": "Glitter Force",
+        "relationType": "ALTERNATIVE",
+        "episodes": 48,
+        "seasonYear": 2012,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx12191-nWmjNC2appDV.jpg"
+      },
+      {
+        "malId": 16419,
+        "title": "Glitter Force Doki Doki",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2013,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx16419-rWEwkEDnKYQ0.jpg"
+      },
+      {
+        "malId": 21407,
+        "title": "HappinessCharge Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2014,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20577-6MqRE2P5ZBuD.jpg"
+      },
+      {
+        "malId": 28669,
+        "title": "Go! Princess Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2015,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21001-49nYJTr7Wnsu.jpg"
+      },
+      {
+        "malId": 31884,
+        "title": "Witchy Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2016,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21506-hcLdwWKY4uyt.jpg"
+      },
+      {
+        "malId": 34290,
+        "title": "KIRA KIRA☆PRECURE A LA MODE",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2017,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx98059-n1fWRel1JlO7.jpg"
+      },
+      {
+        "malId": 36593,
+        "title": "HUGtto! Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2018,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx100661-XT2NWXKklV5T.png"
+      },
+      {
+        "malId": 38578,
+        "title": "Star☆Twinkle Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2019,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx105857-02ruhcNiPGga.jpg"
+      },
+      {
+        "malId": 40610,
+        "title": "Healin' Good Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 45,
+        "seasonYear": 2020,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx112748-UU9yEob7meZj.jpg"
+      },
+      {
+        "malId": 44191,
+        "title": "Tropical-Rouge! Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 46,
+        "seasonYear": 2021,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx126905-dWGjQMt2DUp0.png"
+      },
+      {
+        "malId": 50281,
+        "title": "Delicious Party Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 45,
+        "seasonYear": 2022,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx142080-YQEmfiA8D0Fy.jpg"
+      },
+      {
+        "malId": 53716,
+        "title": "Soaring Sky! Precure",
+        "relationType": "ALTERNATIVE",
+        "episodes": 50,
+        "seasonYear": 2023,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx157883-ib9fXLLjUy5m.png"
+      },
+      {
+        "malId": 60407,
+        "title": "You and Idol Precure ♪",
+        "relationType": "ALTERNATIVE",
+        "episodes": 49,
+        "seasonYear": 2025,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx185073-m4QzzXcEqmvb.png"
+      },
+      {
+        "malId": 63042,
+        "title": "Star Detective Precure!",
+        "relationType": "ALTERNATIVE",
+        "episodes": 51,
+        "seasonYear": 2026,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx202957-fxZGgJTvwXzP.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "It Starts with \"Wonderful!\"",
+        "titleJapanese": "",
+        "airDate": "2024-02-04",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10232428/screencap/65bdaf9cb4701.jpg",
+        "tvdbEpisodeId": 10232428
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Let`s All Be Friends! Cure Friendy!",
+        "titleJapanese": "",
+        "airDate": "2024-02-11",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10288288/screencap/65c6efef798bb.jpg",
+        "tvdbEpisodeId": 10288288
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "Don`t Say It! It`s Baaad!",
+        "titleJapanese": "",
+        "airDate": "2024-02-18",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10288289/screencap/65d030e2c14ef.jpg",
+        "tvdbEpisodeId": 10288289
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "The Nekoyashiki`s Cat and Mayu",
+        "titleJapanese": "",
+        "airDate": "2024-02-25",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10288290/screencap/65d95d787ab98.jpg",
+        "tvdbEpisodeId": 10288290
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "Connecting Bonds, Friendly Wand!",
+        "titleJapanese": "",
+        "airDate": "2024-03-03",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10302410/screencap/65ed3ec57e370.jpg",
+        "tvdbEpisodeId": 10302410
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "Komugi Argues with Iroha",
+        "titleJapanese": "",
+        "airDate": "2024-03-10",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10347794/screencap/65ebd1c37b269.jpg",
+        "tvdbEpisodeId": 10347794
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "Their Friend Liberale!",
+        "titleJapanese": "",
+        "airDate": "2024-03-17",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10347795/screencap/65fe21a141876.jpg",
+        "tvdbEpisodeId": 10347795
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "Mayu`s Anxious New Semester",
+        "titleJapanese": "",
+        "airDate": "2024-03-24",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10347796/screencap/65fe5e92e69d7.jpg",
+        "tvdbEpisodeId": 10347796
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "Junior High Student Komugi!",
+        "titleJapanese": "",
+        "airDate": "2024-03-31",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10347797/screencap/66082b7bd7f70.jpg",
+        "tvdbEpisodeId": 10347797
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "Memories in the Snow",
+        "titleJapanese": "",
+        "airDate": "2024-04-07",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10366977/screencap/6610cede5ea75.jpg",
+        "tvdbEpisodeId": 10366977
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "A Giant Creature Hiding in the Mountains?!",
+        "titleJapanese": "",
+        "airDate": "2024-04-14",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10422510/screencap/661a480e62dd4.jpg",
+        "tvdbEpisodeId": 10422510
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "I`m Cure Nyammy",
+        "titleJapanese": "",
+        "airDate": "2024-04-21",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10422511/screencap/662580d8c6650.jpg",
+        "tvdbEpisodeId": 10422511
+      },
+      {
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 1,
+        "title": "Search for Cure Nyammy!",
+        "titleJapanese": "",
+        "airDate": "2024-04-28",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10456342/screencap/6637fae8347fe.jpg",
+        "tvdbEpisodeId": 10456342
+      },
+      {
+        "episodeNumber": 14,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 1,
+        "title": "Mayu`s First Sleepover",
+        "titleJapanese": "",
+        "airDate": "2024-05-05",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10456343/screencap/6636df1c15520.jpg",
+        "tvdbEpisodeId": 10456343
+      },
+      {
+        "episodeNumber": 15,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 1,
+        "title": "A Day in the Life of Mey Mey the Butler-Sheep!",
+        "titleJapanese": "",
+        "airDate": "2024-05-12",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10481936/screencap/663eed8d985f3.jpg",
+        "tvdbEpisodeId": 10481936
+      },
+      {
+        "episodeNumber": 16,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 1,
+        "title": "The Mystery of the Mirror Stone",
+        "titleJapanese": "",
+        "airDate": "2024-05-19",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10481937/screencap/664835060a76b.jpg",
+        "tvdbEpisodeId": 10481937
+      },
+      {
+        "episodeNumber": 17,
+        "absoluteEpisodeNumber": 17,
+        "seasonNumber": 1,
+        "title": "I Will Protect You!",
+        "titleJapanese": "",
+        "airDate": "2024-05-26",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10481938/screencap/66516facdea65.jpg",
+        "tvdbEpisodeId": 10481938
+      },
+      {
+        "episodeNumber": 18,
+        "absoluteEpisodeNumber": 18,
+        "seasonNumber": 1,
+        "title": "Mayu`s Feelings, Yuki`s Feelings",
+        "titleJapanese": "",
+        "airDate": "2024-06-02",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10489856/screencap/665a987369c30.jpg",
+        "tvdbEpisodeId": 10489856
+      },
+      {
+        "episodeNumber": 19,
+        "absoluteEpisodeNumber": 19,
+        "seasonNumber": 1,
+        "title": "The Birth of Cure Lillian",
+        "titleJapanese": "",
+        "airDate": "2024-06-09",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10489869/screencap/6663de91b55d8.jpg",
+        "tvdbEpisodeId": 10489869
+      },
+      {
+        "episodeNumber": 20,
+        "absoluteEpisodeNumber": 20,
+        "seasonNumber": 1,
+        "title": "Together, We`re Not Scared",
+        "titleJapanese": "",
+        "airDate": "2024-06-16",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10444707/screencap/6688e8b8f3874.jpg",
+        "tvdbEpisodeId": 10444707
+      },
+      {
+        "episodeNumber": 21,
+        "absoluteEpisodeNumber": 21,
+        "seasonNumber": 1,
+        "title": "Mayu and Yuki`s School Life",
+        "titleJapanese": "",
+        "airDate": "2024-06-23",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10444708/screencap/6688e916ac7cd.jpg",
+        "tvdbEpisodeId": 10444708
+      },
+      {
+        "episodeNumber": 22,
+        "absoluteEpisodeNumber": 22,
+        "seasonNumber": 1,
+        "title": "Wonderful Go!",
+        "titleJapanese": "",
+        "airDate": "2024-06-30",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10522924/screencap/668b7e97b2a65.jpg",
+        "tvdbEpisodeId": 10522924
+      },
+      {
+        "episodeNumber": 23,
+        "absoluteEpisodeNumber": 23,
+        "seasonNumber": 1,
+        "title": "Making Wishes! Waon!",
+        "titleJapanese": "",
+        "airDate": "2024-07-07",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10529166/screencap/6688e68f044e0.jpg",
+        "tvdbEpisodeId": 10529166
+      },
+      {
+        "episodeNumber": 24,
+        "absoluteEpisodeNumber": 24,
+        "seasonNumber": 1,
+        "title": "A Very Strange Egg",
+        "titleJapanese": "",
+        "airDate": "2024-07-14",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10578632/screencap/6692b47f1a238.jpg",
+        "tvdbEpisodeId": 10578632
+      },
+      {
+        "episodeNumber": 25,
+        "absoluteEpisodeNumber": 25,
+        "seasonNumber": 1,
+        "title": "Summer! Beach! Homework!",
+        "titleJapanese": "",
+        "airDate": "2024-07-21",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10578633/screencap/669bf93662572.jpg",
+        "tvdbEpisodeId": 10578633
+      },
+      {
+        "episodeNumber": 26,
+        "absoluteEpisodeNumber": 26,
+        "seasonNumber": 1,
+        "title": "It`s Dangerously Hot!",
+        "titleJapanese": "",
+        "airDate": "2024-07-28",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10578634/screencap/66c234d53f52d.jpg",
+        "tvdbEpisodeId": 10578634
+      },
+      {
+        "episodeNumber": 27,
+        "absoluteEpisodeNumber": 27,
+        "seasonNumber": 1,
+        "title": "We Want to Find a Tsuchinoko!",
+        "titleJapanese": "",
+        "airDate": "2024-08-04",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10618362/screencap/66c2350e8adcd.jpg",
+        "tvdbEpisodeId": 10618362
+      },
+      {
+        "episodeNumber": 28,
+        "absoluteEpisodeNumber": 28,
+        "seasonNumber": 1,
+        "title": "Let`s Play at the Ohkuma Farm!",
+        "titleJapanese": "",
+        "airDate": "2024-08-11",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10618363/screencap/66b87dd76119f.jpg",
+        "tvdbEpisodeId": 10618363
+      },
+      {
+        "episodeNumber": 29,
+        "absoluteEpisodeNumber": 29,
+        "seasonNumber": 1,
+        "title": "Nice to Meet You, Niko-sama!",
+        "titleJapanese": "",
+        "airDate": "2024-08-18",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10618364/screencap/66c23570c46bf.jpg",
+        "tvdbEpisodeId": 10618364
+      },
+      {
+        "episodeNumber": 30,
+        "absoluteEpisodeNumber": 30,
+        "seasonNumber": 1,
+        "title": "A Wonderful Castle!",
+        "titleJapanese": "",
+        "airDate": "2024-08-25",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10618365/screencap/66cbb4f57564d.jpg",
+        "tvdbEpisodeId": 10618365
+      },
+      {
+        "episodeNumber": 31,
+        "absoluteEpisodeNumber": 31,
+        "seasonNumber": 1,
+        "title": "Nyanfluencer Mayu",
+        "titleJapanese": "",
+        "airDate": "2024-09-01",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10653124/screencap/66d2b6848fe4a.jpg",
+        "tvdbEpisodeId": 10653124
+      },
+      {
+        "episodeNumber": 32,
+        "absoluteEpisodeNumber": 32,
+        "seasonNumber": 1,
+        "title": "Favorite Animal at the Zoo",
+        "titleJapanese": "",
+        "airDate": "2024-09-08",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10653125/screencap/66dce24499a03.jpg",
+        "tvdbEpisodeId": 10653125
+      },
+      {
+        "episodeNumber": 33,
+        "absoluteEpisodeNumber": 33,
+        "seasonNumber": 1,
+        "title": "Full Animal Smiles",
+        "titleJapanese": "",
+        "airDate": "2024-09-15",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10679260/screencap/66f7a408173d3.jpg",
+        "tvdbEpisodeId": 10679260
+      },
+      {
+        "episodeNumber": 34,
+        "absoluteEpisodeNumber": 34,
+        "seasonNumber": 1,
+        "title": "Cat, Cat, Cat Meeting",
+        "titleJapanese": "",
+        "airDate": "2024-09-22",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10679261/screencap/66ee53f8ca0e4.jpg",
+        "tvdbEpisodeId": 10679261
+      },
+      {
+        "episodeNumber": 35,
+        "absoluteEpisodeNumber": 35,
+        "seasonNumber": 1,
+        "title": "Operation: Satoru`s Love Confession",
+        "titleJapanese": "",
+        "airDate": "2024-09-29",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10679262/screencap/66f7a49156c83.jpg",
+        "tvdbEpisodeId": 10679262
+      },
+      {
+        "episodeNumber": 36,
+        "absoluteEpisodeNumber": 36,
+        "seasonNumber": 1,
+        "title": "A Special Kind of Wonderful",
+        "titleJapanese": "",
+        "airDate": "2024-10-06",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10679263/screencap/6700bc27c206f.jpg",
+        "tvdbEpisodeId": 10679263
+      },
+      {
+        "episodeNumber": 37,
+        "absoluteEpisodeNumber": 37,
+        "seasonNumber": 1,
+        "title": "A First Date with Everyone",
+        "titleJapanese": "",
+        "airDate": "2024-10-13",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10726913/screencap/670a11119a3ba.jpg",
+        "tvdbEpisodeId": 10726913
+      },
+      {
+        "episodeNumber": 38,
+        "absoluteEpisodeNumber": 38,
+        "seasonNumber": 1,
+        "title": "The Place Komugi Calls Home",
+        "titleJapanese": "",
+        "airDate": "2024-10-20",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10726914/screencap/671873b8bd836.jpg",
+        "tvdbEpisodeId": 10726914
+      },
+      {
+        "episodeNumber": 39,
+        "absoluteEpisodeNumber": 39,
+        "seasonNumber": 1,
+        "title": "Niko Evolution!",
+        "titleJapanese": "",
+        "airDate": "2024-10-27",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10726915/screencap/672009cb445af.jpg",
+        "tvdbEpisodeId": 10726915
+      },
+      {
+        "episodeNumber": 40,
+        "absoluteEpisodeNumber": 40,
+        "seasonNumber": 1,
+        "title": "The Great Wanyan Incident",
+        "titleJapanese": "",
+        "airDate": "2024-11-10",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10751504/screencap/672f8826b7943.jpg",
+        "tvdbEpisodeId": 10751504
+      },
+      {
+        "episodeNumber": 41,
+        "absoluteEpisodeNumber": 41,
+        "seasonNumber": 1,
+        "title": "Yuki on Stage!",
+        "titleJapanese": "",
+        "airDate": "2024-11-17",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10780706/screencap/67383bb513a25.jpg",
+        "tvdbEpisodeId": 10780706
+      },
+      {
+        "episodeNumber": 42,
+        "absoluteEpisodeNumber": 42,
+        "seasonNumber": 1,
+        "title": "Everyone`s Wonderful Pets!",
+        "titleJapanese": "",
+        "airDate": "2024-11-24",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10780707/screencap/67497a5ed35b2.jpg",
+        "tvdbEpisodeId": 10780707
+      },
+      {
+        "episodeNumber": 43,
+        "absoluteEpisodeNumber": 43,
+        "seasonNumber": 1,
+        "title": "Feelings Spun Together",
+        "titleJapanese": "",
+        "airDate": "2024-12-01",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10793178/screencap/6753ca1d955e8.jpg",
+        "tvdbEpisodeId": 10793178
+      },
+      {
+        "episodeNumber": 44,
+        "absoluteEpisodeNumber": 44,
+        "seasonNumber": 1,
+        "title": "Lots of Happiness",
+        "titleJapanese": "",
+        "airDate": "2024-12-08",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10793179/screencap/6753c9c903019.jpg",
+        "tvdbEpisodeId": 10793179
+      },
+      {
+        "episodeNumber": 45,
+        "absoluteEpisodeNumber": 45,
+        "seasonNumber": 1,
+        "title": "Friends Forever",
+        "titleJapanese": "",
+        "airDate": "2024-12-15",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10837647/screencap/6794ade85aee1.jpg",
+        "tvdbEpisodeId": 10837647
+      },
+      {
+        "episodeNumber": 46,
+        "absoluteEpisodeNumber": 46,
+        "seasonNumber": 1,
+        "title": "Meeeerry Christmas!",
+        "titleJapanese": "",
+        "airDate": "2024-12-22",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10837648/screencap/6794ad6b13029.jpg",
+        "tvdbEpisodeId": 10837648
+      },
+      {
+        "episodeNumber": 47,
+        "absoluteEpisodeNumber": 47,
+        "seasonNumber": 1,
+        "title": "A Gaou New Year",
+        "titleJapanese": "",
+        "airDate": "2025-01-05",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10841634/screencap/6794acf6cf9f2.jpg",
+        "tvdbEpisodeId": 10841634
+      },
+      {
+        "episodeNumber": 48,
+        "absoluteEpisodeNumber": 48,
+        "seasonNumber": 1,
+        "title": "Gaou`s Friends",
+        "titleJapanese": "",
+        "airDate": "2025-01-12",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10871439/screencap/6794ac91cbaa5.jpg",
+        "tvdbEpisodeId": 10871439
+      },
+      {
+        "episodeNumber": 49,
+        "absoluteEpisodeNumber": 49,
+        "seasonNumber": 1,
+        "title": "Your Voice",
+        "titleJapanese": "",
+        "airDate": "2025-01-19",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10871440/screencap/6794ac53b4276.jpg",
+        "tvdbEpisodeId": 10871440
+      },
+      {
+        "episodeNumber": 50,
+        "absoluteEpisodeNumber": 50,
+        "seasonNumber": 1,
+        "title": "Wonderful Forever!",
+        "titleJapanese": "",
+        "airDate": "2025-01-26",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10871441/screencap/6794aae624368.jpg",
+        "tvdbEpisodeId": 10871441
+      }
+    ]
+  },
+  {
+    "malId": 50613,
+    "title": "Rurouni Kenshin: Meiji Kenkaku Romantan (2023)",
+    "titleEnglish": "Rurouni Kenshin",
+    "titleJapanese": "るろうに剣心 －明治剣客浪漫譚－(2023)",
+    "synopsis": "In the late 19th century, as the cruel times of the Bakumatsu period came to a close, a new Meiji era marked the age of restoration for Japan. With the war over, its infamous hero Hitokiri Battousai disappeared into thin air, leaving only his legend behind.\n\nYears later, a seemingly plain wanderer named Kenshin Himura encounters Kaoru Kamiya, the owner of a struggling local dojo in Tokyo. Kaoru pursues a self-proclaimed Battousai who roams the streets, indiscriminately killing citizens and police officers. Furthermore, the warrior professes to use the Kamiya Kasshin-ryu—a sword style developed by Kaoru's father deeply rooted in the essence of life, not death.\n\nKenshin decides to help Kaoru take down the impostor and restore her father's dojo. Unbeknownst to all, Kenshin is none other than the real warrior whose name still terrifies the people. Although Kaoru eventually learns the truth, his oath to atone for his murderous history by bloodlessly protecting the weak moves her, and she welcomes Kenshin to stay at her dojo. However, Kenshin's ideals are soon challenged by ghosts of the past and enemies of the present.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1599/136532l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1599/136532l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/142877-iMtNuzJHmkd2.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/142877-iMtNuzJHmkd2.jpg",
+    "malUrl": "https://myanimelist.net/anime/50613",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/050/50613.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2023-07-07T00:00:00+00:00",
+    "releaseYear": 2023,
+    "season": "summer 2023",
+    "episodes": 24,
+    "duration": "24 min per episode",
+    "score": 7.62,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Action",
+      "Drama",
+      "Romance",
+      "Adventure",
+      "Japan",
+      "Samurai",
+      "Shounen",
+      "Bakumatsu   Meiji Period"
+    ],
+    "themes": [],
+    "studios": [
+      "LIDENFILMS"
+    ],
+    "producers": [
+      "Aniplex",
+      "Dentsu",
+      "Animax",
+      "Fuji TV",
+      "Shueisha"
+    ],
+    "rating": "R - 17+ (violence & profanity)",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 45,
+        "title": "Rurouni Kenshin",
+        "relationType": "ALTERNATIVE",
+        "episodes": 94,
+        "seasonYear": 1996,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx45-DEFgZRCxiGmF.png"
+      },
+      {
+        "malId": 57554,
+        "title": "Rurouni Kenshin -Kyoto Disturbance-",
+        "relationType": "SEQUEL",
+        "episodes": 23,
+        "seasonYear": 2024,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b171637-h17RbEFtR0rQ.png"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "Kenshin: Himura Battosai",
+        "titleJapanese": "",
+        "airDate": "2023-07-07",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9685396/screencap/64a482bfc33d6.jpg",
+        "tvdbEpisodeId": 9685396
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Tokyo Samurai - Yahiko Myojin",
+        "titleJapanese": "",
+        "airDate": "2023-07-14",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816874/screencap/64adb0a4925e8.jpg",
+        "tvdbEpisodeId": 9816874
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "Kasshin-ryu - Reborn",
+        "titleJapanese": "",
+        "airDate": "2023-07-21",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816875/screencap/64b6c11136882.jpg",
+        "tvdbEpisodeId": 9816875
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "The Fighter for Hire - Sanosuke Sagara",
+        "titleJapanese": "",
+        "airDate": "2023-07-28",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816876/screencap/64c00a9da1fe2.jpg",
+        "tvdbEpisodeId": 9816876
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "And Then, Another",
+        "titleJapanese": "",
+        "airDate": "2023-08-04",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816877/screencap/64cbe13eb955a.jpg",
+        "tvdbEpisodeId": 9816877
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "Kurogasa",
+        "titleJapanese": "",
+        "airDate": "2023-08-11",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816878/screencap/64d245e7eb4ba.jpg",
+        "tvdbEpisodeId": 9816878
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "The Two Hitokiri",
+        "titleJapanese": "",
+        "airDate": "2023-08-18",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816879/screencap/64dbf0e854378.jpg",
+        "tvdbEpisodeId": 9816879
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "Beauty on the Run",
+        "titleJapanese": "",
+        "airDate": "2023-08-25",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816880/screencap/64e55b9c67eee.jpg",
+        "tvdbEpisodeId": 9816880
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "The Oniwabanshu Strike",
+        "titleJapanese": "",
+        "airDate": "2023-09-01",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816881/screencap/64ee60e639a6b.jpg",
+        "tvdbEpisodeId": 9816881
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "A Reason to Act",
+        "titleJapanese": "",
+        "airDate": "2023-09-08",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816882/screencap/64f7a9a34b181.jpg",
+        "tvdbEpisodeId": 9816882
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "Savage Han`nya - Honorable Shikijo",
+        "titleJapanese": "",
+        "airDate": "2023-09-15",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816883/screencap/650112c65e850.jpg",
+        "tvdbEpisodeId": 9816883
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "Okashira - Aoshi Shinomori",
+        "titleJapanese": "",
+        "airDate": "2023-09-22",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816884/screencap/6509d02aac20b.jpg",
+        "tvdbEpisodeId": 9816884
+      },
+      {
+        "episodeNumber": 13,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 1,
+        "title": "Battle`s End",
+        "titleJapanese": "",
+        "airDate": "2023-09-29",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9816885/screencap/65147073e8f16.jpg",
+        "tvdbEpisodeId": 9816885
+      },
+      {
+        "episodeNumber": 14,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 1,
+        "title": "Yahiko`s Battle",
+        "titleJapanese": "",
+        "airDate": "2023-10-06",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013226/screencap/651c34293756f.jpg",
+        "tvdbEpisodeId": 10013226
+      },
+      {
+        "episodeNumber": 15,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 1,
+        "title": "That Man - Raijuta",
+        "titleJapanese": "",
+        "airDate": "2023-10-13",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013235/screencap/652575c76a3e8.jpg",
+        "tvdbEpisodeId": 10013235
+      },
+      {
+        "episodeNumber": 16,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 1,
+        "title": "The Ideal Man",
+        "titleJapanese": "",
+        "airDate": "2023-10-20",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013236/screencap/6531e0176c0ff.jpg",
+        "tvdbEpisodeId": 10013236
+      },
+      {
+        "episodeNumber": 17,
+        "absoluteEpisodeNumber": 17,
+        "seasonNumber": 1,
+        "title": "Settling the Score",
+        "titleJapanese": "",
+        "airDate": "2023-10-27",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013237/screencap/6537d9b548ff2.jpg",
+        "tvdbEpisodeId": 10013237
+      },
+      {
+        "episodeNumber": 18,
+        "absoluteEpisodeNumber": 18,
+        "seasonNumber": 1,
+        "title": "Sanosuke & Nishiki Paintings",
+        "titleJapanese": "",
+        "airDate": "2023-11-03",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013238/screencap/65411e34cd626.jpg",
+        "tvdbEpisodeId": 10013238
+      },
+      {
+        "episodeNumber": 19,
+        "absoluteEpisodeNumber": 19,
+        "seasonNumber": 1,
+        "title": "Tsunan & Nishiki Paintings",
+        "titleJapanese": "",
+        "airDate": "2023-11-10",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013239/screencap/654d2d11cec20.jpg",
+        "tvdbEpisodeId": 10013239
+      },
+      {
+        "episodeNumber": 20,
+        "absoluteEpisodeNumber": 20,
+        "seasonNumber": 1,
+        "title": "Meiji Swordsman Romantic Story: Act Zero - Part One",
+        "titleJapanese": "",
+        "airDate": "2023-11-17",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013240/screencap/6553d8660aab1.jpg",
+        "tvdbEpisodeId": 10013240
+      },
+      {
+        "episodeNumber": 21,
+        "absoluteEpisodeNumber": 21,
+        "seasonNumber": 1,
+        "title": "Meiji Swordsman Romantic Story: Act Zero - Part Two",
+        "titleJapanese": "",
+        "airDate": "2023-11-24",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013241/screencap/655cbb3d7843f.jpg",
+        "tvdbEpisodeId": 10013241
+      },
+      {
+        "episodeNumber": 22,
+        "absoluteEpisodeNumber": 22,
+        "seasonNumber": 1,
+        "title": "Resurrection of the Wolf",
+        "titleJapanese": "",
+        "airDate": "2023-12-01",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013242/screencap/656616b8f30aa.jpg",
+        "tvdbEpisodeId": 10013242
+      },
+      {
+        "episodeNumber": 23,
+        "absoluteEpisodeNumber": 23,
+        "seasonNumber": 1,
+        "title": "The Wolf`s Fangs",
+        "titleJapanese": "",
+        "airDate": "2023-12-08",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013243/screencap/656f451609bce.jpg",
+        "tvdbEpisodeId": 10013243
+      },
+      {
+        "episodeNumber": 24,
+        "absoluteEpisodeNumber": 24,
+        "seasonNumber": 1,
+        "title": "Meiji 11, May 14th",
+        "titleJapanese": "",
+        "airDate": "2023-12-15",
+        "runtime": 23,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10013244/screencap/6578662b2deca.jpg",
+        "tvdbEpisodeId": 10013244
+      }
+    ]
+  },
+  {
+    "malId": 59207,
+    "title": "Mikadono Sanshimai wa Angai, Choroi.",
+    "titleEnglish": "Dealing with Mikadono Sisters Is a Breeze",
+    "titleJapanese": "帝乃三姉妹は案外、チョロい。",
+    "synopsis": "The Mikadono sisters—Miwa, Niko, and Kazuki—stand at the pinnacle of Saika Academy as its Three Royals, renowned respectively as prodigies in shogi, karate, and theater. Unfortunately, they have drifted apart from each other due to their overwhelming dedication to their fields, effectively turning them into strangers living under the same roof.\n\nEnter Yuu Ayase, the son of the late Subaru Ayase, a legendary actress who graduated from Saika. Unlike his mother, Yuu lacks any extraordinary talent whatsoever, much to the disappointment of those who knew her. Still, he transfers to her alma mater with one quiet promise in his heart: to fulfill her final wish that he build a true and happy family.\n\nIt just so happens that the Mikadono patriarch is also Subaru's longtime friend and benefactor, and he offers Yuu both a place to stay and a fresh start. Thrust into the lives of three estranged sisters who act cold toward him, Yuu may not be a genius himself, but the clumsy sincerity he brings might be what they all need to start anew.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1949/150965l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1949/150965l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/178886-wUxMvrfIuAfU.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/178886-wUxMvrfIuAfU.jpg",
+    "malUrl": "https://myanimelist.net/anime/59207",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/059/59207.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2025-07-10T00:00:00+00:00",
+    "releaseYear": 2025,
+    "season": "summer 2025",
+    "episodes": 12,
+    "duration": "23 min per episode",
+    "score": 7.62,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Comedy",
+      "Romance"
+    ],
+    "themes": [],
+    "studios": [
+      "P.A. Works",
+      "P.A.WORKS"
+    ],
+    "producers": [
+      "Aniplex",
+      "Mainichi Broadcasting System",
+      "Movic",
+      "Magic Capsule",
+      "Tokyo MX",
+      "BS11",
+      "Shogakukan",
+      "JR East Marketing & Communications",
+      "arma bianca",
+      "Sankyo"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "Prodigy and Mediocrity",
+        "titleJapanese": "",
+        "airDate": "2025-07-10",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10572685/screencap/686d0688189b9.jpg",
+        "tvdbEpisodeId": 10572685
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Her Secret",
+        "titleJapanese": "",
+        "airDate": "2025-07-17",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11229568/screencap/68753690622c0.jpg",
+        "tvdbEpisodeId": 11229568
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "I Want Us to Be a Family",
+        "titleJapanese": "",
+        "airDate": "2025-07-24",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11229569/screencap/68e930bb68021.jpg",
+        "tvdbEpisodeId": 11229569
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "A Memory the Sisters Can Share",
+        "titleJapanese": "",
+        "airDate": "2025-07-31",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11229570/screencap/688a5089df564.jpg",
+        "tvdbEpisodeId": 11229570
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "A Father`s Teachings",
+        "titleJapanese": "",
+        "airDate": "2025-08-07",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11229571/screencap/6890affa50c30.jpg",
+        "tvdbEpisodeId": 11229571
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "This Is a Date",
+        "titleJapanese": "",
+        "airDate": "2025-08-14",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11229572/screencap/689d2dc0aa55a.jpg",
+        "tvdbEpisodeId": 11229572
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "The True Reason Is...",
+        "titleJapanese": "",
+        "airDate": "2025-08-21",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236386/screencap/68a3543293369.jpg",
+        "tvdbEpisodeId": 11236386
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "You Will Win No Matter What",
+        "titleJapanese": "",
+        "airDate": "2025-08-28",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236387/screencap/68ae5ca29b2d6.jpg",
+        "tvdbEpisodeId": 11236387
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "I`ll Make You Swoon",
+        "titleJapanese": "",
+        "airDate": "2025-09-04",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236388/screencap/68b6d53a6a4da.jpg",
+        "tvdbEpisodeId": 11236388
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "The Shadow of a Genius",
+        "titleJapanese": "",
+        "airDate": "2025-09-11",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236389/screencap/68c017b362814.jpg",
+        "tvdbEpisodeId": 11236389
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "I Already Knew It",
+        "titleJapanese": "",
+        "airDate": "2025-09-18",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236390/screencap/68c8051cc2d6d.jpg",
+        "tvdbEpisodeId": 11236390
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "For Someone Else",
+        "titleJapanese": "",
+        "airDate": "2025-09-25",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11236391/screencap/68e930724ccd6.jpg",
+        "tvdbEpisodeId": 11236391
+      }
+    ]
+  },
+  {
+    "malId": 60131,
+    "title": "Karaoke Iko!",
+    "titleEnglish": "Let's Go Karaoke!",
+    "titleJapanese": "カラオケ行こ！",
+    "synopsis": "Middle school student Satomi Oka ought to be proud that his choir group placed second at a national competition. However, he views this achievement as a failure caused by his inadequacies. Furthermore, since graduation is fast approaching, his time as leader of the choir is coming to an end. \n\nWhile Satomi is preoccupied with his inner turmoil, a smooth-talking gangster named Kyouji Narita approaches him and requests him as a singing teacher. Every year, Kyouji and his colleagues participate in a karaoke competition, where their boss personally designs a tattoo for the loser. To avoid such cruel and unusual punishment, Kyouji asks Satomi to help him find the best song suited for his vocal range.\n\nAlbeit reluctantly, Satomi sets his fears aside and agrees to join Kyouji at his karaoke practice sessions. But it remains to be seen whether the mismatched duo will overcome their respective obstacles or fail miserably.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1801/150665l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1801/150665l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/183127-zk2PgOnqzcAv.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/183127-zk2PgOnqzcAv.jpg",
+    "malUrl": "https://myanimelist.net/anime/60131",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/060/60131.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2025-07-24T00:00:00+00:00",
+    "releaseYear": 2025,
+    "season": "summer 2025",
+    "episodes": 5,
+    "duration": "24 min per episode",
+    "score": 7.62,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Comedy",
+      "Music",
+      "Crime"
+    ],
+    "themes": [],
+    "studios": [
+      "Doga Kobo"
+    ],
+    "producers": [
+      "Movic",
+      "AT-X",
+      "Nagoya Broadcasting Network",
+      "Kansai TV",
+      "Kadokawa"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 60130,
+        "title": "Captivated, By You",
+        "relationType": "OTHER",
+        "episodes": 5,
+        "seasonYear": 2025,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx183128-nMFf0c6IOs9g.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "The Encounter",
+        "titleJapanese": "",
+        "airDate": "2025-07-24",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10748362/screencap/687b7ebb10b2c.jpg",
+        "tvdbEpisodeId": 10748362
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Nightmare",
+        "titleJapanese": "",
+        "airDate": "2025-07-31",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11258030/screencap/688bb751767a9.jpg",
+        "tvdbEpisodeId": 11258030
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "Parting Ways",
+        "titleJapanese": "",
+        "airDate": "2025-08-07",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11258039/screencap/6894bb43b3cd5.jpg",
+        "tvdbEpisodeId": 11258039
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "Crimson",
+        "titleJapanese": "",
+        "airDate": "2025-08-14",
+        "runtime": 25,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11258040/screencap/689e0c8cc3e6f.jpg",
+        "tvdbEpisodeId": 11258040
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "Life Gone Awry",
+        "titleJapanese": "",
+        "airDate": "2025-09-25",
+        "runtime": null,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11258041/screencap/68d552a53a40c.jpg",
+        "tvdbEpisodeId": 11258041
+      }
+    ]
+  },
+  {
+    "malId": 53881,
+    "title": "Arknights: Touin Kiro",
+    "titleEnglish": "Arknights: Perish in Frost",
+    "titleJapanese": "アークナイツ 冬隠帰路",
+    "synopsis": "Rebel organization Reunion has reduced the city of Chernobog to ashes and despair. That is only the beginning of its uprising against the nations prejudiced toward those infected with the highly contagious and deadly disease Oripathy. Now, the rebels have set their sights on Lungmen—a prosperous city infamous for its inhumane treatment of the sick. After witnessing Reunion destroy her homeland, Chief Ch'en of the Lungmen Guard Department's Special Inspection Unit leads her squad to defend her city.\n\nMeanwhile, Amiya, the Doctor, and the rest of the advanced pharmaceutical company Rhodes Island continue to oppose Reunion on all fronts. However, they soon find themselves in a deadlock against a powerful enemy: FrostNova, a Reunion commander whose fearsome wintry powers cause anyone unfortunate enough to stand in her way to slowly perish in frost.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1593/138601l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1593/138601l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/158895-GwaXDM5EOIoV.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/158895-GwaXDM5EOIoV.jpg",
+    "malUrl": "https://myanimelist.net/anime/53881",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/053/53881.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2023-10-07T00:00:00+00:00",
+    "releaseYear": 2023,
+    "season": "fall 2023",
+    "episodes": 8,
+    "duration": "24 min per episode",
+    "score": 7.6,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Game",
+    "genres": [
+      "Action",
+      "Fantasy"
+    ],
+    "themes": [],
+    "studios": [
+      "Yostar Pictures"
+    ],
+    "producers": [
+      "Hypergryph",
+      "Studio Montagne",
+      "Yostar",
+      "Legendoor",
+      "Futokorogatana"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 50205,
+        "title": "Arknights: PRELUDE TO DAWN",
+        "relationType": "PREQUEL",
+        "episodes": 8,
+        "seasonYear": 2022,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx140660-iJAS9omOJdzU.jpg"
+      },
+      {
+        "malId": 58749,
+        "title": "Arknights: RISE FROM EMBER",
+        "relationType": "SEQUEL",
+        "episodes": 10,
+        "seasonYear": 2025,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx177175-cr5tlJIj7dEi.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 2,
+        "title": "Conspiracy",
+        "titleJapanese": "",
+        "airDate": "2023-10-07",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/9509471/screencap/6520403fc5d1e.jpg",
+        "tvdbEpisodeId": 9509471
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 2,
+        "title": "Peril",
+        "titleJapanese": "",
+        "airDate": "2023-10-14",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045172/screencap/65297d655c247.jpg",
+        "tvdbEpisodeId": 10045172
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 2,
+        "title": "Conceal",
+        "titleJapanese": "",
+        "airDate": "2023-10-21",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045173/screencap/6532b2f19ce34.jpg",
+        "tvdbEpisodeId": 10045173
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 2,
+        "title": "Salvation",
+        "titleJapanese": "",
+        "airDate": "2023-10-28",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045174/screencap/653bf0e00e364.jpg",
+        "tvdbEpisodeId": 10045174
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 2,
+        "title": "Resign",
+        "titleJapanese": "",
+        "airDate": "2023-11-04",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045175/screencap/654528a1006ae.jpg",
+        "tvdbEpisodeId": 10045175
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 2,
+        "title": "Partial Necrosis",
+        "titleJapanese": "",
+        "airDate": "2023-11-11",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045176/screencap/654e7ad12b54e.jpg",
+        "tvdbEpisodeId": 10045176
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 2,
+        "title": "Sacrifice",
+        "titleJapanese": "",
+        "airDate": "2023-11-18",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045177/screencap/656f069d99fa4.jpg",
+        "tvdbEpisodeId": 10045177
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 2,
+        "title": "Lullabye",
+        "titleJapanese": "",
+        "airDate": "2023-11-25",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10045178/screencap/656f079e4ded4.jpg",
+        "tvdbEpisodeId": 10045178
+      }
+    ]
+  },
+  {
+    "malId": 59095,
+    "title": "Tensei Shitara Dai Nana Ouji Datta node, Kimamani Majutsu wo Kiwamemasu 2nd Season",
+    "titleEnglish": "I Was Reincarnated as the 7th Prince so I Can Take My Time Perfecting My Magical Ability Season 2",
+    "titleJapanese": "転生したら第七王子だったので、気ままに魔術を極めます 第2期",
+    "synopsis": "Prince Lloyd de Saloum—once a commoner who could never grasp magic—is now blessed with inexhaustible mana and has all the time in the world to master it, as he has no claim to the throne. After mastering demonic magic, he sets his sights on the Church to learn the secrets of divine magic that will bring him one step closer to completing his arsenal. However, due to his fondness for unholy magic, he draws the scrutiny of divine beings who see him as little more than a demonic spawn.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1154/149614l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1154/149614l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/178090-EgKftuHoDJB7.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/178090-EgKftuHoDJB7.jpg",
+    "malUrl": "https://myanimelist.net/anime/59095",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/059/59095.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2025-07-10T00:00:00+00:00",
+    "releaseYear": 2025,
+    "season": "summer 2025",
+    "episodes": 12,
+    "duration": "23 min per episode",
+    "score": 7.6,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Light novel",
+    "genres": [
+      "Adventure",
+      "Fantasy",
+      "Action",
+      "Slice of Life"
+    ],
+    "themes": [],
+    "studios": [
+      "Tsumugi Akita Animation Lab",
+      "Tsumugi Akita Anime Lab"
+    ],
+    "producers": [
+      "TV Tokyo",
+      "Lantis",
+      "Kodansha",
+      "Ai Addiction",
+      "Glovision",
+      "Crunchyroll",
+      "ADK Marketing Solutions",
+      "Bandai Namco Filmworks",
+      "Bandai Namco Music Live"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [
+      {
+        "malId": 53516,
+        "title": "I Was Reincarnated as the 7th Prince so I Can Take My Time Perfecting My Magical Ability",
+        "relationType": "PREQUEL",
+        "episodes": 12,
+        "seasonYear": 2024,
+        "posterUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx156415-zwP9deA786S1.jpg"
+      }
+    ],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 13,
+        "seasonNumber": 2,
+        "title": "I`ll Join the Church!",
+        "titleJapanese": "",
+        "airDate": "2025-07-10",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10548986/screencap/686d06f2a4fd9.jpg",
+        "tvdbEpisodeId": 10548986
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 14,
+        "seasonNumber": 2,
+        "title": "Jihriel`s Miracles",
+        "titleJapanese": "",
+        "airDate": "2025-07-17",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218269/screencap/6877008d36efe.jpg",
+        "tvdbEpisodeId": 11218269
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 15,
+        "seasonNumber": 2,
+        "title": "Ghoul Hunt",
+        "titleJapanese": "",
+        "airDate": "2025-07-24",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218270/screencap/6880cd241815c.jpg",
+        "tvdbEpisodeId": 11218270
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 16,
+        "seasonNumber": 2,
+        "title": "Civil War",
+        "titleJapanese": "",
+        "airDate": "2025-07-31",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218271/screencap/68897abadb462.jpg",
+        "tvdbEpisodeId": 11218271
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 17,
+        "seasonNumber": 2,
+        "title": "The Church`s Secret",
+        "titleJapanese": "",
+        "airDate": "2025-08-07",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218272/screencap/6892023cced64.jpg",
+        "tvdbEpisodeId": 11218272
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 18,
+        "seasonNumber": 2,
+        "title": "Escher`s Will",
+        "titleJapanese": "",
+        "airDate": "2025-08-14",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218273/screencap/689b4ba0a306d.jpg",
+        "tvdbEpisodeId": 11218273
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 19,
+        "seasonNumber": 2,
+        "title": "The Great Advent Festival",
+        "titleJapanese": "",
+        "airDate": "2025-08-21",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218274/screencap/68a5f93fe62e4.jpg",
+        "tvdbEpisodeId": 11218274
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 20,
+        "seasonNumber": 2,
+        "title": "Invasion",
+        "titleJapanese": "",
+        "airDate": "2025-08-28",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218275/screencap/68adbf5240aa8.jpg",
+        "tvdbEpisodeId": 11218275
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 21,
+        "seasonNumber": 2,
+        "title": "The Moon and Tonkatsu",
+        "titleJapanese": "",
+        "airDate": "2025-09-04",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218276/screencap/68b6d4cdeab3f.jpg",
+        "tvdbEpisodeId": 11218276
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 22,
+        "seasonNumber": 2,
+        "title": "Black Dragon",
+        "titleJapanese": "",
+        "airDate": "2025-09-11",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218277/screencap/68c01785394f9.jpg",
+        "tvdbEpisodeId": 11218277
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 23,
+        "seasonNumber": 2,
+        "title": "The Battle Above the Clouds",
+        "titleJapanese": "",
+        "airDate": "2025-09-18",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218278/screencap/68c9802106208.jpg",
+        "tvdbEpisodeId": 11218278
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 24,
+        "seasonNumber": 2,
+        "title": "In the Light",
+        "titleJapanese": "",
+        "airDate": "2025-09-25",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11218279/screencap/68d41e27e6b43.jpg",
+        "tvdbEpisodeId": 11218279
+      }
+    ]
+  },
+  {
+    "malId": 58725,
+    "title": "Ninja to Koroshiya no Futarigurashi",
+    "titleEnglish": "A Ninja and an Assassin Under One Roof",
+    "titleJapanese": "忍者と殺し屋のふたりぐらし",
+    "synopsis": "At first glance, Konoha Koga is an average high school girl who lives alone. However, she has a secret—she works as an assassin on the side! One day, fate puts her in an encounter with Satoko Kusagukare, a runaway ninja hunted by her comrades for accidentally leaving her village.\n\nWhen Konoha kills one of the people seeking Satoko, the mysterious girl uses her exceptional ability to cover up corpses. Seeing potential in Satoko's skill, Konoha offers her a deal: she can live with Konoha in exchange for cleaning up the scenes of her assassinations. As the ninja and the assassin now live under one roof, they begin enjoying their new life together, whether at home or during their conveniently aligned collaborations.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1855/146642l.jpg",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1855/146642l.jpg",
+    "bannerUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/177120-AeL6hv0brH0l.jpg",
+    "backdropUrl": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/177120-AeL6hv0brH0l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58725",
+    "sourceUrl": "https://github.com/subhajeetch-fl/anime-mapper/blob/main/data/anime/058/58725.json",
+    "metadataSource": "MAL ID matched Anime Mapper static snapshot",
+    "airedFrom": "2025-04-10T00:00:00+00:00",
+    "releaseYear": 2025,
+    "season": "spring 2025",
+    "episodes": 12,
+    "duration": "24 min per episode",
+    "score": 7.58,
+    "status": "Finished Airing",
+    "type": "TV",
+    "source": "Manga",
+    "genres": [
+      "Comedy",
+      "Samurai",
+      "Shounen",
+      "Fantasy",
+      "Adventure",
+      "Ninja",
+      "Assassin",
+      "Absurdist Humour"
+    ],
+    "themes": [],
+    "studios": [
+      "Shaft"
+    ],
+    "producers": [
+      "Pony Canyon",
+      "Movic",
+      "AT-X",
+      "Kansai TV",
+      "BS11",
+      "Kadokawa",
+      "Bit grooove promotion",
+      "Heart Company"
+    ],
+    "rating": "PG-13 - Teens 13 or older",
+    "nextAiringEpisode": null,
+    "relatedAnime": [],
+    "episodeGuide": [
+      {
+        "episodeNumber": 1,
+        "absoluteEpisodeNumber": 1,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin Meet",
+        "titleJapanese": "",
+        "airDate": "2025-04-10",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/10460452/screencap/67f64e026656f.jpg",
+        "tvdbEpisodeId": 10460452
+      },
+      {
+        "episodeNumber": 2,
+        "absoluteEpisodeNumber": 2,
+        "seasonNumber": 1,
+        "title": "Daily Life of a Ninja and an Assassin",
+        "titleJapanese": "",
+        "airDate": "2025-04-17",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019722/screencap/67ff77dae7678.jpg",
+        "tvdbEpisodeId": 11019722
+      },
+      {
+        "episodeNumber": 3,
+        "absoluteEpisodeNumber": 3,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin`s Job",
+        "titleJapanese": "",
+        "airDate": "2025-04-24",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019723/screencap/6808b2b639649.jpg",
+        "tvdbEpisodeId": 11019723
+      },
+      {
+        "episodeNumber": 4,
+        "absoluteEpisodeNumber": 4,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin`s Relationship",
+        "titleJapanese": "",
+        "airDate": "2025-05-01",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019724/screencap/68121c2519f7e.jpg",
+        "tvdbEpisodeId": 11019724
+      },
+      {
+        "episodeNumber": 5,
+        "absoluteEpisodeNumber": 5,
+        "seasonNumber": 1,
+        "title": "A Robot and an Assassin Under One Roof",
+        "titleJapanese": "",
+        "airDate": "2025-05-08",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019725/screencap/681b3ee1c8779.jpg",
+        "tvdbEpisodeId": 11019725
+      },
+      {
+        "episodeNumber": 6,
+        "absoluteEpisodeNumber": 6,
+        "seasonNumber": 1,
+        "title": "A Busty Girl and an Assassin Under One Roof",
+        "titleJapanese": "",
+        "airDate": "2025-05-15",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019726/screencap/682463a175527.jpg",
+        "tvdbEpisodeId": 11019726
+      },
+      {
+        "episodeNumber": 7,
+        "absoluteEpisodeNumber": 7,
+        "seasonNumber": 1,
+        "title": "An Assassin and Her Classmate`s Friend",
+        "titleJapanese": "",
+        "airDate": "2025-05-22",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019727/screencap/682dac4e515ac.jpg",
+        "tvdbEpisodeId": 11019727
+      },
+      {
+        "episodeNumber": 8,
+        "absoluteEpisodeNumber": 8,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin`s Big House",
+        "titleJapanese": "",
+        "airDate": "2025-05-29",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019728/screencap/6837050d2b0d6.jpg",
+        "tvdbEpisodeId": 11019728
+      },
+      {
+        "episodeNumber": 9,
+        "absoluteEpisodeNumber": 9,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin`s Experiment",
+        "titleJapanese": "",
+        "airDate": "2025-06-05",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019729/screencap/6840220ed8375.jpg",
+        "tvdbEpisodeId": 11019729
+      },
+      {
+        "episodeNumber": 10,
+        "absoluteEpisodeNumber": 10,
+        "seasonNumber": 1,
+        "title": "A Ninja and a Baby Assassin",
+        "titleJapanese": "",
+        "airDate": "2025-06-12",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019730/screencap/68494830b59e9.jpg",
+        "tvdbEpisodeId": 11019730
+      },
+      {
+        "episodeNumber": 11,
+        "absoluteEpisodeNumber": 11,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin`s Big Dilemma",
+        "titleJapanese": "",
+        "airDate": "2025-06-19",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019731/screencap/68540a6240ea8.jpg",
+        "tvdbEpisodeId": 11019731
+      },
+      {
+        "episodeNumber": 12,
+        "absoluteEpisodeNumber": 12,
+        "seasonNumber": 1,
+        "title": "A Ninja and an Assassin Under One Roof",
+        "titleJapanese": "",
+        "airDate": "2025-06-26",
+        "runtime": 24,
+        "imageUrl": "https://artworks.thetvdb.com/banners/v4/episode/11019732/screencap/685bc27098836.jpg",
+        "tvdbEpisodeId": 11019732
+      }
+    ]
+  }
+];
