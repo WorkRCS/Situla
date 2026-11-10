@@ -183,8 +183,8 @@ test("home and catalog spotlights refresh and rotate across all media types", as
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
   assert.match(app, /mixHomeSpotlight\(\{/);
-  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=24&random=true"/);
-  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=24&random=true"/);
+  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=32"/);
+  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=32"/);
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
   assert.match(app, /\}, 10000\)/);
@@ -357,6 +357,8 @@ test("home movie, TV, anime and hero clicks provide item-level loading feedback"
   assert.match(app, /Opening…/);
   assert.match(app, /openHomeMovie\(movie\)/);
   assert.match(app, /openHomeSeries\(series, kind\)/);
+  assert.match(app, /router\.prefetch\("\/watch\/" \+ encodeURIComponent\(imdbId\)\)/);
+  assert.match(app, /prefetchHomeSpotlight\(featured\)/);
   assert.match(css, /@keyframes situla-button-spin/);
   assert.match(css, /\.media-loading-overlay/);
 });

@@ -96,10 +96,10 @@ function MoviePosterImage({ movie }) {
   );
 }
 
-function MovieCard({ movie, onOpen, onSave, saved, navigating = false }) {
+function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
   return (
     <article className="movie-card">
-      <button type="button" onClick={() => onOpen(movie)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
+      <button type="button" onClick={() => onOpen(movie)} onMouseEnter={() => onPreload?.(movie)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
         <div className="movie-poster">
           <MoviePosterImage movie={movie} />
           {movie.voteAverage > 0 && (
@@ -155,7 +155,7 @@ function movieNavigationKey(movie) {
   return "movie:" + String(movie?.imdbId || "").toLowerCase();
 }
 
-function SeriesCard({ item, kind, onOpen, navigating = false }) {
+function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
   const isTv = kind === "tv";
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
@@ -167,7 +167,7 @@ function SeriesCard({ item, kind, onOpen, navigating = false }) {
   const synopsis = isTv ? item.overview : item.synopsis;
   return (
     <article className={"movie-card series-card series-card-" + kind}>
-      <button type="button" onClick={() => onOpen(item, kind)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
+      <button type="button" onClick={() => onOpen(item, kind)} onMouseEnter={() => onPreload?.(item, kind)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
         <div className="movie-poster">
           <SeriesPosterImage item={item} title={title} />
           {rating > 0 && (
@@ -226,7 +226,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   );
 }
 
-function SeriesShelf({ title, eyebrow, items, kind, onOpen, pendingNavigation = "" }) {
+function SeriesShelf({ title, eyebrow, items, kind, onOpen, pendingNavigation = "", onPreload }) {
   if (!items.length) return null;
   return (
     <section className="netflix-shelf home-series-shelf">
@@ -246,6 +246,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, pendingNavigation = 
             item={item}
             kind={kind}
             onOpen={onOpen}
+            onPreload={onPreload}
             navigating={pendingNavigation === seriesNavigationKey(item, kind)}
           />
         ))}
@@ -254,7 +255,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, pendingNavigation = 
   );
 }
 
-function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "" }) {
+function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "", onPreload }) {
   if (!items.length) return null;
   return (
     <section className="netflix-shelf home-series-shelf">
@@ -277,6 +278,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "
               item={item}
               kind={kind}
               onOpen={() => onOpen(item, kind)}
+              onPreload={onPreload}
               navigating={pendingNavigation === seriesNavigationKey(item, kind)}
             />
           );
@@ -286,7 +288,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "
   );
 }
 
-function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingNavigation = "" }) {
+function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
   const rowRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   if (!movies.length) return null;
@@ -348,6 +350,7 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingN
             onSave={onSave}
             saved={savedIds.has(movie.imdbId)}
             navigating={pendingNavigation === movieNavigationKey(movie)}
+            onPreload={onPreload}
           />
         ))}
       </div>
@@ -763,6 +766,26 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const savedIds = useMemo(() => new Set(savedMovies.map((movie) => movie.imdbId)), [savedMovies]);
   const filteredMovies = movies;
 
+  function prefetchHomeMovie(movie) {
+    const imdbId = String(movie?.imdbId || "").toLowerCase();
+    if (/^tt\d{5,12}$/.test(imdbId)) router.prefetch("/watch/" + encodeURIComponent(imdbId));
+  }
+
+  function prefetchHomeSeries(series, kind) {
+    if (kind === "tv") {
+      const tmdbId = Number(series?.tmdbId);
+      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.prefetch("/tv/" + tmdbId);
+      return;
+    }
+    if (/^\d+$/.test(String(series?.malId || ""))) router.prefetch("/anime/" + encodeURIComponent(series.malId));
+  }
+
+  function prefetchHomeSpotlight(item) {
+    if (item?.mediaType === "tv") return prefetchHomeSeries(item, "tv");
+    if (item?.mediaType === "anime") return prefetchHomeSeries(item, "anime");
+    return prefetchHomeMovie(item);
+  }
+
   function openHomeSpotlight(item) {
     if (item?.mediaType === "tv") {
       setPendingHomeNavigation("tv:" + String(item.tmdbId));
@@ -978,6 +1001,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
   const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;
+
+  useEffect(() => {
+    if (tab === "home" && featured) prefetchHomeSpotlight(featured);
+  }, [tab, featured?.heroId]);
 
   return (
     <main className="app-shell">
@@ -1274,10 +1301,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </>
             ) : (
               <>
-                <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} />
-                <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} />
-                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item) => openHomeSeries(item, "tv")} pendingNavigation={pendingHomeNavigation} />
-                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item) => openHomeSeries(item, "anime")} pendingNavigation={pendingHomeNavigation} />
+                <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item) => openHomeSeries(item, "tv")} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item) => openHomeSeries(item, "anime")} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
               </>
             )}
 
@@ -1291,9 +1318,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
             {genre === "All" ? (
               <>
-                <MovieShelf title="Movies to discover" eyebrow="FRESH PICKS FROM THE CATALOG" movies={movies} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} />
+                <MovieShelf title="Movies to discover" eyebrow="FRESH PICKS FROM THE CATALOG" movies={movies} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeMovie} />
                 {categoryShelves.map((category) => (
-                  <MovieShelf key={category.key} title={category.name} eyebrow="EXPLORE BY GENRE" movies={category.items} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} />
+                  <MovieShelf key={category.key} title={category.name} eyebrow="EXPLORE BY GENRE" movies={category.items} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeMovie} />
                 ))}
               </>
             ) : (
