@@ -23,6 +23,8 @@ jobs:
           node --check index.js
           node --check server.js
           find src public test scripts -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Validate curated Anime data
+        run: npm run check:anime
       - name: Build the Next.js web app
         run: npm run build
       - name: Run tests
