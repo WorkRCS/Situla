@@ -20,7 +20,7 @@ test("TV and Anime load-more requests exclude already visible canonical IDs", as
   assert.doesNotMatch(app, /current\.map\(\(item\) => item\.imdbId\)/);
   assert.match(api, /randomFilter\.tmdbId = \{ \$nin: excludedIds, \$type: 'number', \$gt: 0 \}/);
   assert.match(api, /randomFilter\.malId = \{ \$nin: excludedIds, \$type: 'number', \$gt: 0 \}/);
-  assert.equal((api.match(/\$sample: \{ size: limit \}/g) || []).length, 2);
+  assert.equal((api.match(/\$sample: \{ size: limit \}/g) || []).length, 3);
 });
 
 test("global search interleaves Movies, TV series, and Anime", async () => {
