@@ -199,13 +199,18 @@ test('global search returns an empty list for short queries without touching the
   assert.deepEqual(await response.json(), { items: [] });
 });
 
-test('TVmaze importer retains an IMDb cross-reference for TMDB ID resolution and maps episodes', async () => {
-  const { mapTvmazeShow, normalizeShowName, stripHtml, selectTmdbTvId, CURATED_TV_SHOWS } = await import('../scripts/seed-tv-series.js');
+test('TVmaze importer matches exact candidate titles and maps verified season/episode metadata', async () => {
+  const { mapTvmazeShow, normalizeShowName, stripHtml, isExactTvmazeMatch } = await import('../scripts/seed-tv-series.js');
   assert.equal(normalizeShowName('Pokémon & Friends'), 'pokemon and friends');
   assert.equal(stripHtml('<p>Hello &amp; welcome</p>'), 'Hello & welcome');
-  assert.ok(CURATED_TV_SHOWS.length > 65);
-
-  const mapped = mapTvmazeShow({
+  const candidate = {
+    tmdbId: 991234,
+    title: 'Example Show',
+    firstAirDate: '2015-01-01',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/example-poster.jpg',
+    genres: ['Drama']
+  };
+  const show = {
     id: 321,
     url: 'https://www.tvmaze.com/shows/321/example-show',
     name: 'Example Show',
@@ -219,35 +224,31 @@ test('TVmaze importer retains an IMDb cross-reference for TMDB ID resolution and
     genres: ['Drama', 'Mystery'],
     image: { medium: 'https://images.example/poster-medium.jpg', original: 'https://images.example/poster.jpg' },
     externals: { imdb: 'tt1234567' },
-    summary: '<p>A short synopsis.</p>',
+    summary: '<p>This is a sufficiently detailed example synopsis for the importer test.</p>',
     _embedded: {
       episodes: [
         { id: 1, season: 1, number: 1, name: 'Pilot', airdate: '2015-01-01', runtime: 45, summary: '<p>First episode.</p>', rating: { average: 8 }, image: { original: 'https://images.example/episode-1.jpg' } },
         { id: 2, season: 1, number: 2, name: 'The Mystery', airdate: '2015-01-08', runtime: 45, summary: '<p>Second episode.</p>', rating: { average: 8.2 }, image: { medium: 'https://images.example/episode-2.jpg' } }
       ]
     }
-  });
-  assert.equal(mapped.ok, true);
-  assert.equal(mapped.item.externalImdbId, 'tt1234567');
-  assert.equal(Object.hasOwn(mapped.item, 'imdbId'), false);
-  assert.equal(selectTmdbTvId([
-    { id: 1234, name: 'Example Show', first_air_date: '2015-01-01' },
-    { id: 9876, name: 'Other Show', first_air_date: '2015-01-01' }
-  ], 'Example Show', '2015-01-01'), 1234);
-  assert.equal(selectTmdbTvId([{ id: 1234, name: 'Different Show' }, { id: 9876, name: 'Another Show' }], 'Example Show'), null);
-  assert.equal(mapped.item.metadataSource, 'TVmaze');
-  assert.equal(mapped.item.adult, false);
-  assert.equal(mapped.item.runtime, 45);
-  assert.equal(mapped.item.numberOfEpisodes, 2);
-  assert.equal(mapped.item.seasons[0].episodes[0].stillUrl, 'https://images.example/episode-1.jpg');
-  assert.equal(mapped.item.seasons[0].episodes[1].stillUrl, 'https://images.example/episode-2.jpg');
+  };
+  assert.equal(isExactTvmazeMatch(show, candidate), true);
+  const mapped = mapTvmazeShow(show, candidate);
+  assert.ok(mapped);
+  assert.equal(mapped.tmdbId, 991234);
+  assert.equal(mapped.externalImdbId, 'tt1234567');
+  assert.equal(Object.hasOwn(mapped, 'imdbId'), false);
+  assert.equal(mapped.metadataSource, 'TVmaze');
+  assert.equal(mapped.adult, false);
+  assert.equal(mapped.runtime, 45);
+  assert.equal(mapped.numberOfEpisodes, 2);
+  assert.equal(mapped.numberOfSeasons, 1);
+  assert.equal(mapped.seasons[0].episodes[0].stillUrl, 'https://images.example/episode-1.jpg');
+  assert.equal(mapped.seasons[0].episodes[1].stillUrl, 'https://images.example/episode-2.jpg');
+  assert.equal(mapped.sourceUrl, 'https://www.tvmaze.com/shows/321');
 
-  const adultGenre = mapTvmazeShow({
-    id: 322, name: 'Adult title', externals: { imdb: 'tt1234568' },
-    image: { original: 'https://images.example/adult.jpg' },
-    rating: { average: 7 }, genres: ['Adult'],
-    _embedded: { episodes: [{ season: 1, number: 1 }, { season: 1, number: 2 }] }
-  });
-  assert.equal(adultGenre.ok, false);
-  assert.equal(adultGenre.reason, 'adult-genre-filter');
+  assert.equal(mapTvmazeShow({ ...show, name: 'Different Show' }, candidate), null);
+  assert.equal(mapTvmazeShow({ ...show, genres: ['Adult'] }, candidate), null);
+  assert.equal(mapTvmazeShow({ ...show, summary: '' }, candidate), null);
+  assert.equal(mapTvmazeShow({ ...show, _embedded: { episodes: [] } }, candidate), null);
 });

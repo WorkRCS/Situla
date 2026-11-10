@@ -314,6 +314,6 @@ test("TV player exposes working Next Episode and Next Season navigation from ver
   assert.match(player, /function playNextSeason\(\)/);
   assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\) \+ "\/" \+ Number\(nextSeason\.seasonNumber\) \+ "\/1"\)/);
   assert.match(player, /Next episode[\s\S]*?disabled=\{!nextEpisode \|\| !catalogVerified\}/);
-  assert.match(player, /Next season[\s\S]*?disabled=\{!nextSeason \|\| !catalogVerified\}/);
+  assert.match(player, /onClick=\{playNextSeason\} disabled=\{!nextSeason \|\| !catalogVerified\}/);\n  assert.match(player, />\\s*Next season/);
   assert.match(player, /episodeCount\) > 0 && Number\(item\.seasonNumber\) > 0/);
 });
