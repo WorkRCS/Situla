@@ -113,8 +113,8 @@ export default function AnimeSeriesExperience({ malId }) {
   }
 
   return (
-    <main className="app-shell min-h-screen">
-      <div className="mx-auto max-w-[1120px] px-4 py-6 md:px-8 md:py-10">
+    <main className="app-shell min-h-screen series-detail-page anime-detail-page">
+      <div className="series-detail-container mx-auto max-w-[1180px] px-4 py-6 md:px-8 md:py-10">
         <button className="watch-control mb-5" onClick={() => router.back()} aria-label="Go back">
           <i className="bi bi-arrow-left" aria-hidden="true" />
         </button>
@@ -128,13 +128,13 @@ export default function AnimeSeriesExperience({ malId }) {
           </div>
         ) : anime ? (
           <>
-            <section className="relative mb-6 min-h-[230px] overflow-hidden rounded-3xl border border-white/10 bg-[#11131b] md:min-h-[320px]">
+            <section className="series-detail-hero relative mb-6 min-h-[230px] overflow-hidden rounded-3xl border border-white/10 bg-[#11131b] md:min-h-[320px]">
               {!bannerFailed && (anime.bannerUrl || anime.backdropUrl || anime.posterUrl) ? (
                 <img
                   src={anime.bannerUrl || anime.backdropUrl || anime.posterUrl}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 h-full w-full object-cover opacity-45"
+                  className="series-detail-hero-image absolute inset-0 h-full w-full object-cover opacity-45"
                   onError={(event) => {
                     const fallback = anime.posterUrl || anime.posterFallbackUrl;
                     if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
@@ -142,13 +142,13 @@ export default function AnimeSeriesExperience({ malId }) {
                   }}
                 />
               ) : null}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#08090d] via-[#08090de8] to-[#08090d70]" />
-              <div className="relative z-10 flex min-h-[230px] items-end p-5 md:min-h-[320px] md:p-8">
+              <div className="series-detail-hero-overlay absolute inset-0 bg-gradient-to-r from-[#08090d] via-[#08090de8] to-[#08090d70]" />
+              <div className="series-detail-hero-content relative z-10 flex min-h-[230px] items-end p-5 md:min-h-[320px] md:p-8">
                 <div className="max-w-3xl">
-                  <p className="text-[10px] font-black tracking-[.2em] text-[#f0c471]">SITULA ANIME · MAL {anime.malId}</p>
-                  <h1 className="mt-2 text-3xl font-black text-white md:text-5xl">{anime.titleEnglish || anime.title}</h1>
+                  <p className="series-detail-eyebrow text-[10px] font-black tracking-[.2em] text-[#f0c471]">SITULA ANIME · MAL {anime.malId}</p>
+                  <h1 className="series-detail-title mt-2 text-3xl font-black text-white md:text-5xl">{anime.titleEnglish || anime.title}</h1>
                   {anime.titleJapanese && <p className="mt-2 text-sm text-[#d0d3dc]">{anime.titleJapanese}</p>}
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs text-[#c0c4ce]">
+                  <div className="series-detail-meta mt-4 flex flex-wrap gap-2 text-xs text-[#c0c4ce]">
                     {anime.releaseYear && <span className="rounded-full border border-white/20 px-3 py-1">{anime.releaseYear}</span>}
                     {anime.score > 0 && <span className="rounded-full border border-white/20 px-3 py-1">★ {Number(anime.score).toFixed(2)} MAL</span>}
                     {anime.status && <span className="rounded-full border border-white/20 px-3 py-1">{anime.status}</span>}
@@ -158,14 +158,14 @@ export default function AnimeSeriesExperience({ malId }) {
               </div>
             </section>
 
-            <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-              <aside className="space-y-4">
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
+            <div className="series-detail-layout grid gap-6 md:grid-cols-[260px_1fr]">
+              <aside className="series-detail-sidebar space-y-4">
+                <div className="series-detail-poster overflow-hidden rounded-2xl border border-white/10 bg-[#11131b]">
                   {!posterFailed && (posterSource || anime.posterUrl) ? (
                     <img
                       src={posterSource || anime.posterUrl}
                       alt={anime.titleEnglish || anime.title}
-                      className="w-full object-cover"
+                      className="series-detail-poster-image w-full object-cover"
                       loading="eager"
                       onError={() => {
                         if (anime.posterFallbackUrl && posterSource !== anime.posterFallbackUrl) {
@@ -200,11 +200,11 @@ export default function AnimeSeriesExperience({ malId }) {
                 </a>
               </aside>
 
-              <section className="min-w-0">
-                <div className="flex flex-wrap gap-2">
+              <section className="series-detail-main min-w-0">
+                <div className="series-detail-genres flex flex-wrap gap-2">
                   {(anime.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}
                 </div>
-                <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-7 text-[#b5bac7]">
+                <p className="series-detail-description mt-5 max-w-3xl whitespace-pre-line text-sm leading-7 text-[#b5bac7]">
                   {anime.synopsis || "No synopsis available."}
                 </p>
                 {(anime.studios?.length > 0 || anime.producers?.length > 0) && (
@@ -214,7 +214,7 @@ export default function AnimeSeriesExperience({ malId }) {
                   </div>
                 )}
 
-                <div className="mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
+                <div className="series-detail-panel mt-8 rounded-2xl border border-white/10 bg-[#11131b] p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-[9px] font-black tracking-[.18em] text-[#e8b65b]">WATCH AN EPISODE</p>
