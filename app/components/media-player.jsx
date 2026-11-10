@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { normalizeTvPlayerRoute, vidlinkTvUrl } from "../../src/player-urls.js";
+import { normalizeAnimePlayerRoute, normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkTvUrl } from "../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
 export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
   const router = useRouter();
   const tvRoute = kind === "tv" ? normalizeTvPlayerRoute(tmdbId, season, episode) : null;
+  const animeRoute = kind === "anime" ? normalizeAnimePlayerRoute(malId, episode, audio) : null;
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
   const [seriesInfo, setSeriesInfo] = useState(null);
@@ -21,7 +22,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     const controller = new AbortController();
-    if (kind === "tv" && !tvRoute) {
+    if ((kind === "tv" && !tvRoute) || (kind === "anime" && !animeRoute)) {
       setMetadataError("This episode link is invalid. Return to the series and choose an episode.");
       setLoading(false);
       return () => controller.abort();
@@ -29,7 +30,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
     const endpoint = kind === "tv"
       ? "/api/tv/" + encodeURIComponent(tvRoute.tmdbId)
-      : "/api/anime/" + encodeURIComponent(malId);
+      : "/api/anime/" + encodeURIComponent(animeRoute.malId);
 
     fetch(endpoint, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
@@ -72,7 +73,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       });
 
     return () => controller.abort();
-  }, [kind, tmdbId, malId, season, episode, tvRoute?.tmdbId]);
+  }, [kind, tmdbId, malId, season, episode, tvRoute?.tmdbId, animeRoute?.malId, animeRoute?.episode, animeRoute?.audio]);
 
   useEffect(() => {
     try {
@@ -215,25 +216,22 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
   }
 
+  function tryAlternateAnimeAudio() {
+    if (!animeRoute || kind !== "anime") return;
+    const alternate = animeRoute.audio === "sub" ? "dub" : "sub";
+    router.push("/watch/anime/" + animeRoute.malId + "/" + animeRoute.episode + "/" + alternate);
+  }
+
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified || !tvRoute) return null;
       return vidlinkTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode);
     }
-    const params = new URLSearchParams({
-      primaryColor: "e8b65b",
-      secondaryColor: "171a23",
-      iconColor: "ffffff",
-      icons: "default",
-      player: "default",
-      title: "false",
-      poster: "true",
-      autoplay: "false",
-      fallback: "true"
+    if (!animeRoute) return null;
+    return vidlinkAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, {
+      fallback: true,
+      startAt
     });
-    if (startAt > 0) params.set("startAt", String(startAt));
-    return VIDLINK_ORIGIN + "/anime/" + encodeURIComponent(malId) + "/" +
-      encodeURIComponent(episode) + "/" + encodeURIComponent(audio || "sub") + "?" + params.toString();
   })();
 
   return (
@@ -267,6 +265,11 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>
         </div>
+        {kind === "anime" && <div className="series-player-actions">
+          <button type="button" className="series-player-guide" onClick={tryAlternateAnimeAudio} disabled={!animeRoute}>
+            Try {audio === "sub" ? "Dub" : "Sub"} instead
+          </button>
+        </div>}
         {kind === "tv" && <div className="series-player-actions">
           <button
             type="button"
