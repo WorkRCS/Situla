@@ -1733,9 +1733,6 @@ body { color:#f7f7fa; background:#08090e; }
   content-visibility:auto;
   contain-intrinsic-size:auto 330px;
 }
-.movie-poster img,.suggestion-item img {
-  decoding:async;
-}
 
 /* Mixed movie / TV / anime search dialog. Avoid heavy blur/backdrop filters for low-end devices. */
 .search-overlay {
