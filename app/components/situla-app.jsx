@@ -89,7 +89,7 @@ function MovieCard({ movie, onOpen, onSave, saved }) {
 
 function SeriesPosterImage({ item, title }) {
   const sources = [...new Set([item.posterUrl, item.posterFallbackUrl].filter((value) =>
-    typeof value === "string" && /^https:\/\/cdn\.myanimelist\.net\/images\/anime\//.test(value)
+    typeof value === "string" && /^https:\/\//.test(value)
   ))];
   const [sourceIndex, setSourceIndex] = useState(0);
 
@@ -132,6 +132,7 @@ function SeriesCard({ item, kind, onOpen }) {
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
         <p className="mt-1 text-[11px] text-[#858b9b]">{meta}</p>
         {category && <p className="series-card-category">{category}</p>}
+        {!isTv && item.synopsis && <p className="mt-1 line-clamp-3 text-[10px] leading-4 text-[#9297a7]">{item.synopsis}</p>}
       </button>
     </article>
   );
