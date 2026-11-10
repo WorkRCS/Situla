@@ -96,6 +96,15 @@ test("Anime additions are seeded only for new MAL IDs/titles and never update ol
   assert.match(staticSeed, /STATIC_TV_SERIES/);
 });
 
+test("Anime list and search APIs omit heavy episode guides while detail API exposes them", async () => {
+  const api = await read("../src/app.js");
+  assert.match(api, /export function animeSeriesDto/);
+  assert.match(api, /episodeGuide: Array\.isArray\(anime\.episodeGuide\)/);
+  assert.match(api, /AnimeSeries\.find\(filter\)\.select\('-episodeGuide -relatedAnime'\)/);
+  assert.match(api, /AnimeSeries\.find\(\{[\s\S]*?\}\)\.select\('-episodeGuide -relatedAnime'\)/);
+  assert.match(api, /AnimeSeries\.findOne\(\{ malId, type: \{ \$in: \['TV', 'ONA'\] \} \}\)\.lean\(\)/);
+});
+
 test("Anime detail renders season-specific episode stills, franchise posters and Next Episode", async () => {
   const detail = await read("../app/anime/[malId]/detail.jsx");
   assert.match(detail, /episodeGuide/);
