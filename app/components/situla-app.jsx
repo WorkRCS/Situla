@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
+import { Button } from "./ui/button.jsx";
+import { Card, CardContent, CardHeader } from "./ui/card.jsx";
+import { Badge } from "./ui/badge.jsx";
+import { Progress } from "./ui/progress.jsx";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -41,6 +46,19 @@ function formatRuntime(minutes) {
   const seconds = Math.max(0, Math.round(Number(minutes) || 0) * 60);
   return seconds ? formatClock(seconds) : "";
 }
+
+function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
+  const validItems = (Array.isArray(items) ? items : []).filter((item) => item && item[idField]);
+  if (!validItems.length) return null;
+  let previousId = "";
+  try { previousId = localStorage.getItem(storageKey) || ""; } catch {}
+  const freshItems = validItems.filter((item) => String(item[idField]) !== previousId);
+  const pool = freshItems.length ? freshItems : validItems;
+  const selected = pool[Math.floor(Math.random() * pool.length)] || validItems[0];
+  try { localStorage.setItem(storageKey, String(selected[idField])); } catch {}
+  return selected;
+}
+
 
 function MovieCard({ movie, onOpen, onSave, saved }) {
   return (
@@ -95,6 +113,41 @@ function SeriesCard({ item, kind, onOpen }) {
 }
 
 function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
+function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
+  if (!item) return null;
+  const isTv = kind === "tv";
+  const isAnime = kind === "anime";
+  const title = isAnime ? (item.titleEnglish || item.title) : item.title;
+  const year = item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "";
+  const rating = isAnime ? item.score : item.voteAverage;
+  const genres = Array.isArray(item.genres) ? item.genres.slice(0, 2) : [];
+  const kicker = isTv ? "A SERIES TO GET LOST IN" : isAnime ? "ANOTHER WORLD AWAITS" : "FEATURED MOVIE";
+  return (
+    <section className="hero-card catalog-spotlight" key={item.imdbId || item.malId}>
+      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" />}
+      <div className="hero-content">
+        <div className="hero-eyebrow"><span className="hero-live-dot" /> {kicker}</div>
+        <p className="hero-kicker">Picked for your next watch</p>
+        <h2 className="hero-title">{title}</h2>
+        <div className="hero-meta">
+          {year && <Badge variant="outline">{year}</Badge>}
+          {rating > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(rating).toFixed(1)}</span>}
+          {genres.map((genre) => <Badge key={genre} variant="outline">{genre}</Badge>)}
+        </div>
+        <p className="hero-description">{item.overview || item.synopsis || "Discover this title on Situla."}</p>
+        <div className="hero-actions">
+          <Button variant="gold" onClick={() => onWatch(item)}><Icon name="play" size={17} /> {isTv || isAnime ? "Explore series" : "Watch now"}</Button>
+          {!isTv && !isAnime && <Button variant="ghost" onClick={() => onSave(item)}>
+            <Icon name={saved ? "check" : "bookmark"} size={16} /> {saved ? "In my list" : "Add to my list"}
+          </Button>}
+        </div>
+        <span className="catalog-spotlight-note">FRESH PICK · CHANGES WHEN YOU REFRESH</span>
+      </div>
+    </section>
+  );
+}
+
+
   const rowRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   if (!movies.length) return null;
@@ -195,6 +248,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [heroMovies, setHeroMovies] = useState([]);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [catalogSpotlight, setCatalogSpotlight] = useState(null);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -205,9 +259,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [error, setError] = useState("");
   const [storageReady, setStorageReady] = useState(false);
   const [watchHistory, setWatchHistory] = useState([]);
-  const [themeMode, setThemeMode] = useState("system");
-  const [themeReady, setThemeReady] = useState(false);
-  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [moviesPage, setMoviesPage] = useState(1);
   const [moviesTotal, setMoviesTotal] = useState(0);
   const [tvPage, setTvPage] = useState(1);
@@ -258,32 +309,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       else localStorage.removeItem("situla:watch-history:v1");
     } catch {}
   }, [watchHistory, storageReady]);
-
-  useEffect(() => {
-    try {
-      const savedMode = localStorage.getItem("situla:theme:v1");
-      if (savedMode === "dark" || savedMode === "light" || savedMode === "system") setThemeMode(savedMode);
-    } catch {}
-    setThemeReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!themeReady) return;
-    const root = document.documentElement;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const resolved = themeMode === "system" ? (media.matches ? "dark" : "light") : themeMode;
-      root.dataset.theme = resolved;
-      root.dataset.themeMode = themeMode;
-      root.style.colorScheme = resolved;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolved === "dark" ? "#08090e" : "#f3f5f8");
-    };
-    apply();
-    try { localStorage.setItem("situla:theme:v1", themeMode); } catch {}
-    if (themeMode !== "system") return;
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, [themeMode, themeReady]);
 
   useEffect(() => {
     if (tab !== "settings" || !storageReady) return;
@@ -343,6 +368,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
         setMovies(items);
+        if (tab === "movies") setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:movies"));
         if (isDiscover) {
           const uniqueHeroMovies = [];
           const seenHeroIds = new Set();
@@ -352,9 +378,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             seenHeroIds.add(id);
             uniqueHeroMovies.push(candidate);
           }
+          const selectedHero = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:home");
+          const selectedHeroIndex = uniqueHeroMovies.findIndex((item) => item.imdbId === selectedHero?.imdbId);
           setHeroMovies(uniqueHeroMovies);
-          setHeroIndex(0);
-          setFeaturedMovie(payload.featured || items[0] || null);
+          setHeroIndex(Math.max(0, selectedHeroIndex));
+          setFeaturedMovie(selectedHero || payload.featured || items[0] || null);
           setCategoryShelves(Array.isArray(payload.categories) ? payload.categories : []);
         } else if (tab === "home" && !featuredMovie && items.length) {
           setFeaturedMovie(items[0]);
@@ -380,6 +408,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
 
   useEffect(() => {
+    if (tab !== "home") return;
+    const activeHero = heroMovies[heroIndex];
+    if (activeHero?.imdbId) {
+      try { localStorage.setItem("situla:spotlight:home", activeHero.imdbId); } catch {}
+    }
+  }, [tab, heroMovies, heroIndex]);
+
+  useEffect(() => {
     if (tab !== "home" || heroMovies.length < 2) return;
     const timer = window.setInterval(() => {
       setHeroIndex((current) => (current + 1) % heroMovies.length);
@@ -400,10 +436,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const items = Array.isArray(payload.items) ? payload.items : [];
         if (tab === "tv") {
           setTvShows(items);
+          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:tv"));
           setTvPage(Number(payload.pagination?.page) || 1);
           setTvTotal(Number(payload.pagination?.total) || items.length);
         } else {
           setAnimeShows(items);
+          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:anime", "malId"));
           setAnimePage(Number(payload.pagination?.page) || 1);
           setAnimeTotal(Number(payload.pagination?.total) || items.length);
         }
@@ -557,19 +595,21 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     <main className="app-shell">
       <header className="app-header safe-top">
         <div className="header-inner container-fluid mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
-          <div className="brand-mark" aria-hidden="true">S</div>
-          <div className="brand-copy min-w-0">
-            <p className="text-[17px] font-black tracking-[.18em]">SITULA</p>
-            <p className="text-[9px] font-bold tracking-[.19em]">{({
-            home: "DISCOVER MORE",
-            movies: "MOVIE CATALOG",
-            tv: "TV SHOWS",
-            anime: "ANIME COLLECTION",
-            search: "FIND SOMETHING TO WATCH",
-            saved: "YOUR COLLECTION",
-            settings: "APP PREFERENCES"
-          })[tab] || "DISCOVER MORE"}</p>
-          </div>
+          <Link href="/" className="brand-lockup" aria-label="Situla home">
+            <img src="/icon.svg" alt="" className="brand-logo" width="40" height="40" />
+            <span className="brand-copy min-w-0">
+              <strong>SITULA</strong>
+              <small>{({
+                home: "DISCOVER MOVIES",
+                movies: "MOVIE COLLECTION",
+                tv: "TV SERIES",
+                anime: "ANIME COLLECTION",
+                search: "SEARCH MOVIES",
+                saved: "YOUR COLLECTION",
+                settings: "APP SETTINGS"
+              })[tab] || "DISCOVER MOVIES"}</small>
+            </span>
+          </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
             {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
               <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
@@ -604,16 +644,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 )) : <div className="suggestion-empty">No matching movie titles found.</div>}
               </div>
             )}
-          </div>
-          <div className="theme-switcher">
-            <button type="button" className="theme-trigger watch-control" onClick={() => setThemeMenuOpen((open) => !open)} aria-label="Choose appearance" aria-expanded={themeMenuOpen} title="Appearance">
-              {themeMode === "dark" ? <BootstrapIcon icon="moon" size={19} /> : themeMode === "light" ? <BootstrapIcon icon="sun" size={19} /> : <BootstrapIcon icon="display" size={19} />}
-            </button>
-            {themeMenuOpen && <div className="theme-menu" role="group" aria-label="Choose theme">
-              <button type="button" className={themeMode === "system" ? "selected" : ""} onClick={() => { setThemeMode("system"); setThemeMenuOpen(false); }}><BootstrapIcon icon="display" size={16} /> System</button>
-              <button type="button" className={themeMode === "light" ? "selected" : ""} onClick={() => { setThemeMode("light"); setThemeMenuOpen(false); }}><BootstrapIcon icon="sun" size={16} /> Light</button>
-              <button type="button" className={themeMode === "dark" ? "selected" : ""} onClick={() => { setThemeMode("dark"); setThemeMenuOpen(false); }}><BootstrapIcon icon="moon" size={16} /> Dark</button>
-            </div>}
           </div>
         </div>
       </header>
@@ -754,12 +784,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="section-heading">
               <div><span>EXPLORE THE CATALOG</span><h1 className="mt-1 text-2xl font-black">Movies</h1></div>
             </div>
+            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(catalogSpotlight.imdbId)} />}
             {loading ? (
               <SkeletonGrid count={12} />
             ) : error ? (
               <div className="empty-panel"><p className="font-bold text-white">Movie catalog unavailable</p><p className="mt-2 text-xs">{error}</p></div>
             ) : movies.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+              <div className="catalog-grid">
                 {movies.map((movie) => <MovieCard key={movie.imdbId} movie={movie} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(movie.imdbId)} />)}
               </div>
             ) : (
@@ -774,6 +805,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="section-heading">
               <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
             </div>
+            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="tv" onWatch={openTvSeries} />}
             {loading ? (
               <SkeletonGrid count={12} />
             ) : error ? (
@@ -794,6 +826,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="section-heading">
               <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
             </div>
+            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="anime" onWatch={openAnimeSeries} />}
             {loading ? (
               <SkeletonGrid count={12} />
             ) : error ? (
@@ -846,27 +879,49 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="max-w-2xl pb-8">
             <div className="section-heading"><div><span>YOUR APP</span><h1 className="mt-1 text-2xl font-black">Settings</h1></div></div>
             <div className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div><h2 className="font-bold">Watch history</h2><p className="mt-1 text-xs text-[#9297a7]">Saved only on this device</p></div>
-                  {sortedHistory.length > 0 && <button type="button" className="history-clear" onClick={clearWatchHistory}><BootstrapIcon icon="trash3" size={15} /> Clear all</button>}
-                </div>
-                {sortedHistory.length ? (
-                  <div className="mt-4 space-y-2">
-                    {sortedHistory.map((item) => (
-                      <div key={item.key} className="history-row">
-                        {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
-                          <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
-                          <p className="mt-1 text-xs text-[#9297a7]">{formatClock(item.watched)} / {formatClock(item.duration)}</p>
+              <Card className="history-card">
+                <Disclosure defaultOpen>
+                  {({ open }) => (
+                    <>
+                      <CardHeader className="history-card-header">
+                        <div>
+                          <h2 className="font-bold">Watch history</h2>
+                          <p className="mt-1 text-xs text-[#9297a7]">Saved only on this device</p>
                         </div>
-                        <button type="button" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><BootstrapIcon icon="x-lg" size={16} /></button>
-                      </div>
-                    ))}
-                  </div>
-                ) : <p className="mt-4 text-sm text-[#9297a7]">Nothing watched yet. Playback progress will appear here.</p>}
-              </div>
+                        <div className="history-heading-actions">
+                          {sortedHistory.length > 0 && <Button type="button" variant="subtle" size="sm" className="history-clear" onClick={clearWatchHistory}><BootstrapIcon icon="trash3" size={15} /> Clear all</Button>}
+                          <DisclosureButton className="history-collapse" aria-label={open ? "Collapse watch history" : "Expand watch history"}>
+                            <BootstrapIcon icon={open ? "chevron-up" : "chevron-down"} size={16} />
+                          </DisclosureButton>
+                        </div>
+                      </CardHeader>
+                      <DisclosurePanel>
+                        {sortedHistory.length ? (
+                          <CardContent className="history-list">
+                            {sortedHistory.map((item) => {
+                              const duration = Math.max(0, Number(item.duration) || 0);
+                              const watched = Math.min(duration || Number(item.watched) || 0, Math.max(0, Number(item.watched) || 0));
+                              const progress = duration > 0 ? Math.max(0, Math.min(100, (watched / duration) * 100)) : 0;
+                              return (
+                                <article key={item.key} className="history-row">
+                                  {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
+                                  <div className="history-item-copy">
+                                    <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
+                                    <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
+                                    <Progress value={progress} ariaLabel={"Watched progress for " + (item.title || "this title")} className="history-progress" />
+                                    <div className="history-time-labels"><span>{formatClock(watched)} watched</span><span>{formatClock(duration)} total</span></div>
+                                  </div>
+                                  <Button type="button" variant="icon" size="icon" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><BootstrapIcon icon="x-lg" size={15} /></Button>
+                                </article>
+                              );
+                            })}
+                          </CardContent>
+                        ) : <p className="history-empty">Nothing watched yet. Playback progress will appear here.</p>}
+                      </DisclosurePanel>
+                    </>
+                  )}
+                </Disclosure>
+              </Card>
               <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
                 <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies and TV, and MAL IDs for anime playback.</p>
