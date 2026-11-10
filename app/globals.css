@@ -1861,3 +1861,19 @@ body { color:#f7f7fa; background:#08090e; }
 @media(prefers-reduced-motion:reduce) {
   .search-overlay,.search-dialog,.search-dialog * { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
 }
+
+
+/* Less compositing work on touch/low-power devices. */
+@media (max-width:760px) {
+  .bottom-nav,.rating-pill,.save-button {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  .movie-card:hover .movie-poster {
+    transform:none;
+    box-shadow:none;
+  }
+  .movie-card button:active .movie-poster img {
+    transform:none;
+  }
+}
