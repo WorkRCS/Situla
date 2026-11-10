@@ -50,8 +50,8 @@ for (const item of NEW_ANIME_CATALOG) {
 }
 
 const seeder = await readFile(new URL("../scripts/seed-anime-additions.js", import.meta.url), "utf8");
-assert.match(seeder, /\$setOnInsert/);
-assert.doesNotMatch(seeder, /\$set\s*:/);
+assert.match(seeder, /AnimeSeries\.insertMany/);
+assert.doesNotMatch(seeder, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
 assert.doesNotMatch(seeder, /\bfetch\s*\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
 
 console.log("Anime static check passed.");
