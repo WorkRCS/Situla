@@ -496,9 +496,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   useEffect(() => {
     if (tab !== "home" || heroMovies.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       setHeroIndex((current) => (current + 1) % heroMovies.length);
-    }, 3000);
+    }, 10000);
     return () => window.clearInterval(timer);
   }, [tab, heroMovies.length]);
 
@@ -547,13 +549,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     if (tab !== "movies" && tab !== "tv" && tab !== "anime") return;
     if (catalogSpotlightItems.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       setCatalogSpotlight((current) => {
         const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
         const currentIndex = catalogSpotlightItems.findIndex((item) => String(item[idField]) === String(current?.[idField]));
         return catalogSpotlightItems[(currentIndex + 1 + catalogSpotlightItems.length) % catalogSpotlightItems.length];
       });
-    }, 3000);
+    }, 10000);
     return () => window.clearInterval(interval);
   }, [tab, catalogSpotlightItems]);
 
