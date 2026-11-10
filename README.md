@@ -22,31 +22,46 @@ The provider controls stream availability, resolution and audio tracks. Situla d
 
 ## Static catalogue seed
 
-The static lists are committed to the repository:
+Movies and TV retain their separate static lists and identifier providers. Anime now has its own **new-only MAL seed**:
 
-- `data/movie-catalog.js`: 70 curated Movie additions keyed by IMDb ID. The source shortlist is the public IMDb Top 250 JSON list; Situla stores catalogue facts (title, ID, poster reference, year, runtime, rating and genres), not its long plot descriptions.
-- `data/tv-catalog.js`: 70 curated TV additions keyed by TMDB numeric ID. The source data is a curated TV dataset containing TMDB IDs, first-air dates, aggregate season/episode totals, genres and poster references.
-- `data/anime-catalog.js`: 81 Anime entries keyed by MAL ID (the original 11 starter entries plus 70 additions). The source is a MIT-licensed seasonal Anime dataset; long synopsis text is not copied.
+- Movies: IMDb IDs in data/movie-catalog.js.
+- TV Series: numeric TMDB IDs in data/tv-catalog.js.
+- Existing/legacy Anime: MAL IDs in data/anime-catalog.js; this list is not re-seeded or updated by the Anime additions command.
+- New Anime: 200 MAL-ID matched entries in data/anime-additions-01.js through data/anime-additions-16.js, aggregated by data/anime-additions.js.
 
-Run all three lists with one command:
+The new Anime pack includes individual poster/banner references, synopsis, canonical MAL links, franchise/related-season cards, and numbered season/episode guide entries. The curated pack contains 200 unique new MAL IDs, 2,883 episode guide entries, and 2,881 episode still-image references. A missing episode still is left blank rather than borrowing an image from another episode or title.
+
+### Anime check, artwork audit and new-only seed
+
+From the Situla project folder:
 
 ```sh
-npm run seed:catalog
+npm run check:anime
+npm run audit:anime
 ```
 
-Or seed one category only:
+The first command validates the static pack, ID/title uniqueness, posters, banners and episode guide coverage. The artwork audit is a **dry run** and reports existing Anime records with no usable poster or banner/backdrop. It does not delete anything.
+
+After reviewing the audit report, apply the cleanup:
+
+```sh
+npm run audit:anime:apply
+npm run seed:anime
+```
+
+The cleanup deletes only Anime documents that have neither a usable poster nor a usable banner/backdrop. A record with at least one valid artwork image is retained. The new-only seed then inserts the curated additions whose MAL ID and title are not already in the collection. It uses $setOnInsert; it does not update or replace existing Anime records.
+
+### Movie and TV static seeds
+
+The general static seed command is limited to Movies and TV. It cannot alter Anime:
 
 ```sh
 npm run seed:movies
 npm run seed:tv
-npm run seed:anime
 ```
 
-These commands only read the committed JavaScript data files and write to MongoDB using bulk upserts. They do not call any metadata API, crawl a website, or require TMDB/MAL credentials. Each upsert uses `$setOnInsert`: existing records with the same primary ID are left untouched, and the terminal reports how many records were added versus already present. The one-time run requires only `MONGODB_URI` and `MONGODB_DB_NAME` in `.env`, plus Atlas network access for your current IP.
+All seed/audit commands require MONGODB_URI and MONGODB_DB_NAME in .env, plus database network access. They read committed static data and do not call IMDb, TMDB, MAL, TVmaze or other metadata APIs at run time. npm run dev never runs a seed or cleanup automatically.
 
-The 70 new static TV entries include season and overall episode totals but deliberately do not invent per-season or per-episode metadata. Their detail pages let the viewer enter season and episode numbers directly for VidLink playback. Existing TV entries that already have full episode guides continue to use the season/episode dropdown and guide.
-
-The seed scripts are separate from the development server. `npm run dev` never runs a seed automatically.
 
 ## Legacy TV identifier migration
 
