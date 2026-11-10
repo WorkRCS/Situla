@@ -42,6 +42,12 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+private fun releasePlayerWebView(view: WebView) {
+    (view.parent as? ViewGroup)?.removeView(view)
+    runCatching { view.stopLoading() }
+    runCatching { view.destroy() }
+}
+
 @Composable
 fun VidLinkPlayerScreen(
     movie: Movie,
@@ -53,6 +59,7 @@ fun VidLinkPlayerScreen(
 
     var fullScreenView by remember { mutableStateOf<View?>(null) }
     var playerWebView by remember(movie.imdbId) { mutableStateOf<WebView?>(null) }
+    var playerWebViewGeneration by remember(movie.imdbId) { mutableStateOf(0) }
     var fullScreenCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
     var previousOrientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) }
 
@@ -109,6 +116,7 @@ fun VidLinkPlayerScreen(
     }
 
     Box(modifier = boxModifier) {
+        androidx.compose.runtime.key(playerWebViewGeneration) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { viewContext ->
@@ -163,6 +171,21 @@ fun VidLinkPlayerScreen(
                             super.onPageFinished(view, url)
                             val script = url?.let(NetworkAdBlocker::cosmeticScriptFor) ?: return
                             view?.evaluateJavascript(script, null)
+                        }
+
+                        override fun onRenderProcessGone(
+                            view: WebView,
+                            detail: android.webkit.RenderProcessGoneDetail
+                        ): Boolean {
+                            android.util.Log.e(
+                                "SitulaPlayerWebView",
+                                "Renderer exited (crashed=${detail.didCrash()}); rebuilding player WebView."
+                            )
+                            if (playerWebView === view) playerWebView = null
+                            exitFullScreen()
+                            releasePlayerWebView(view)
+                            playerWebViewGeneration += 1
+                            return true
                         }
                     }
                     webChromeClient = object : WebChromeClient() {
@@ -223,9 +246,9 @@ fun VidLinkPlayerScreen(
             onRelease = { webView ->
                 if (playerWebView === webView) playerWebView = null
                 exitFullScreen()
-                webView.stopLoading()
-                webView.destroy()
+                releasePlayerWebView(webView)
             }
         )
+        }
     }
 }
