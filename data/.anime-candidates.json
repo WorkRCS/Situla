@@ -2,66 +2,140 @@
   "source": "zyhe16/anime-stats-tracker",
   "ids": [
     52991,
+    61316,
+    59978,
     54492,
     39894,
+    58788,
     52215,
+    60098,
     51009,
     53998,
+    60058,
     56784,
+    61930,
+    61517,
+    57658,
     54898,
+    59636,
     55823,
+    63375,
+    51553,
+    61322,
+    59845,
+    59986,
+    62076,
     54857,
     57334,
+    60543,
+    55318,
     55102,
+    58390,
     55644,
+    60371,
+    55830,
+    62568,
     58572,
     54595,
     54959,
+    60852,
+    59062,
+    59027,
     51179,
+    59983,
+    59551,
+    59228,
+    53065,
+    57433,
+    61186,
+    55825,
     57181,
     55911,
+    56009,
     54856,
     56738,
     52826,
+    59459,
     52347,
+    59898,
+    56653,
+    61339,
     56063,
+    59828,
     53887,
     56980,
     53410,
+    59675,
+    58913,
+    59226,
+    59791,
     59145,
+    53924,
+    62164,
     55742,
+    61274,
     46422,
     53287,
+    60285,
     55310,
     57066,
     60108,
+    59360,
     53199,
+    52293,
+    62001,
     55153,
     55855,
+    60334,
+    59708,
     52505,
     54790,
+    60427,
+    58749,
+    59047,
     54918,
+    56734,
+    61126,
     57559,
+    59205,
     57554,
+    59177,
+    61159,
     56768,
+    60658,
     52741,
     54839,
+    60564,
     51536,
+    61443,
+    58878,
+    58492,
+    62856,
     52196,
     54112,
     53526,
+    60326,
+    61687,
     50586,
     51552,
     54714,
     54842,
+    57025,
     53716,
     55973,
+    54757,
     51916,
     49858,
     57635,
     57390,
     50613,
+    59207,
+    60131,
+    61425,
     53881,
+    59095,
+    62601,
+    58725,
     58714,
     53590,
     58488,
@@ -75,65 +149,107 @@
     54726,
     52229,
     56165,
+    59619,
+    56877,
+    63347,
     53879,
     53621,
     54865,
+    59361,
+    60619,
     49980,
     58516,
     54803,
+    60508,
     54301,
     55844,
+    59466,
+    61663,
+    62604,
+    61280,
     51215,
+    59644,
     56230,
+    57859,
+    60055,
+    59517,
+    60168,
     50664,
     54743,
     51586,
+    54703,
+    59267,
+    61839,
     50002,
     54853,
     55749,
     57362,
     57325,
     56843,
+    50694,
+    63376,
     52082,
     53833,
     53407,
     59425,
     53698,
+    59421,
     50854,
     44204,
     57810,
     53356,
+    57719,
+    59597,
+    59169,
     54913,
+    59632,
+    59846,
     56228,
     57947,
     54883,
+    60083,
+    62391,
     52973,
     59175,
     52481,
     58080,
     57533,
+    60130,
+    60969,
+    61211,
     52173,
     53770,
     51020,
     53434,
     45486,
+    57648,
+    60254,
+    62146,
     54855,
+    49778,
     54632,
     55877,
     51461,
+    62876,
     55774,
     50384,
     52081,
+    54717,
     53613,
     54617,
+    60157,
     52367,
     51794,
+    60665,
     41514,
     51498,
     50652,
+    59136,
     53128,
     52962,
-    51614
+    51614,
+    60460,
+    58820
   ],
   "items": [
     {
@@ -143,6 +259,24 @@
       "episodes": 28,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61316,
+      "title": "Re:ZERO -Starting Life in Another World- Season 4",
+      "score": 9.17,
+      "episodes": 19,
+      "year": 2026,
+      "season": "spring",
+      "status": "Currently Airing"
+    },
+    {
+      "malId": 59978,
+      "title": "Frieren: Beyond Journey's End Season 2",
+      "score": 8.86,
+      "episodes": 10,
+      "year": 2026,
+      "season": "winter",
       "status": "Finished Airing"
     },
     {
@@ -164,11 +298,29 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 58788,
+      "title": "Journal with Witch",
+      "score": 8.73,
+      "episodes": 13,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 52215,
       "title": "Orb: On the Movements of the Earth",
       "score": 8.72,
       "episodes": 25,
       "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60098,
+      "title": "My Hero Academia Final Season",
+      "score": 8.71,
+      "episodes": 11,
+      "year": 2025,
       "season": "fall",
       "status": "Finished Airing"
     },
@@ -191,12 +343,48 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60058,
+      "title": "[Oshi No Ko] Season 3",
+      "score": 8.69,
+      "episodes": 11,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 56784,
       "title": "Bleach: Thousand-Year Blood War - The Conflict",
       "score": 8.67,
       "episodes": 14,
       "year": 2024,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61930,
+      "title": "Umamusume: Cinderella Gray Part 2",
+      "score": 8.67,
+      "episodes": 10,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61517,
+      "title": "Kingdom Season 6",
+      "score": 8.67,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57658,
+      "title": "Jujutsu Kaisen: The Culling Game Part 1",
+      "score": 8.61,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
       "status": "Finished Airing"
     },
     {
@@ -209,6 +397,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59636,
+      "title": "Umamusume: Cinderella Gray",
+      "score": 8.58,
+      "episodes": 13,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 55823,
       "title": "Natsume's Book of Friends Season 7",
       "score": 8.57,
@@ -216,6 +413,60 @@
       "year": 2024,
       "season": "fall",
       "status": "Finished Airing"
+    },
+    {
+      "malId": 63375,
+      "title": "Nippon Sangoku: The Three Nations of the Crimson Sun",
+      "score": 8.56,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51553,
+      "title": "Witch Hat Atelier",
+      "score": 8.53,
+      "episodes": 13,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61322,
+      "title": "Dr. Stone: Science Future Part 2",
+      "score": 8.51,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59845,
+      "title": "The Fragrant Flower Blooms with Dignity",
+      "score": 8.5,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59986,
+      "title": "Grand Blue Dreaming Season 2",
+      "score": 8.5,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62076,
+      "title": "Smoking Behind the Supermarket with You",
+      "score": 8.46,
+      "episodes": 12,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
     },
     {
       "malId": 54857,
@@ -236,6 +487,24 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60543,
+      "title": "Dan Da Dan Season 2",
+      "score": 8.39,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55318,
+      "title": "Medalist",
+      "score": 8.38,
+      "episodes": 13,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 55102,
       "title": "Girls Band Cry",
       "score": 8.36,
@@ -245,12 +514,48 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 58390,
+      "title": "Call of the Night Season 2",
+      "score": 8.34,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 55644,
       "title": "Dr. Stone: New World Part 2",
       "score": 8.3,
       "episodes": 11,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60371,
+      "title": "You and I Are Polar Opposites",
+      "score": 8.28,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55830,
+      "title": "Fate/strange Fake",
+      "score": 8.28,
+      "episodes": 13,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62568,
+      "title": "Dr. Stone: Science Future Part 3",
+      "score": 8.28,
+      "episodes": 13,
+      "year": 2026,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -281,12 +586,102 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60852,
+      "title": "The Ramparts of Ice",
+      "score": 8.23,
+      "episodes": 14,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59062,
+      "title": "Gachiakuta",
+      "score": 8.21,
+      "episodes": 24,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59027,
+      "title": "Spy x Family Season 3",
+      "score": 8.21,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 51179,
       "title": "Mushoku Tensei: Jobless Reincarnation Season 2",
       "score": 8.2,
       "episodes": 12,
       "year": 2023,
       "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59983,
+      "title": "Wistoria: Wand and Sword Season 2",
+      "score": 8.2,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59551,
+      "title": "Go For It, Nakamura-kun!!",
+      "score": 8.2,
+      "episodes": 13,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59228,
+      "title": "Black Butler: Emerald Witch Arc",
+      "score": 8.17,
+      "episodes": 13,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53065,
+      "title": "My Dress-Up Darling Season 2",
+      "score": 8.17,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57433,
+      "title": "Rascal Does Not Dream of Santa Claus",
+      "score": 8.17,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61186,
+      "title": "Botan Kamiina Fully Blossoms When Drunk",
+      "score": 8.17,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55825,
+      "title": "Hell's Paradise Season 2",
+      "score": 8.16,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
       "status": "Finished Airing"
     },
     {
@@ -305,6 +700,15 @@
       "episodes": 25,
       "year": 2024,
       "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56009,
+      "title": "Sentenced to Be a Hero",
+      "score": 8.14,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
       "status": "Finished Airing"
     },
     {
@@ -335,6 +739,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59459,
+      "title": "Secrets of the Silent Witch",
+      "score": 8.11,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 52347,
       "title": "Shangri-La Frontier",
       "score": 8.1,
@@ -344,12 +757,48 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59898,
+      "title": "City The Animation",
+      "score": 8.09,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56653,
+      "title": "Ave Mujica: The Die is Cast",
+      "score": 8.07,
+      "episodes": 13,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61339,
+      "title": "Toilet-Bound Hanako-kun Season 2 Part 2",
+      "score": 8.07,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 56063,
       "title": "NieR:Automata Ver1.1a (Cour 2)",
       "score": 8.06,
       "episodes": 12,
       "year": 2024,
       "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59828,
+      "title": "Shoshimin: How to Become Ordinary Season 2",
+      "score": 8.06,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -380,6 +829,42 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59675,
+      "title": "Apocalypse Hotel",
+      "score": 8.02,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58913,
+      "title": "The Summer Hikaru Died",
+      "score": 8.02,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59226,
+      "title": "Blue Exorcist: The Blue Night Saga",
+      "score": 7.99,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59791,
+      "title": "Ruri Rocks",
+      "score": 7.98,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 59145,
       "title": "Ranma ½ (2024)",
       "score": 7.97,
@@ -389,12 +874,39 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 53924,
+      "title": "Toilet-Bound Hanako-kun Season 2",
+      "score": 7.95,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62164,
+      "title": "Akane-banashi",
+      "score": 7.94,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 55742,
       "title": "The Ancient Magus' Bride Season 2 Part 2",
       "score": 7.92,
       "episodes": 12,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61274,
+      "title": "Milky☆Subway: The Galactic Limited Express",
+      "score": 7.92,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
       "status": "Finished Airing"
     },
     {
@@ -413,6 +925,15 @@
       "episodes": 12,
       "year": 2024,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60285,
+      "title": "Sakamoto Days Part 2",
+      "score": 7.91,
+      "episodes": 11,
+      "year": 2025,
+      "season": "summer",
       "status": "Finished Airing"
     },
     {
@@ -443,6 +964,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59360,
+      "title": "Rock Is a Lady's Modesty",
+      "score": 7.89,
+      "episodes": 13,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 53199,
       "title": "Mobile Suit Gundam: The Witch from Mercury Season 2",
       "score": 7.88,
@@ -450,6 +980,24 @@
       "year": 2023,
       "season": "spring",
       "status": "Finished Airing"
+    },
+    {
+      "malId": 52293,
+      "title": "New Panty & Stocking with Garterbelt",
+      "score": 7.88,
+      "episodes": 13,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62001,
+      "title": "Daemons of the Shadow Realm",
+      "score": 7.88,
+      "episodes": 24,
+      "year": 2026,
+      "season": "spring",
+      "status": "Currently Airing"
     },
     {
       "malId": 55153,
@@ -466,6 +1014,24 @@
       "score": 7.86,
       "episodes": 11,
       "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60334,
+      "title": "Anne Shirley",
+      "score": 7.86,
+      "episodes": 24,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59708,
+      "title": "Classroom of the Elite 4th Season: Second Year, First Semester",
+      "score": 7.86,
+      "episodes": 16,
+      "year": 2026,
       "season": "spring",
       "status": "Finished Airing"
     },
@@ -488,6 +1054,33 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60427,
+      "title": "Gnosia",
+      "score": 7.84,
+      "episodes": 21,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58749,
+      "title": "Arknights: Rise from Ember",
+      "score": 7.82,
+      "episodes": 10,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59047,
+      "title": "Tamon's B-Side",
+      "score": 7.82,
+      "episodes": 13,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 54918,
       "title": "Tokyo Revengers: Tenjiku Arc",
       "score": 7.81,
@@ -497,12 +1090,39 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 56734,
+      "title": "I Made Friends with the Second Prettiest Girl in My Class",
+      "score": 7.81,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61126,
+      "title": "I Want to Love You Till Your Dying Day",
+      "score": 7.81,
+      "episodes": 13,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
+    },
+    {
       "malId": 57559,
       "title": "MF Ghost Season 2",
       "score": 7.8,
       "episodes": 12,
       "year": 2024,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59205,
+      "title": "Clevatess",
+      "score": 7.8,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
       "status": "Finished Airing"
     },
     {
@@ -515,11 +1135,38 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59177,
+      "title": "Kaiju No. 8 Season 2",
+      "score": 7.78,
+      "episodes": 11,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61159,
+      "title": "Tojima Wants to Be a Kamen Rider",
+      "score": 7.77,
+      "episodes": 24,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 56768,
       "title": "Tadaima, Okaeri",
       "score": 7.76,
       "episodes": 12,
       "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60658,
+      "title": "Food for the Soul",
+      "score": 7.76,
+      "episodes": 12,
+      "year": 2025,
       "season": "spring",
       "status": "Finished Airing"
     },
@@ -542,6 +1189,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60564,
+      "title": "Ranma ½ (2024) Season 2",
+      "score": 7.74,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 51536,
       "title": "The iDOLM@STER Cinderella Girls: U149",
       "score": 7.73,
@@ -549,6 +1205,42 @@
       "year": 2023,
       "season": "spring",
       "status": "Finished Airing"
+    },
+    {
+      "malId": 61443,
+      "title": "Agents of the Four Seasons: Dance of Spring",
+      "score": 7.73,
+      "episodes": 14,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58878,
+      "title": "Goodbye, Lara",
+      "score": 7.73,
+      "episodes": 12,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
+    },
+    {
+      "malId": 58492,
+      "title": "mono",
+      "score": 7.72,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62856,
+      "title": "Sparks of Tomorrow",
+      "score": 7.72,
+      "episodes": 13,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
     },
     {
       "malId": 52196,
@@ -575,6 +1267,24 @@
       "episodes": 13,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60326,
+      "title": "There's No Freaking Way I'll be Your Lover! Unless...",
+      "score": 7.7,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61687,
+      "title": "An Observation Log of My Fiancée Who Calls Herself a Villainess",
+      "score": 7.69,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -614,6 +1324,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 57025,
+      "title": "Campfire Cooking in Another World with My Absurd Skill Season 2",
+      "score": 7.67,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 53716,
       "title": "Soaring Sky! Pretty Cure",
       "score": 7.66,
@@ -629,6 +1348,15 @@
       "episodes": 12,
       "year": 2024,
       "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54757,
+      "title": "Gintama - Mr. Ginpachi's Zany Class",
+      "score": 7.64,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
       "status": "Finished Airing"
     },
     {
@@ -677,12 +1405,66 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59207,
+      "title": "Dealing with Mikadono Sisters Is a Breeze",
+      "score": 7.62,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60131,
+      "title": "Let's Go Karaoke!",
+      "score": 7.62,
+      "episodes": 5,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61425,
+      "title": "The Klutzy Class Monitor and the Girl with the Short Skirt",
+      "score": 7.61,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 53881,
       "title": "Arknights: Perish in Frost",
       "score": 7.6,
       "episodes": 8,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59095,
+      "title": "I Was Reincarnated as the 7th Prince so I Can Take My Time Perfecting My Magical Ability Season 2",
+      "score": 7.6,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62601,
+      "title": "Marriagetoxin",
+      "score": 7.59,
+      "episodes": 13,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58725,
+      "title": "A Ninja and an Assassin Under One Roof",
+      "score": 7.58,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -803,6 +1585,33 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59619,
+      "title": "With You and the Rain",
+      "score": 7.52,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56877,
+      "title": "Ao no Orchestra Season 2",
+      "score": 7.52,
+      "episodes": 21,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 63347,
+      "title": "The World Is Dancing",
+      "score": 7.52,
+      "episodes": 13,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
+    },
+    {
       "malId": 53879,
       "title": "Ron Kamonohashi's Forbidden Deductions",
       "score": 7.51,
@@ -826,6 +1635,24 @@
       "score": 7.5,
       "episodes": 14,
       "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59361,
+      "title": "I Have a Crush at Work",
+      "score": 7.5,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60619,
+      "title": "Let This Grieving Soul Retire Part 2",
+      "score": 7.5,
+      "episodes": 11,
+      "year": 2025,
       "season": "fall",
       "status": "Finished Airing"
     },
@@ -857,6 +1684,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60508,
+      "title": "See You Tomorrow at the Food Court",
+      "score": 7.49,
+      "episodes": 6,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 54301,
       "title": "Overtake!",
       "score": 7.48,
@@ -875,11 +1711,56 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59466,
+      "title": "Aharen-san wa Hakarenai Season 2",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61663,
+      "title": "In the Clear Moonlit Dusk",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62604,
+      "title": "Gals Can't Be Kind to Otaku!?",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61280,
+      "title": "Draw This, Then Die!",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
+    },
+    {
       "malId": 51215,
       "title": "The Saint's Magic Power is Omnipotent Season 2",
       "score": 7.46,
       "episodes": 12,
       "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59644,
+      "title": "A Wild Last Boss Appeared!",
+      "score": 7.46,
+      "episodes": 12,
+      "year": 2025,
       "season": "fall",
       "status": "Finished Airing"
     },
@@ -890,6 +1771,42 @@
       "episodes": 11,
       "year": 2024,
       "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57859,
+      "title": "A Mangaka's Weirdly Wonderful Workplace",
+      "score": 7.45,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60055,
+      "title": "Mission: Yozakura Family Season 2",
+      "score": 7.45,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59517,
+      "title": "Chitose Is in the Ramune Bottle",
+      "score": 7.44,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60168,
+      "title": "This Monster Wants to Eat Me",
+      "score": 7.44,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
       "status": "Finished Airing"
     },
     {
@@ -917,6 +1834,33 @@
       "episodes": 12,
       "year": 2023,
       "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54703,
+      "title": "To Your Eternity Season 3",
+      "score": 7.43,
+      "episodes": 22,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59267,
+      "title": "Sanda",
+      "score": 7.43,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61839,
+      "title": "I Want to End This Love Game",
+      "score": 7.43,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -974,6 +1918,24 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 50694,
+      "title": "Summer Pockets",
+      "score": 7.39,
+      "episodes": 26,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 63376,
+      "title": "My Ribdiculous Reincarnation",
+      "score": 7.39,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 52082,
       "title": "Saint Cecilia and Pastor Lawrence",
       "score": 7.38,
@@ -1019,6 +1981,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59421,
+      "title": "Betrothed to My Sister's Ex",
+      "score": 7.37,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 50854,
       "title": "Handyman Saitou in Another World",
       "score": 7.36,
@@ -1055,12 +2026,57 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 57719,
+      "title": "From Bureaucrat to Villainess: Dad's Been Reincarnated!",
+      "score": 7.36,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59597,
+      "title": "Witch Watch",
+      "score": 7.36,
+      "episodes": 25,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59169,
+      "title": "Once Upon a Witch's Death",
+      "score": 7.36,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 54913,
       "title": "The Ossan Newbie Adventurer, Trained to Death by the Most Powerful Party, Became Invincible",
       "score": 7.35,
       "episodes": 12,
       "year": 2024,
       "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59632,
+      "title": "Detectives These Days Are Crazy!",
+      "score": 7.35,
+      "episodes": 12,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59846,
+      "title": "May I Ask for One Final Thing?",
+      "score": 7.35,
+      "episodes": 13,
+      "year": 2025,
+      "season": "fall",
       "status": "Finished Airing"
     },
     {
@@ -1088,6 +2104,24 @@
       "episodes": 12,
       "year": 2023,
       "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60083,
+      "title": "Kowloon Generic Romance",
+      "score": 7.34,
+      "episodes": 13,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62391,
+      "title": "Kill Blue",
+      "score": 7.34,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -1136,6 +2170,33 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60130,
+      "title": "Captivated, By You",
+      "score": 7.31,
+      "episodes": 5,
+      "year": 2025,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60969,
+      "title": "A Star Brighter Than the Sun",
+      "score": 7.31,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 61211,
+      "title": "Tune In to the Midnight Heart",
+      "score": 7.31,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 52173,
       "title": "The Ice Guy and His Cool Female Colleague",
       "score": 7.3,
@@ -1181,12 +2242,48 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 57648,
+      "title": "Welcome to Japan, Ms. Elf!",
+      "score": 7.29,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60254,
+      "title": "Yano-kun's Ordinary Days",
+      "score": 7.29,
+      "episodes": 12,
+      "year": 2025,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 62146,
+      "title": "Farming Life in Another World Season 2",
+      "score": 7.29,
+      "episodes": 12,
+      "year": 2026,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 54855,
       "title": "Senpai is an Otokonoko",
       "score": 7.28,
       "episodes": 12,
       "year": 2024,
       "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 49778,
+      "title": "Sword of the Demon Hunter: Kijin Gentosho",
+      "score": 7.28,
+      "episodes": 24,
+      "year": 2025,
+      "season": "spring",
       "status": "Finished Airing"
     },
     {
@@ -1217,6 +2314,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 62876,
+      "title": "Rich Girl Caretaker: I'm Secretly the Caregiver of the Most Popular Girl in This Rich Kid School",
+      "score": 7.27,
+      "episodes": 12,
+      "year": 2026,
+      "season": "summer",
+      "status": "Currently Airing"
+    },
+    {
       "malId": 55774,
       "title": "'Tis Time for \"Torture,\" Princess",
       "score": 7.26,
@@ -1244,6 +2350,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 54717,
+      "title": "Witchy Pretty Cure!! Mirai Days",
+      "score": 7.26,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 53613,
       "title": "Dead Mount Death Play",
       "score": 7.25,
@@ -1262,6 +2377,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 60157,
+      "title": "The Too-Perfect Saint: Tossed Aside by My Fiancé and Sold to Another Kingdom",
+      "score": 7.25,
+      "episodes": 12,
+      "year": 2025,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 52367,
       "title": "No Longer Allowed in Another World",
       "score": 7.24,
@@ -1277,6 +2401,15 @@
       "episodes": 24,
       "year": 2023,
       "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60665,
+      "title": "Solo Camping for Two",
+      "score": 7.24,
+      "episodes": 24,
+      "year": 2025,
+      "season": "summer",
       "status": "Finished Airing"
     },
     {
@@ -1307,6 +2440,15 @@
       "status": "Finished Airing"
     },
     {
+      "malId": 59136,
+      "title": "Tasokare Hotel",
+      "score": 7.23,
+      "episodes": 12,
+      "year": 2025,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
       "malId": 53128,
       "title": "Atri -My Dear Moments-",
       "score": 7.21,
@@ -1330,6 +2472,24 @@
       "score": 7.2,
       "episodes": 24,
       "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60460,
+      "title": "Hell Mode: The Hardcore Gamer Dominates in Another World with Garbage Balancing",
+      "score": 7.2,
+      "episodes": 12,
+      "year": 2026,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58820,
+      "title": "A Hundred Scenes of Awajima",
+      "score": 7.2,
+      "episodes": 12,
+      "year": 2026,
       "season": "spring",
       "status": "Finished Airing"
     }
