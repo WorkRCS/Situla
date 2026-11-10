@@ -1,0 +1,1337 @@
+{
+  "source": "zyhe16/anime-stats-tracker",
+  "ids": [
+    52991,
+    54492,
+    39894,
+    52215,
+    51009,
+    53998,
+    56784,
+    54898,
+    55823,
+    54857,
+    57334,
+    55102,
+    55644,
+    58572,
+    54595,
+    54959,
+    51179,
+    57181,
+    55911,
+    54856,
+    56738,
+    52826,
+    52347,
+    56063,
+    53887,
+    56980,
+    53410,
+    59145,
+    55742,
+    46422,
+    53287,
+    55310,
+    57066,
+    60108,
+    53199,
+    55153,
+    55855,
+    52505,
+    54790,
+    54918,
+    57559,
+    57554,
+    56768,
+    52741,
+    54839,
+    51536,
+    52196,
+    54112,
+    53526,
+    50586,
+    51552,
+    54714,
+    54842,
+    53716,
+    55973,
+    51916,
+    49858,
+    57635,
+    57390,
+    50613,
+    53881,
+    58714,
+    53590,
+    58488,
+    51297,
+    50695,
+    55528,
+    56662,
+    56894,
+    57217,
+    55071,
+    54726,
+    52229,
+    56165,
+    53879,
+    53621,
+    54865,
+    49980,
+    58516,
+    54803,
+    54301,
+    55844,
+    51215,
+    56230,
+    50664,
+    54743,
+    51586,
+    50002,
+    54853,
+    55749,
+    57362,
+    57325,
+    56843,
+    52082,
+    53833,
+    53407,
+    59425,
+    53698,
+    50854,
+    44204,
+    57810,
+    53356,
+    54913,
+    56228,
+    57947,
+    54883,
+    52973,
+    59175,
+    52481,
+    58080,
+    57533,
+    52173,
+    53770,
+    51020,
+    53434,
+    45486,
+    54855,
+    54632,
+    55877,
+    51461,
+    55774,
+    50384,
+    52081,
+    53613,
+    54617,
+    52367,
+    51794,
+    41514,
+    51498,
+    50652,
+    53128,
+    52962,
+    51614
+  ],
+  "items": [
+    {
+      "malId": 52991,
+      "title": "Frieren: Beyond Journey's End",
+      "score": 9.26,
+      "episodes": 28,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54492,
+      "title": "The Apothecary Diaries",
+      "score": 8.85,
+      "episodes": 24,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 39894,
+      "title": "Sound! Euphonium 3",
+      "score": 8.73,
+      "episodes": 13,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52215,
+      "title": "Orb: On the Movements of the Earth",
+      "score": 8.72,
+      "episodes": 25,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51009,
+      "title": "Jujutsu Kaisen Season 2",
+      "score": 8.7,
+      "episodes": 23,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53998,
+      "title": "Bleach: Thousand-Year Blood War - The Separation",
+      "score": 8.7,
+      "episodes": 13,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56784,
+      "title": "Bleach: Thousand-Year Blood War - The Conflict",
+      "score": 8.67,
+      "episodes": 14,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54898,
+      "title": "Bungo Stray Dogs 5",
+      "score": 8.6,
+      "episodes": 11,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55823,
+      "title": "Natsume's Book of Friends Season 7",
+      "score": 8.57,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54857,
+      "title": "Re:ZERO -Starting Life in Another World- Season 3",
+      "score": 8.42,
+      "episodes": 16,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57334,
+      "title": "Dan Da Dan",
+      "score": 8.4,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55102,
+      "title": "Girls Band Cry",
+      "score": 8.36,
+      "episodes": 13,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55644,
+      "title": "Dr. Stone: New World Part 2",
+      "score": 8.3,
+      "episodes": 11,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58572,
+      "title": "Shangri-La Frontier Season 2",
+      "score": 8.26,
+      "episodes": 25,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54595,
+      "title": "The Eminence in Shadow Season 2",
+      "score": 8.25,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54959,
+      "title": "BanG Dream! It's MyGO!!!!!",
+      "score": 8.24,
+      "episodes": 13,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51179,
+      "title": "Mushoku Tensei: Jobless Reincarnation Season 2",
+      "score": 8.2,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57181,
+      "title": "Blue Box",
+      "score": 8.15,
+      "episodes": 25,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55911,
+      "title": "The Fable",
+      "score": 8.15,
+      "episodes": 25,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54856,
+      "title": "Horimiya: The Missing Pieces",
+      "score": 8.12,
+      "episodes": 13,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56738,
+      "title": "The Duke of Death and His Maid Season 3",
+      "score": 8.12,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52826,
+      "title": "Tsurune - The Linking Shot -",
+      "score": 8.11,
+      "episodes": 13,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52347,
+      "title": "Shangri-La Frontier",
+      "score": 8.1,
+      "episodes": 25,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56063,
+      "title": "NieR:Automata Ver1.1a (Cour 2)",
+      "score": 8.06,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53887,
+      "title": "Spy x Family Season 2",
+      "score": 8.05,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56980,
+      "title": "Yatagarasu: The Raven Does Not Choose Its Master",
+      "score": 8.05,
+      "episodes": 20,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53410,
+      "title": "Laid-Back Camp Season 3",
+      "score": 8.04,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59145,
+      "title": "Ranma ½ (2024)",
+      "score": 7.97,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55742,
+      "title": "The Ancient Magus' Bride Season 2 Part 2",
+      "score": 7.92,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 46422,
+      "title": "Sacrificial Princess and the King of Beasts",
+      "score": 7.91,
+      "episodes": 24,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53287,
+      "title": "Love Live! Superstar!! Season 3",
+      "score": 7.91,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55310,
+      "title": "My New Boss Is Goofy",
+      "score": 7.9,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57066,
+      "title": "Is It Wrong to Try to Pick Up Girls in a Dungeon? V",
+      "score": 7.89,
+      "episodes": 15,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 60108,
+      "title": "One Piece Log: Fish-Man Island Saga",
+      "score": 7.89,
+      "episodes": 21,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53199,
+      "title": "Mobile Suit Gundam: The Witch from Mercury Season 2",
+      "score": 7.88,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55153,
+      "title": "The Yuzuki Family's Four Sons",
+      "score": 7.87,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55855,
+      "title": "Black Butler: Public School Arc",
+      "score": 7.86,
+      "episodes": 11,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52505,
+      "title": "Dark Gathering",
+      "score": 7.84,
+      "episodes": 25,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54790,
+      "title": "Undead Murder Farce",
+      "score": 7.84,
+      "episodes": 13,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54918,
+      "title": "Tokyo Revengers: Tenjiku Arc",
+      "score": 7.81,
+      "episodes": 13,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57559,
+      "title": "MF Ghost Season 2",
+      "score": 7.8,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57554,
+      "title": "Rurouni Kenshin: Kyoto Disturbance",
+      "score": 7.78,
+      "episodes": 23,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56768,
+      "title": "Tadaima, Okaeri",
+      "score": 7.76,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52741,
+      "title": "Undead Unluck",
+      "score": 7.74,
+      "episodes": 24,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54839,
+      "title": "Jellyfish Can't Swim in the Night",
+      "score": 7.74,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51536,
+      "title": "The iDOLM@STER Cinderella Girls: U149",
+      "score": 7.73,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52196,
+      "title": "Date A Live V",
+      "score": 7.71,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54112,
+      "title": "Zom 100: Bucket List of the Dead",
+      "score": 7.7,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53526,
+      "title": "Umamusume: Pretty Derby Season 3",
+      "score": 7.7,
+      "episodes": 13,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50586,
+      "title": "Migi & Dali",
+      "score": 7.68,
+      "episodes": 13,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51552,
+      "title": "My Happy Marriage",
+      "score": 7.67,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54714,
+      "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
+      "score": 7.67,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54842,
+      "title": "Sugar Apple Fairy Tale Part 2",
+      "score": 7.67,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53716,
+      "title": "Soaring Sky! Pretty Cure",
+      "score": 7.66,
+      "episodes": 50,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55973,
+      "title": "Cherry Magic! Thirty Years of Virginity Can Make You a Wizard?!",
+      "score": 7.64,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51916,
+      "title": "The Masterful Cat Is Depressed Again Today",
+      "score": 7.63,
+      "episodes": 13,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 49858,
+      "title": "The Duke of Death and His Maid Season 2",
+      "score": 7.63,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57635,
+      "title": "Ron Kamonohashi's Forbidden Deductions Season 2",
+      "score": 7.63,
+      "episodes": 13,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57390,
+      "title": "Wonderful Precure!",
+      "score": 7.63,
+      "episodes": 50,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50613,
+      "title": "Rurouni Kenshin",
+      "score": 7.62,
+      "episodes": 24,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53881,
+      "title": "Arknights: Perish in Frost",
+      "score": 7.6,
+      "episodes": 8,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58714,
+      "title": "The Most Notorious \"Talker\" Runs the World's Greatest Clan",
+      "score": 7.57,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53590,
+      "title": "The Weakest Tamer Began a Journey to Pick Up Trash",
+      "score": 7.57,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58488,
+      "title": "Sengoku Youko 2nd Season",
+      "score": 7.57,
+      "episodes": 22,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51297,
+      "title": "Ragna Crimson",
+      "score": 7.56,
+      "episodes": 24,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50695,
+      "title": "MF Ghost",
+      "score": 7.56,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55528,
+      "title": "Brave Bang Bravern!",
+      "score": 7.56,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56662,
+      "title": "TRILLION GAME",
+      "score": 7.56,
+      "episodes": 26,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56894,
+      "title": "Dragon Ball Daima",
+      "score": 7.55,
+      "episodes": 20,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57217,
+      "title": "The Magical Girl and the Evil Lieutenant Used to Be Archenemies",
+      "score": 7.55,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55071,
+      "title": "Tying the Knot with an Amagami Sister",
+      "score": 7.54,
+      "episodes": 24,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54726,
+      "title": "TsumaSho",
+      "score": 7.54,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52229,
+      "title": "Birdie Wing: Golf Girls' Story Season 2",
+      "score": 7.54,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56165,
+      "title": "Oblivion Battery",
+      "score": 7.52,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53879,
+      "title": "Ron Kamonohashi's Forbidden Deductions",
+      "score": 7.51,
+      "episodes": 13,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53621,
+      "title": "My Clueless First Friend",
+      "score": 7.51,
+      "episodes": 13,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54865,
+      "title": "Blue Lock Season 2",
+      "score": 7.5,
+      "episodes": 14,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 49980,
+      "title": "Sugar Apple Fairy Tale",
+      "score": 7.49,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58516,
+      "title": "Blue Exorcist: Beyond the Snow Saga",
+      "score": 7.49,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54803,
+      "title": "Captain Tsubasa: Junior Youth Arc",
+      "score": 7.49,
+      "episodes": 39,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54301,
+      "title": "Overtake!",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55844,
+      "title": "Twilight Out of Focus",
+      "score": 7.48,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51215,
+      "title": "The Saint's Magic Power is Omnipotent Season 2",
+      "score": 7.46,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56230,
+      "title": "Grandpa and Grandma Turn Young Again",
+      "score": 7.45,
+      "episodes": 11,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50664,
+      "title": "The Faraway Paladin: The Lord of the Rust Mountains",
+      "score": 7.43,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54743,
+      "title": "Dead Mount Death Play Part 2",
+      "score": 7.43,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51586,
+      "title": "D4DJ All Mix",
+      "score": 7.43,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50002,
+      "title": "Edens Zero Season 2",
+      "score": 7.42,
+      "episodes": 25,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54853,
+      "title": "Demon Lord 2099",
+      "score": 7.4,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55749,
+      "title": "The Café Terrace and Its Goddesses Season 2",
+      "score": 7.4,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57362,
+      "title": "Nina the Starry Bride",
+      "score": 7.4,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57325,
+      "title": "Ramen Akaneko",
+      "score": 7.4,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56843,
+      "title": "How I Attended an All-Guy's Mixer",
+      "score": 7.39,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52082,
+      "title": "Saint Cecilia and Pastor Lawrence",
+      "score": 7.38,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53833,
+      "title": "I'm in Love with the Villainess",
+      "score": 7.37,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53407,
+      "title": "Bartender Glass of God",
+      "score": 7.37,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59425,
+      "title": "Negative Positive Angler",
+      "score": 7.37,
+      "episodes": 12,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53698,
+      "title": "Stella of the Theater: World Dai Star",
+      "score": 7.37,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50854,
+      "title": "Handyman Saitou in Another World",
+      "score": 7.36,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 44204,
+      "title": "In/Spectre 2",
+      "score": 7.36,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57810,
+      "title": "Shoshimin: How to Become Ordinary",
+      "score": 7.36,
+      "episodes": 10,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53356,
+      "title": "Train to the End of the World",
+      "score": 7.36,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54913,
+      "title": "The Ossan Newbie Adventurer, Trained to Death by the Most Powerful Party, Became Invincible",
+      "score": 7.35,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 56228,
+      "title": "I'll Become a Villainess Who Goes Down in History",
+      "score": 7.34,
+      "episodes": 13,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57947,
+      "title": "Mayonaka Punch",
+      "score": 7.34,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54883,
+      "title": "Malevolent Spirits: Mononogatari 2nd Season",
+      "score": 7.34,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52973,
+      "title": "The Café Terrace and Its Goddesses",
+      "score": 7.32,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 59175,
+      "title": "Tonbo! Season 2",
+      "score": 7.32,
+      "episodes": 13,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52481,
+      "title": "Days with My Stepsister",
+      "score": 7.31,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 58080,
+      "title": "Viral Hit",
+      "score": 7.31,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 57533,
+      "title": "A Terrified Teacher at Ghoul School!",
+      "score": 7.31,
+      "episodes": 24,
+      "year": 2024,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52173,
+      "title": "The Ice Guy and His Cool Female Colleague",
+      "score": 7.3,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53770,
+      "title": "Go! Go! Loser Ranger!",
+      "score": 7.3,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51020,
+      "title": "Helck",
+      "score": 7.3,
+      "episodes": 24,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53434,
+      "title": "An Archdemon's Dilemma: How to Love Your Elf Bride",
+      "score": 7.29,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 45486,
+      "title": "Kuma Kuma Kuma Bear Punch!",
+      "score": 7.29,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54855,
+      "title": "Senpai is an Otokonoko",
+      "score": 7.28,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54632,
+      "title": "Doctor Elise: The Royal Lady with the Lamp",
+      "score": 7.27,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55877,
+      "title": "A Salad Bowl of Eccentrics",
+      "score": 7.27,
+      "episodes": 12,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51461,
+      "title": "Tonari no Yokai-san",
+      "score": 7.27,
+      "episodes": 13,
+      "year": 2024,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 55774,
+      "title": "'Tis Time for \"Torture,\" Princess",
+      "score": 7.26,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50384,
+      "title": "Malevolent Spirits: Mononogatari",
+      "score": 7.26,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52081,
+      "title": "Otaku Elf",
+      "score": 7.26,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53613,
+      "title": "Dead Mount Death Play",
+      "score": 7.25,
+      "episodes": 12,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 54617,
+      "title": "Mr. Villain's Day Off",
+      "score": 7.25,
+      "episodes": 12,
+      "year": 2024,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52367,
+      "title": "No Longer Allowed in Another World",
+      "score": 7.24,
+      "episodes": 12,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51794,
+      "title": "The Seven Deadly Sins: Four Knights of the Apocalypse",
+      "score": 7.24,
+      "episodes": 24,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 41514,
+      "title": "BOFURI: I Don't Want to Get Hurt, so I'll Max Out My Defense. Season 2",
+      "score": 7.23,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51498,
+      "title": "Masamune-kun's Revenge R",
+      "score": 7.23,
+      "episodes": 12,
+      "year": 2023,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 50652,
+      "title": "Endo and Kobayashi Live! The Latest on Tsundere Villainess Lieselotte",
+      "score": 7.23,
+      "episodes": 12,
+      "year": 2023,
+      "season": "winter",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 53128,
+      "title": "Atri -My Dear Moments-",
+      "score": 7.21,
+      "episodes": 13,
+      "year": 2024,
+      "season": "summer",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 52962,
+      "title": "Tearmoon Empire",
+      "score": 7.2,
+      "episodes": 12,
+      "year": 2023,
+      "season": "fall",
+      "status": "Finished Airing"
+    },
+    {
+      "malId": 51614,
+      "title": "Ao no Orchestra",
+      "score": 7.2,
+      "episodes": 24,
+      "year": 2023,
+      "season": "spring",
+      "status": "Finished Airing"
+    }
+  ]
+}
