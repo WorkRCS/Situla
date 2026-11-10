@@ -10,6 +10,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
   const router = useRouter();
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
+  const [seriesInfo, setSeriesInfo] = useState(null);
   const [catalogVerified, setCatalogVerified] = useState(false);
   const [startAt, setStartAt] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -25,6 +26,7 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
         if (!response.ok || !payload.item) throw new Error(payload.error || "Series metadata is unavailable.");
         setTitle(payload.item.titleEnglish || payload.item.title);
         setPosterUrl(payload.item.posterUrl || null);
+        if (kind === "tv") setSeriesInfo(payload.item);
         setCatalogVerified(true);
       })
       .catch(() => {})
@@ -141,6 +143,22 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [kind, imdbId, malId, season, episode, audio, title, posterUrl]);
 
+  const tvSeasons = (seriesInfo?.seasons || [])
+    .filter((item) => Number(item.episodeCount) > 0 && Number(item.seasonNumber) > 0)
+    .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber));
+  const currentSeason = tvSeasons.find((item) => Number(item.seasonNumber) === Number(season));
+  const nextSeason = tvSeasons.find((item) => Number(item.seasonNumber) > Number(season));
+  const nextEpisode = kind === "tv" && currentSeason
+    ? (Number(episode) < Number(currentSeason.episodeCount)
+      ? { season: Number(season), episode: Number(episode) + 1 }
+      : nextSeason ? { season: Number(nextSeason.seasonNumber), episode: 1 } : null)
+    : null;
+
+  function playNextEpisode() {
+    if (!nextEpisode || kind !== "tv") return;
+    router.push("/watch/tv/" + encodeURIComponent(imdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
+  }
+
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified) return null;
@@ -193,6 +211,12 @@ export default function SeriesMediaPlayer({ kind, imdbId, malId, season, episode
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>
         </div>
+        {kind === "tv" && <div className="series-player-actions">
+          <button type="button" className="series-player-guide" onClick={() => router.push("/tv/" + encodeURIComponent(imdbId))}>Episode guide</button>
+          <button type="button" className="series-player-next" onClick={playNextEpisode} disabled={!nextEpisode || !catalogVerified}>
+            Next episode <i className="bi bi-skip-forward-fill" aria-hidden="true" />
+          </button>
+        </div>}
       </header>
     </main>
   );
