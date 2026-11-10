@@ -117,7 +117,7 @@ test("Movie additions seeder is insert-only and verifies all required fields bef
   const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
   assert.equal(pkg.scripts["seed:movie-additions"], "node scripts/seed-movie-additions.js");
   assert.equal(pkg.scripts["check:movies"], "node --test test/movie-catalog.test.js");
-  assert.match(pkg.scripts["seed:movies"], /seed-static-catalog\.js --movies.*seed-movie-additions\.js/);
+  assert.match(pkg.scripts["seed:movies"], /seed-static-catalog\.js --movies.*seed:movie-additions/);
   assert.match(script, /Movie\.insertMany\(newRecords/);
   assert.match(script, /existingAdditionCount/);
   assert.match(script, /verifyRemoteImage/);
