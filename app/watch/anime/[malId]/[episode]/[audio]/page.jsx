@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import SeriesMediaPlayer from "../../../../../components/media-player";
-import { normalizeAnimePlayerRoute } from "../../../../../../src/player-urls.js";
+import { normalizeAnimePlayerRoute } from "../../../../../../src/anime-player-route.js";
 
 export const dynamic = "force-dynamic";
 
