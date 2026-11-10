@@ -2344,10 +2344,48 @@ body { color:#f7f7fa; background:#08090e; }
 }
 
 
-/* Home-only refinements: retain the charcoal/gold palette and compact the desktop hero. */
+/* Home-only refinements: retain the charcoal/gold palette and keep the desktop hero compact. */
 @media (min-width:1101px) {
   .home-page-layout .hero-card {
-    min-height:clamp(500px,65vh,700px);
+    min-height:clamp(340px,43vh,460px);
+  }
+  .home-page-layout .hero-content {
+    padding:clamp(22px,3vw,42px);
+  }
+  .home-page-layout .hero-eyebrow {
+    margin-bottom:10px;
+  }
+  .home-page-layout .hero-kicker {
+    margin-bottom:6px;
+  }
+  .home-page-layout .hero-title {
+    font-size:clamp(34px,4.2vw,62px);
+  }
+  .home-page-layout .hero-meta {
+    gap:8px 14px;
+    margin-top:12px;
+  }
+  .home-page-layout .hero-description {
+    display:-webkit-box;
+    overflow:hidden;
+    margin-top:9px;
+    line-height:1.55;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  .home-page-layout .hero-actions {
+    gap:10px;
+    margin-top:14px;
+  }
+  .home-page-layout .hero-carousel-footer {
+    margin-top:15px;
+  }
+  .home-page-layout .hero-skeleton {
+    min-height:clamp(340px,43vh,460px);
+    padding:clamp(20px,3vw,42px);
+  }
+  .home-page-layout .skeleton-hero-copy {
+    gap:12px;
   }
 }
 .media-open-button:disabled { cursor:progress; }
