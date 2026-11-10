@@ -7,7 +7,7 @@ Situla is a mobile-first movie, TV and anime catalog built as a Next.js website.
 - Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. After the Movie record is found in MongoDB, the player is requested directly at `https://vidlink.pro/movie/{imdbId}`.
 - TV series: TMDB numeric TV ID is the required unique Situla catalog key. Metadata, posters, episode stills and episode guides remain sourced from TVmaze and stored in MongoDB. Each episode is requested directly at `https://vidlink.pro/tv/{tmdbId}/{season}/{episode}`. The detail route is `/tv/{tmdbId}`, and playback uses `/watch/tv/{tmdbId}/{season}/{episode}`. The series page includes the same episode guide and next-episode navigation.
 - The previous TV IMDb value is retained only as the optional `externalImdbId` cross-reference for migration/progress compatibility; it is not used as the TV route or playback ID.
-- Anime: MAL ID remains the anime key because VidLink's anime endpoint requires a MyAnimeList ID.
+- Anime: MAL ID remains the anime key. Episode playback uses `https://vidlink.pro/anime/{malId}/{episode}/{subOrDub}?fallback=true`; the `sub`/`dub` segment is validated and the alternate audio can be tried from the player.
 
 Movie watch pages keep the optional Hindi player switch using the path-based IMDb format `https://slast430did.com/play/{imdbId}`; Movie English playback remains `https://vidlink.pro/movie/{imdbId}`. TV playback uses the numeric TMDB ID in VidLink's TV path. Anime continues to use MAL IDs. The player provider still controls stream availability, resolution and audio tracks.
 
@@ -56,6 +56,14 @@ Use MongoDB Compass, Atlas Data Explorer, or a controlled database script to ins
 Movie document minimum fields: `imdbId`, `title`, plus optional `posterUrl`, `releaseYear`, `voteAverage`, and `genres`.
 
 TV document minimum fields: numeric `tmdbId`, `title`, and an embedded `seasons` array containing `seasonNumber` and `episodes`. `externalImdbId` is optional cross-reference metadata and is not used as the TV player key.
+
+Anime is added manually; there is no Anime crawler and no Jikan/MAL API call in the manual seed command. Starter entries and the editable source list live in `data/anime-catalog.js`. Add one object per MyAnimeList entry with a numeric `malId`, `title`, `type: "TV"` (or `"ONA"`) and optional metadata such as `episodes`, `posterUrl`, `synopsis`, `genres` and `score`. Then run:
+
+```sh
+npm run seed:anime
+```
+
+The command writes only to the Anime collection, inserts missing MAL IDs, and leaves already-existing records untouched. It does not crawl or call any external metadata service. Anime playback validates the MAL ID, one-based episode number and `sub`/`dub` path segment. Situla requests VidLink's `fallback=true` option and provides a player control to manually switch to the other audio track.
 
 The public API is read-only for catalog data. There are no write routes or privileged admin endpoints exposed by the application. The TV seed script writes directly to MongoDB during local development only; it is not exposed as a public API route.
 
