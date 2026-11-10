@@ -416,7 +416,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           if (selected?.genre) params.set("genre", selected.genre);
         }
         const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" : "/api/movies?" + params.toString());
-        const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+        const requestSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
+        const response = await fetch(endpoint, { cache: "no-store", signal: requestSignal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
@@ -610,7 +611,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           params.set("random", "true");
           params.set("exclude", movies.map((item) => item.imdbId).filter(Boolean).join(","));
         }
-        const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store" });
+        const response = await fetch("/api/movies?" + params.toString(), {
+          cache: "no-store",
+          signal: AbortSignal.timeout(20000)
+        });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
@@ -890,6 +894,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             )}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+            {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
+            {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </>
         )}
