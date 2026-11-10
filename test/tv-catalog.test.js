@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { TV_SERIES_CANDIDATES } from "../data/tv-additions.js";
+import { STATIC_TV_SERIES } from "../data/tv-catalog.js";
 import {
   buildSeasonRecords,
   isExactTvmazeMatch,
@@ -58,6 +59,8 @@ test("TV candidate pack has at least 200 unique TMDB IDs and policy-safe metadat
   const ids = TV_SERIES_CANDIDATES.map((item) => item.tmdbId);
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(ids.every((id) => Number.isSafeInteger(id) && id > 0));
+  const legacyIds = new Set(STATIC_TV_SERIES.map((item) => item.tmdbId));
+  assert.ok(ids.every((id) => !legacyIds.has(id)), "New TV candidate IDs must not collide with the 70 legacy static IDs.");
   assert.ok(TV_SERIES_CANDIDATES.every((item) =>
     item.title && /^\d{4}-\d{2}-\d{2}$/.test(item.firstAirDate) &&
     item.numberOfSeasons > 0 && item.numberOfEpisodes > 0 &&
