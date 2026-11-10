@@ -68,6 +68,7 @@ function MoviePosterImage({ movie }) {
       src={movie.posterUrl}
       alt={movie.title}
       loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
     />
   ) : (
@@ -116,6 +117,7 @@ function SeriesPosterImage({ item, title }) {
       src={source}
       alt={title}
       loading="lazy"
+      decoding="async"
       onError={() => setSourceIndex((current) => current + 1)}
     />
   ) : (
@@ -247,8 +249,8 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
         onPointerCancel={onPointerUp}
         onClickCapture={onClickCapture}
       >
-        {movies.map((movie) => (
-          <MovieCard key={movie.imdbId || movie.id || (String(movie.title || 'movie') + '-' + String(movie.releaseYear || 'unknown') + '-' + movies.indexOf(movie))} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
+        {movies.map((movie, index) => (
+          <MovieCard key={movie.imdbId || movie.id || (String(movie.title || 'movie') + '-' + String(movie.releaseYear || 'unknown') + '-' + index)} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
         ))}
       </div>
     </section>
@@ -314,11 +316,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [animePage, setAnimePage] = useState(1);
   const [animeTotal, setAnimeTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreLock = useRef(false);
 
   useEffect(() => {
     setCatalogSpotlight(null);
     setCatalogSpotlightItems([]);
   }, [tab]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [searchOpen]);
 
   useEffect(() => {
     try {
@@ -382,9 +392,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const timer = window.setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]);
         const response = await fetch("/api/search?q=" + encodeURIComponent(value), {
           cache: "no-store",
-          signal: controller.signal
+          signal
         });
         const payload = await response.json().catch(() => ({}));
         if (response.ok && !controller.signal.aborted) {
@@ -494,11 +505,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
     const controller = new AbortController();
-    const endpoint = tab === "tv" ? "/api/tv?page=1&limit=40" : "/api/anime?page=1&limit=40";
+    const endpoint = tab === "tv"
+      ? "/api/tv?page=1&limit=40&random=true"
+      : "/api/anime?page=1&limit=40&random=true";
     async function loadSeries() {
       setLoading(true);
       try {
-        const response = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
+        const response = await fetch(endpoint, { cache: "no-store", signal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Series catalog is not available.");
         const items = Array.isArray(payload.items) ? payload.items : [];
@@ -596,7 +610,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }
 
   async function loadMore() {
-    if (loadingMore) return;
+    if (loadMoreLock.current) return;
+    loadMoreLock.current = true;
     setLoadingMore(true);
     try {
       if (tab === "home" || tab === "movies" || tab === "search") {
@@ -632,32 +647,63 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         setError("");
       } else if (tab === "tv") {
         const nextPage = tvPage + 1;
-        const response = await fetch("/api/tv?page=" + nextPage + "&limit=40", { cache: "no-store" });
+        const params = new URLSearchParams({
+          page: String(nextPage),
+          limit: "40",
+          random: "true",
+          exclude: tvShows.map((item) => item.tmdbId).filter((id) => Number.isSafeInteger(Number(id)) && Number(id) > 0).join(",")
+        });
+        const response = await fetch("/api/tv?" + params.toString(), {
+          cache: "no-store",
+          signal: AbortSignal.timeout(20000)
+        });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
         setTvShows((current) => {
-          const ids = new Set(current.map((item) => item.imdbId));
-          return [...current, ...nextItems.filter((item) => !ids.has(item.imdbId))];
+          const ids = new Set(current.map((item) => Number(item.tmdbId)).filter((id) => Number.isSafeInteger(id)));
+          return [...current, ...nextItems.filter((item) => {
+            const id = Number(item.tmdbId);
+            if (!Number.isSafeInteger(id) || id < 1 || ids.has(id)) return false;
+            ids.add(id);
+            return true;
+          })];
         });
         setTvPage(Number(payload.pagination?.page) || nextPage);
         setTvTotal(Number(payload.pagination?.total) || tvTotal);
+        setError("");
       } else if (tab === "anime") {
         const nextPage = animePage + 1;
-        const response = await fetch("/api/anime?page=" + nextPage + "&limit=40", { cache: "no-store" });
+        const params = new URLSearchParams({
+          page: String(nextPage),
+          limit: "40",
+          random: "true",
+          exclude: animeShows.map((item) => item.malId).filter((id) => Number.isSafeInteger(Number(id)) && Number(id) > 0).join(",")
+        });
+        const response = await fetch("/api/anime?" + params.toString(), {
+          cache: "no-store",
+          signal: AbortSignal.timeout(20000)
+        });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more anime.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
         setAnimeShows((current) => {
-          const ids = new Set(current.map((item) => item.malId));
-          return [...current, ...nextItems.filter((item) => !ids.has(item.malId))];
+          const ids = new Set(current.map((item) => Number(item.malId)).filter((id) => Number.isSafeInteger(id)));
+          return [...current, ...nextItems.filter((item) => {
+            const id = Number(item.malId);
+            if (!Number.isSafeInteger(id) || id < 1 || ids.has(id)) return false;
+            ids.add(id);
+            return true;
+          })];
         });
         setAnimePage(Number(payload.pagination?.page) || nextPage);
         setAnimeTotal(Number(payload.pagination?.total) || animeTotal);
+        setError("");
       }
     } catch (requestError) {
       setError(requestError.message || "Unable to load the next catalog page.");
     } finally {
+      loadMoreLock.current = false;
       setLoadingMore(false);
     }
   }
@@ -706,9 +752,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }
 
   const sortedHistory = [...watchHistory].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
-  const hasMoreMovies = moviesPage * 40 < moviesTotal;
-  const hasMoreTv = tvPage * 40 < tvTotal;
-  const hasMoreAnime = animePage * 40 < animeTotal;
+  const hasMoreMovies = movies.length < moviesTotal;
+  const hasMoreTv = tvShows.length < tvTotal;
+  const hasMoreAnime = animeShows.length < animeTotal;
   const featured = heroMovies.length ? heroMovies[heroIndex % heroMovies.length] : (featuredMovie || movies[0]);
 
   return (
@@ -741,30 +787,73 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <div className="header-search-wrap">
             <label className="header-search search-box" aria-label="Search catalog">
               <BootstrapIcon icon="search" size={18} />
-              <input value={query} onFocus={() => setSearchOpen(true)} onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }} onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  setSearchOpen(false);
-                  router.push("/search" + (query.trim() ? "?q=" + encodeURIComponent(query.trim()) : ""));
-                }
-                if (event.key === "Escape") setSearchOpen(false);
-              }} placeholder="Search movies, TV series & anime…" aria-label="Search all Situla titles" />
-              {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); setSearchOpen(false); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
+              <input value={query} readOnly onClick={() => setSearchOpen(true)} onFocus={() => setSearchOpen(true)} placeholder="Search movies, TV series & anime…" aria-label="Open mixed catalog search" />
+              {query && <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setQuery(""); setSuggestions([]); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
             </label>
-            {searchOpen && query.trim().length >= 2 && (
-              <div className="suggestion-panel" role="listbox" aria-label="Matching movie titles">
-                {suggestionsLoading ? (
-                  <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
-                ) : suggestions.length ? suggestions.map((item) => (
-                  <button key={item.mediaType === "tv" ? item.tmdbId : item.imdbId || item.malId} type="button" className="suggestion-item" onMouseDown={(event) => event.preventDefault()} onClick={() => openSearchResult(item)}>
-                    {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
-                    <span className="suggestion-title"><strong>{item.titleEnglish || item.title}</strong><small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || "Release year unknown"}</small></span>
-                    <BootstrapIcon icon="play-fill" size={16} />
-                  </button>
-                )) : <div className="suggestion-empty">No matching movies, TV series or anime found.</div>}
-              </div>
-            )}
           </div>
+          {searchOpen && (
+            <div className="search-overlay" role="presentation" onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setSearchOpen(false);
+            }}>
+              <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
+                <div className="search-dialog-heading">
+                  <div>
+                    <span>ALL SITULA CATALOGS</span>
+                    <h2 id="search-dialog-title">Search movies, TV & anime</h2>
+                  </div>
+                  <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search"><BootstrapIcon icon="x-lg" size={19} /></button>
+                </div>
+                <label className="search-dialog-input">
+                  <BootstrapIcon icon="search" size={18} />
+                  <input
+                    autoFocus
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setSearchOpen(false);
+                      if (event.key === "Enter" && query.trim().length >= 2) {
+                        setSearchOpen(false);
+                        router.push("/search?q=" + encodeURIComponent(query.trim()));
+                      }
+                    }}
+                    placeholder="Type a title, person or IMDb/MAL ID…"
+                    aria-label="Search all media types"
+                  />
+                  {query && <button type="button" onClick={() => { setQuery(""); setSuggestions([]); }} aria-label="Clear search"><BootstrapIcon icon="x-lg" size={16} /></button>}
+                </label>
+                {query.trim().length < 2 ? (
+                  <div className="suggestion-empty">Type at least two characters to search across Movies, TV series and Anime.</div>
+                ) : suggestionsLoading ? (
+                  <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
+                ) : suggestions.length ? (
+                  <>
+                    <div className="search-results-caption">Mixed results · Movies · TV series · Anime</div>
+                    <div className="search-results-list" role="listbox" aria-label="Mixed search results">
+                      {suggestions.map((item) => {
+                        const identity = item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+                        return (
+                          <button key={item.mediaType + ":" + identity} type="button" className="suggestion-item" role="option" aria-selected="false" onClick={() => openSearchResult(item)}>
+                            {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" decoding="async" /> : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
+                            <span className="suggestion-title"><strong>{item.titleEnglish || item.title}</strong><small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "Release year unknown"}</small></span>
+                            <BootstrapIcon icon="play-fill" size={16} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="search-dialog-footer">
+                      <span>{suggestions.length} mixed catalog matches</span>
+                      <button type="button" className="ghost-button" onClick={() => {
+                        setSearchOpen(false);
+                        router.push("/search?q=" + encodeURIComponent(query.trim()));
+                      }}>View full search page</button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="suggestion-empty">No matching movies, TV series or anime found.</div>
+                )}
+              </section>
+            </div>
+          )}
         </div>
       </header>
 
