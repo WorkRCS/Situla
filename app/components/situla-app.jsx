@@ -269,6 +269,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
+    setCatalogSpotlight(null);
+    setCatalogSpotlightItems([]);
+  }, [tab]);
+
+  useEffect(() => {
     try {
       const hasValidImdbId = (item) => /^tt\d{5,12}$/i.test(String(item?.imdbId || ""));
       const saved = JSON.parse(localStorage.getItem("situla:saved:v1") || "[]");
