@@ -197,7 +197,7 @@ test("Situla header keeps the logo with the name, and the theme switch is remove
 
   assert.match(app, /className="brand-lockup"/);
   assert.match(app, /src="\/icon\.svg"/);
-  assert.match(app, /DISCOVER MOVIES/);
+  assert.match(app, /DISCOVER STORIES/);
   assert.doesNotMatch(app, /themeMode|themeReady|themeMenuOpen|theme-switcher/);
   assert.match(layout, /data-theme="dark"/);
   assert.doesNotMatch(css, /data-theme="light"/);
@@ -322,4 +322,48 @@ test("TV player exposes working Next Episode and Next Season navigation from ver
   assert.match(player, /onClick=\{playNextSeason\} disabled=\{!nextSeason \|\| !catalogVerified\}/);
   assert.match(player, />\s*Next season/);
   assert.match(player, /episodeCount\) > 0 && Number\(item\.seasonNumber\) > 0/);
+});
+
+
+test("home page omits personal watch-history shelves and shows catalog discovery sections", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.doesNotMatch(app, /title="Continue watching"/);
+  assert.doesNotMatch(app, /title="Recently opened"/);
+  assert.match(app, /title="Popular series"/);
+  assert.match(app, /title="Favorite series"/);
+  assert.match(app, /title="Top TV series"/);
+  assert.match(app, /title="Top anime series"/);
+  assert.match(app, /categoryShelves\.map\(\(category\)/);
+  assert.match(app, /title=\{category\.name\}/);
+});
+
+test("home series use ranked catalog feeds and mix favorite series across TV and anime", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=32"/);
+  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=32"/);
+  assert.match(app, /homeTvShows\.map\(\(item\) => \(\{ \.\.\.item, homeMediaKind: "tv" \}\)\)/);
+  assert.match(app, /homeAnimeShows\.map\(\(item\) => \(\{ \.\.\.item, homeMediaKind: "anime" \}\)\)/);
+  assert.match(app, /favoriteSeriesItems/);
+  assert.match(app, /popularSeriesItems/);
+});
+
+test("home movie, TV, anime and hero clicks provide item-level loading feedback", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /pendingHomeNavigation/);
+  assert.match(app, /media-loading-overlay/);
+  assert.match(app, /aria-busy=\{navigating\}/);
+  assert.match(app, /hero-route-loading/);
+  assert.match(app, /Opening…/);
+  assert.match(app, /openHomeMovie\(movie\)/);
+  assert.match(app, /openHomeSeries\(series, kind\)/);
+  assert.match(css, /@keyframes situla-button-spin/);
+  assert.match(css, /\.media-loading-overlay/);
+});
+
+test("desktop homepage hero is slightly shorter without changing the gold palette", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /@media \(min-width:1101px\)[\s\S]*?\.home-page-layout \.hero-card[\s\S]*?min-height:clamp\(500px,65vh,700px\)/);
+  assert.match(css, /--accent:#e8b65b/);
+  assert.match(css, /#f7d58b/);
 });

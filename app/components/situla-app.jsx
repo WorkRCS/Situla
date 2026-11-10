@@ -96,15 +96,16 @@ function MoviePosterImage({ movie }) {
   );
 }
 
-function MovieCard({ movie, onOpen, onSave, saved }) {
+function MovieCard({ movie, onOpen, onSave, saved, navigating = false }) {
   return (
     <article className="movie-card">
-      <button type="button" onClick={() => onOpen(movie)} className="block w-full text-left">
+      <button type="button" onClick={() => onOpen(movie)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
         <div className="movie-poster">
           <MoviePosterImage movie={movie} />
           {movie.voteAverage > 0 && (
             <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
           )}
+          {navigating && <span className="media-loading-overlay" role="status" aria-label="Opening movie"><span className="inline-loading-spinner" /></span>}
         </div>
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{movie.title}</h3>
         <p className="mt-1 text-[11px] text-[#858b9b]">{movie.releaseYear || "Movie"}{movie.runtime ? " · " + formatRuntime(movie.runtime) : ""}</p>
@@ -146,7 +147,15 @@ function SeriesPosterImage({ item, title }) {
 }
 
 
-function SeriesCard({ item, kind, onOpen }) {
+function seriesNavigationKey(item, kind) {
+  return kind === "tv" ? "tv:" + String(item?.tmdbId || "") : "anime:" + String(item?.malId || "");
+}
+
+function movieNavigationKey(movie) {
+  return "movie:" + String(movie?.imdbId || "").toLowerCase();
+}
+
+function SeriesCard({ item, kind, onOpen, navigating = false }) {
   const isTv = kind === "tv";
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
@@ -158,12 +167,13 @@ function SeriesCard({ item, kind, onOpen }) {
   const synopsis = isTv ? item.overview : item.synopsis;
   return (
     <article className={"movie-card series-card series-card-" + kind}>
-      <button type="button" onClick={() => onOpen(item)} className="block w-full text-left">
+      <button type="button" onClick={() => onOpen(item, kind)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
         <div className="movie-poster">
           <SeriesPosterImage item={item} title={title} />
           {rating > 0 && (
             <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
           )}
+          {navigating && <span className="media-loading-overlay" role="status" aria-label={"Opening " + (isTv ? "TV series" : "anime")}><span className="inline-loading-spinner" /></span>}
         </div>
         <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
         <p className="series-card-meta">{meta}</p>
@@ -216,7 +226,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   );
 }
 
-function SeriesShelf({ title, eyebrow, items, kind, onOpen }) {
+function SeriesShelf({ title, eyebrow, items, kind, onOpen, pendingNavigation = "" }) {
   if (!items.length) return null;
   return (
     <section className="netflix-shelf home-series-shelf">
@@ -236,6 +246,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen }) {
             item={item}
             kind={kind}
             onOpen={onOpen}
+            navigating={pendingNavigation === seriesNavigationKey(item, kind)}
           />
         ))}
       </div>
@@ -243,7 +254,39 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen }) {
   );
 }
 
-function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
+function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "" }) {
+  if (!items.length) return null;
+  return (
+    <section className="netflix-shelf home-series-shelf">
+      <div className="section-heading shelf-heading">
+        <div>
+          {eyebrow && <span>{eyebrow}</span>}
+          <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
+        </div>
+        <div className="shelf-browse-links">
+          <Link href="/tv" className="shelf-browse-link">TV <BootstrapIcon icon="arrow-up-right" size={13} /></Link>
+          <Link href="/anime" className="shelf-browse-link">Anime <BootstrapIcon icon="arrow-up-right" size={13} /></Link>
+        </div>
+      </div>
+      <div className="media-row flex gap-4 overflow-x-auto pb-3">
+        {items.slice(0, 20).map((item) => {
+          const kind = item.homeMediaKind;
+          return (
+            <SeriesCard
+              key={seriesNavigationKey(item, kind)}
+              item={item}
+              kind={kind}
+              onOpen={() => onOpen(item, kind)}
+              navigating={pendingNavigation === seriesNavigationKey(item, kind)}
+            />
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingNavigation = "" }) {
   const rowRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   if (!movies.length) return null;
@@ -298,7 +341,14 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
         onClickCapture={onClickCapture}
       >
         {movies.map((movie, index) => (
-          <MovieCard key={movie.imdbId || movie.id || (String(movie.title || 'movie') + '-' + String(movie.releaseYear || 'unknown') + '-' + index)} movie={movie} onOpen={onOpen} onSave={onSave} saved={savedIds.has(movie.imdbId)} />
+          <MovieCard
+            key={movie.imdbId || movie.id || (String(movie.title || "movie") + "-" + String(movie.releaseYear || "unknown") + "-" + index)}
+            movie={movie}
+            onOpen={onOpen}
+            onSave={onSave}
+            saved={savedIds.has(movie.imdbId)}
+            navigating={pendingNavigation === movieNavigationKey(movie)}
+          />
         ))}
       </div>
     </section>
@@ -348,6 +398,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeAnimeShows, setHomeAnimeShows] = useState([]);
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [heroPaused, setHeroPaused] = useState(false);
+  const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
   const [catalogSpotlight, setCatalogSpotlight] = useState(null);
   const [catalogSpotlightItems, setCatalogSpotlightItems] = useState([]);
@@ -373,6 +424,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     setCatalogSpotlight(null);
     setCatalogSpotlightItems([]);
+    setPendingHomeNavigation("");
   }, [tab]);
 
   useEffect(() => {
@@ -557,22 +609,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       return Array.isArray(payload.items) ? payload.items : [];
     }
 
-    const tvRecentIds = readRecentCatalogIds("situla:recent-catalog:tv");
-    const animeRecentIds = readRecentCatalogIds("situla:recent-catalog:anime");
-    const tvExclude = tvRecentIds.length ? "&exclude=" + encodeURIComponent(tvRecentIds.join(",")) : "";
-    const animeExclude = animeRecentIds.length ? "&exclude=" + encodeURIComponent(animeRecentIds.join(",")) : "";
-
     Promise.allSettled([
-      loadSeries("/api/tv?page=1&limit=24&random=true" + tvExclude),
-      loadSeries("/api/anime?page=1&limit=24&random=true" + animeExclude)
+      loadSeries("/api/tv?page=1&limit=32"),
+      loadSeries("/api/anime?page=1&limit=32")
     ]).then(([tvResult, animeResult]) => {
       if (controller.signal.aborted) return;
       const tvItems = tvResult.status === "fulfilled" ? tvResult.value : [];
       const animeItems = animeResult.status === "fulfilled" ? animeResult.value : [];
       setHomeTvShows(tvItems);
       setHomeAnimeShows(animeItems);
-      rememberRecentCatalogIds("situla:recent-catalog:tv", tvItems.map((item) => item.tmdbId));
-      rememberRecentCatalogIds("situla:recent-catalog:anime", animeItems.map((item) => item.malId));
       if (tvResult.status === "rejected" && animeResult.status === "rejected") {
         setError("TV and anime picks are temporarily unavailable.");
       }
@@ -591,6 +636,33 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     }),
     [heroMovies, homeTvShows, homeAnimeShows]
   );
+
+  const homeSeriesMix = useMemo(() => [
+    ...homeTvShows.map((item) => ({ ...item, homeMediaKind: "tv" })),
+    ...homeAnimeShows.map((item) => ({ ...item, homeMediaKind: "anime" }))
+  ], [homeTvShows, homeAnimeShows]);
+
+  const popularSeriesItems = useMemo(() => [...homeSeriesMix]
+    .sort((a, b) => Number(b.homeMediaKind === "tv" ? b.voteCount : b.scoredBy) - Number(a.homeMediaKind === "tv" ? a.voteCount : a.scoredBy))
+    .slice(0, 20), [homeSeriesMix]);
+
+  const favoriteSeriesItems = useMemo(() => [...homeSeriesMix]
+    .sort((a, b) => {
+      const aScore = Number(a.homeMediaKind === "tv" ? a.voteAverage : a.score) || 0;
+      const bScore = Number(b.homeMediaKind === "tv" ? b.voteAverage : b.score) || 0;
+      const aVotes = Number(a.homeMediaKind === "tv" ? a.voteCount : a.scoredBy) || 0;
+      const bVotes = Number(b.homeMediaKind === "tv" ? b.voteCount : b.scoredBy) || 0;
+      return bScore - aScore || bVotes - aVotes;
+    })
+    .slice(0, 20), [homeSeriesMix]);
+
+  const topTvShows = useMemo(() => [...homeTvShows]
+    .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0))
+    .slice(0, 20), [homeTvShows]);
+
+  const topAnimeShows = useMemo(() => [...homeAnimeShows]
+    .sort((a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) || Number(b.score || 0) - Number(a.score || 0))
+    .slice(0, 20), [homeAnimeShows]);
 
   useEffect(() => {
     if (tab !== "home" || !homeSeriesReady || !homeHeroItems.length) return;
@@ -692,9 +764,26 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const filteredMovies = movies;
 
   function openHomeSpotlight(item) {
-    if (item?.mediaType === "tv") return openTvSeries(item);
-    if (item?.mediaType === "anime") return openAnimeSeries(item);
+    if (item?.mediaType === "tv") {
+      setPendingHomeNavigation("tv:" + String(item.tmdbId));
+      return openTvSeries(item);
+    }
+    if (item?.mediaType === "anime") {
+      setPendingHomeNavigation("anime:" + String(item.malId));
+      return openAnimeSeries(item);
+    }
+    setPendingHomeNavigation(movieNavigationKey(item));
     return openMovie(item);
+  }
+
+  function openHomeMovie(movie) {
+    setPendingHomeNavigation(movieNavigationKey(movie));
+    return openMovie(movie);
+  }
+
+  function openHomeSeries(series, kind) {
+    setPendingHomeNavigation(seriesNavigationKey(series, kind));
+    return kind === "tv" ? openTvSeries(series) : openAnimeSeries(series);
   }
 
   function openMovie(movie) {
@@ -1061,8 +1150,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   type="button"
                   className="hero-art-link"
                   aria-label={"Explore " + featured.heroTitle}
+                  aria-busy={pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId))}
+                  disabled={Boolean(pendingHomeNavigation)}
                   onClick={() => openHomeSpotlight(featured)}
                 />
+                {pendingHomeNavigation && pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId)) && (
+                  <span className="hero-route-loading" role="status"><span className="inline-loading-spinner" /> Opening {featured.heroMediaLabel.toLowerCase()}…</span>
+                )}
                 <div className="hero-content">
                   <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA SPOTLIGHT · {featured.heroMediaLabel}</div>
                   <p className="hero-kicker">
@@ -1078,9 +1172,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   </div>
                   <p className="hero-description">{featured.heroOverview || "Discover a new favourite on Situla."}</p>
                   <div className="hero-actions">
-                    <button className="gold-button" onClick={() => openHomeSpotlight(featured)}>
-                      <Icon name="play" size={17} />
-                      {featured.mediaType === "movie" ? "Watch now" : featured.mediaType === "tv" ? "Explore TV series" : "Explore anime"}
+                    <button
+                      className="gold-button"
+                      onClick={() => openHomeSpotlight(featured)}
+                      disabled={Boolean(pendingHomeNavigation)}
+                      aria-busy={Boolean(pendingHomeNavigation)}
+                    >
+                      {pendingHomeNavigation ? <span className="inline-loading-spinner" /> : <Icon name="play" size={17} />}
+                      {pendingHomeNavigation ? "Opening…" : featured.mediaType === "movie" ? "Watch now" : featured.mediaType === "tv" ? "Explore TV series" : "Explore anime"}
                     </button>
                     {featured.mediaType === "movie" && (
                       <button className="ghost-button" onClick={() => toggleSaved(featured)}>
@@ -1120,20 +1219,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <p>Pick a path and let the story begin.</p>
               </div>
               <div className="home-discovery-grid">
-                <Link href="/movies" className="discovery-card discovery-movies">
+                <Link href="/movies" className="discovery-card discovery-movies" onClick={() => setPendingHomeNavigation("route:movies")} aria-busy={pendingHomeNavigation === "route:movies"}>
                   <span className="discovery-symbol"><Icon name="film" size={25} /></span>
                   <span className="discovery-copy"><strong>Movies</strong><small>Big-screen stories, anytime</small></span>
-                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                  {pendingHomeNavigation === "route:movies" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
                 </Link>
-                <Link href="/tv" className="discovery-card discovery-tv">
+                <Link href="/tv" className="discovery-card discovery-tv" onClick={() => setPendingHomeNavigation("route:tv")} aria-busy={pendingHomeNavigation === "route:tv"}>
                   <span className="discovery-symbol"><Icon name="tv" size={25} /></span>
                   <span className="discovery-copy"><strong>TV series</strong><small>Stories that keep unfolding</small></span>
-                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                  {pendingHomeNavigation === "route:tv" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
                 </Link>
-                <Link href="/anime" className="discovery-card discovery-anime">
+                <Link href="/anime" className="discovery-card discovery-anime" onClick={() => setPendingHomeNavigation("route:anime")} aria-busy={pendingHomeNavigation === "route:anime"}>
                   <span className="discovery-symbol"><Icon name="play" size={25} /></span>
                   <span className="discovery-copy"><strong>Anime</strong><small>Step into another world</small></span>
-                  <BootstrapIcon icon="arrow-up-right" size={19} />
+                  {pendingHomeNavigation === "route:anime" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
                 </Link>
               </div>
             </section>
@@ -1166,8 +1265,21 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </section>
             )}
 
-            <SeriesShelf title="TV series to get into" eyebrow="LONG-FORM STORIES" items={homeTvShows} kind="tv" onOpen={openTvSeries} />
-            <SeriesShelf title="Anime worlds to explore" eyebrow="ANIMATION, REIMAGINED" items={homeAnimeShows} kind="anime" onOpen={openAnimeSeries} />
+            {!homeSeriesReady ? (
+              <>
+                <SkeletonShelf title="Popular series" />
+                <SkeletonShelf title="Favorite series" />
+                <SkeletonShelf title="Top TV series" />
+                <SkeletonShelf title="Top anime series" />
+              </>
+            ) : (
+              <>
+                <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} />
+                <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} />
+                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item) => openHomeSeries(item, "tv")} pendingNavigation={pendingHomeNavigation} />
+                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item) => openHomeSeries(item, "anime")} pendingNavigation={pendingHomeNavigation} />
+              </>
+            )}
 
             {allGenres.length > 1 && (
               <div className="mt-7 flex gap-2 overflow-x-auto pb-1">
@@ -1177,17 +1289,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </div>
             )}
 
-            {progressMovies.length > 0 && (
-              <MovieShelf title="Continue watching" eyebrow="RESUME YOUR MOVIE" movies={progressMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
-            )}
-            {recentMovies.length > 0 && (
-              <MovieShelf title="Recently opened" eyebrow="YOUR ACTIVITY" movies={recentMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
-            )}
             {genre === "All" ? (
               <>
-                <MovieShelf title="Popular on Situla" eyebrow="CURATED FOR YOU" movies={movies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+                <MovieShelf title="Movies to discover" eyebrow="FRESH PICKS FROM THE CATALOG" movies={movies} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} />
                 {categoryShelves.map((category) => (
-                  <MovieShelf key={category.key} title={category.name} eyebrow="BROWSE BY GENRE" movies={category.items} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
+                  <MovieShelf key={category.key} title={category.name} eyebrow="EXPLORE BY GENRE" movies={category.items} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} />
                 ))}
               </>
             ) : (

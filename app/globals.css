@@ -2342,3 +2342,67 @@ body { color:#f7f7fa; background:#08090e; }
     flex-basis:clamp(124px,36vw,150px);
   }
 }
+
+
+/* Home-only refinements: retain the charcoal/gold palette and compact the desktop hero. */
+@media (min-width:1101px) {
+  .home-page-layout .hero-card {
+    min-height:clamp(500px,65vh,700px);
+  }
+}
+.media-open-button:disabled { cursor:progress; }
+.media-loading-overlay {
+  position:absolute;
+  z-index:4;
+  inset:0;
+  display:grid;
+  place-items:center;
+  border-radius:inherit;
+  background:rgba(4,5,9,.62);
+  backdrop-filter:blur(2px);
+}
+.inline-loading-spinner {
+  display:inline-block;
+  width:19px;
+  height:19px;
+  flex:none;
+  border:2px solid rgba(255,255,255,.26);
+  border-top-color:#e8b65b;
+  border-right-color:#f7d58b;
+  border-radius:50%;
+  animation:situla-button-spin .68s linear infinite;
+}
+.media-loading-overlay .inline-loading-spinner {
+  width:31px;
+  height:31px;
+  border-width:3px;
+}
+.hero-route-loading {
+  position:absolute;
+  z-index:3;
+  right:clamp(16px,3vw,34px);
+  bottom:clamp(16px,3vw,34px);
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 14px;
+  border:1px solid rgba(232,182,91,.25);
+  border-radius:999px;
+  color:#f6e1ba;
+  background:rgba(7,8,12,.84);
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  backdrop-filter:blur(14px);
+}
+.shelf-browse-links {
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.discovery-card[aria-busy="true"] { cursor:progress; }
+@keyframes situla-button-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) {
+  .inline-loading-spinner { animation:none; }
+}
