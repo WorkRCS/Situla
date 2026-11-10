@@ -1,37 +1,46 @@
-# Situla catalog data policy
+# Situla catalogue content policy
 
-Situla's public catalog is maintained manually in MongoDB. There is no admin dashboard, metadata crawler, or automatic metadata importer.
+Situla's catalogue is maintained as committed static seed data and stored in MongoDB. The regular seed commands do not run metadata crawlers or contact IMDb, TMDB, TVmaze or MAL.
 
 ## Identity keys
 
-| Catalog type | Required unique key | Player identity |
+| Catalogue type | Required unique key | Player identity |
 | --- | --- | --- |
-| Movie | IMDb title ID (`tt...`) | Same IMDb title ID |
-| TV series | IMDb title ID (`tt...`) | Same IMDb title ID plus season and episode |
-| Anime | MAL numeric ID | Same MAL ID plus episode and Sub/Dub |
+| Movie | IMDb title ID (`tt...`) | IMDb title ID |
+| TV series | Numeric TMDB TV ID | TMDB TV ID plus season and episode |
+| Anime | Numeric MyAnimeList ID | MAL ID plus episode and Sub/Dub |
 
-Every Movie and TV record must contain a valid IMDb title ID matching `^tt\d{5,12}$`. Documents without a valid ID are excluded from the catalog and removed by the one-time IMDb migration. Duplicate IMDb IDs must be resolved before migration.
+Movies must contain a valid IMDb ID matching `^tt\d{5,12}$`. TV series must contain a positive numeric `tmdbId`. Anime must contain a positive numeric `malId`. Each collection uses its own unique identity key.
 
-## Manual MongoDB fields
+## Static seed data
 
-Movies use `imdbId`, `title`, optional `originalTitle`, `overview`, `posterUrl`, `backdropUrl`, `releaseDate`, `releaseYear`, `runtime`, `voteAverage`, `voteCount`, `popularity`, `genres`, `keywords`, and `certification`.
+The curated seed lists live in `data/movie-catalog.js`, `data/tv-catalog.js`, and `data/anime-catalog.js`.
 
-TV series use `imdbId`, `title`, the corresponding direct metadata/artwork URL fields, and an embedded `seasons` array. Each season holds `seasonNumber`, summary fields, and an embedded `episodes` array with `episodeNumber`, title, air date, runtime, and direct still-image URL.
+- Movies: IMDb Top 250 shortlist additions with title, poster URL, year, runtime, IMDb rating and genres.
+- TV: TMDB-keyed TV additions with title, poster URL, first-air date, genres, and overall season/episode totals.
+- Anime: MAL-keyed TV Anime additions with title, poster URL, episode count, rating, rank and basic metadata.
 
-Anime remains keyed by MAL ID because its current player integration requires that identifier. Anime records do not use TMDB.
+Run `npm run seed:catalog` to bulk-upsert all three lists, or `npm run seed:movies`, `npm run seed:tv`, and `npm run seed:anime` to run one catalogue. Upserts use `$setOnInsert`, so existing documents with the same primary ID are preserved. The seed scripts require only `MONGODB_URI` and `MONGODB_DB_NAME`; they do not call external metadata services.
+
+Static TV entries include aggregate season and episode counts but do not invent individual episode names or season breakdowns. When a verified guide is present in a TV record, Situla keeps the existing dropdown and guide. When no guide is present, the series detail page accepts a season and episode number directly for VidLink playback. Add season and episode details only when verified.
 
 ## Playback notes
 
-Movie and TV playback requests the direct IMDb path from VidLink Pro after the IMDb record is found in Situla's database: `/movie/{imdbId}` and `/tv/{imdbId}/{season}/{episode}`. Situla does not store or look up a separate numeric player source ID. Anime playback uses VidLink with MAL ID. Note that VidLink's currently published API documentation still lists numeric TMDB IDs for Movie/TV; direct IMDb support is not documented, so provider-side support must be confirmed against real playback.
+- Movie: VidLink `/movie/{imdbId}`.
+- TV: VidLink `/tv/{tmdbId}/{season}/{episode}`.
+- Anime: VidLink `/anime/{malId}/{episode}/{subOrDub}?fallback=true`.
 
-A parent page cannot arbitrarily amplify audio inside a cross-origin iframe. The embedded player's own volume control and the device's output volume remain the available controls.
+Movie, TV and Anime players use the same Situla warm-gold embed settings. The external provider controls whether a particular stream, episode, resolution or audio track is available. Situla does not download or store copyrighted video files.
 
-## Data quality
+## Data quality and policy
 
-- Use valid, lowercase IMDb IDs for movies and TV.
-- Keep one document per IMDb ID in each collection.
-- Store absolute poster/backdrop/still URLs, not provider-specific image paths.
-- Keep season and episode numbers numeric and positive (except season zero specials).
-- Maintain genre names as strings, such as `Action`, `Comedy`, or `Science Fiction`.
-- Keep ratings on a 0–10 scale and record their source consistently in the curated data.
-- Do not store iframe HTML or player URLs in catalog documents.
+- Keep valid, unique IDs and absolute poster URLs.
+- Keep ratings between 0 and 10, with their provenance clear in the source file.
+- Keep TV season and episode numbers numeric; include individual episode data only when verified.
+- Use `adult: false` for curated static TV entries and do not add Adult, Erotica, Pornographic or Hentai genres.
+- Keep Anime types to TV or ONA for the current Anime-series catalogue.
+- Do not store iframe HTML or player URLs in catalogue documents.
+
+## Sources
+
+The static additions are derived from public catalogue datasets: [IMDb Top 250 JSON shortlist](https://github.com/sharmadhiraj/free-json-datasets/blob/master/docs/sports-entertainment/imdb_top_movies.json), [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets) (MIT-licensed), and [Anime Stats Tracker seasonal dataset](https://github.com/zyhe16/anime-stats-tracker) (MIT-licensed). Situla stores catalogue metadata and external poster URLs; the seed process itself makes no requests to these sources.
