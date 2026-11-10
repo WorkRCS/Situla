@@ -663,6 +663,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        if (tab !== "search") {
+          const recentKey = tab === "movies" ? "situla:recent-catalog:movies" : "situla:recent-catalog:home";
+          rememberRecentCatalogIds(recentKey, nextItems.map((item) => item.imdbId));
+        }
         setMovies((current) => {
           const ids = new Set(current.map((item) => String(item.imdbId || "").toLowerCase()));
           return [...current, ...nextItems.filter((item) => {
@@ -690,6 +694,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        rememberRecentCatalogIds("situla:recent-catalog:tv", nextItems.map((item) => item.tmdbId));
         setTvShows((current) => {
           const ids = new Set(current.map((item) => Number(item.tmdbId)).filter((id) => Number.isSafeInteger(id)));
           return [...current, ...nextItems.filter((item) => {
@@ -717,6 +722,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more anime.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        rememberRecentCatalogIds("situla:recent-catalog:anime", nextItems.map((item) => item.malId));
         setAnimeShows((current) => {
           const ids = new Set(current.map((item) => Number(item.malId)).filter((id) => Number.isSafeInteger(id)));
           return [...current, ...nextItems.filter((item) => {
