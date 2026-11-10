@@ -46,3 +46,38 @@ test("both Movie providers use Situla gold controls without a mute override", ()
   assert.equal(hindi.searchParams.get("mute"), null);
   assert.equal(hindi.searchParams.get("audio"), null);
 });
+
+
+test("Situla homepage hero rotates through live discovery movies every three seconds", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /setHeroMovies\(uniqueHeroMovies\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /heroMovies\[heroIndex % heroMovies\.length\]/);
+  assert.match(app, /Previous featured movie/);
+  assert.match(app, /Next featured movie/);
+});
+
+test("catalog pages do not render aggregate movie, series, saved-list or history counts", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const anime = await read("../app/anime/[malId]/detail.jsx");
+  const tv = await read("../app/tv/[imdbId]/detail.jsx");
+
+  assert.doesNotMatch(app, /\{movies\.length\}\s*\/\s*\{/);
+  assert.doesNotMatch(app, /\{tvShows\.length\}\s*\/\s*\{/);
+  assert.doesNotMatch(app, /\{animeShows\.length\}\s*\/\s*\{/);
+  assert.doesNotMatch(app, /\{savedMovies\.length\}\s+SAVED/i);
+  assert.doesNotMatch(app, /Showing \{movies\.length\} of \{moviesTotal\}/);
+  assert.doesNotMatch(app, /\{sortedHistory\.length\}\s+entries/i);
+  assert.doesNotMatch(anime, /\{anime\.episodes\s*\|\|\s*["']\?["']\}\s+episodes/i);
+  assert.doesNotMatch(tv, /\{series\.numberOf(?:Seasons|Episodes)\}/);
+});
+
+test("landing page exposes primary navigation and cinematic responsive hero styles", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /className="desktop-nav"/);
+  assert.match(app, /className="hero-content"/);
+  assert.match(css, /\.hero-card/);
+  assert.match(css, /\.hero-progress-fill/);
+  assert.match(css, /@media \(max-width: 620px\)/);
+});
