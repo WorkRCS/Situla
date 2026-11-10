@@ -1715,3 +1715,10 @@ body { color:#f7f7fa; background:#08090e; }
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+
+/* Desktop uses the header navigation; bottom navigation is touch-screen only. */
+@media (min-width:1101px) {
+  .bottom-nav { display:none !important; }
+  .app-shell { padding-bottom:0; }
+}
