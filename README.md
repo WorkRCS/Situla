@@ -71,8 +71,7 @@ The public API is read-only for catalog data. There are no write routes or privi
 
 ## Browser access
 
-The website is restricted to Brave Browser and the existing Situla Android WebView app. Brave is recognized through its documented `Sec-CH-UA` brand hint when supplied, with a browser-side `navigator.brave.isBrave()` verification fallback. Successful Brave verification is cached in a first-party cookie for up to 400 days.
+The website is restricted to Brave Browser only. Brave is recognized through its documented `Sec-CH-UA` brand hint when supplied, with a browser-side `navigator.brave.isBrave()` verification fallback. Successful Brave verification is cached in a first-party cookie for up to 400 days.
 
-The existing Android wrapper removes the `; wv` user-agent token but keeps Android WebView's `Version/4.0` signature, so the website continues to accept that installed app. This is a compatibility check, not cryptographic app authentication: other Android apps using a matching WebView user-agent can also pass it, and user-agent values can be spoofed. Ordinary Chrome, Safari, Firefox, and other non-Brave browsers are redirected to a browser access page. The access check applies to website pages and API routes.
 
-The native Android source project and its Android build workflow have been removed from this repository. Previously installed copies of the Android app can continue loading the hosted website while they retain the supported WebView user-agent signature.
+The native Android app, source project, and Android build workflow have been permanently removed from this repository. Existing Android app builds are not allowed to access the website.
