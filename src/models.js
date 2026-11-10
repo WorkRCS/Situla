@@ -84,6 +84,33 @@ tvSeriesSchema.index({ externalImdbId: 1 }, { sparse: true });
 tvSeriesSchema.index({ popularity: -1, firstAirDate: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
+const animeEpisodeSchema = new mongoose.Schema({
+  episodeNumber: { type: Number, required: true, min: 1 },
+  absoluteEpisodeNumber: { type: Number, min: 1, default: null },
+  seasonNumber: { type: Number, min: 0, default: 1 },
+  title: { type: String, required: true, trim: true },
+  titleJapanese: { type: String, default: '' },
+  overview: { type: String, default: '' },
+  airDate: { type: String, default: null },
+  runtime: { type: Number, min: 0, default: null },
+  imageUrl: { type: String, default: null },
+  tvdbEpisodeId: { type: Number, min: 1, default: null }
+}, { _id: false, versionKey: false });
+
+const animeRelatedSchema = new mongoose.Schema({
+  malId: { type: Number, required: true, min: 1 },
+  title: { type: String, required: true, trim: true },
+  relationType: { type: String, default: 'RELATED' },
+  episodes: { type: Number, min: 0, default: null },
+  seasonYear: { type: Number, default: null },
+  posterUrl: { type: String, default: null }
+}, { _id: false, versionKey: false });
+
+const animeNextAiringSchema = new mongoose.Schema({
+  episode: { type: Number, min: 1, default: null },
+  airDate: { type: String, default: null }
+}, { _id: false, versionKey: false });
+
 const animeSeriesSchema = new mongoose.Schema({
   malId: { type: Number, required: true, unique: true, min: 1 },
   title: { type: String, required: true, trim: true },
@@ -93,7 +120,10 @@ const animeSeriesSchema = new mongoose.Schema({
   posterUrl: { type: String, default: null },
   posterFallbackUrl: { type: String, default: null },
   backdropUrl: { type: String, default: null },
+  bannerUrl: { type: String, default: null },
   malUrl: { type: String, default: "" },
+  sourceUrl: { type: String, default: "" },
+  metadataSource: { type: String, default: "" },
   trailerUrl: { type: String, default: null },
   airedFrom: { type: String, default: null },
   releaseYear: { type: Number, default: null },
@@ -110,6 +140,11 @@ const animeSeriesSchema = new mongoose.Schema({
   genres: { type: [String], default: [] },
   themes: { type: [String], default: [] },
   demographics: { type: [String], default: [] },
+  studios: { type: [String], default: [] },
+  producers: { type: [String], default: [] },
+  episodeGuide: { type: [animeEpisodeSchema], default: [] },
+  relatedAnime: { type: [animeRelatedSchema], default: [] },
+  nextAiringEpisode: { type: animeNextAiringSchema, default: null },
   rating: { type: String, default: '' }
 }, { timestamps: true, versionKey: false, strict: true });
 
