@@ -140,7 +140,7 @@ test('Android startup isolates optional native/VPN work and recovers crashed Web
   const initializeBody = blocker.slice(blocker.indexOf('fun initialize('), blocker.indexOf('private fun initializeOnWorker('));
   assert.ok(initializeBody.includes('initializationExecutor.execute'));
   assert.ok(initializeBody.includes('keeping host fallback'));
-  assert.doesNotMatch(initializeBody, /installEngine\(appContext, fallbackRules\)\s*\\n\s*initializationExecutor/);
+  assert.ok(initializeBody.indexOf('initializationExecutor.execute') < initializeBody.indexOf('installEngine(appContext, fallbackRules)'));
 
   assert.ok(wrapper.includes('override fun onRenderProcessGone('));
   assert.ok(wrapper.includes('key(webViewGeneration)'));
