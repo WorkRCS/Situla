@@ -1,11 +1,11 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored directly in MongoDB and maintained manually. There is no admin dashboard, external metadata crawler, or automatic catalog importer.
+Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. Movies and anime remain manually maintained; the TV catalogue has an idempotent TVmaze metadata/episode-guide importer that runs automatically before the development server starts.
 
 ## Identifiers and playback
 
 - Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. After the Movie record is found in MongoDB, the player is requested directly at `https://vidlink.pro/movie/{imdbId}`.
-- TV series: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. After the TV record is found in MongoDB, each episode is requested directly at `https://vidlink.pro/tv/{imdbId}/{season}/{episode}`.
+- TV series: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Metadata, posters, episode stills and episode guides are sourced from TVmaze and stored in MongoDB. After the TV record is found in MongoDB, each episode is requested directly at `https://vidlink.pro/tv/{imdbId}/{season}/{episode}`. The series page includes an episode guide and the TV player offers next-episode navigation.
 - No numeric provider/source ID is stored in the current schema or required by Situla's player code. The public routes remain `/watch/{imdbId}` and `/tv/{imdbId}`.
 - Anime: MAL ID remains the anime key because VidLink's anime endpoint requires a MyAnimeList ID.
 
@@ -17,8 +17,22 @@ Movie watch pages provide an optional Hindi player switch using the path-based I
 2. Copy `.env.example` to `.env`.
 3. Set `MONGODB_URI` and `MONGODB_DB_NAME`.
 4. Run `npm install`.
-5. Run `npm run dev`.
+5. Run `npm run dev`. Its `predev` hook runs `npm run seed:tv` first. When the database has fewer than 65 imported TVmaze series, it resolves curated show names to IMDb IDs and upserts complete season/episode metadata, then starts Next.js. If 65 imported records already exist, it skips the import.
 6. Open `http://localhost:3000` and check `/api/health`.
+
+To run the TV importer manually:
+
+```sh
+npm run seed:tv
+```
+
+To refresh the curated TVmaze metadata and episode guides, even when 65 or more imported records already exist:
+
+```sh
+SEED_TV_FORCE=true npm run seed:tv
+```
+
+The importer requires `MONGODB_URI` and `MONGODB_DB_NAME` in `.env` and internet access to `api.tvmaze.com`. It resolves each curated series to its TVmaze external IMDb ID, requests the full TVmaze episode list, groups episodes into seasons, and stores posters, episode stills, summaries, air dates, episode runtimes, series runtime, genres, status and the provider's numeric rating. The initial import intentionally uses a conservative request pace and can take a while. It skips titles without a verifiable IMDb ID, poster, rating or episode list and requires at least 65 complete series before reporting success.
 
 ## Existing database migration
 
@@ -53,7 +67,14 @@ Movie document minimum fields: `imdbId`, `title`, plus optional `posterUrl`, `re
 
 TV document minimum fields: `imdbId`, `title`, and an embedded `seasons` array containing `seasonNumber` and `episodes`. The player uses the IMDb title ID directly.
 
-The public API is read-only for catalog data. There are no write routes or privileged admin endpoints exposed by the application.
+The public API is read-only for catalog data. There are no write routes or privileged admin endpoints exposed by the application. The TV seed script writes directly to MongoDB during local development only; it is not exposed as a public API route.
+
+
+## TV metadata attribution and limitations
+
+TV series metadata, posters and episode stills imported by Situla come from the [TVmaze public API](https://www.tvmaze.com/api), which is licensed under CC BY-SA. Situla links back to each TVmaze show page on the series detail screen. The rating value shown for imported series is TVmaze's rating, not an IMDb user rating. The public TVmaze show response does not provide a parental certification field, so Situla leaves `certification` blank rather than inventing a TV rating. The importer filters the curated allowlist and rejects any source record tagged with the Adult genre.
+
+The importer stores metadata and episode-guide information only. It does not download, store, or redistribute copyrighted episode video files. TV playback remains a separate external-provider service; available resolution, audio tracks and stream stability are controlled by that provider and cannot be guaranteed or forced by Situla's parent page.
 
 ## API
 
@@ -61,6 +82,7 @@ The public API is read-only for catalog data. There are no write routes or privi
 - `GET /api/movies?page=1&limit=40`
 - `GET /api/movies/discover`
 - `GET /api/movies/suggestions?q=inception`
+- `GET /api/search?q=the+office` (searches Movies, TV series and Anime together)
 - `GET /api/movies/:imdbId`
 - `GET /api/tv?page=1&limit=40`
 - `GET /api/tv/:imdbId`
