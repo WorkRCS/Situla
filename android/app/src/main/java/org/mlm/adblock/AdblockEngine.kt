@@ -22,7 +22,7 @@ data class BlockDecision(
 )
 
 /**
- * Cosmet filtering resources for a single page URL, produced by
+ * Cosmetic filtering resources for a single page URL, produced by
  * [AdblockEngine.cosmeticResources].
  *
  * @param selectors CSS selectors that should be hidden (`display: none !important`).
@@ -108,7 +108,8 @@ class AdblockEngine private constructor(private var nativePtr: Long) : AutoClose
     fun checkNetworkRequest(url: String, sourceUrl: String, requestType: String): BlockDecision {
         if (closed.get() || nativePtr == 0L) return BlockDecision(false, false, null, null, false)
         return try {
-            val json = nativeCheckNetworkUrls(nativePtr, url, sourceUrl, requestType) ?: return BlockDecision(false, false, null, null, false)
+            val json = nativeCheckNetworkUrls(nativePtr, url, sourceUrl, requestType)
+                ?: return BlockDecision(false, false, null, null, false)
             val obj = JSONObject(json)
             BlockDecision(
                 matched = obj.optBoolean("matched"),
@@ -157,19 +158,23 @@ class AdblockEngine private constructor(private var nativePtr: Long) : AutoClose
         }
     }
 
-    fun serializeTo(file: File): Boolean = try {
-        val bytes = nativeSerialize(nativePtr) ?: return false
-        file.writeBytes(bytes)
-        true
-    } catch (_: Exception) {
-        false
+    fun serializeTo(file: File): Boolean {
+        return try {
+            val bytes = nativeSerialize(nativePtr) ?: return false
+            file.writeBytes(bytes)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
-    fun deserializeFrom(file: File): Boolean = try {
-        if (!file.exists()) return false
-        nativeDeserialize(nativePtr, file.readBytes())
-    } catch (_: Exception) {
-        false
+    fun deserializeFrom(file: File): Boolean {
+        return try {
+            if (!file.exists()) return false
+            nativeDeserialize(nativePtr, file.readBytes())
+        } catch (_: Exception) {
+            false
+        }
     }
 
     override fun close() {
