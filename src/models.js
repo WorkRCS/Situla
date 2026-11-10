@@ -8,22 +8,51 @@ const imdbIdField = {
   match: /^tt\d{5,12}$/
 };
 
+const movieCastSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  character: { type: String, default: '' },
+  profileUrl: { type: String, default: null }
+}, { _id: false, versionKey: false });
+
+const movieCollectionSchema = new mongoose.Schema({
+  name: { type: String, default: '' },
+  posterUrl: { type: String, default: null },
+  backdropUrl: { type: String, default: null }
+}, { _id: false, versionKey: false });
+
 const movieSchema = new mongoose.Schema({
   imdbId: imdbIdField,
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
+  tagline: { type: String, default: '' },
   posterUrl: { type: String, default: null },
   backdropUrl: { type: String, default: null },
   releaseDate: { type: String, default: null },
   releaseYear: { type: Number, default: null },
   runtime: { type: Number, min: 0, default: null },
+  originalLanguage: { type: String, default: '' },
+  adult: { type: Boolean, default: false },
+  status: { type: String, default: '' },
+  homepage: { type: String, default: '' },
+  sourceUrl: { type: String, default: '' },
+  metadataSource: { type: String, default: '' },
+  budget: { type: Number, min: 0, default: 0 },
+  revenue: { type: Number, min: 0, default: 0 },
   voteAverage: { type: Number, min: 0, max: 10, default: 0 },
   voteCount: { type: Number, min: 0, default: 0 },
   popularity: { type: Number, default: 0 },
   genres: { type: [String], default: [] },
   keywords: { type: [String], default: [] },
-  certification: { type: String, default: '' }
+  certification: { type: String, default: '' },
+  productionCompanies: { type: [String], default: [] },
+  productionCountries: { type: [String], default: [] },
+  spokenLanguages: { type: [String], default: [] },
+  cast: { type: [movieCastSchema], default: [] },
+  directors: { type: [String], default: [] },
+  writers: { type: [String], default: [] },
+  trailerUrl: { type: String, default: '' },
+  collection: { type: movieCollectionSchema, default: null }
 }, { timestamps: true, versionKey: false, strict: true });
 
 movieSchema.index({ imdbId: 1 }, { unique: true });
