@@ -20,16 +20,19 @@ export default function TvSeriesExperience({ tmdbId }) {
       .then(async (response) => {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "TV series not found.");
-        setSeries(payload.item);
+        const seasons = Array.isArray(payload.item?.seasons) ? payload.item.seasons : [];
+        const normalizedSeries = { ...payload.item, seasons };
+        setSeries(normalizedSeries);
         let progress = null;
         try {
           const saved = JSON.parse(localStorage.getItem("situla:tv-progress:v1") || "[]");
           progress = Array.isArray(saved) ? saved.find((item) =>
-            Number(item.tmdbId) === Number(tmdbId) ||
-            (payload.item?.externalImdbId && String(item.imdbId || "").toLowerCase() === String(payload.item.externalImdbId).toLowerCase())
+            item && typeof item === "object" && (
+              Number(item.tmdbId) === Number(tmdbId) ||
+              (normalizedSeries.externalImdbId && String(item.imdbId || "").toLowerCase() === String(normalizedSeries.externalImdbId).toLowerCase())
+            )
           ) : null;
         } catch {}
-        const seasons = payload.item?.seasons || [];
         const resumedSeason = progress && seasons.find((item) => item.seasonNumber === Number(progress.season) && item.episodeCount > 0);
         const first = seasons.find((item) => item.seasonNumber > 0 && item.episodeCount > 0)
           || seasons.find((item) => item.episodeCount > 0);
@@ -59,9 +62,11 @@ export default function TvSeriesExperience({ tmdbId }) {
     }).then(async (response) => {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Season episodes unavailable.");
-      setSeason(payload.item);
-      const firstEpisode = payload.item?.episodes?.[0]?.episodeNumber || 1;
-      const resume = payload.item?.episodes?.find((item) => item.episodeNumber === Number(resumeEpisode));
+      const episodes = Array.isArray(payload.item?.episodes) ? payload.item.episodes : [];
+      const normalizedSeason = { ...payload.item, episodes };
+      setSeason(normalizedSeason);
+      const firstEpisode = episodes[0]?.episodeNumber || 1;
+      const resume = episodes.find((item) => item.episodeNumber === Number(resumeEpisode));
       setEpisodeNumber(String(resume?.episodeNumber || firstEpisode));
       if (resume) setResumeEpisode("");
     }).catch((requestError) => {
@@ -72,7 +77,7 @@ export default function TvSeriesExperience({ tmdbId }) {
     return () => controller.abort();
   }, [tmdbId, seasonNumber]);
 
-  const episodes = season?.episodes || [];
+  const episodes = Array.isArray(season?.episodes) ? season.episodes : [];
   const selectedEpisode = episodes.find((item) => item.episodeNumber === Number(episodeNumber));
 
   function playEpisode() {
