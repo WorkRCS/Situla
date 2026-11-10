@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import Link from "next/link";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { Button } from "./ui/button.jsx";
@@ -215,6 +216,33 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   );
 }
 
+function SeriesShelf({ title, eyebrow, items, kind, onOpen }) {
+  if (!items.length) return null;
+  return (
+    <section className="netflix-shelf home-series-shelf">
+      <div className="section-heading shelf-heading">
+        <div>
+          {eyebrow && <span>{eyebrow}</span>}
+          <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
+        </div>
+        <Link href={kind === "tv" ? "/tv" : "/anime"} className="shelf-browse-link">
+          Explore all <BootstrapIcon icon="arrow-up-right" size={14} />
+        </Link>
+      </div>
+      <div className="media-row flex gap-4 overflow-x-auto pb-3">
+        {items.slice(0, 16).map((item) => (
+          <SeriesCard
+            key={kind === "tv" ? item.tmdbId : item.malId}
+            item={item}
+            kind={kind}
+            onOpen={onOpen}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
   const rowRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
@@ -316,6 +344,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [heroMovies, setHeroMovies] = useState([]);
+  const [homeTvShows, setHomeTvShows] = useState([]);
+  const [homeAnimeShows, setHomeAnimeShows] = useState([]);
+  const [homeSeriesReady, setHomeSeriesReady] = useState(false);
+  const [heroPaused, setHeroPaused] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
   const [catalogSpotlight, setCatalogSpotlight] = useState(null);
   const [catalogSpotlightItems, setCatalogSpotlightItems] = useState([]);
@@ -481,11 +513,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             setCatalogSpotlightItems(uniqueHeroMovies);
             setCatalogSpotlight(freshSpotlight || payload.featured || items[0] || null);
           } else {
-            const selectedHero = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:home");
-            const selectedHeroIndex = uniqueHeroMovies.findIndex((item) => item.imdbId === selectedHero?.imdbId);
-            setHeroMovies(uniqueHeroMovies);
-            setHeroIndex(Math.max(0, selectedHeroIndex));
-            setFeaturedMovie(selectedHero || payload.featured || items[0] || null);
+            const homeMoviePicks = uniqueHeroMovies
+              .map((item) => toHomeSpotlight(item, "movie"))
+              .filter(Boolean);
+            setHeroMovies(homeMoviePicks);
+            setFeaturedMovie(homeMoviePicks[0] || null);
           }
         } else if (tab === "home" && !featuredMovie && items.length) {
           setFeaturedMovie(items[0]);
@@ -509,24 +541,81 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     };
   }, [query, tab, genre]);
 
+  useEffect(() => {
+    if (tab !== "home") {
+      setHomeSeriesReady(false);
+      return;
+    }
+    const controller = new AbortController();
+    setHomeSeriesReady(false);
+
+    async function loadSeries(endpoint) {
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]);
+      const response = await fetch(endpoint, { cache: "no-store", signal });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
+      return Array.isArray(payload.items) ? payload.items : [];
+    }
+
+    const tvRecentIds = readRecentCatalogIds("situla:recent-catalog:tv");
+    const animeRecentIds = readRecentCatalogIds("situla:recent-catalog:anime");
+    const tvExclude = tvRecentIds.length ? "&exclude=" + encodeURIComponent(tvRecentIds.join(",")) : "";
+    const animeExclude = animeRecentIds.length ? "&exclude=" + encodeURIComponent(animeRecentIds.join(",")) : "";
+
+    Promise.allSettled([
+      loadSeries("/api/tv?page=1&limit=24&random=true" + tvExclude),
+      loadSeries("/api/anime?page=1&limit=24&random=true" + animeExclude)
+    ]).then(([tvResult, animeResult]) => {
+      if (controller.signal.aborted) return;
+      const tvItems = tvResult.status === "fulfilled" ? tvResult.value : [];
+      const animeItems = animeResult.status === "fulfilled" ? animeResult.value : [];
+      setHomeTvShows(tvItems);
+      setHomeAnimeShows(animeItems);
+      rememberRecentCatalogIds("situla:recent-catalog:tv", tvItems.map((item) => item.tmdbId));
+      rememberRecentCatalogIds("situla:recent-catalog:anime", animeItems.map((item) => item.malId));
+      if (tvResult.status === "rejected" && animeResult.status === "rejected") {
+        setError("TV and anime picks are temporarily unavailable.");
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setHomeSeriesReady(true);
+    });
+
+    return () => controller.abort();
+  }, [tab]);
+
+  const homeHeroItems = useMemo(
+    () => mixHomeSpotlight({
+      movies: heroMovies,
+      tv: homeTvShows.map((item) => toHomeSpotlight(item, "tv")).filter(Boolean),
+      anime: homeAnimeShows.map((item) => toHomeSpotlight(item, "anime")).filter(Boolean)
+    }),
+    [heroMovies, homeTvShows, homeAnimeShows]
+  );
+
+  useEffect(() => {
+    if (tab !== "home" || !homeSeriesReady || !homeHeroItems.length) return;
+    const selectedHero = chooseFreshSpotlight(homeHeroItems, "situla:spotlight:home", "heroId");
+    const selectedIndex = homeHeroItems.findIndex((item) => item.heroId === selectedHero?.heroId);
+    if (selectedIndex >= 0) setHeroIndex(selectedIndex);
+  }, [tab, homeSeriesReady, homeHeroItems]);
 
   useEffect(() => {
     if (tab !== "home") return;
-    const activeHero = heroMovies[heroIndex];
-    if (activeHero?.imdbId) {
-      try { localStorage.setItem("situla:spotlight:home", activeHero.imdbId); } catch {}
+    const activeHero = homeHeroItems[heroIndex];
+    if (activeHero?.heroId) {
+      try { localStorage.setItem("situla:spotlight:home", activeHero.heroId); } catch {}
     }
-  }, [tab, heroMovies, heroIndex]);
+  }, [tab, homeHeroItems, heroIndex]);
 
   useEffect(() => {
-    if (tab !== "home" || heroMovies.length < 2) return;
+    if (tab !== "home" || !homeSeriesReady || homeHeroItems.length < 2 || heroPaused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
-      setHeroIndex((current) => (current + 1) % heroMovies.length);
-    }, 10000);
+      setHeroIndex((current) => (current + 1) % homeHeroItems.length);
+    }, 3000);
     return () => window.clearInterval(timer);
-  }, [tab, heroMovies.length]);
+  }, [tab, homeSeriesReady, homeHeroItems.length, heroPaused]);
 
   useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
@@ -601,6 +690,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   const savedIds = useMemo(() => new Set(savedMovies.map((movie) => movie.imdbId)), [savedMovies]);
   const filteredMovies = movies;
+
+  function openHomeSpotlight(item) {
+    if (item?.mediaType === "tv") return openTvSeries(item);
+    if (item?.mediaType === "anime") return openAnimeSeries(item);
+    return openMovie(item);
+  }
 
   function openMovie(movie) {
     const imdbId = String(movie?.imdbId || "").toLowerCase();
@@ -793,7 +888,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreMovies = movies.length < moviesTotal;
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
-  const featured = heroMovies.length ? heroMovies[heroIndex % heroMovies.length] : (featuredMovie || movies[0]);
+  const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;
 
   return (
     <main className="app-shell">
@@ -804,7 +899,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <span className="brand-copy min-w-0">
               <strong>SITULA</strong>
               <small>{({
-                home: "DISCOVER MOVIES",
+                home: "DISCOVER STORIES",
                 movies: "MOVIE COLLECTION",
                 tv: "TV SERIES",
                 anime: "ANIME COLLECTION",
@@ -937,37 +1032,76 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         {tab === "home" && (
           <>
             {featured ? (
-              <section className="hero-card" key={featured.imdbId || featured.id}>
-                {(featured.backdropUrl || featured.posterUrl) && <img className="hero-image" src={featured.backdropUrl || featured.posterUrl} alt="" fetchPriority="high" />}
+              <section
+                className="hero-card"
+                key={featured.heroId || featured.imdbId || featured.id}
+                onMouseEnter={() => setHeroPaused(true)}
+                onMouseLeave={() => setHeroPaused(false)}
+                onFocusCapture={() => setHeroPaused(true)}
+                onBlurCapture={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false);
+                }}
+                aria-label={featured.heroMediaLabel + " spotlight"}
+              >
+                {(featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl) && (
+                  <img
+                    className="hero-image"
+                    src={featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl}
+                    alt=""
+                    fetchPriority="high"
+                    decoding="async"
+                    onError={(event) => {
+                      const fallback = featured.heroPoster || featured.posterUrl || featured.posterFallbackUrl;
+                      if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
+                      else event.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                <button
+                  type="button"
+                  className="hero-art-link"
+                  aria-label={"Explore " + featured.heroTitle}
+                  onClick={() => openHomeSpotlight(featured)}
+                />
                 <div className="hero-content">
-                  <div className="hero-eyebrow"><span className="hero-live-dot" /> THE SITULA SPOTLIGHT</div>
-                  <p className="hero-kicker">A story worth staying in for</p>
-                  <h1 className="hero-title">{featured.title}</h1>
+                  <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA SPOTLIGHT · {featured.heroMediaLabel}</div>
+                  <p className="hero-kicker">
+                    {featured.mediaType === "movie" ? "A film for your next movie night" : featured.mediaType === "tv" ? "A series to settle into" : "A new world to discover"}
+                  </p>
+                  <h1 className="hero-title">{featured.heroTitle}</h1>
                   <div className="hero-meta">
-                    {featured.releaseYear && <span>{featured.releaseYear}</span>}
-                    {featured.voteAverage > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(featured.voteAverage).toFixed(1)}</span>}
-                    {featured.runtime > 0 && <span>{formatRuntime(featured.runtime)}</span>}
-                    {featured.genres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
+                    {featured.heroYear && <span>{featured.heroYear}</span>}
+                    {featured.heroRating > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(featured.heroRating).toFixed(1)}</span>}
+                    {featured.heroRuntime > 0 && <span>{formatRuntime(featured.heroRuntime)}</span>}
+                    {featured.heroEpisodes > 0 && <span>{featured.heroEpisodes} episodes</span>}
+                    {featured.heroGenres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
                   </div>
-                  <p className="hero-description">{featured.overview || "Discover a new favourite on Situla."}</p>
+                  <p className="hero-description">{featured.heroOverview || "Discover a new favourite on Situla."}</p>
                   <div className="hero-actions">
-                    <button className="gold-button" onClick={() => openMovie(featured)}><Icon name="play" size={17} /> Watch now</button>
-                    <button className="ghost-button" onClick={() => toggleSaved(featured)}>
-                      <Icon name={savedIds.has(featured.imdbId) ? "check" : "bookmark"} size={16} />
-                      {savedIds.has(featured.imdbId) ? "In my list" : "Add to my list"}
+                    <button className="gold-button" onClick={() => openHomeSpotlight(featured)}>
+                      <Icon name="play" size={17} />
+                      {featured.mediaType === "movie" ? "Watch now" : featured.mediaType === "tv" ? "Explore TV series" : "Explore anime"}
                     </button>
+                    {featured.mediaType === "movie" && (
+                      <button className="ghost-button" onClick={() => toggleSaved(featured)}>
+                        <Icon name={savedIds.has(featured.imdbId) ? "check" : "bookmark"} size={16} />
+                        {savedIds.has(featured.imdbId) ? "In my list" : "Add to my list"}
+                      </button>
+                    )}
                   </div>
-                  {heroMovies.length > 1 && <div className="hero-carousel-footer">
-                    <span className="hero-carousel-label">EXPLORE THE SPOTLIGHT</span>
-                    <div className="hero-carousel-controls">
-                      <button type="button" className="hero-arrow" aria-label="Previous featured movie" onClick={() => setHeroIndex((current) => (current - 1 + heroMovies.length) % heroMovies.length)}><BootstrapIcon icon="arrow-left" size={16} /></button>
-                      <span className="hero-progress-track" aria-hidden="true"><span className="hero-progress-fill" key={featured.imdbId || featured.id} /></span>
-                      <button type="button" className="hero-arrow" aria-label="Next featured movie" onClick={() => setHeroIndex((current) => (current + 1) % heroMovies.length)}><BootstrapIcon icon="arrow-right" size={16} /></button>
+                  {homeHeroItems.length > 1 && (
+                    <div className="hero-carousel-footer">
+                      <span className="hero-carousel-label">DISCOVER ANOTHER STORY</span>
+                      <div className="hero-carousel-controls">
+                        <button type="button" className="hero-arrow" aria-label="Previous featured title" onClick={() => setHeroIndex((current) => (current - 1 + homeHeroItems.length) % homeHeroItems.length)}><BootstrapIcon icon="arrow-left" size={16} /></button>
+                        <span className="hero-progress-track" aria-hidden="true"><span className="hero-progress-fill" key={featured.heroId} style={{ animationPlayState: heroPaused ? "paused" : "running" }} /></span>
+                        <button type="button" className="hero-arrow" aria-label="Next featured title" onClick={() => setHeroIndex((current) => (current + 1) % homeHeroItems.length)}><BootstrapIcon icon="arrow-right" size={16} /></button>
+                      </div>
                     </div>
-                  </div>}
+                  )}
                 </div>
               </section>
-            ) : loading ? (
+            ) : loading || !homeSeriesReady ? (
               <>
                 <div className="hero-skeleton"><div className="skeleton-hero-copy"><div className="skeleton-line short" /><div className="skeleton-line hero-title" /><div className="skeleton-line wide" /><div className="skeleton-line medium" /><div className="skeleton-hero-button" /></div></div>
                 <SkeletonShelf title="Trending now" />
@@ -1004,32 +1138,36 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </div>
             </section>
 
-            {heroMovies.length > 1 && (
-              <section className="spotlight-strip" aria-label="Choose a featured movie">
+            {homeHeroItems.length > 1 && (
+              <section className="spotlight-strip" aria-label="Choose a featured title">
                 <div className="spotlight-strip-heading">
                   <span>NOW IN THE SPOTLIGHT</span>
                   <p>More stories to discover</p>
                 </div>
                 <div className="spotlight-strip-track">
-                  {heroMovies.slice(0, 6).map((movie, index) => (
+                  {homeHeroItems.slice(0, 8).map((item, index) => (
                     <button
-                      key={movie.imdbId || movie.id}
+                      key={item.heroId}
                       type="button"
                       className={"spotlight-chip" + (index === heroIndex ? " active" : "")}
                       onClick={() => setHeroIndex(index)}
                       aria-pressed={index === heroIndex}
+                      aria-label={"Show " + item.heroTitle + ", " + item.heroMediaLabel}
                     >
                       <span className="spotlight-chip-art">
-                        {movie.posterUrl
-                          ? <img src={movie.posterUrl} alt="" loading="lazy" />
-                          : <Icon name="film" size={17} />}
+                        {item.heroPoster
+                          ? <img src={item.heroPoster} alt="" loading="lazy" decoding="async" />
+                          : <Icon name={item.mediaType === "tv" ? "tv" : item.mediaType === "anime" ? "play" : "film"} size={17} />}
                       </span>
-                      <span className="spotlight-chip-title">{movie.title}</span>
+                      <span className="spotlight-chip-title">{item.heroTitle}</span>
                     </button>
                   ))}
                 </div>
               </section>
             )}
+
+            <SeriesShelf title="TV series to get into" eyebrow="LONG-FORM STORIES" items={homeTvShows} kind="tv" onOpen={openTvSeries} />
+            <SeriesShelf title="Anime worlds to explore" eyebrow="ANIMATION, REIMAGINED" items={homeAnimeShows} kind="anime" onOpen={openAnimeSeries} />
 
             {allGenres.length > 1 && (
               <div className="mt-7 flex gap-2 overflow-x-auto pb-1">
@@ -1057,7 +1195,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             )}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
-            {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
           </>

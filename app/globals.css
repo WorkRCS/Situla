@@ -16,7 +16,8 @@
   --font-sans: Arial, Helvetica, sans-serif;
 }
 
-* { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+* { box-sizing: border-box; }
+button { -webkit-user-select: none; user-select: none; }
 html, body { min-height: 100%; background: var(--background); }
 html { scroll-behavior: smooth; }
 body {
@@ -30,7 +31,7 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 svg.lucide { display: inline-block; flex: none; vertical-align: middle; }
 img { display: block; }
-::selection { background: transparent; color: inherit; }
+::selection { background: rgba(232,182,91,.34); color: #fff; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: #343746; border-radius: 99px; }
 .safe-bottom { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
@@ -2287,4 +2288,57 @@ body { color:#f7f7fa; background:#08090e; }
 }
 @media (min-width:1101px) {
   .catalog-page-layout { padding-bottom:52px; }
+}
+
+
+/* Home discovery: accessible artwork targets, mixed-media rows, and calm motion. */
+.hero-art-link {
+  position:absolute;
+  z-index:1;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  padding:0;
+  border:0;
+  border-radius:inherit;
+  background:transparent;
+  cursor:pointer;
+}
+.hero-art-link:focus-visible {
+  outline:3px solid rgba(247,213,139,.9);
+  outline-offset:-8px;
+  box-shadow:inset 0 0 0 5px rgba(8,9,14,.55);
+}
+.hero-content { z-index:2; }
+.home-series-shelf .series-card {
+  width:clamp(140px,13.5vw,184px);
+  flex:0 0 clamp(140px,13.5vw,184px);
+}
+.home-series-shelf .series-card .movie-poster { aspect-ratio:2/3; }
+.home-series-shelf .series-card-description {
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-height:1.45;
+}
+.shelf-browse-link {
+  display:inline-flex;
+  flex:none;
+  align-items:center;
+  gap:6px;
+  color:#d6ad69;
+  font-size:11px;
+  font-weight:750;
+  text-decoration:none;
+}
+.shelf-browse-link:hover { color:#ffe0a5; }
+.home-series-shelf .section-heading { align-items:end; }
+@media (max-width:760px) {
+  .hero-art-link { border-radius:18px; }
+  .home-series-shelf .series-card {
+    width:clamp(124px,36vw,150px);
+    flex-basis:clamp(124px,36vw,150px);
+  }
 }
