@@ -833,7 +833,7 @@ export const MANUAL_ANIME_CATALOG = [
     "title": "Kono Subarashii Sekai ni Shukufuku wo! 3",
     "titleEnglish": "KonoSuba: God's Blessing on This Wonderful World! 3",
     "titleJapanese": "この素晴らしい世界に祝福を！3",
-    "synopsis": "",
+    "synopsis": "Kazuma Satou, former NEET and current reincarnated adventurer, finally returns home after the incident at the Crimson Demon village. He is joined by his ever-reliable companions: self-absorbed goddess Aqua, one-trick pony arch-wizard Megumin, and masochistic crusader Lalatina Ford \"Darkness\" Dustiness. Following their recent exploits, the party is one step closer to vanquishing the Demon King and his armies—a terrifying task that Kazuma is eager to ignore for as long as possible. Things, however, are not going as smoothly as the group would like; they are constantly racking up debt, getting sidetracked during missions, and falling into traps due to their recklessness and eccentricities.\n\nAs the party struggles with their perennial issues, they receive an invitation from a princess interested in hearing tales of the group's \"heroic\" deeds. Darkness' pleas to refuse the invitation only fire the others up to accept it, marking the start of yet another uncanny adventure with unforeseen consequences.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1758/141268l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Meo3mO98huE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-10",
@@ -841,76 +841,87 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 11,
     "duration": "23 min per ep",
     "score": 8.33,
-    "scoredBy": 245595,
-    "rank": 292,
-    "popularity": 456,
+    "scoredBy": 257763,
+    "rank": 297,
+    "popularity": 444,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Adventure",
       "Comedy",
-      "Fantasy"
+      "Fantasy",
+      "Isekai",
+      "Parody"
     ],
     "themes": [
       "Isekai",
       "Parody"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1758/141268.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1758/141268l.jpg",
+    "malUrl": "https://myanimelist.net/anime/49458"
   },
   {
     "malId": 53126,
     "title": "Yamada-kun to Lv999 no Koi wo Suru",
     "titleEnglish": "My Love Story with Yamada-kun at Lv999",
     "titleJapanese": "山田くんとLv999の恋をする",
-    "synopsis": "",
+    "synopsis": "After her boyfriend breaks up with her for another girl, college student Akane Kinoshita wrestles with a broken heart and the memories he left behind. Loading up Forest of Savior, the MMO they used to play together, she forms a plan to get back at her ex-boyfriend through an in-person event for the game. In the process, she runs into someone unexpected: Akito Yamada, a gaming legend who just happens to be her guildmate.\n\nDesperate for support, Akane ropes the asocial Yamada into helping with her scheme and lending her a shoulder to cry on. The differences between Akane and Yamada soon become apparent as they spend time together, yet they cannot help but notice each other's inner qualities. As the two gain more experience with one another in and out of the game, their tentative acquaintance may level up in a way neither expects.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1298/134178l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/LpZI3j6Axlo?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-04-02",
     "releaseYear": 2023,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.74,
-    "scoredBy": 295582,
-    "rank": 1332,
-    "popularity": 456,
+    "score": 7.73,
+    "scoredBy": 309165,
+    "rank": 1395,
+    "popularity": 440,
     "status": "Finished Airing",
     "season": "spring 2023",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
-      "Romance"
+      "Romance",
+      "Video Game"
     ],
     "themes": [
       "Video Game"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1298/134178.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1298/134178l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53126"
   },
   {
     "malId": 51180,
     "title": "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e 3rd Season",
     "titleEnglish": "Classroom of the Elite III",
     "titleJapanese": "ようこそ実力至上主義の教室へ 3rd Season",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1332/139318l.jpg",
+    "synopsis": "As the third semester begins in Tokyo Metropolitan Advanced Nurturing High School, it is time for a mixed training camp. Students from all classes and grade levels are participating, making the stakes as high as ever, not to mention the amount of both class and individual points in play. However, that is not all—the students of the groups that fail to meet the required point threshold are in danger of being expelled.\n\nAmong the first-year students, the once last-ranked Class D has been promoted to Class C thanks to the efforts of Kiyotaka Ayanokouji and his peers. As everyone in the new Class C gears up for their next challenge, Ayanokouji takes the opportunity to observe the people around him and make new acquaintances. With Class A's representative Arisu Sakayanagi preparing her own plans for him, Ayanokouji must continue using any tools at his disposal if he wants to outwit his most formidable enemy yet and lead Class C to even greater heights.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1332/139318l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/0yOULRwyp2o?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-03",
     "releaseYear": 2024,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.92,
-    "scoredBy": 283911,
-    "rank": 880,
-    "popularity": 464,
+    "score": 7.9,
+    "scoredBy": 297925,
+    "rank": 957,
+    "popularity": 460,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Drama",
+      "Psychological",
+      "School",
       "Suspense"
     ],
     "themes": [
@@ -918,30 +929,36 @@ export const MANUAL_ANIME_CATALOG = [
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1332/139318.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1332/139318l.webp",
+    "malUrl": "https://myanimelist.net/anime/51180"
   },
   {
     "malId": 55791,
     "title": "[Oshi no Ko] 2nd Season",
     "titleEnglish": "[Oshi No Ko] Season 2",
     "titleJapanese": "【推しの子】第2期",
-    "synopsis": "",
+    "synopsis": "With the help of producer Masaya Kaburagi, Aquamarine \"Aqua\" Hoshino and Kana Arima have landed the roles of Touki and Tsurugi in Lala Lai Theatrical Company's stage adaptation of the popular manga series Tokyo Blade. Co-starring with them is Aqua's girlfriend, Akane Kurokawa, who plays Touki's fiancée, Princess Saya. Due to the fanbase preferring Tsurugi as Touki's love interest, Saya has made fewer and fewer appearances in the manga, making it difficult for Akane to fully immerse herself in the role. Her struggles are compounded by differences between the play's script and the original work—differences that also frustrate Tokyo Blade's author, Abiko Samejima.\n\nAqua, however, is more concerned with his personal goals than he is with the play. He has only one objective in mind: to grow closer to director Toshirou Kindaichi and find out what he knows about Aqua's mother, Ai.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1006/143302l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/QMuajQlx64c?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-03",
     "releaseYear": 2024,
     "episodes": 13,
     "duration": "25 min per ep",
-    "score": 8.51,
-    "scoredBy": 267299,
-    "rank": 164,
-    "popularity": 486,
+    "score": 8.49,
+    "scoredBy": 281205,
+    "rank": 174,
+    "popularity": 477,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Drama"
+      "Drama",
+      "Reincarnation",
+      "Seinen",
+      "Showbiz"
     ],
     "themes": [
       "Reincarnation",
@@ -950,30 +967,35 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Seinen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1006/143302.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1006/143302l.jpg",
+    "malUrl": "https://myanimelist.net/anime/55791"
   },
   {
     "malId": 58514,
     "title": "Kusuriya no Hitorigoto 2nd Season",
     "titleEnglish": "The Apothecary Diaries Season 2",
     "titleJapanese": "薬屋のひとりごと 第2期",
-    "synopsis": "",
+    "synopsis": "Using her wit and vast knowledge of medicines and poisons alike, Maomao played a pivotal role in solving a series of mysteries and conspiracies that plagued the imperial court. Having recently come to terms with the secrets of her parents, she returns to fulfill her normal duties on behalf of the emperor's highest-ranking consorts. Maomao also works alongside the eunuch Jinshi to better the consorts' many ladies-in-waiting, including helping them learn to read.\n\nHowever, with the arrival of a merchant caravan comes a new wave of intrigue. A pattern of strange coincidences involving the visitors and their wares unsettles Maomao, driving her to investigate the puzzling circumstances behind the convoy. As dangers from both outside and within threaten the balance between the imperial concubines, Maomao continues to utilize her cunning and medical expertise to keep the women safe from harm.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1025/147458l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/3BYutu3Pf_0?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-10",
     "releaseYear": 2025,
     "episodes": 24,
     "duration": "24 min per ep",
-    "score": 8.91,
-    "scoredBy": 274216,
+    "score": 8.9,
+    "scoredBy": 308030,
     "rank": 23,
-    "popularity": 492,
+    "popularity": 450,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Drama",
+      "Historical",
+      "Medical",
       "Mystery"
     ],
     "themes": [
@@ -981,14 +1003,17 @@ export const MANUAL_ANIME_CATALOG = [
       "Medical"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1025/147458.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1025/147458l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58514"
   },
   {
     "malId": 55813,
     "title": "Mashle: Shinkakusha Kouho Senbatsu Shiken-hen",
     "titleEnglish": "Mashle: Magic and Muscles - The Divine Visionary Candidate Exam Arc",
     "titleJapanese": "マッシュル-MASHLE- 神覚者候補選抜試験編",
-    "synopsis": "",
+    "synopsis": "After Mash Burnedead's clash with Magia Lupus, the secret about his powers is now out in the open. The short-lived celebration ends when the Bureau of Magic summons Mash before an audience of Divine Visionaries, who collectively decree Mash should reap the consequences and die. However, an evil shadow organization called Innocent Zero hijacks the inquiry to demand that Mash be kept alive.\n\nMash proves that he is capable of dealing with Innocent Zero, but the Divine Visionaries' verdict remains unchanged. Luckily, Mash finds unexpected allies in Divine Visionary Rayne Ames and Headmaster Wahlberg Baigan, and they successfully defer his execution until Innocent Zero is defeated. Mash is now allowed to live under one condition: he must be selected as the Divine Visionary candidate by the year's end.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1912/140804l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/kKPEaart14E?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-01-06",
@@ -996,17 +1021,21 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 12,
     "duration": "23 min per ep",
     "score": 7.77,
-    "scoredBy": 284054,
-    "rank": 1242,
-    "popularity": 500,
+    "scoredBy": 295126,
+    "rank": 1278,
+    "popularity": 490,
     "status": "Finished Airing",
     "season": "winter 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Comedy",
-      "Fantasy"
+      "Fantasy",
+      "Gag Humor",
+      "Parody",
+      "School",
+      "Shounen"
     ],
     "themes": [
       "Gag Humor",
@@ -1016,61 +1045,71 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1912/140804.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1912/140804l.jpg",
+    "malUrl": "https://myanimelist.net/anime/55813"
   },
   {
     "malId": 52305,
     "title": "Tomo-chan wa Onnanoko!",
     "titleEnglish": "Tomo-chan Is a Girl!",
     "titleJapanese": "トモちゃんは女の子！",
-    "synopsis": "",
+    "synopsis": "Childhood friends Tomo Aizawa and Junichirou \"Jun\" Kubota do everything together, whether it be training or just enjoying a fun day out. Anyone would think that these two are best friends for life. The only issue is that the tomboyish Tomo is in love with Jun, but he regards her like a brother.\n\nAt the start of their first year of high school, Tomo confesses her feelings to Jun. However, her rough mannerisms and lack of hesitance to throw a punch do nothing to sway Jun's heart. Realizing that he will remain indifferent to her affections unless she does something about it, Tomo must find a way to knock some sense into Jun and open his eyes to what is right in front of him.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1444/131828l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/Fmpa10BFimE?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2023-01-05",
     "releaseYear": 2023,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.71,
-    "scoredBy": 273383,
-    "rank": 1414,
-    "popularity": 501,
+    "score": 7.7,
+    "scoredBy": 283004,
+    "rank": 1489,
+    "popularity": 492,
     "status": "Finished Airing",
     "season": "winter 2023",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
       "Comedy",
-      "Romance"
+      "Romance",
+      "School"
     ],
     "themes": [
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1444/131828.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1444/131828l.jpg",
+    "malUrl": "https://myanimelist.net/anime/52305"
   },
   {
     "malId": 58939,
     "title": "Sakamoto Days",
     "titleEnglish": "Sakamoto Days",
     "titleJapanese": "SAKAMOTO DAYS",
-    "synopsis": "",
+    "synopsis": "The name Tarou Sakamoto once instilled fear in every villain. No other professional hitman matched his prowess, and fellow assassins revered him. However, Sakamoto fell in love. In five short years, he married, became a father, put on some weight, and traded his weapons for an apron as he became the owner of a humble convenience store.\n\nAlthough Sakamoto is decidedly retired, he finds his old life of crime hard to shake off. His former partner, Shin Asakura, reappears and resolves to stay with Sakamoto's family under their strict no-kill rule. To make matters worse, a large bounty is placed on Sakamoto's head. Numerous assassins now pursue him—but they are in for a surprise. Sakamoto has not lost his edge, and no matter what tricks his enemies pull, he will fight off every last one to protect his dear family.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1026/146459l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/CdnMoPIgC5s?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2025-01-11",
     "releaseYear": 2025,
     "episodes": 11,
     "duration": "23 min per ep",
-    "score": 7.59,
-    "scoredBy": 243638,
-    "rank": 1796,
-    "popularity": 503,
+    "score": 7.58,
+    "scoredBy": 259284,
+    "rank": 1897,
+    "popularity": 480,
     "status": "Finished Airing",
     "season": "winter 2025",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
-      "Comedy"
+      "Adult Cast",
+      "Comedy",
+      "Organized Crime",
+      "Shounen"
     ],
     "themes": [
       "Adult Cast",
@@ -1079,60 +1118,70 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "R - 17+ (violence & profanity)"
+    "rating": "r",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1026/146459.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1026/146459l.jpg",
+    "malUrl": "https://myanimelist.net/anime/58939"
   },
   {
     "malId": 54744,
     "title": "Tokidoki Bosotto Russia-go de Dereru Tonari no Alya-san",
     "titleEnglish": "Alya Sometimes Hides Her Feelings in Russian",
     "titleJapanese": "時々ボソッとロシア語でデレる隣のアーリャさん",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1596/152806l.jpg",
+    "synopsis": "Seirei Academy is a prestigious school attended by the very best students in Japan. Alisa Mikhailovna \"Alya\" Kujou, the half-Russian and half-Japanese treasurer of the school's student council, is known for her intelligence, stunning looks, and rigid personality. Contrasting her near-flawless persona, Alya's unmotivated classmate Masachika Kuze slacks off during lessons and seems to show no interest in her.\n\nInitially irritated, Alya gradually becomes more intrigued by Masachika and starts expressing her affection for him in Russian. However, she is oblivious to his secret—he understands the language fluently! Due to a childhood friend who was temporarily staying in Japan, Masachika has been studying Russian in hopes of reuniting with her.\n\nAs the two spend more time together, the playful and eccentric relationship between them quickly deepens. In the meantime, both must learn to navigate their new growing feelings for one another.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1596/152806l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/pBX6TtOlYow?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-07-03",
     "releaseYear": 2024,
     "episodes": 12,
     "duration": "24 min per ep",
-    "score": 7.54,
-    "scoredBy": 280836,
-    "rank": 2010,
-    "popularity": 507,
+    "score": 7.53,
+    "scoredBy": 298368,
+    "rank": 2109,
+    "popularity": 482,
     "status": "Finished Airing",
     "season": "summer 2024",
     "type": "TV",
-    "source": "Light novel",
+    "source": "light_novel",
     "genres": [
       "Comedy",
-      "Romance"
+      "Romance",
+      "School"
     ],
     "themes": [
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1596/152806.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1596/152806l.webp",
+    "malUrl": "https://myanimelist.net/anime/54744"
   },
   {
     "malId": 54789,
     "title": "Boku no Hero Academia 7th Season",
     "titleEnglish": "My Hero Academia Season 7",
     "titleJapanese": "僕のヒーローアカデミア 第7期",
-    "synopsis": "",
-    "posterUrl": "https://cdn.myanimelist.net/images/anime/1573/157212l.jpg",
+    "synopsis": "Following an all-out battle with the Paranormal Liberation Front, it is difficult for the people of Japan to continue placing faith in their heroes. To combat the combined power of Tomura Shigaraki and All For One, All Might calls for his ally from the West—the strongest woman on the planet, Star and Stripe.\n\nHowever, All For One decides to intercept Star and her fleet to get his hands on her overpowered quirk before she can enter Japanese airspace. Although Endeavor, Hawks, and Best Jeanist are headed to the rendezvous point, Star makes a gamble in the present to save her comrades.",
+    "posterUrl": "https://cdn.myanimelist.net/images/anime/1573/157212l.webp",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/E5pcEwi6ynk?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-05-04",
     "releaseYear": 2024,
     "episodes": 21,
     "duration": "23 min per ep",
-    "score": 8.14,
-    "scoredBy": 235054,
-    "rank": 519,
-    "popularity": 535,
+    "score": 8.15,
+    "scoredBy": 252499,
+    "rank": 530,
+    "popularity": 519,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
-      "Action"
+      "Action",
+      "School",
+      "Shounen",
+      "Super Power"
     ],
     "themes": [
       "School",
@@ -1141,14 +1190,17 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1573/157212.webp",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1573/157212l.webp",
+    "malUrl": "https://myanimelist.net/anime/54789"
   },
   {
     "malId": 53580,
     "title": "Tensei shitara Slime Datta Ken 3rd Season",
     "titleEnglish": "That Time I Got Reincarnated as a Slime Season 3",
     "titleJapanese": "転生したらスライムだった件 第3期",
-    "synopsis": "",
+    "synopsis": "Rimuru Tempest is victorious following his climactic showdown with Demon Lord Clayman. With Diablo's aid, the war with the Falmuth Kingdom ends decisively in Rimuru's favor. Fueled by increased migration and the integration of Jura Forest, the nation of Tempest undergoes rapid growth.\n\nRimuru's victory shifts the balance of power, giving rise to a renewed period of peace—but whether that peace will last is another matter. Yuuki Kagurazaka and Kazalim are conspiring with the Harlequin Alliance to bring about Rimuru's downfall. Furthermore, the Western Holy Church continues its intolerant crusade against Rimuru and his non-human subordinates. Both allies and enemies engage in a battle of wits, carefully advancing their agendas without shattering the delicate status quo. But once the first domino inevitably falls, the race to supremacy begins.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1211/143476l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/kM2m7GcF6W0?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-05",
@@ -1156,17 +1208,20 @@ export const MANUAL_ANIME_CATALOG = [
     "episodes": 24,
     "duration": "24 min per ep",
     "score": 7.71,
-    "scoredBy": 223554,
-    "rank": 1411,
-    "popularity": 539,
+    "scoredBy": 241574,
+    "rank": 1457,
+    "popularity": 522,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Manga",
+    "source": "manga",
     "genres": [
       "Action",
       "Comedy",
-      "Fantasy"
+      "Fantasy",
+      "Isekai",
+      "Reincarnation",
+      "Shounen"
     ],
     "themes": [
       "Isekai",
@@ -1175,37 +1230,45 @@ export const MANUAL_ANIME_CATALOG = [
     "demographics": [
       "Shounen"
     ],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1211/143476.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1211/143476l.jpg",
+    "malUrl": "https://myanimelist.net/anime/53580"
   },
   {
     "malId": 54900,
     "title": "Wind Breaker",
     "titleEnglish": "Wind Breaker",
     "titleJapanese": "WIND BREAKER",
-    "synopsis": "",
+    "synopsis": "From an early age, Haruka Sakura was made an outcast due to his unconventional appearance and lack of social skills. However, the rough treatment turned him into a proficient fighter, which is now the only thing he prides himself on. Starting at Furin High School, where it is rumored that strength is valued over academics, Sakura has only one goal—taking the top spot.\n\nInvolved in a street brawl the day before his enrollment, Sakura happens to meet a group of his future schoolmates. Instead of the usual rejection, they fight alongside him, demonstrating that what the school actually cares about is protecting the town of Makochi from any harm—hence why the students call themselves \"Bofurin.\" Surprised by the support and appreciation of the townspeople, Sakura has a hard time accepting their goodwill.\n\nThough unfamiliar with kindness being shown to him, Sakura must learn to push past his discomfort when Bofurin is pitted against formidable enemies. After experiencing the feeling of acceptance, he finds himself fighting for the sake of others for the first time.",
     "posterUrl": "https://cdn.myanimelist.net/images/anime/1438/141816l.jpg",
     "trailerUrl": "https://www.youtube-nocookie.com/embed/k5qM1PoLmUc?enablejsapi=1&wmode=opaque&autoplay=1",
     "airedFrom": "2024-04-05",
     "releaseYear": 2024,
     "episodes": 13,
     "duration": "23 min per ep",
-    "score": 7.71,
-    "scoredBy": 242534,
-    "rank": 1417,
-    "popularity": 561,
+    "score": 7.7,
+    "scoredBy": 252709,
+    "rank": 1494,
+    "popularity": 547,
     "status": "Finished Airing",
     "season": "spring 2024",
     "type": "TV",
-    "source": "Web manga",
+    "source": "web_manga",
     "genres": [
-      "Action"
+      "Action",
+      "Delinquents",
+      "School"
     ],
     "themes": [
       "Delinquents",
       "School"
     ],
     "demographics": [],
-    "rating": "PG-13 - Teens 13 or older"
+    "rating": "pg_13",
+    "posterFallbackUrl": "https://cdn.myanimelist.net/images/anime/1438/141816.jpg",
+    "backdropUrl": "https://cdn.myanimelist.net/images/anime/1438/141816l.jpg",
+    "malUrl": "https://myanimelist.net/anime/54900"
   },
   {
     "malId": 50739,
