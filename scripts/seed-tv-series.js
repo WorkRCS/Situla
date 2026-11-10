@@ -129,7 +129,7 @@ export const CURATED_TV_SHOWS = [
   "3rd Rock from the Sun"
 ];
 
-const DISALLOWED_GENRES = new Set(["Adult"]);
+const DISALLOWED_GENRES = new Set(["adult", "erotica", "pornographic", "hentai"]);
 let nextRequestAt = 0;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -241,7 +241,7 @@ export function mapTvmazeShow(show) {
 
   if (!/^tt\d{5,12}$/.test(imdbId)) return { ok: false, reason: "missing-valid-imdb-id" };
   if (!show?.id || !show?.name || !image) return { ok: false, reason: "missing-show-metadata-or-poster" };
-  if (genres.some((genre) => DISALLOWED_GENRES.has(genre))) return { ok: false, reason: "adult-genre-filter" };
+  if (genres.some((genre) => DISALLOWED_GENRES.has(genre.toLowerCase()))) return { ok: false, reason: "adult-genre-filter" };
   if (!Array.isArray(episodes) || episodes.length < 2) return { ok: false, reason: "missing-complete-episode-guide" };
   if (!(rating > 0)) return { ok: false, reason: "missing-rating" };
 
