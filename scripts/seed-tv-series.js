@@ -1,5 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { connectDatabase } from "../src/db.js";
 import { TvSeries } from "../src/models.js";
 
@@ -135,7 +137,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function normalizeShowName(value) {
   return String(value || "")
     .normalize("NFKD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, " ")
@@ -144,8 +146,8 @@ export function normalizeShowName(value) {
 
 export function stripHtml(value) {
   return String(value || "")
-    .replace(/<\\/p>\\s*<p[^>]*>/gi, "\\n\\n")
-    .replace(/<br\\s*\\/?>/gi, "\\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -153,11 +155,10 @@ export function stripHtml(value) {
     .replace(/&#39;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
     .slice(0, 4000);
 }
-
 async function tvmazeRequest(path, attempt = 0) {
   const wait = Math.max(0, nextRequestAt - Date.now());
   if (wait) await sleep(wait);
@@ -292,6 +293,10 @@ async function findCuratedShow(name) {
 }
 
 export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
+  if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
+    console.warn("TV seed skipped: set MONGODB_URI and MONGODB_DB_NAME in .env to import the curated TV catalog.");
+    return { imported: 0, total: 0, skipped: 0, configured: false };
+  }
   await connectDatabase();
   const existing = await TvSeries.countDocuments({ metadataSource: "TVmaze" });
   if (!force && existing >= TARGET_SERIES) {
@@ -354,7 +359,7 @@ export async function seedTvSeries({ force = FORCE_REFRESH } = {}) {
   return { imported, total, skipped };
 }
 
-const isDirectRun = process.argv[1] && new URL(import.meta.url).pathname === process.argv[1].replace(/\\\\/g, "/");
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isDirectRun) {
   seedTvSeries().catch((error) => {
     console.error("Situla TV seed failed:", error.message);
