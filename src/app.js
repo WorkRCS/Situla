@@ -60,11 +60,12 @@ export function movieDto(movie) {
 }
 
 export function tvSeriesDto(series) {
-  const imdbId = String(series.imdbId || '').toLowerCase();
+  const tmdbId = Number(series.tmdbId) || null;
   return {
     id: String(series._id),
-    imdbId,
-    imdbUrl: IMDB_ID.test(imdbId) ? 'https://www.imdb.com/title/' + imdbId + '/' : null,
+    tmdbId,
+    tmdbUrl: tmdbId ? 'https://www.themoviedb.org/tv/' + tmdbId : null,
+    externalImdbId: String(series.externalImdbId || '').toLowerCase() || null,
     title: series.title,
     originalTitle: series.originalTitle || '',
     overview: series.overview || '',
@@ -221,7 +222,7 @@ app.get('/api/search', async (c) => {
     const [movies, shows, anime] = await Promise.all([
       Movie.find({
         adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
+        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^\\d+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
       }).sort({ popularity: -1, releaseDate: -1 }).limit(8).lean(),
       TvSeries.find({
         adult: { $ne: true },
@@ -331,8 +332,8 @@ app.get('/api/tv', async (c) => {
     await connectDatabase();
     const { page, limit } = pageOptions(c);
     const query = safeText(c.req.query('q'));
-    const filter = { imdbId: IMDB_ID, adult: { $ne: true } };
-    if (IMDB_ID.test(query)) filter.imdbId = query.toLowerCase();
+    const filter = { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } };
+    if (/^\\d+$/.test(query) && Number(query) > 0) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
     const sort = query && !IMDB_ID.test(query)
       ? { score: { $meta: 'textScore' }, popularity: -1, firstAirDate: -1 }
@@ -356,15 +357,17 @@ app.get('/api/tv', async (c) => {
   }
 });
 
-app.get('/api/tv/:imdbId/seasons/:seasonNumber', async (c) => {
-  const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
+app.get('/api/tv/:tmdbId/seasons/:seasonNumber', async (c) => {
+  const tmdbIdText = String(c.req.param('tmdbId') || '');
+  const tmdbId = Number(tmdbIdText);
   const seasonNumber = Number(c.req.param('seasonNumber'));
-  if (!IMDB_ID.test(imdbId) || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) {
-    return c.json({ error: 'Invalid IMDb series or season ID.' }, 400);
+  if (!/^\\d{1,12}$/.test(tmdbIdText) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
+      !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) {
+    return c.json({ error: 'Invalid TMDB series or season ID.' }, 400);
   }
   try {
     await connectDatabase();
-    const series = await TvSeries.findOne({ imdbId }).select('seasons').lean();
+    const series = await TvSeries.findOne({ tmdbId }).select('seasons').lean();
     if (!series) return c.json({ error: 'TV series not found.' }, 404);
     const season = (series.seasons || []).find((item) => Number(item.seasonNumber) === seasonNumber);
     if (!season) return c.json({ error: 'Season not found.' }, 404);
@@ -375,12 +378,15 @@ app.get('/api/tv/:imdbId/seasons/:seasonNumber', async (c) => {
   }
 });
 
-app.get('/api/tv/:imdbId', async (c) => {
-  const imdbId = String(c.req.param('imdbId') || '').toLowerCase();
-  if (!IMDB_ID.test(imdbId)) return c.json({ error: 'Invalid IMDb series ID.' }, 400);
+app.get('/api/tv/:tmdbId', async (c) => {
+  const tmdbIdText = String(c.req.param('tmdbId') || '');
+  const tmdbId = Number(tmdbIdText);
+  if (!/^\\d{1,12}$/.test(tmdbIdText) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
+    return c.json({ error: 'Invalid TMDB series ID.' }, 400);
+  }
   try {
     await connectDatabase();
-    const item = await TvSeries.findOne({ imdbId }).lean();
+    const item = await TvSeries.findOne({ tmdbId }).lean();
     if (!item) return c.json({ error: 'TV series not found.' }, 404);
     return c.json({ item: tvSeriesDto(item) });
   } catch (error) {
