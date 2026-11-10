@@ -202,7 +202,7 @@ MONGODB_DB_NAME=situla
 A successful seed is only useful if the catalog can render and paginate correctly.
 
 - Movie feeds use IMDb IDs; TV feeds use numeric TMDb IDs; Anime feeds use MAL IDs.
-- A refresh/new page load should request a new random first batch for Movies, TV and Anime.
+- A refresh/new page load should request a new random first batch for Movies, TV and Anime. The client remembers up to 120 recently shown canonical IDs per catalog and passes them as exclusions to the next refresh so the same batch is not immediately repeated.
 - “Load more” must request another batch while excluding every ID already displayed. It must not reuse the wrong key field (for example, TV must deduplicate by `tmdbId`, never `imdbId`).
 - The API must return a correct total count and a deterministic pagination contract. Random pagination should use an exclusion list rather than sampling a fresh `page * limit` array and skipping into it; that old approach can repeat or omit titles between requests.
 - Search results must combine Movies, TV series and Anime in a mixed/interleaved order, not three separate category blocks. Selecting a result must route using the correct catalog key.
