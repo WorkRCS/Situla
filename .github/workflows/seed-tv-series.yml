@@ -24,10 +24,11 @@ concurrency:
 jobs:
   seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
       MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
+      TMDB_API_READ_ACCESS_TOKEN: ${{ secrets.TMDB_API_READ_ACCESS_TOKEN }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -45,7 +46,14 @@ jobs:
             echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets."
             exit 1
           fi
-          echo "MongoDB credentials are present. TV seed verifies public TVmaze metadata and artwork before writing; no video files or stream URLs are imported."
+          if [[ "${{ inputs.catalog }}" == "movies" || "${{ inputs.catalog }}" == "all" ]]; then
+            if [[ -z "$TMDB_API_READ_ACCESS_TOKEN" ]]; then
+              echo "::error::Add TMDB_API_READ_ACCESS_TOKEN as a GitHub Actions secret before choosing movies or all."
+              exit 1
+            fi
+            echo "TMDB credentials are present. Movie seeding preflights 500 complete IMDb-keyed titles, posters and backdrops before writing."
+          fi
+          echo "TV seed verifies public TVmaze metadata and artwork before writing; no video files or stream URLs are imported."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
