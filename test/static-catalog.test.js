@@ -72,7 +72,7 @@ test("Anime cleanup is dry-run by default and only deletes records with no poste
   const audit = await read("../scripts/audit-anime-artwork.js");
   assert.match(audit, /process\.argv\.includes\("--apply"\)/);
   assert.match(audit, /if \(!apply\)/);
-  assert.match(audit, /!posterOk && !bannerOk/);
+  assert.match(audit, /filter\(\(check\) => !check\.posterOk && !check\.bannerOk\)/);
   assert.match(audit, /AnimeSeries\.deleteMany/);
   assert.doesNotMatch(audit, /Movie\.deleteMany|TvSeries\.deleteMany/);
 });
