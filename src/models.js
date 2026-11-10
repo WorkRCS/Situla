@@ -54,7 +54,7 @@ const tvSeasonSchema = new mongoose.Schema({
 
 const tvSeriesSchema = new mongoose.Schema({
   tmdbId: { type: Number, required: true, min: 1 },
-  externalImdbId: { type: String, trim: true, lowercase: true, match: /^tt\\d{5,12}$/, default: null },
+  externalImdbId: { type: String, trim: true, lowercase: true, match: /^tt[0-9]{5,12}$/, default: null },
   title: { type: String, required: true, trim: true },
   originalTitle: { type: String, default: '' },
   overview: { type: String, default: '' },
