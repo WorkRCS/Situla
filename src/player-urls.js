@@ -1,5 +1,6 @@
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
+const TMDB_TV_ID = /^[0-9]{1,12}$/;
 const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
 
 // Normalize route params before they are used by Server or Client Components.
@@ -13,8 +14,8 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
   const seasonNumber = Number(seasonText);
   const episodeNumber = Number(episodeText);
   if (!Number.isSafeInteger(tmdbNumber) || tmdbNumber < 1) return null;
-  if (!/^\\d+$/.test(seasonText) || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
-  if (!/^\\d+$/.test(episodeText) || !Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
+  if (!/^[0-9]+$/.test(seasonText) || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
+  if (!/^[0-9]+$/.test(episodeText) || !Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
 
   return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
