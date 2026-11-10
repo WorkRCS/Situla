@@ -155,7 +155,7 @@ test("mobile navigation is attached to the viewport and catalog grids are compac
   assert.match(css, /transform:none !important/);
   assert.match(css, /\.catalog-grid \{[\s\S]*?repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /@media \(min-width:600px\) and \(max-width:1100px\)[\s\S]*?repeat\(4,minmax\(0,1fr\)\)/);
-  assert.equal((app.match(/className="catalog-grid"/g) || []).length, 4);
+  assert.equal((app.match(/className="catalog-grid"/g) || []).length, 5);
 });
 
 test("React UI stack uses Headless UI and local shadcn primitives without importing Svelte Bits UI", async () => {
