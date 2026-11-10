@@ -75,15 +75,20 @@ export async function seedAnimeAdditions() {
     return { inserted: 0, skipped, total: await AnimeSeries.countDocuments() };
   }
 
-  const operations = newRecords.map((record) => ({
-    updateOne: {
-      filter: { malId: record.malId },
-      update: { $setOnInsert: record },
-      upsert: true
-    }
-  }));
-  const result = await AnimeSeries.bulkWrite(operations, { ordered: false });
-  const inserted = Number(result.upsertedCount || 0);
+  // This path is insert-only: no update/upsert operation can touch legacy Anime docs.
+  // The unique MAL index protects against a second process inserting the same ID.
+  let inserted = 0;
+  try {
+    const created = await AnimeSeries.insertMany(newRecords, { ordered: false });
+    inserted = created.length;
+  } catch (error) {
+    const partial = Array.isArray(error.insertedDocs) ? error.insertedDocs.length : 0;
+    const writeErrors = error.writeErrors || error.result?.writeErrors || [];
+    const duplicateOnly = writeErrors.length > 0 && writeErrors.every((entry) => Number(entry.code || entry.err?.code) === 11000);
+    if (!partial && !duplicateOnly) throw error;
+    inserted = partial;
+    console.warn("Some MAL IDs were inserted by another seed process; duplicates were left unchanged.");
+  }
   const total = await AnimeSeries.countDocuments();
   console.log("New Anime inserted:", inserted);
   console.log("Existing MAL IDs/titles skipped without update:", skipped + (newRecords.length - inserted));
