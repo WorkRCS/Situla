@@ -59,10 +59,11 @@ export async function auditAnimeArtwork({ apply = process.argv.includes("--apply
   const imageChecks = await mapWithLimit(records, 16, async (item) => {
     const posterUrl = item.posterUrl;
     const bannerUrl = item.bannerUrl || item.backdropUrl;
-    const [posterOk, bannerOk] = await Promise.all([
-      probeImageUrl(posterUrl),
-      bannerUrl && bannerUrl !== posterUrl ? probeImageUrl(bannerUrl) : probeImageUrl(posterUrl)
-    ]);
+    const posterPromise = probeImageUrl(posterUrl);
+    const bannerPromise = bannerUrl && bannerUrl === posterUrl
+      ? posterPromise
+      : probeImageUrl(bannerUrl);
+    const [posterOk, bannerOk] = await Promise.all([posterPromise, bannerPromise]);
     return { item, posterOk, bannerOk };
   });
 
