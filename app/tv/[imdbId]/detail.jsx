@@ -97,8 +97,6 @@ export default function TvSeriesExperience({ imdbId }) {
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-[#a4a9b7]">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
                 {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)}</span>}
-                <span>{series.numberOfSeasons} seasons</span>
-                <span>{series.numberOfEpisodes} episodes</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">{(series.genres || []).map((genre) => <span key={genre} className="genre-chip">{genre}</span>)}</div>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-[#b5bac7]">{series.overview || "No description available."}</p>
