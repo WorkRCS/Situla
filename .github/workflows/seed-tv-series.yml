@@ -1,28 +1,33 @@
-name: seed-tv-series
+name: seed-static-catalog
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/seed-tv-series.yml"
   workflow_dispatch:
+    inputs:
+      catalog:
+        description: "Which static catalogue should be seeded"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - movies
+          - tv
+          - anime
 
 permissions:
   contents: read
 
 concurrency:
-  group: situla-tv-series-seed
+  group: situla-static-catalog-seed
   cancel-in-progress: false
 
 jobs:
-  seed-tv:
+  seed:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     env:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
       MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
-      TMDB_API_READ_ACCESS_TOKEN: ${{ secrets.TMDB_API_READ_ACCESS_TOKEN }}
-      TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -32,22 +37,26 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate TV-only seed credentials
+      - name: Validate MongoDB credentials
         shell: bash
         run: |
           set -euo pipefail
           if [[ -z "$MONGODB_URI" || -z "$MONGODB_DB_NAME" ]]; then
-            echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets before running the TV seed."
+            echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets."
             exit 1
           fi
-          if [[ -z "$TMDB_API_READ_ACCESS_TOKEN" && -z "$TMDB_API_KEY" ]]; then
-            echo "::error::Add TMDB_API_READ_ACCESS_TOKEN or TMDB_API_KEY as a GitHub Actions secret before running the TV seed."
-            exit 1
-          fi
-          echo "Credentials are present. Only scripts/seed-tv-series.js will run."
+          echo "MongoDB credentials are present. No metadata APIs or crawlers will run."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Seed curated TV series only
-        run: npm run seed:tv
+      - name: Seed selected static catalogue
+        shell: bash
+        run: |
+          case "${{ inputs.catalog }}" in
+            movies) npm run seed:movies ;;
+            tv) npm run seed:tv ;;
+            anime) npm run seed:anime ;;
+            all) npm run seed:catalog ;;
+            *) echo "Unknown catalogue option" >&2; exit 1 ;;
+          esac
