@@ -111,6 +111,21 @@ test("movie validator rejects missing artwork, description, credits and adult co
   assert.equal(mapTmdbMovie({ ...fixture(), external_ids: { imdb_id: null } }, { id: 1234 }), null);
 });
 
+test("Movies grid refreshes with random discovery and paginates by IMDb ID without duplicate results", async () => {
+  const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
+  const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+  assert.match(app, /const isDiscover = \(\(tab === "home" && genre === "All"\) \|\| tab === "movies"\)/);
+  assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
+  assert.match(app, /params\.set\("random", "true"\)/);
+  assert.match(app, /params\.set\("exclude", movies\.map\(\(item\) => item\.imdbId\)/);
+  assert.match(app, /current\.map\(\(item\) => String\(item\.imdbId/);
+  assert.doesNotMatch(app, /current\.map\(\(item\) => item\.tmdbId\)/);
+  assert.match(app, /function MoviePosterImage/);
+  assert.match(app, /AbortSignal\.timeout\(20000\)/);
+  assert.match(api, /items: \[\{ \$sample: \{ size: 40 \} \}\]/);
+  assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
+});
+
 test("Movie additions seeder is insert-only and verifies all required fields before writing", async () => {
   const script = await readFile(new URL("../scripts/seed-movie-additions.js", import.meta.url), "utf8");
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
