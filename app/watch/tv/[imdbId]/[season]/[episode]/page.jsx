@@ -1,17 +1,42 @@
+import { notFound } from "next/navigation";
 import SeriesMediaPlayer from "../../../../../components/media-player";
+import { normalizeTvPlayerRoute } from "../../../../../src/player-urls.js";
 
 export const dynamic = "force-dynamic";
 
+async function getRoute(params) {
+  const values = await params;
+  return normalizeTvPlayerRoute(values?.imdbId, values?.season, values?.episode);
+}
+
 export async function generateMetadata({ params }) {
-  const { imdbId, season, episode } = await params;
+  const route = await getRoute(params);
+  if (!route) {
+    return {
+      title: "TV episode unavailable",
+      robots: { index: false, follow: false }
+    };
+  }
+
   return {
     title: "TV episode",
     robots: { index: false, follow: false },
-    alternates: { canonical: "/watch/tv/" + imdbId + "/" + season + "/" + episode }
+    alternates: {
+      canonical: "/watch/tv/" + encodeURIComponent(route.imdbId) + "/" + route.season + "/" + route.episode
+    }
   };
 }
 
 export default async function TvEpisodePage({ params }) {
-  const { imdbId, season, episode } = await params;
-  return <SeriesMediaPlayer kind="tv" imdbId={imdbId} season={season} episode={episode} />;
+  const route = await getRoute(params);
+  if (!route) notFound();
+
+  return (
+    <SeriesMediaPlayer
+      kind="tv"
+      imdbId={route.imdbId}
+      season={route.season}
+      episode={route.episode}
+    />
+  );
 }
