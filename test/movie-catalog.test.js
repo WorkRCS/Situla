@@ -93,7 +93,7 @@ test("TMDB detail mapper preserves full movie details while using IMDb ID as the
   assert.deepEqual(movie.directors, ["Example Director"]);
   assert.deepEqual(movie.writers, ["Example Writer"]);
   assert.equal(movie.trailerUrl, "https://www.youtube.com/watch?v=abc123");
-  assert.equal(movie.collection.name, "Example Collection");
+  assert.equal(movie.collectionInfo.name, "Example Collection");
   assert.equal(movie.sourceUrl, "https://www.themoviedb.org/movie/1234");
   assert.equal(validateMovieRecord({ ...movie, posterUrl: movie.posterUrl, backdropUrl: movie.backdropUrl }), true);
   assert.equal(Object.hasOwn(movie, "tmdbId"), false);
