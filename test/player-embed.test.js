@@ -1,9 +1,38 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { hindiMoviePlayerUrl, vidlinkMovieUrl } from "../src/player-urls.js";
+import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("TV episode routes normalize valid IMDb IDs and reject unsafe season or episode params", () => {
+  assert.deepEqual(normalizeTvPlayerRoute("TT1234567", "2", "8"), {
+    imdbId: "tt1234567",
+    season: 2,
+    episode: 8
+  });
+  assert.equal(normalizeTvPlayerRoute("1234567", "2", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("tt1234567", "-1", "8"), null);
+  assert.equal(normalizeTvPlayerRoute("tt1234567", "2", "0"), null);
+  assert.equal(normalizeTvPlayerRoute("tt1234567", "1.5", "2"), null);
+  assert.equal(normalizeTvPlayerRoute("tt1234567", "999999999999999999", "2"), null);
+  assert.equal(vidlinkTvUrl("TT1234567", "2", "8"), "https://vidlink.pro/tv/tt1234567/2/8");
+  assert.equal(vidlinkTvUrl("tt1234567", "-1", "8"), null);
+});
+
+test("TV episode server route validates params and the player has a route-level recovery boundary", async () => {
+  const page = await read("../app/watch/tv/[imdbId]/[season]/[episode]/page.jsx");
+  const errorBoundary = await read("../app/watch/tv/[imdbId]/[season]/[episode]/error.jsx");
+  const player = await read("../app/components/media-player.jsx");
+
+  assert.match(page, /normalizeTvPlayerRoute/);
+  assert.match(page, /if \(!route\) notFound\(\)/);
+  assert.match(errorBoundary, /export default function TvEpisodeError/);
+  assert.match(errorBoundary, /onClick=\{\(\) => reset\(\)\}/);
+  assert.match(player, /Array\.isArray\(seriesInfo\?\.seasons\)/);
+  assert.match(player, /String\(item\.imdbId \|\| ""\)\.toLowerCase\(\)/);
+  assert.match(player, /!tvRoute \|\| String\(data\.mediaType/);
+});
 
 test("Hindi movie iframe blocks popups and top-level redirects while retaining playback scripts", async () => {
   const moviePlayer = await read("../app/watch/[imdbId]/player.jsx");
