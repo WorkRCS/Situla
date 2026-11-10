@@ -1,7 +1,9 @@
+import { normalizeAnimePlayerRoute } from "./anime-player-route.js";
+export { normalizeAnimePlayerRoute };
+
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const TMDB_TV_ID = /^[0-9]{1,12}$/;
-const MAL_ANIME_ID = /^[0-9]{1,10}$/;
 const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
 
 // Normalize route params before they are used by Server or Client Components.
@@ -26,19 +28,6 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
 // user-initiated audio controls, with the iframe autoplay permission retained.
 // Anime playback uses the provider's MyAnimeList ID, one-based episode number,
  // and an explicit sub/dub track. fallback=true asks VidLink to try the other track.
-export function normalizeAnimePlayerRoute(malId, episode, audio) {
-  const malText = String(malId ?? "").trim();
-  const episodeText = String(episode ?? "").trim();
-  const audioText = String(audio ?? "").trim().toLowerCase();
-  if (!MAL_ANIME_ID.test(malText)) return null;
-  const malNumber = Number(malText);
-  const episodeNumber = Number(episodeText);
-  if (!Number.isSafeInteger(malNumber) || malNumber < 1) return null;
-  if (!/^[0-9]+$/.test(episodeText) || !Number.isSafeInteger(episodeNumber) || episodeNumber < 1) return null;
-  if (audioText !== "sub" && audioText !== "dub") return null;
-  return { malId: malNumber, episode: episodeNumber, audio: audioText };
-}
-
 const ANIME_PLAYER_THEME = Object.freeze({
   primaryColor: "e8b65b",
   secondaryColor: "171a23",
