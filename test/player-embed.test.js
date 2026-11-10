@@ -130,3 +130,24 @@ test('Android app retains popup rejection and the existing targeted request filt
   assert.ok(wrapper.includes('setSupportMultipleWindows(true)'));
   assert.ok(blocker.includes('"doubleclick.net"'));
 });
+
+test('Android startup isolates optional native/VPN work and recovers crashed WebView renderers', async () => {
+  const blocker = await read('../android/app/src/main/java/com/workrcs/situla/ui/NetworkAdBlocker.kt');
+  const wrapper = await read('../android/app/src/main/java/com/workrcs/situla/ui/SitulaApp.kt');
+  const player = await read('../android/app/src/main/java/com/workrcs/situla/ui/VidLinkPlayerScreen.kt');
+  const vpnStore = await read('../android/app/src/main/java/com/workrcs/situla/vpn/VpnProfileStore.kt');
+
+  const initializeBody = blocker.slice(blocker.indexOf('fun initialize('), blocker.indexOf('private fun initializeOnWorker('));
+  assert.ok(initializeBody.includes('initializationExecutor.execute'));
+  assert.ok(initializeBody.includes('keeping host fallback'));
+  assert.doesNotMatch(initializeBody, /installEngine\(appContext, fallbackRules\)\s*\\n\s*initializationExecutor/);
+
+  assert.ok(wrapper.includes('override fun onRenderProcessGone('));
+  assert.ok(wrapper.includes('key(webViewGeneration)'));
+  assert.ok(player.includes('override fun onRenderProcessGone('));
+  assert.ok(player.includes('key(playerWebViewGeneration)'));
+
+  assert.ok(vpnStore.includes('STARTUP_SAFE_DEFAULTS_KEY'));
+  assert.ok(vpnStore.includes('putBoolean("auto_connect_enabled", false)'));
+  assert.ok(vpnStore.includes('getBoolean("auto_connect_enabled", false)'));
+});
