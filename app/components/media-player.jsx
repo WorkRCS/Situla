@@ -150,9 +150,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         if (kind === "tv") {
           const key = "situla:tv-progress:v1";
           const current = JSON.parse(localStorage.getItem(key) || "[]");
+          const legacyImdbId = String(seriesInfo?.externalImdbId || "").toLowerCase();
           const matchesEpisode = (item) =>
             (Number(item?.tmdbId) === tvRoute.tmdbId ||
-              String(item?.imdbId || "").toLowerCase() === String(seriesInfo?.externalImdbId || "").toLowerCase()) &&
+              (legacyImdbId && String(item?.imdbId || "").toLowerCase() === legacyImdbId)) &&
             Number(item?.season) === tvRoute.season &&
             Number(item?.episode) === tvRoute.episode;
           if (eventName === "ended") {
