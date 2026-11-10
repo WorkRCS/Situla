@@ -239,6 +239,9 @@ app.get('/api/movies/discover', async (c) => {
   try {
     await connectDatabase();
     const baseFilter = { imdbId: IMDB_ID, adult: { $ne: true } };
+    const excludedIds = [...new Set(String(c.req.query('exclude') || '')
+      .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 120);
+    if (excludedIds.length) baseFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
     const facets = {
       featured: [{ $sample: { size: 1 } }],
       items: [{ $sample: { size: 40 } }],
