@@ -424,7 +424,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       } finally {
         if (!controller.signal.aborted) setSuggestionsLoading(false);
       }
-    }, 120);
+    }, 220);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
