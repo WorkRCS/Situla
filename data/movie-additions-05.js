@@ -1,13 +1,9 @@
-// TMDB discovery batch 5: international-language cinema.
-// Pipe-separated language codes request titles from any listed original language.
+// Cinemeta discovery batch 5: popular animated movies.
 export const MOVIE_DISCOVERY_PART_05 = {
-  key: "international-cinema",
-  label: "International cinema",
-  pages: 14,
-  params: {
-    sort_by: "vote_average.desc",
-    with_original_language: "ja|ko|fr|es|it|de|zh|fa|pt",
-    "vote_count.gte": "100",
-    "with_runtime.gte": "65"
-  }
+  key: "animation",
+  label: "Animated movies",
+  catalogId: "top",
+  genre: "Animation",
+  pages: 12,
+  pageSize: 100
 };
