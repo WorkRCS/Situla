@@ -203,7 +203,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                 )}
               </div>}
 
-              <p className="mt-5 text-[10px] text-[#9297a7]">Series ID: <a href={series.tmdbUrl || ("https://www.themoviedb.org/tv/" + series.tmdbId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB {series.tmdbId}</a>{series.externalImdbId && <> · IMDb reference: <a href={"https://www.imdb.com/title/" + series.externalImdbId + "/"} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.externalImdbId}</a></>}{series.sourceUrl && <> · Episode metadata: <a href={series.sourceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.metadataSource === "TVmaze" ? "TVmaze" : "TMDB"}</a></>}</p>
+              <p className="mt-5 text-[10px] text-[#9297a7]">Series ID: <a href={series.tmdbUrl || ("https://www.themoviedb.org/tv/" + series.tmdbId)} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB {series.tmdbId}</a>{series.externalImdbId && <> · IMDb reference: <a href={"https://www.imdb.com/title/" + series.externalImdbId + "/"} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.externalImdbId}</a></>}{series.sourceUrl && <> · Catalogue source: <a href={series.sourceUrl} target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">{series.metadataSource === "TVmaze" ? "TVmaze" : "TMDB"}</a></>}</p>
             </section>
           </div>
         ) : null}
