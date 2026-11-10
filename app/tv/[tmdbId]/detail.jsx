@@ -47,7 +47,7 @@ export default function TvSeriesExperience({ tmdbId }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [imdbId]);
+  }, [tmdbId]);
 
   useEffect(() => {
     if (!seasonNumber) return;
@@ -70,7 +70,7 @@ export default function TvSeriesExperience({ tmdbId }) {
       if (!controller.signal.aborted) setSeasonLoading(false);
     });
     return () => controller.abort();
-  }, [imdbId, seasonNumber]);
+  }, [tmdbId, seasonNumber]);
 
   const episodes = season?.episodes || [];
   const selectedEpisode = episodes.find((item) => item.episodeNumber === Number(episodeNumber));
