@@ -282,6 +282,9 @@ test("Anime episode route validates MAL ID, episode and audio, with an in-player
   assert.match(player, /fallback: true/);
   assert.match(player, /function tryAlternateAnimeAudio/);
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
+  assert.match(player, /function playNextAnimeEpisode/);
+  assert.match(player, /Next episode/);
+  assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
 });
 
 test("Anime catalog is a manually curated MAL list and the seed command uses the offline bulk seeder", async () => {
