@@ -107,3 +107,71 @@ test("home page auto-advances and lets visitors select a spotlight title", async
   assert.match(app, /onClick=\{\(\) => setHeroIndex\(index\)\}/);
   assert.match(app, /aria-pressed=\{index === heroIndex\}/);
 });
+
+
+test("watch history renders an accessible progress meter inside each history card", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const progress = await read("../app/components/ui/progress.jsx");
+  const headless = await read("../app/components/ui/card.jsx");
+
+  assert.match(app, /<Card className="history-card">/);
+  assert.match(app, /<Disclosure defaultOpen>/);
+  assert.match(app, /<DisclosureButton className="history-collapse"/);
+  assert.match(app, /<Progress value=\{progress\} ariaLabel=/);
+  assert.match(app, /history-time-labels/);
+  assert.match(progress, /role="progressbar"/);
+  assert.match(progress, /aria-valuenow=\{Math\.round\(safeValue\)\}/);
+  assert.match(headless, /ui-card/);
+});
+
+test("Movies, TV and Anime choose a different spotlight on refresh and rotate it", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:home"\)/);
+  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:movies"\)/);
+  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv"\)/);
+  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(app, /setCatalogSpotlightItems\(items\)/);
+});
+
+test("Situla header keeps the logo with the name, and the theme switch is removed", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const layout = await read("../app/layout.jsx");
+  const css = await read("../app/globals.css");
+
+  assert.match(app, /className="brand-lockup"/);
+  assert.match(app, /src="\/icon\.svg"/);
+  assert.match(app, /DISCOVER MOVIES/);
+  assert.doesNotMatch(app, /themeMode|themeReady|themeMenuOpen|theme-switcher/);
+  assert.match(layout, /data-theme="dark"/);
+  assert.doesNotMatch(css, /data-theme="light"/);
+});
+
+test("mobile navigation is attached to the viewport and catalog grids are compact", async () => {
+  const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
+
+  assert.match(css, /\.bottom-nav \{[\s\S]*?left:0;[\s\S]*?right:0;[\s\S]*?bottom:0;/);
+  assert.match(css, /transform:none !important/);
+  assert.match(css, /\.catalog-grid \{[\s\S]*?repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media \(min-width:600px\) and \(max-width:1100px\)[\s\S]*?repeat\(4,minmax\(0,1fr\)\)/);
+  assert.equal((app.match(/className="catalog-grid"/g) || []).length, 4);
+});
+
+test("React UI stack uses Headless UI and local shadcn primitives without importing Svelte Bits UI", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const pkg = JSON.parse(await read("../package.json"));
+  const config = JSON.parse(await read("../components.json"));
+  const button = await read("../app/components/ui/button.jsx");
+  const badge = await read("../app/components/ui/badge.jsx");
+
+  assert.match(app, /from "@headlessui\/react"/);
+  assert.match(app, /from "\.\/ui\/button\.jsx"/);
+  assert.match(app, /from "\.\/ui\/card\.jsx"/);
+  assert.equal(pkg.dependencies["@headlessui/react"] !== undefined, true);
+  assert.equal(pkg.dependencies["class-variance-authority"] !== undefined, true);
+  assert.equal(config.tailwind.css, "app/globals.css");
+  assert.match(button, /buttonVariants/);
+  assert.match(badge, /badgeVariants/);
+  assert.doesNotMatch(app, /from ["']bits-ui["']/);
+});
