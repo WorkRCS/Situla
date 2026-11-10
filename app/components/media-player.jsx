@@ -60,6 +60,11 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
               setStartAt(Math.max(0, Math.floor(Number(legacyProgress.watched))));
             }
           } catch {}
+        } else {
+          setSeriesInfo({
+            episodes: Number(payload.item.episodes) || null,
+            episodeGuide: Array.isArray(payload.item.episodeGuide) ? payload.item.episodeGuide : []
+          });
         }
         setMetadataError("");
         setCatalogVerified(true);
@@ -217,6 +222,34 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + nextEpisode.season + "/" + nextEpisode.episode);
   }
 
+  const animeEpisodeGuide = (Array.isArray(seriesInfo?.episodeGuide) ? seriesInfo.episodeGuide : [])
+    .filter((item) => Number(item?.episodeNumber) > 0)
+    .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber) ||
+      Number(a.episodeNumber) - Number(b.episodeNumber));
+  const currentAnimeGuideIndex = animeEpisodeGuide.findIndex((item) =>
+    Number(item.absoluteEpisodeNumber || item.episodeNumber) === Number(animeRoute?.episode)
+  );
+  const nextAnimeGuideEntry = currentAnimeGuideIndex >= 0
+    ? animeEpisodeGuide[currentAnimeGuideIndex + 1] || null
+    : null;
+  const nextAnimeEpisode = kind === "anime" && animeRoute
+    ? (nextAnimeGuideEntry
+      ? Number(nextAnimeGuideEntry.absoluteEpisodeNumber || nextAnimeGuideEntry.episodeNumber)
+      : (!animeEpisodeGuide.length && Number(seriesInfo?.episodes) > animeRoute.episode ? animeRoute.episode + 1 : null))
+    : null;
+
+  function playNextAnimeEpisode() {
+    if (!animeRoute || kind !== "anime" || !Number.isSafeInteger(nextAnimeEpisode) || nextAnimeEpisode < 1) return;
+    try {
+      localStorage.setItem("situla:anime-last-episode:v1", JSON.stringify({
+        malId: animeRoute.malId,
+        episode: nextAnimeEpisode,
+        audio: animeRoute.audio
+      }));
+    } catch {}
+    router.push("/watch/anime/" + animeRoute.malId + "/" + nextAnimeEpisode + "/" + animeRoute.audio);
+  }
+
   function tryAlternateAnimeAudio() {
     if (!animeRoute || kind !== "anime") return;
     const alternate = animeRoute.audio === "sub" ? "dub" : "sub";
@@ -269,6 +302,9 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         {kind === "anime" && <div className="series-player-actions">
           <button type="button" className="series-player-guide" onClick={tryAlternateAnimeAudio} disabled={!animeRoute}>
             Try {audio === "sub" ? "Dub" : "Sub"} instead
+          </button>
+          <button type="button" className="series-player-next" onClick={playNextAnimeEpisode} disabled={!nextAnimeEpisode}>
+            Next episode <i className="bi bi-skip-forward-fill" aria-hidden="true" />
           </button>
         </div>}
         {kind === "tv" && <div className="series-player-actions">
