@@ -101,7 +101,7 @@ export async function auditAnimeArtwork({ apply = process.argv.includes("--apply
     }))
   };
   await mkdir("reports", { recursive: true });
-  await writeFile("reports/anime-artwork-audit.json", JSON.stringify(auditReport, null, 2) + "\\n", "utf8");
+  await writeFile("reports/anime-artwork-audit.json", JSON.stringify(auditReport, null, 2) + "\n", "utf8");
   console.log("Full audit report saved to reports/anime-artwork-audit.json");
 
   console.log("Anime artwork audit");
