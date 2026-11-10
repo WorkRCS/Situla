@@ -9,11 +9,11 @@ test("Hindi movie iframe blocks popups and top-level redirects while retaining p
   const moviePlayer = await read("../app/watch/[imdbId]/player.jsx");
   const seriesPlayer = await read("../app/components/media-player.jsx");
 
-  assert.match(moviePlayer, /<iframe[\\s\\S]*?src=\\{playerUrl\\}/);
-  assert.match(moviePlayer, /sandbox=\\{playerLanguage === "hi" \\? "allow-scripts allow-same-origin allow-forms allow-presentation" : undefined\\}/);
+  assert.match(moviePlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
+  assert.match(moviePlayer, /sandbox=\{playerLanguage === "hi" \? "allow-scripts allow-same-origin allow-forms allow-presentation" : undefined\}/);
   assert.doesNotMatch(moviePlayer, /allow-popups|allow-top-navigation/i);
-  assert.match(seriesPlayer, /<iframe[\\s\\S]*?src=\\{playerUrl\\}/);
-  assert.doesNotMatch(seriesPlayer, /\\bsandbox\\s*=/i);
+  assert.match(seriesPlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
+  assert.doesNotMatch(seriesPlayer, /\bsandbox\s*=/i);
 });
 
 test("Hindi/English player switch is restricted to the Movie watch page", async () => {

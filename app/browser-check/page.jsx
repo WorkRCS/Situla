@@ -11,7 +11,7 @@ function safeReturnPath(value) {
     typeof value !== "string" ||
     !value.startsWith("/") ||
     value.startsWith("//") ||
-    value.startsWith("/\\\\")
+    value.includes("\\")
   ) {
     return "/";
   }
@@ -48,7 +48,8 @@ export default function BrowserCheckPage() {
 
       const secure = window.location.protocol === "https:" ? "; Secure" : "";
       document.cookie =
-        `${BRAVE_ACCESS_COOKIE_NAME}=${BRAVE_ACCESS_COOKIE_VALUE}; Path=/; Max-Age=34560000; SameSite=Lax${secure}`;
+        BRAVE_ACCESS_COOKIE_NAME + "=" + BRAVE_ACCESS_COOKIE_VALUE +
+        "; Path=/; Max-Age=34560000; SameSite=Lax" + secure;
 
       const requestedPath = new URLSearchParams(window.location.search).get("next");
       window.location.replace(safeReturnPath(requestedPath));

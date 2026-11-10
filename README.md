@@ -68,6 +68,11 @@ The public API is read-only for catalog data. There are no write routes or privi
 - `GET /api/anime?page=1&limit=40`
 - `GET /api/anime/:malId`
 
-## Android
 
-The Android package opens the hosted site inside a native WebView. Fullscreen requests are handled by Android's WebChromeClient. Android also restores the WireGuard tunnel client with six region profile slots, optional auto-connect to the fastest previously measured provisioned region, and five-hour rotation. Each region still requires a genuine provider-issued WireGuard profile; no public VPN gateway or credentials are bundled. The Android WebView integrates Brave's `adblock-rust` network engine through a community-maintained Kotlin/JNI bridge (MPL-2.0), with EasyList, EasyPrivacy, uBlock Origin ads/privacy filters, Brave-specific and Android-specific rules, Brave regional first-party rules (including Indian site cosmetics), and Brave Unbreak rules cached and refreshed every 12 hours. The Kotlin wrapper source is vendored with attribution; its published AAR is used only to extract the prebuilt native libraries and filter resources. It also explicitly rejects new WebView windows/popups and retains a top-level redirect guard and AdGuard DNS when the full-tunnel VPN is connected. Cosmetic filtering is limited to the Situla top-level document; cross-origin player iframe contents cannot be inspected by the parent WebView. This is not the full Brave browser or full Shields implementation, and same-host/in-stream ads cannot be guaranteed removable. The JNI bridge is community-maintained (not an official Brave Android SDK) and MPL-2.0.
+## Browser access
+
+The website is restricted to Brave Browser and the existing Situla Android WebView app. Brave is recognized through its documented \`Sec-CH-UA\` brand hint when supplied, with a browser-side \`navigator.brave.isBrave()\` verification fallback. Successful Brave verification is cached in a first-party cookie for up to 400 days.
+
+The existing Android wrapper removes the \`; wv\` user-agent token but keeps Android WebView's \`Version/4.0\` signature, so the website continues to accept that installed app. This is a compatibility check, not cryptographic app authentication: other Android apps using a matching WebView user-agent can also pass it, and user-agent values can be spoofed. Ordinary Chrome, Safari, Firefox, and other non-Brave browsers are redirected to a browser access page. The access check applies to website pages and API routes.
+
+The native Android source project and its Android build workflow have been removed from this repository. Previously installed copies of the Android app can continue loading the hosted website while they retain the supported WebView user-agent signature.

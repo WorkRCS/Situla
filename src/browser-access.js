@@ -9,19 +9,19 @@ export const BRAVE_ACCESS_COOKIE_VALUE = "1";
 export function isSitulaAndroidWebView(userAgent = "") {
   const value = String(userAgent);
   return (
-    /\\bAndroid\\b/i.test(value) &&
-    /\\bVersion\\/4\\.0\\b/i.test(value) &&
-    /\\bChrome\\/[\\d.]+/i.test(value) &&
-    /\\bMobile Safari\\/[\\d.]+/i.test(value)
+    /\bAndroid\b/i.test(value) &&
+    /\bVersion\/4\.0\b/i.test(value) &&
+    /\bChrome\/[\d.]+/i.test(value) &&
+    /\bMobile Safari\/[\d.]+/i.test(value)
   );
 }
 
 export function hasBraveClientHint(secChUa = "") {
-  return /"Brave"\\s*;\\s*v=/i.test(String(secChUa));
+  return /"Brave"\s*;\s*v=/i.test(String(secChUa));
 }
 
 export function hasBraveIOSUserAgent(userAgent = "") {
-  return /\\bBrave\\/1\\b/i.test(String(userAgent));
+  return /\bBrave\/1\b/i.test(String(userAgent));
 }
 
 export function isAllowedBrowserRequest({ userAgent = "", secChUa = "" } = {}) {
