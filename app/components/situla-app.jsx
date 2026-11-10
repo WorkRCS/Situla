@@ -112,7 +112,6 @@ function SeriesCard({ item, kind, onOpen }) {
   );
 }
 
-function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
 function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   if (!item) return null;
   const isTv = kind === "tv";
@@ -147,7 +146,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   );
 }
 
-
+function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds }) {
   const rowRef = useRef(null);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
   if (!movies.length) return null;
