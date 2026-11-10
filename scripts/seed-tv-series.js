@@ -239,7 +239,7 @@ export function mapTvmazeShow(show) {
     ? show.genres.map((genre) => String(genre).trim()).filter(Boolean)
     : [];
 
-  if (!/^tt\\d{5,12}$/.test(imdbId)) return { ok: false, reason: "missing-valid-imdb-id" };
+  if (!/^tt\d{5,12}$/.test(imdbId)) return { ok: false, reason: "missing-valid-imdb-id" };
   if (!show?.id || !show?.name || !image) return { ok: false, reason: "missing-show-metadata-or-poster" };
   if (genres.some((genre) => DISALLOWED_GENRES.has(genre))) return { ok: false, reason: "adult-genre-filter" };
   if (!Array.isArray(episodes) || episodes.length < 2) return { ok: false, reason: "missing-complete-episode-guide" };
