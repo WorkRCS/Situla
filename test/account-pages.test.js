@@ -79,7 +79,7 @@ test("Login showcase mixes live movie, TV and anime posters in opposing vertical
   assert.ok(pages.includes("login-poster-rail"));
   assert.ok(pages.includes('direction="down"'));
   assert.ok(pages.includes('direction="up"'));
-  assert.ok(pages.includes('loading={copy === 0 ? "eager" : "lazy"}'));
+  assert.ok(pages.includes('loading={prioritize ? "eager" : "lazy"}'));
   assert.ok(css.includes("@keyframes login-poster-up"));
   assert.ok(css.includes("@keyframes login-poster-down"));
   assert.ok(css.includes("animation:login-poster-up"));
