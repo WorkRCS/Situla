@@ -16,7 +16,7 @@ test("global Site footer appears after page content and links to the copyright p
 });
 
 test("copyright policy explains third-party video embeds without claiming blanket legal immunity", async () => {
-  const page = await read("../app/copyright/page.jsx");
+  const page = (await read("../app/copyright/page.jsx")).replace(/\s+/g, " ");
   assert.match(page, /does not upload[\s\S]*?store complete[\s\S]*?video files/i);
   assert.match(page, /embedded players/);
   assert.match(page, /third[\s\S]*?parties/i);
