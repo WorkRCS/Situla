@@ -355,8 +355,8 @@ test("home movie, TV, anime and hero clicks provide item-level loading feedback"
   assert.match(app, /aria-busy=\{navigating\}/);
   assert.match(app, /hero-route-loading/);
   assert.match(app, /Opening…/);
-  assert.match(app, /openHomeMovie\(movie\)/);
-  assert.match(app, /openHomeSeries\(series, kind\)/);
+  assert.match(app, /function openHomeMovie\(movie, options\)/);
+  assert.match(app, /function openHomeSeries\(series, kind, options\)/);
   assert.match(app, /router\.prefetch\("\/watch\/" \+ encodeURIComponent\(imdbId\)\)/);
   assert.match(app, /prefetchHomeSpotlight\(featured\)/);
   assert.match(css, /@keyframes situla-button-spin/);
