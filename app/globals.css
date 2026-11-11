@@ -3208,3 +3208,29 @@ body { color:#f7f7fa; background:#08090e; }
   .plans-tv-section { grid-template-columns:minmax(0,1fr); }
   .plans-tv-icon { width:42px; height:42px; }
 }
+
+
+.plans-playback-line {
+  display:grid;
+  gap:5px;
+  margin-top:12px;
+  padding:9px 10px;
+  border:1px solid rgba(232,182,91,.12);
+  border-radius:10px;
+  background:rgba(232,182,91,.045);
+}
+.plans-playback-line > span {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#b69a68;
+  font-size:7px;
+  font-weight:950;
+  letter-spacing:.12em;
+}
+.plans-playback-line > strong {
+  color:#c5c9d2;
+  font-size:8px;
+  font-weight:750;
+  line-height:1.55;
+}
