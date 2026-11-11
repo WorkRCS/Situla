@@ -363,9 +363,9 @@ test("home movie, TV, anime and hero clicks provide item-level loading feedback"
   assert.match(css, /\.media-loading-overlay/);
 });
 
-test("desktop homepage hero is slightly shorter without changing the gold palette", async () => {
+test("desktop homepage hero stays compact without changing the gold palette", async () => {
   const css = await read("../app/globals.css");
-  assert.match(css, /@media \(min-width:1101px\)[\s\S]*?\.home-page-layout \.hero-card[\s\S]*?min-height:clamp\(500px,65vh,700px\)/);
+  assert.match(css, /@media \(min-width:1101px\)[\s\S]*?\.home-page-layout \.hero-card[\s\S]*?min-height:clamp\(340px,43vh,460px\)/);
   assert.match(css, /--accent:#e8b65b/);
   assert.match(css, /#f7d58b/);
 });

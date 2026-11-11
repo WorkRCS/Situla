@@ -96,20 +96,70 @@ function MoviePosterImage({ movie }) {
   );
 }
 
+function movieCardHref(movie) {
+  const imdbId = String(movie?.imdbId || "").toLowerCase();
+  return /^tt\d{5,12}$/.test(imdbId) ? "/watch/" + encodeURIComponent(imdbId) : null;
+}
+
+function seriesCardHref(item, kind) {
+  if (kind === "tv") {
+    const tmdbId = Number(item?.tmdbId);
+    return Number.isSafeInteger(tmdbId) && tmdbId > 0 ? "/tv/" + tmdbId : null;
+  }
+  const malId = String(item?.malId || "").trim();
+  return /^\d+$/.test(malId) ? "/anime/" + encodeURIComponent(malId) : null;
+}
+
 function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
+  const href = movieCardHref(movie);
+
+  function handleOpen(event) {
+    if (navigating) {
+      event.preventDefault();
+      return;
+    }
+    onOpen?.(movie, { navigate: false });
+  }
+
+  const cardContent = (
+    <>
+      <div className="movie-poster">
+        <MoviePosterImage movie={movie} />
+        {movie.voteAverage > 0 && (
+          <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
+        )}
+        {navigating && <span className="media-loading-overlay" role="status" aria-label="Opening movie"><span className="inline-loading-spinner" /></span>}
+      </div>
+      <h3 className="mt-2 truncate text-[13px] font-bold text-white">{movie.title}</h3>
+      <p className="mt-1 text-[11px] text-[#858b9b]">{movie.releaseYear || "Movie"}{movie.runtime ? " · " + formatRuntime(movie.runtime) : ""}</p>
+    </>
+  );
+
   return (
     <article className="movie-card">
-      <button type="button" onClick={() => onOpen(movie)} onMouseEnter={() => onPreload?.(movie)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
-        <div className="movie-poster">
-          <MoviePosterImage movie={movie} />
-          {movie.voteAverage > 0 && (
-            <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
-          )}
-          {navigating && <span className="media-loading-overlay" role="status" aria-label="Opening movie"><span className="inline-loading-spinner" /></span>}
-        </div>
-        <h3 className="mt-2 truncate text-[13px] font-bold text-white">{movie.title}</h3>
-        <p className="mt-1 text-[11px] text-[#858b9b]">{movie.releaseYear || "Movie"}{movie.runtime ? " · " + formatRuntime(movie.runtime) : ""}</p>
-      </button>
+      {href ? (
+        <Link
+          href={href}
+          prefetch={false}
+          onClick={handleOpen}
+          onMouseEnter={() => onPreload?.(movie)}
+          className="media-open-button media-open-link block w-full text-left no-underline"
+          aria-busy={navigating}
+        >
+          {cardContent}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpen}
+          onMouseEnter={() => onPreload?.(movie)}
+          className="media-open-button block w-full text-left"
+          disabled={navigating}
+          aria-busy={navigating}
+        >
+          {cardContent}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => onSave(movie)}
@@ -164,22 +214,56 @@ function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
     ? [year, item.runtime ? item.runtime + " min / ep" : "TV series", item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "", item.numberOfEpisodes ? item.numberOfEpisodes + " eps" : ""].filter(Boolean).join(" · ")
     : [year, item.episodes ? item.episodes + " episodes" : "Anime series"].filter(Boolean).join(" · ");
   const category = (item.genres || []).slice(0, 2).join(" · ");
-  const synopsis = isTv ? item.overview : item.synopsis;
+  const href = seriesCardHref(item, kind);
+
+  function handleOpen(event) {
+    if (navigating) {
+      event.preventDefault();
+      return;
+    }
+    onOpen?.(item, kind, { navigate: false });
+  }
+
+  const cardContent = (
+    <>
+      <div className="movie-poster">
+        <SeriesPosterImage item={item} title={title} />
+        {rating > 0 && (
+          <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
+        )}
+        {navigating && <span className="media-loading-overlay" role="status" aria-label={"Opening " + (isTv ? "TV series" : "anime")}><span className="inline-loading-spinner" /></span>}
+      </div>
+      <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
+      <p className="series-card-meta">{meta}</p>
+      {category && <p className="series-card-category">{category}</p>}
+    </>
+  );
+
   return (
     <article className={"movie-card series-card series-card-" + kind}>
-      <button type="button" onClick={() => onOpen(item, kind)} onMouseEnter={() => onPreload?.(item, kind)} className="media-open-button block w-full text-left" disabled={navigating} aria-busy={navigating}>
-        <div className="movie-poster">
-          <SeriesPosterImage item={item} title={title} />
-          {rating > 0 && (
-            <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
-          )}
-          {navigating && <span className="media-loading-overlay" role="status" aria-label={"Opening " + (isTv ? "TV series" : "anime")}><span className="inline-loading-spinner" /></span>}
-        </div>
-        <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
-        <p className="series-card-meta">{meta}</p>
-        {category && <p className="series-card-category">{category}</p>}
-        {synopsis && <p className="series-card-description">{synopsis}</p>}
-      </button>
+      {href ? (
+        <Link
+          href={href}
+          prefetch={false}
+          onClick={handleOpen}
+          onMouseEnter={() => onPreload?.(item, kind)}
+          className="media-open-button media-open-link block w-full text-left no-underline"
+          aria-busy={navigating}
+        >
+          {cardContent}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpen}
+          onMouseEnter={() => onPreload?.(item, kind)}
+          className="media-open-button block w-full text-left"
+          disabled={navigating}
+          aria-busy={navigating}
+        >
+          {cardContent}
+        </button>
+      )}
     </article>
   );
 }
@@ -277,7 +361,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, pendingNavigation = "
               key={seriesNavigationKey(item, kind)}
               item={item}
               kind={kind}
-              onOpen={() => onOpen(item, kind)}
+              onOpen={onOpen}
               onPreload={onPreload}
               navigating={pendingNavigation === seriesNavigationKey(item, kind)}
             />
@@ -799,17 +883,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return openMovie(item);
   }
 
-  function openHomeMovie(movie) {
+  function openHomeMovie(movie, options) {
     setPendingHomeNavigation(movieNavigationKey(movie));
-    return openMovie(movie);
+    return openMovie(movie, options);
   }
 
-  function openHomeSeries(series, kind) {
+  function openHomeSeries(series, kind, options) {
     setPendingHomeNavigation(seriesNavigationKey(series, kind));
-    return kind === "tv" ? openTvSeries(series) : openAnimeSeries(series);
+    return kind === "tv" ? openTvSeries(series, options) : openAnimeSeries(series, options);
   }
 
-  function openMovie(movie) {
+  function openMovie(movie, { navigate = true } = {}) {
     const imdbId = String(movie?.imdbId || "").toLowerCase();
     if (!/^tt\d{5,12}$/.test(imdbId)) {
       setError("This saved movie has no valid IMDb ID. Refresh the catalog and open it again.");
@@ -819,7 +903,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     try { localStorage.setItem("situla:movie:" + imdbId, JSON.stringify(normalized)); } catch {}
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
     setSearchOpen(false);
-    router.push("/watch/" + encodeURIComponent(imdbId));
+    if (navigate) router.push("/watch/" + encodeURIComponent(imdbId));
   }
 
   function openSearchResult(item) {
@@ -829,17 +913,22 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return openMovie(item);
   }
 
-  function openTvSeries(series) {
+  function openTvSeries(series, { navigate = true } = {}) {
     const tmdbId = Number(series?.tmdbId);
     if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) {
       setError("This TV series has no valid TMDB ID. Refresh the catalog and open it again.");
       return;
     }
-    router.push("/tv/" + tmdbId);
+    if (navigate) router.push("/tv/" + tmdbId);
   }
 
-  function openAnimeSeries(series) {
-    router.push("/anime/" + encodeURIComponent(series.malId));
+  function openAnimeSeries(series, { navigate = true } = {}) {
+    const malId = String(series?.malId || "").trim();
+    if (!/^\d+$/.test(malId)) {
+      setError("This anime has no valid MyAnimeList ID. Refresh the catalog and open it again.");
+      return;
+    }
+    if (navigate) router.push("/anime/" + encodeURIComponent(malId));
   }
 
   function toggleSaved(movie) {
@@ -1303,8 +1392,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <>
                 <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
                 <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item) => openHomeSeries(item, "tv")} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item) => openHomeSeries(item, "anime")} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item, _kind, options) => openHomeSeries(item, "tv", options)} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item, _kind, options) => openHomeSeries(item, "anime", options)} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
               </>
             )}
 

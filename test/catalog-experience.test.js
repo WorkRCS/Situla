@@ -101,12 +101,31 @@ test("TV and Anime detail pages share the adaptive cinematic detail system", asy
   assert.match(css, /@media \(orientation:landscape\) and \(max-height:560px\)/);
 });
 
-test("TV and Anime catalogue cards expose concise metadata and descriptions", async () => {
+test("TV and Anime catalogue cards keep metadata but hide synopsis outside detail pages", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const tvDetail = await read("../app/tv/[tmdbId]/detail.jsx");
+  const animeDetail = await read("../app/anime/[malId]/detail.jsx");
   const css = await read("../app/globals.css");
   assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind\}/);
-  assert.match(app, /const synopsis = isTv \? item\.overview : item\.synopsis/);
-  assert.match(app, /series-card-description/);
-  assert.match(css, /\.series-card-description[\s\S]*?-webkit-line-clamp:3/);
+  assert.match(app, /series-card-category/);
+  assert.doesNotMatch(app, /series-card-description|const synopsis = isTv/);
+  assert.doesNotMatch(css, /series-card-description/);
+  assert.match(tvDetail, /series-detail-description/);
+  assert.match(animeDetail, /series-detail-description/);
   assert.match(app, /catalog-page-layout/);
+});
+
+test("movie, TV, and Anime cards have direct routes and preserve click metadata without double navigation", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /function movieCardHref\(movie\)/);
+  assert.match(app, /"\/watch\/" \+ encodeURIComponent\(imdbId\)/);
+  assert.match(app, /function seriesCardHref\(item, kind\)/);
+  assert.match(app, /"\/tv\/" \+ tmdbId/);
+  assert.match(app, /"\/anime\/" \+ encodeURIComponent\(malId\)/);
+  assert.match(app, /<Link[\s\S]*?href=\{href\}[\s\S]*?prefetch=\{false\}/);
+  assert.match(app, /onOpen\?\.\(movie, \{ navigate: false \}\)/);
+  assert.match(app, /onOpen\?\.\(item, kind, \{ navigate: false \}\)/);
+  assert.match(app, /function openMovie\(movie, \{ navigate = true \} = \{\}\)/);
+  assert.match(app, /function openTvSeries\(series, \{ navigate = true \} = \{\}\)/);
+  assert.match(app, /function openAnimeSeries\(series, \{ navigate = true \} = \{\}\)/);
 });

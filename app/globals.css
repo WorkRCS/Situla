@@ -2042,18 +2042,6 @@ body { color:#f7f7fa; background:#08090e; }
   font-size:9px;
   line-height:1.35;
 }
-.series-card-description {
-  display:-webkit-box;
-  min-height:0;
-  overflow:hidden;
-  margin-top:6px;
-  color:#9297a7;
-  font-size:10px;
-  line-height:1.55;
-  text-align:left;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:3;
-}
 .catalog-grid .series-card h3 {
   margin-top:8px;
   font-size:clamp(11px,1.1vw,14px);
@@ -2062,12 +2050,9 @@ body { color:#f7f7fa; background:#08090e; }
   overflow-wrap:anywhere;
 }
 .catalog-grid .series-card .movie-poster { aspect-ratio:2/3; }
-.catalog-grid .series-card-description { min-height:4.6em; }
 @media (max-width:599px) {
   .catalog-grid .series-card h3 { font-size:11px; }
   .series-card-meta { font-size:9px; }
-  .series-card-description { font-size:9px; line-height:1.45; -webkit-line-clamp:2; }
-  .catalog-grid .series-card-description { min-height:2.9em; }
 }
 
 /* Shared cinematic detail pages for TV and Anime. */
@@ -2273,10 +2258,6 @@ body { color:#f7f7fa; background:#08090e; }
 .anime-catalog-page .catalog-spotlight {
   margin-bottom:clamp(20px,2.6vw,30px);
 }
-.tv-catalog-page .series-card-description,
-.anime-catalog-page .series-card-description {
-  color:#9da3b2;
-}
 @media (max-width:767px) {
   .tv-detail-page .series-detail-sidebar {
     display:flex;
@@ -2316,13 +2297,6 @@ body { color:#f7f7fa; background:#08090e; }
   flex:0 0 clamp(140px,13.5vw,184px);
 }
 .home-series-shelf .series-card .movie-poster { aspect-ratio:2/3; }
-.home-series-shelf .series-card-description {
-  display:-webkit-box;
-  overflow:hidden;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-  line-height:1.45;
-}
 .shelf-browse-link {
   display:inline-flex;
   flex:none;
@@ -2444,3 +2418,8 @@ body { color:#f7f7fa; background:#08090e; }
 @media (prefers-reduced-motion:reduce) {
   .inline-loading-spinner { animation:none; }
 }
+
+
+/* Poster cards are native client-side routes; keep links visually identical to buttons. */
+.media-open-link { color:inherit; text-decoration:none; }
+.media-open-link:hover,.media-open-link:focus-visible { color:inherit; text-decoration:none; }
