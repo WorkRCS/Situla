@@ -10,8 +10,8 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   const footer = await read("../app/components/site-footer.jsx");
   assert.match(route, /PlansPage/);
   assert.match(page, /Anonymous Guest/);
-  assert.match(page, />Free</);
-  assert.match(page, />Premium</);
+  assert.match(page, /name: "Free"/);
+  assert.match(page, /name: "Premium"/);
   assert.match(page, /allowance: "1 hour"/);
   assert.match(page, /cooldown: "5 hours"/);
   assert.match(page, /cooldown: "2 hours"/);

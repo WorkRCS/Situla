@@ -74,7 +74,7 @@ const PLANS = [
     cooldown: "2 hours",
     devices: "Up to 3 registered devices",
     badge: "Verified badge",
-    player: "VidBolt for Premium movies · VidBolt for TV & Anime",
+    player: "VidBolt for Premium movies (planned) · VidBolt for TV & Anime",
     updates: "Early updates and detailed upcoming-movie information",
     features: [
       "Account and active Premium subscription required",
@@ -210,6 +210,7 @@ export default function PlansPage() {
                     <div><span>COOLDOWN</span><strong>{plan.cooldown}</strong><small>after limit</small></div>
                     <div><span>DEVICES</span><strong>{plan.devices}</strong><small>access policy</small></div>
                   </div>
+                  <div className="plans-playback-line"><span><i className="bi bi-play-circle" aria-hidden="true" /> PLAYBACK</span><strong>{plan.player}</strong></div>
                   <div className="plans-feature-block">
                     <h4><i className="bi bi-check2-circle" aria-hidden="true" /> Included</h4>
                     <ul>{plan.features.map((feature) => <li key={feature}><i className="bi bi-check2" aria-hidden="true" /> <span>{feature}</span></li>)}</ul>
