@@ -243,9 +243,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const tvSeasons = (Array.isArray(seriesInfo?.seasons) ? seriesInfo.seasons : [])
     .filter((item) => item && Number(item.episodeCount) > 0 && Number(item.seasonNumber) > 0)
     .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber));
-  const currentSeason = tvRoute
-    ? tvSeasons.find((item) => Number(item.seasonNumber) === tvRoute.season)
-    : null;
   const nextSeason = tvRoute
     ? tvSeasons.find((item) => Number(item.seasonNumber) > tvRoute.season)
     : null;
@@ -387,6 +384,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
               aria-expanded={episodePickerOpen}
               aria-haspopup="true"
               aria-label="Open episode picker"
+              disabled={!catalogVerified || !animeEpisodeOptions.length}
             >
               <i className="bi bi-skip-forward-fill" aria-hidden="true" /> Next Episode
               <i className="bi bi-chevron-down" aria-hidden="true" />
