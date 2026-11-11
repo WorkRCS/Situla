@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
-import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidlinkMovieUrl, vidlinkTvUrl } from '../src/player-urls.js';
+import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidboltTvUrl, vidlinkMovieUrl } from '../src/player-urls.js';
 
 test('admin and crawler API routes are removed', async () => {
   const paths = [
@@ -208,21 +208,20 @@ test('public Movie and TV APIs validate their distinct identifier formats', asyn
 });
 
 
-test('VidLink movie URLs remain IMDb-based while TV URLs use numeric TMDB IDs', () => {
+test('VidLink movie URLs remain unchanged while TV URLs use VidBolt and numeric TMDB IDs', () => {
   const movieUrl = new URL(vidlinkMovieUrl('tt0848228'));
   assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
   assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(movieUrl.searchParams.get('secondaryColor'), '171a23');
-  const tvUrl = new URL(vidlinkTvUrl(1399, 1, 1));
-  assert.equal(tvUrl.origin + tvUrl.pathname, 'https://vidlink.pro/tv/1399/1/1');
-  assert.equal(tvUrl.searchParams.get('primaryColor'), 'e8b65b');
-  assert.equal(tvUrl.searchParams.get('secondaryColor'), '171a23');
-  const tvSpecialUrl = new URL(vidlinkTvUrl('1399', 0, 1));
+  const tvUrl = new URL(vidboltTvUrl(1399, 1, 1));
+  assert.equal(tvUrl.origin + tvUrl.pathname, 'https://vidbolt.pro/tv/1399/1/1');
+  assert.equal(tvUrl.searchParams.get('theme'), 'e8b65b');
+  const tvSpecialUrl = new URL(vidboltTvUrl('1399', 0, 1));
   assert.equal(tvSpecialUrl.pathname, '/tv/1399/0/1');
   assert.equal(vidlinkMovieUrl('24428'), null);
-  assert.equal(vidlinkTvUrl('tt0944947', 1, 1), null);
-  assert.equal(vidlinkTvUrl('1399', -1, 1), null);
-  assert.equal(vidlinkTvUrl('1399', 1, 0), null);
+  assert.equal(vidboltTvUrl('tt0944947', 1, 1), null);
+  assert.equal(vidboltTvUrl('1399', -1, 1), null);
+  assert.equal(vidboltTvUrl('1399', 1, 0), null);
   assert.deepEqual(normalizeTvPlayerRoute('1399', '1', '1'), { tmdbId: 1399, season: 1, episode: 1 });
   assert.equal(normalizeTvPlayerRoute('tt0944947', '1', '1'), null);
 });
