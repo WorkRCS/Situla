@@ -197,6 +197,9 @@ test("watch history renders an accessible progress meter inside each history car
   assert.match(app, /<DisclosureButton className="history-collapse"/);
   assert.match(app, /<Progress value=\{progress\} ariaLabel=/);
   assert.match(app, /history-time-labels/);
+  assert.match(app, /history-type-chip/);
+  assert.match(app, /history-progress-heading/);
+  assert.match(app, /history-resume-action/);
   assert.match(progress, /role="progressbar"/);
   assert.match(progress, /aria-valuenow=\{Math\.round\(safeValue\)\}/);
   assert.match(headless, /ui-card/);
@@ -317,15 +320,20 @@ test("Anime catalog is a manually curated MAL list and the seed command uses the
 });
 
 
-test("TV player exposes working Next Episode and Next Season navigation from verified season metadata", async () => {
+test("TV and Anime player expose a route-aware Next Episode picker with episode metadata", async () => {
   const player = await read("../app/components/media-player.jsx");
-  assert.match(player, /function playNextEpisode\(\)/);
+  assert.match(player, /className=\{"episode-picker"/);
+  assert.match(player, /aria-label="Open episode picker"/);
+  assert.match(player, /fetch\("\/api\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\) \+ "\/seasons\/" \+ encodeURIComponent\(episodePickerSeason\)/);
+  assert.match(player, /episodePickerSeason/);
+  assert.match(player, /tvEpisodeOptions\.map/);
+  assert.match(player, /animeEpisodeOptions\.map/);
+  assert.match(player, /function selectPickerEpisode\(/);
+  assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\)/);
+  assert.match(player, /router\.push\("\/watch\/anime\/" \+ animeRoute\.malId/);
+  assert.match(player, /aria-current=\{isCurrent \? "true" : undefined\}/);
   assert.match(player, /function playNextSeason\(\)/);
-  assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\) \+ "\/" \+ Number\(nextSeason\.seasonNumber\) \+ "\/1"\)/);
-  assert.match(player, /Next episode[\s\S]*?disabled=\{!nextEpisode \|\| !catalogVerified\}/);
   assert.match(player, /onClick=\{playNextSeason\} disabled=\{!nextSeason \|\| !catalogVerified\}/);
-  assert.match(player, />\s*Next season/);
-  assert.match(player, /episodeCount\) > 0 && Number\(item\.seasonNumber\) > 0/);
 });
 
 

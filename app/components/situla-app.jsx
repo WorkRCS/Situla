@@ -45,6 +45,12 @@ function formatClock(totalSeconds) {
   return [hours, minutes, seconds].map((part) => String(part).padStart(2, "0")).join(":");
 }
 
+function formatHistoryDate(timestamp) {
+  const value = Number(timestamp);
+  if (!Number.isFinite(value) || value <= 0) return "Recently watched";
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(value));
+}
+
 function formatRuntime(minutes) {
   const seconds = Math.max(0, Math.round(Number(minutes) || 0) * 60);
   return seconds ? formatClock(seconds) : "";
@@ -1582,9 +1588,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         {sortedHistory.length ? (
                           <CardContent className="history-list">
                             {sortedHistory.map((item) => {
+                              const mediaType = String(item.mediaType || "movie").toLowerCase();
+                              const typeLabel = mediaType === "tv" ? "TV SERIES" : mediaType === "anime" ? "ANIME" : "MOVIE";
                               const duration = Math.max(0, Number(item.duration) || 0);
                               const watched = Math.min(duration || Number(item.watched) || 0, Math.max(0, Number(item.watched) || 0));
+                              const remaining = Math.max(0, duration - watched);
                               const progress = duration > 0 ? Math.max(0, Math.min(100, (watched / duration) * 100)) : 0;
+                              const episodeLabel = mediaType === "tv"
+                                ? "Season " + String(Number(item.season) || 0).padStart(2, "0") + " · Episode " + item.episode
+                                : mediaType === "anime"
+                                  ? "Episode " + item.episode + " · " + String(item.audio || "sub").toUpperCase()
+                                  : "Feature film";
                               return (
                                 <article key={item.key} className="history-row">
                                   <button
@@ -1593,14 +1607,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                                     onClick={() => resumeHistoryItem(item)}
                                     aria-label={"Continue watching " + (item.title || "this title") + " from " + formatClock(watched)}
                                   >
-                                    {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
-                                    <div className="history-item-copy">
-                                      <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
-                                      <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
-                                      <Progress value={progress} ariaLabel={"Watched progress for " + (item.title || "this title")} className="history-progress" />
-                                      <div className="history-time-labels"><span>{formatClock(watched)} watched</span><span>{formatClock(duration)} total</span></div>
-                                      <span className="history-resume-action"><BootstrapIcon icon="play-fill" size={11} /> Continue watching</span>
-                                    </div>
+                                    <span className="history-thumb">
+                                      {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <span className="history-poster"><BootstrapIcon icon="film" size={20} /></span>}
+                                      <span className="history-type-chip">{typeLabel}</span>
+                                    </span>
+                                    <span className="history-item-copy">
+                                      <span className="history-item-heading">
+                                        <span className="history-title">{item.title || "Untitled"}</span>
+                                        <span className="history-updated">{formatHistoryDate(item.updatedAt)}</span>
+                                      </span>
+                                      <span className="history-meta">{episodeLabel}</span>
+                                      <span className="history-progress-heading">
+                                        <span>WATCHED PROGRESS</span>
+                                        <strong>{duration > 0 ? Math.round(progress) + "%" : "—"}</strong>
+                                      </span>
+                                      <Progress value={progress} ariaLabel={"Watched progress for " + (item.title || "this title")} className="history-progress" indicatorClassName="history-progress-indicator" />
+                                      <span className="history-time-labels">
+                                        <span><strong>{formatClock(watched)}</strong> watched</span>
+                                        <span><strong>{formatClock(duration)}</strong> total</span>
+                                      </span>
+                                      <span className="history-resume-action"><BootstrapIcon icon="play-fill" size={11} /> Continue watching <span>·</span> {duration > 0 ? formatClock(remaining) + " left" : "Progress unavailable"}</span>
+                                    </span>
                                   </button>
                                   <Button type="button" variant="icon" size="icon" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><BootstrapIcon icon="x-lg" size={15} /></Button>
                                 </article>
@@ -1624,8 +1651,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </div>
                 <p className="mt-3 text-[10px] leading-5 text-[#73798a]">Powered by the <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB API</a>. This product is not endorsed or certified by TMDB. Anime identifiers are provided by MyAnimeList; movie identifiers use IMDb title IDs.</p>
                 <div className="premium-coming-soon">
-                  <span>PREMIUM</span>
-                  <strong>Premium Feature Coming Soon</strong>
+                  <span className="premium-kicker">PREMIUM</span>
+                  <strong>Premium Feature</strong>
+                  <em className="premium-status">COMING SOON</em>
                 </div>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
