@@ -1169,7 +1169,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ))}
           </nav>
           <div className="header-actions">
-            <div className="header-account-wrap">
+            <div className="header-search-wrap">
+              <button
+                type="button"
+                className="header-search search-box header-search-trigger"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search movies, TV series and anime"
+                aria-haspopup="dialog"
+                aria-expanded={searchOpen}
+              >
+                <Search size={18} strokeWidth={2} aria-hidden="true" />
+                <span className="header-search-label">Search movies, TV & anime</span>
+              </button>
+            </div>            <div className="header-account-wrap">
               <button
                 type="button"
                 className="header-avatar-trigger"
@@ -1246,19 +1258,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </section>
               )}
             </div>
-            <div className="header-search-wrap">
-              <button
-                type="button"
-                className="header-search search-box header-search-trigger"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Search movies, TV series and anime"
-                aria-haspopup="dialog"
-                aria-expanded={searchOpen}
-              >
-                <Search size={18} strokeWidth={2} aria-hidden="true" />
-                <span className="header-search-label">Search movies, TV & anime</span>
-              </button>
-            </div>
+
           </div>
         </div>
       </header>

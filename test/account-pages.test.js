@@ -27,19 +27,21 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(membership.includes('status: "active"'));
 });
 
-test("Main app header orders avatar, notification bell and search controls", async () => {
+test("Main app header places search before avatar and notifications", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
+  const search = app.indexOf('className="header-search-wrap">');
   const avatar = app.indexOf('className="header-account-wrap"');
   const notifications = app.indexOf('className="header-notifications-wrap"');
-  const search = app.indexOf('className="header-search-wrap">');
-  assert.ok(avatar >= 0 && notifications > avatar && search > notifications);
+  assert.ok(search >= 0 && avatar > search && notifications > avatar);
   assert.ok(app.includes('router.push("/profile")'));
   assert.ok(app.includes('router.push("/login")'));
   assert.ok(app.includes("setDemoAccountSession(false)"));
   assert.ok(css.includes(".header-actions"));
   assert.ok(css.includes("@media (max-width:1100px)"));
   assert.ok(css.includes(".header-notification-popover"));
+  assert.match(css, /\.bottom-nav \{\s*position:fixed !important;\s*z-index:40;\s*left:0 !important;\s*right:0 !important;\s*bottom:0 !important;\s*width:100% !important;/);
+  assert.ok(css.includes("border-radius:22px 22px 0 0 !important;"));
 });
 
 test("Premium pricing data is shared by Plans and the demo membership profile", async () => {
