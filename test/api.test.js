@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
-import { hindiMoviePlayerUrl, normalizeTvPlayerRoute, vidboltTvUrl, vidlinkMovieUrl } from '../src/player-urls.js';
+import { hindiMoviePlaybackUrl, normalizeTvPlayerRoute, tvSeriesPlaybackUrl, moviePlaybackUrl } from '../src/player-urls.js';
 
 test('admin and crawler API routes are removed', async () => {
   const paths = [
@@ -209,31 +209,31 @@ test('public Movie and TV APIs validate their distinct identifier formats', asyn
 
 
 test('VidLink movie URLs remain unchanged while TV URLs use VidBolt and numeric TMDB IDs', () => {
-  const movieUrl = new URL(vidlinkMovieUrl('tt0848228'));
+  const movieUrl = new URL(moviePlaybackUrl('tt0848228'));
   assert.equal(movieUrl.origin + movieUrl.pathname, 'https://vidlink.pro/movie/tt0848228');
   assert.equal(movieUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(movieUrl.searchParams.get('secondaryColor'), '171a23');
-  const tvUrl = new URL(vidboltTvUrl(1399, 1, 1));
+  const tvUrl = new URL(tvSeriesPlaybackUrl(1399, 1, 1));
   assert.equal(tvUrl.origin + tvUrl.pathname, 'https://vidbolt.pro/tv/1399/1/1');
   assert.equal(tvUrl.searchParams.get('theme'), 'e8b65b');
-  const tvSpecialUrl = new URL(vidboltTvUrl('1399', 0, 1));
+  const tvSpecialUrl = new URL(tvSeriesPlaybackUrl('1399', 0, 1));
   assert.equal(tvSpecialUrl.pathname, '/tv/1399/0/1');
-  assert.equal(vidlinkMovieUrl('24428'), null);
-  assert.equal(vidboltTvUrl('tt0944947', 1, 1), null);
-  assert.equal(vidboltTvUrl('1399', -1, 1), null);
-  assert.equal(vidboltTvUrl('1399', 1, 0), null);
+  assert.equal(moviePlaybackUrl('24428'), null);
+  assert.equal(tvSeriesPlaybackUrl('tt0944947', 1, 1), null);
+  assert.equal(tvSeriesPlaybackUrl('1399', -1, 1), null);
+  assert.equal(tvSeriesPlaybackUrl('1399', 1, 0), null);
   assert.deepEqual(normalizeTvPlayerRoute('1399', '1', '1'), { tmdbId: 1399, season: 1, episode: 1 });
   assert.equal(normalizeTvPlayerRoute('tt0944947', '1', '1'), null);
 });
 
 test('Hindi movie player URL receives the same validated IMDb ID and gold theme', () => {
-  const hindiUrl = new URL(hindiMoviePlayerUrl('tt4154796'));
+  const hindiUrl = new URL(hindiMoviePlaybackUrl('tt4154796'));
   assert.equal(hindiUrl.origin + hindiUrl.pathname, 'https://slast430did.com/play/tt4154796');
   assert.equal(hindiUrl.searchParams.get('id'), null);
   assert.equal(hindiUrl.searchParams.get('primaryColor'), 'e8b65b');
   assert.equal(hindiUrl.searchParams.get('secondaryColor'), '171a23');
-  assert.equal(hindiMoviePlayerUrl('24428'), null);
-  assert.equal(hindiMoviePlayerUrl('javascript:alert(1)'), null);
+  assert.equal(hindiMoviePlaybackUrl('24428'), null);
+  assert.equal(hindiMoviePlaybackUrl('javascript:alert(1)'), null);
 });
 
 

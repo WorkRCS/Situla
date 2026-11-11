@@ -125,6 +125,6 @@ test("static TV detail allows manual season and episode selection when no guide 
   assert.match(detail, /const hasEpisodeGuide =/);
   assert.match(detail, /type="number" min="0"/);
   assert.match(detail, /type="number" min="1"/);
-  assert.match(detail, /Enter the season and episode number to open it directly in VidLink/);
+  assert.match(detail, /Enter the season and episode number to open the episode in Situla/);
   assert.match(detail, /{hasEpisodeGuide && <div className="episode-guide-section/);
 });
