@@ -3552,7 +3552,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   z-index:2;
   right:0;
   left:0;
-  height:1.1%;
+  height:.35%;
   content:"";
   pointer-events:none;
 }
@@ -3579,7 +3579,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   min-width:0;
   height:100%;
   overflow:hidden;
-  mask-image:linear-gradient(180deg,transparent 0%,#000 1%,#000 99%,transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 .25%,#000 99.75%,transparent 100%);
 }
 .login-poster-track {
   display:flex;
@@ -3654,8 +3654,11 @@ body:has(.login-page) .site-footer { display:none !important; }
   margin-top:3px;
   font-size:13px;
 }
+.login-form-panel .account-divider {
+  margin:14px 0 0;
+}
 .login-form-panel .account-google-button {
-  margin-top:14px;
+  margin-top:0;
   min-height:48px;
   border:1px solid #747775;
   border-radius:12px;

@@ -45,7 +45,7 @@ function LoginPosterRail({ items, direction }) {
         {[0, 1].map((copy) => (
           <div className="login-poster-set" key={copy}>
             {items.map((item, index) => {
-              const prioritize = copy === 0 && index < 2;
+              const prioritize = copy === 0 && index < 3;
               return (
                 <div className="login-poster-card" key={item.heroId + "-" + copy}>
                   <img
@@ -76,6 +76,7 @@ export function LoginPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const cacheKey = "situla:login-posters:v1";
     const catalog = { movies: [], tv: [], anime: [] };
 
     async function readCatalog(path) {
@@ -103,16 +104,41 @@ export function LoginPage() {
       });
     }
 
+    function restorePosterCache() {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+        if (!cached?.catalog || Date.now() - cached.savedAt > 6 * 60 * 60 * 1000) return;
+        for (const key of ["movies", "tv", "anime"]) {
+          if (Array.isArray(cached.catalog[key])) catalog[key] = cached.catalog[key];
+        }
+        publishPosterColumns();
+      } catch {}
+    }
+
+    function persistPosterCache() {
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), catalog }));
+      } catch {}
+    }
+
+    restorePosterCache();
+
     const sources = [
-      { key: "movies", mediaType: "movie", path: "/api/movies?random=true&limit=40" },
-      { key: "tv", mediaType: "tv", path: "/api/tv?random=true&limit=40" },
-      { key: "anime", mediaType: "anime", path: "/api/anime?random=true&limit=40" }
+      { key: "movies", mediaType: "movie", path: "/api/movies?limit=16" },
+      { key: "tv", mediaType: "tv", path: "/api/tv?limit=16" },
+      { key: "anime", mediaType: "anime", path: "/api/anime?limit=16" }
     ];
 
     Promise.all(sources.map(async (source) => {
       const items = await readCatalog(source.path);
-      catalog[source.key] = items.map((item) => toHomeSpotlight(item, source.mediaType));
+      catalog[source.key] = items.map((item) => {
+        const poster = toHomeSpotlight(item, source.mediaType);
+        return poster?.heroPoster
+          ? { mediaType: poster.mediaType, heroId: poster.heroId, heroPoster: poster.heroPoster }
+          : null;
+      }).filter(Boolean);
       publishPosterColumns();
+      persistPosterCache();
     }));
 
     return () => controller.abort();
@@ -158,8 +184,15 @@ export function LoginPage() {
                 </button>
               </span>
             </label>
+            <div className="login-form-options">
+              <label className="account-remember">
+                <input type="checkbox" name="rememberMe" defaultChecked />
+                <span>Remember me</span>
+              </label>
+            </div>
             <button type="submit" className="account-primary-button">Continue with email</button>
           </form>
+          <div className="account-divider" role="separator">OR</div>
           <button type="button" className="account-google-button" onClick={completeDemoSignIn}>
             <img
               className="account-google-logo"
