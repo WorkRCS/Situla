@@ -191,12 +191,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [kind, tmdbId, malId, season, episode, audio, title, posterUrl, tvRoute?.tmdbId, tvRoute?.season, tvRoute?.episode, seriesInfo?.externalImdbId]);
 
-  function tryAlternateAnimeAudio() {
-    if (!animeRoute || kind !== "anime") return;
-    const alternate = animeRoute.audio === "sub" ? "dub" : "sub";
-    router.push("/watch/anime/" + animeRoute.malId + "/" + animeRoute.episode + "/" + alternate);
-  }
-
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified || !tvRoute) return null;
@@ -265,11 +259,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>
         </div>
-        {kind === "anime" && <div className="series-player-actions">
-          <button type="button" className="series-player-guide" onClick={tryAlternateAnimeAudio} disabled={!animeRoute}>
-            Try {audio === "sub" ? "Dub" : "Sub"} instead
-          </button>
-        </div>}
       </header>
     </main>
   );
