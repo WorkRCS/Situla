@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export function proxy() {
-  // Situla is available in every modern browser. No user-agent or browser-brand gate.
+  // Pass every page and API request through without access checks.
   return NextResponse.next();
 }
 
