@@ -3519,7 +3519,7 @@ body { color:#f7f7fa; background:#08090e; }
 
 
 /* Login: database-backed poster columns with opposing seamless motion. */
-.login-page {
+.account-page.login-page {
   display:flex;
   align-items:stretch;
   width:100%;
@@ -3567,7 +3567,8 @@ body:has(.login-page) .site-footer { display:none !important; }
 .login-poster-columns {
   display:grid;
   width:min(100%,680px);
-  min-height:calc(100dvh - 2 * clamp(18px,3vw,42px));
+  height:calc(100dvh - 2 * clamp(18px,3vw,42px));
+  min-height:0;
   grid-template-columns:repeat(2,minmax(0,1fr));
   align-items:stretch;
   gap:clamp(12px,1.8vw,24px);
@@ -3679,7 +3680,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   .login-poster-card { border-radius:12px; }
 }
 @media (max-width:640px) {
-  .login-page {
+  .account-page.login-page {
     min-height:100svh;
     flex-direction:column;
     overflow:visible;

@@ -98,7 +98,7 @@ export function LoginPage() {
         anime: anime.map((item) => toHomeSpotlight(item, "anime"))
       });
       const posters = mixed
-        .filter((item) => item && typeof item.heroPoster === "string" && /^https?:\\/\\//i.test(item.heroPoster))
+        .filter((item) => item && typeof item.heroPoster === "string" && (item.heroPoster.startsWith("https://") || item.heroPoster.startsWith("http://")))
         .slice(0, 48);
 
       setPosterColumns({
