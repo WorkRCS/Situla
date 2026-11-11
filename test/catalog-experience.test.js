@@ -160,5 +160,7 @@ test("Settings About section credits the ID providers and previews Premium", asy
   assert.match(app, /IMDb · TV Series IDs: TMDB · Anime IDs: MyAnimeList/);
   assert.match(app, /href="https:\/\/myanimelist\.net\//);
   assert.match(app, /Powered by the/);
-  assert.match(app, /Premium Feature Coming Soon/);
+  assert.match(app, /Premium Feature/);
+  assert.match(app, /premium-status/);
+  assert.match(app, /COMING SOON/);
 });
