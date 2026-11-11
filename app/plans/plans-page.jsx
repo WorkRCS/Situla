@@ -49,7 +49,6 @@ const PLANS = [
     cooldown: "5 hours",
     devices: "IP + guest session",
     badge: "No badge",
-    player: "VidLink Pro for movies · VidBolt for TV & Anime",
     updates: "Standard public catalog updates",
     features: [
       "No account or sign-in required",
@@ -76,7 +75,6 @@ const PLANS = [
     cooldown: "2 hours",
     devices: "1 registered device",
     badge: "No badge",
-    player: "VidLink Pro for movies · VidBolt for TV & Anime",
     updates: "Standard public catalog updates",
     features: [
       "Account and sign-in required",
@@ -103,7 +101,6 @@ const PLANS = [
     cooldown: "2 hours",
     devices: "Up to 3 registered devices",
     badge: "Verified badge",
-    player: "VidBolt for Premium movies (planned) · VidBolt for TV & Anime",
     updates: "Early updates and detailed upcoming-movie information",
     features: [
       "Account and active Premium subscription required",
@@ -111,7 +108,7 @@ const PLANS = [
       "One shared account allowance across all registered devices",
       "Premium Verified badge",
       "Early upcoming-movie updates and release information",
-      "VidBolt planned for Premium movie playback"
+      "Premium movie playback planned"
     ],
     limits: [
       "Maximum 3 registered devices",
@@ -180,10 +177,10 @@ export default function PlansPage() {
     { label: "Early upcoming-movie updates", cells: [
       { available: false }, { available: false }, { available: true, detail: "Included" }
     ]},
-    { label: "VidBolt for Premium movie playback", cells: [
-      { available: false, detail: "VidLink Pro" }, { available: false, detail: "VidLink Pro" }, { available: false, detail: "Planned, not active" }
+    { label: "Premium movie playback", cells: [
+      { available: false }, { available: false }, { available: false, detail: "Planned, not active" }
     ]},
-    { label: "VidBolt for TV & Anime", cells: [
+    { label: "TV & Anime streaming access", cells: [
       { available: true, detail: "Included" }, { available: true, detail: "Included" }, { available: true, detail: "Included" }
     ]},
     { label: "Android / Smart TV browser access", cells: [
@@ -289,7 +286,6 @@ export default function PlansPage() {
                     <div><span>COOLDOWN</span><strong>{plan.id === "premium" ? selectedBilling.cooldown : plan.cooldown}</strong><small>{plan.id === "premium" && billingCycle === "yearly" ? "while yearly plan is active" : "after limit"}</small></div>
                     <div><span>DEVICES</span><strong>{plan.devices}</strong><small>access policy</small></div>
                   </div>
-                  <div className="plans-playback-line"><span><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /> PLAYBACK</span><strong>{plan.player}</strong></div>
                   <div className="plans-feature-block">
                     <h4><CheckCircle2 size={13} strokeWidth={2.2} aria-hidden="true" /> Included</h4>
                     <ul>
@@ -393,7 +389,7 @@ export default function PlansPage() {
               <span><Check size={13} strokeWidth={2.7} aria-hidden="true" /> Remote-friendly navigation design</span>
               <span><Check size={13} strokeWidth={2.7} aria-hidden="true" /> Same plan and Watch Page rules</span>
             </div>
-            <small>Compatibility depends on the TV model, installed browser, video codecs and third-party embedded player support. Not every TV/browser combination can be guaranteed.</small>
+            <small>Compatibility depends on the TV model, installed browser and supported video formats. Not every TV/browser combination can be guaranteed.</small>
           </div>
         </section>
 
@@ -405,7 +401,7 @@ export default function PlansPage() {
             <article><span className="plans-policy-icon"><Globe2 size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Guest IP policy</h3><p>Guest cooldown uses the public IP seen by Situla together with an anonymous session. People sharing one Wi-Fi or carrier network may share an IP, while VPNs or network changes can change the IP. IP is not a unique person identifier.</p></article>
             <article><span className="plans-policy-icon"><ShieldCheck size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Account & device policy</h3><p>Free usage belongs to one account and one registered device. Premium usage is shared across the account's registered devices, up to three. A device switch or revoked device will need server-side verification.</p></article>
             <article><span className="plans-policy-icon"><Clock3 size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Watch timer policy</h3><p>Watch limits are intended to count playback usage, not ordinary catalog browsing. The server is the source of truth for allowance and cooldown; browser clocks must not control access.</p></article>
-            <article><span className="plans-policy-icon"><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /></span><h3>Third-party player policy</h3><p>Situla can gate Watch Pages and prevent a player from loading during cooldown. Strictly stopping an already-running third-party stream also depends on provider support for expiring playback sessions or server-side playback authorization.</p></article>
+            <article><span className="plans-policy-icon"><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /></span><h3>Playback access policy</h3><p>Situla can restrict Watch Pages and prevent playback from starting during a cooldown. Ending a session that is already in progress can depend on session expiry and playback authorization, so restrictions may not take effect instantly on every device.</p></article>
           </div>
         </section>
 

@@ -4,12 +4,11 @@ Situla is a mobile-first movie, TV and anime catalog built as a Next.js website.
 
 ## Identifiers and playback
 
-- Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Playback uses `https://vidlink.pro/movie/{imdbId}`.
-- TV series: numeric TMDB TV ID is the required unique Situla catalog key. Playback uses `https://vidlink.pro/tv/{tmdbId}/{season}/{episode}`. The detail route is `/tv/{tmdbId}`, and the player route is `/watch/tv/{tmdbId}/{season}/{episode}`.
-- Anime: MAL ID is the required catalog and playback key. Playback uses `https://vidlink.pro/anime/{malId}/{episode}/{subOrDub}?fallback=true`. `sub` and `dub` are validated; the player can switch to the alternate audio.
-- Movie, TV and Anime VidLink embeds share Situla's warm-gold player theme (`primaryColor=e8b65b`, `secondaryColor=171a23`). The optional Hindi Movie player uses the IMDb path format `https://slast430did.com/play/{imdbId}` with the same Situla theme.
+- Movies: IMDb title ID (`tt...`) is the required unique Situla route and catalog key. Playback opens through Situla's canonical Watch Page.
+- TV series: numeric TMDB TV ID is the required unique Situla catalog key. The detail route is `/tv/{tmdbId}`, and the Watch Page route is `/watch/tv/{tmdbId}/{season}/{episode}`.
+- Anime: MAL ID is the required catalog and playback key. `sub` and `dub` audio preferences are validated; alternate audio selection is supported in the Situla Watch experience.
 
-The provider controls stream availability, resolution and audio tracks. Situla does not download or store copyrighted video files.
+Playback configuration is managed internally and is not identified in the public interface. Video availability, resolution and audio options depend on the selected title and supported viewing options. Situla does not download or store copyrighted video files.
 
 ## Local setup
 

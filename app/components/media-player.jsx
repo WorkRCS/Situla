@@ -237,7 +237,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     <main className="watch-screen series-watch-screen">
       {playerUrl ? (
         <iframe
-          id="vidbolt-player"
+          id="situla-series-player"
           ref={iframeRef}
           key={playerUrl}
           className="watch-frame series-watch-frame"

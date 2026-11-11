@@ -258,7 +258,7 @@ export function ProfilePage() {
                 <div className="profile-benefit-item"><span><MonitorSmartphone size={17} /></span><strong>Up to 3 devices</strong><small>Manage your registered devices</small></div>
                 <div className="profile-benefit-item"><span><BadgeCheck size={17} /></span><strong>Verified badge</strong><small>Premium member identity</small></div>
                 <div className="profile-benefit-item"><span><Sparkles size={17} /></span><strong>Early movie updates</strong><small>Upcoming titles and release info</small></div>
-                <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>VidBolt movie player</strong><small>Planned · Not active yet</small></div>
+                <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>Premium movie playback</strong><small>Planned · Not active yet</small></div>
               </div>
               <Link href="/plans" className="profile-view-plans">Compare all plans <ArrowRight size={15} /></Link>
             </section>

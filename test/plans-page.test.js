@@ -18,7 +18,7 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(page.includes('allowance: "3 hours"'));
   assert.ok(page.includes("Up to 3 registered devices"));
   assert.ok(page.includes("Premium Verified badge"));
-  assert.ok(page.includes("VidBolt for Premium movies (planned)"));
+  assert.ok(page.includes("Premium movie playback planned"));
   assert.ok(page.includes("Continue as Guest"));
   assert.ok(page.includes('"Login"'));
   assert.ok(page.includes("Buy Premium"));
@@ -26,7 +26,7 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(page.includes("Cooldown locks Watch Pages, not Situla"));
   assert.ok(page.includes("IP is not a unique person identifier"));
   assert.ok(page.includes("TV browser"));
-  assert.ok(page.includes("Third-party player policy"));
+  assert.ok(page.includes("Playback access policy"));
   assert.ok(page.includes("not active yet"));
   assert.ok(footer.includes('<Link href="/plans">Plans</Link>'));
 });
@@ -80,4 +80,16 @@ test("Plans comparison is responsive without a forced wide table", async () => {
   assert.ok(css.includes(".plans-feature-status.is-included"));
   assert.ok(css.includes(".plans-feature-status.is-unavailable"));
   assert.ok(css.includes("@media (max-width:360px)"));
+});
+
+test("Public-facing playback copy does not disclose provider brands", async () => {
+  const page = await read("../app/plans/plans-page.jsx");
+  const profile = await read("../app/components/account-pages.jsx");
+  const tvDetail = await read("../app/tv/[tmdbId]/detail.jsx");
+  const readme = await read("../README.md");
+  const publicCopy = [page, profile, tvDetail, readme].join("\n");
+  assert.doesNotMatch(publicCopy, /vid\s?link|vid\s?bolt|slast430did/i);
+  assert.ok(page.includes("TV & Anime streaming access"));
+  assert.ok(profile.includes("<strong>Premium movie playback</strong>"));
+  assert.ok(tvDetail.includes("open the episode in Situla"));
 });

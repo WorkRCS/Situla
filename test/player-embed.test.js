@@ -296,7 +296,7 @@ test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pr
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
   assert.doesNotMatch(player, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
-  assert.match(player, /id="vidbolt-player"/);
+  assert.match(player, /id="situla-series-player"/);
   assert.match(player, /attachFullscreenLandscapeLock\(frame\)/);
 });
 

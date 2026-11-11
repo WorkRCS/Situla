@@ -189,7 +189,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                         <input className="series-control series-input mt-2" type="number" min="1" step="1" value={episodeNumber} onChange={(event) => setEpisodeNumber(event.target.value)} />
                       </label>
                     </div>
-                    <p className="mt-3 text-xs leading-5 text-[#858b9b]">This static catalogue entry has season and episode totals, but no preloaded episode-by-episode guide. Enter the season and episode number to open it directly in VidLink.</p>
+                    <p className="mt-3 text-xs leading-5 text-[#858b9b]">This static catalogue entry has season and episode totals, but no preloaded episode-by-episode guide. Enter the season and episode number to open the episode in Situla.</p>
                   </>
                 )}
                 {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
