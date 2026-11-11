@@ -136,7 +136,8 @@ test("mobile/tablet bottom navigation replaces Search with a working Back action
   assert.match(app, /onClick=\{navigateBack\}/);
   assert.match(app, /aria-label="Go back to the previous page"/);
   assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
-  assert.doesNotMatch(app, /key=\{item\.id\}[\s\S]*?setSearchOpen\(true\)/);
+  const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
+  assert.doesNotMatch(bottomNav, /setSearchOpen|>Search</);
   assert.match(app, /className="header-search-wrap"/);
   assert.match(app, /function navigateBack\(\)[\s\S]*?router\.back\(\)[\s\S]*?router\.replace\("\/"\)/);
 });
