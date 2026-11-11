@@ -263,7 +263,7 @@ test("bottom navigation is visible on touch layouts and hidden on desktop", asyn
 });
 
 
-test("Anime VidLink URLs require MAL ID, episode and sub/dub, and request fallback", () => {
+test("MegaPlay Anime URLs use the existing MAL ID, episode and sub/dub route", () => {
   assert.deepEqual(normalizeAnimePlayerRoute("5", "1", "sub"), { malId: 5, episode: 1, audio: "sub" });
   assert.deepEqual(normalizeAnimePlayerRoute(5114, 64, "DUB"), { malId: 5114, episode: 64, audio: "dub" });
   assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
@@ -273,18 +273,11 @@ test("Anime VidLink URLs require MAL ID, episode and sub/dub, and request fallba
   assert.equal(normalizeAnimePlayerRoute("5", "1", "raw"), null);
 
   const sub = new URL(megaplayAnimeUrl(5, 1, "sub"));
-  assert.equal(sub.origin + sub.pathname, "https://vidlink.pro/anime/5/1/sub");
-  assert.equal(sub.searchParams.get("fallback"), "true");
-  assert.equal(sub.searchParams.get("primaryColor"), "e8b65b");
-  assert.equal(sub.searchParams.get("autoplay"), "false");
-
-  const dub = new URL(megaplayAnimeUrl(5114, 64, "dub", { startAt: 125 }));
-  assert.equal(dub.pathname, "/anime/5114/64/dub");
-  assert.equal(dub.searchParams.get("fallback"), "true");
-  assert.equal(dub.searchParams.get("startAt"), "125");
-  const noFallback = new URL(megaplayAnimeUrl(5, 2, "sub", { fallback: false }));
-  assert.equal(noFallback.searchParams.has("fallback"), false);
+  assert.equal(sub.origin + sub.pathname, "https://megaplay.buzz/stream/mal/5/1/sub");
+  const dub = new URL(megaplayAnimeUrl(5114, 64, "dub"));
+  assert.equal(dub.origin + dub.pathname, "https://megaplay.buzz/stream/mal/5114/64/dub");
   assert.equal(megaplayAnimeUrl(5, 0, "sub"), null);
+  assert.equal(megaplayAnimeUrl(5, 1, "raw"), null);
 });
 
 test("Anime page keeps its Situla route and uses MegaPlay embed and events", async () => {
