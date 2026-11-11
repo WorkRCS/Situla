@@ -17,58 +17,9 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const [metadataError, setMetadataError] = useState("");
   const [startAt, setStartAt] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [episodePickerOpen, setEpisodePickerOpen] = useState(false);
-  const [episodePickerSeason, setEpisodePickerSeason] = useState(tvRoute?.season ?? 1);
-  const [seasonEpisodes, setSeasonEpisodes] = useState([]);
-  const [seasonEpisodesLoading, setSeasonEpisodesLoading] = useState(false);
-  const episodePickerRef = useRef(null);
   const iframeRef = useRef(null);
   const lastWrite = useRef(0);
   const lastPlayerDuration = useRef(0);
-
-  useEffect(() => {
-    setEpisodePickerSeason(tvRoute?.season ?? 1);
-    setEpisodePickerOpen(false);
-  }, [tvRoute?.season, kind]);
-
-  useEffect(() => {
-    if (!episodePickerOpen || kind !== "tv" || !tvRoute) return;
-    const controller = new AbortController();
-    setSeasonEpisodes([]);
-    setSeasonEpisodesLoading(true);
-    fetch("/api/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/seasons/" + encodeURIComponent(episodePickerSeason), {
-      cache: "no-store",
-      signal: controller.signal
-    })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Episode list is unavailable.");
-        setSeasonEpisodes(Array.isArray(payload.item?.episodes) ? payload.item.episodes : []);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setSeasonEpisodes([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setSeasonEpisodesLoading(false);
-      });
-    return () => controller.abort();
-  }, [episodePickerOpen, kind, tvRoute?.tmdbId, episodePickerSeason]);
-
-  useEffect(() => {
-    if (!episodePickerOpen) return;
-    const closeOnOutsideClick = (event) => {
-      if (!episodePickerRef.current?.contains(event.target)) setEpisodePickerOpen(false);
-    };
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") setEpisodePickerOpen(false);
-    };
-    document.addEventListener("pointerdown", closeOnOutsideClick);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsideClick);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [episodePickerOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -240,56 +191,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [kind, tmdbId, malId, season, episode, audio, title, posterUrl, tvRoute?.tmdbId, tvRoute?.season, tvRoute?.episode, seriesInfo?.externalImdbId]);
 
-  const tvSeasons = (Array.isArray(seriesInfo?.seasons) ? seriesInfo.seasons : [])
-    .filter((item) => item && Number(item.episodeCount) > 0 && Number(item.seasonNumber) > 0)
-    .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber));
-  const animeEpisodeGuide = (Array.isArray(seriesInfo?.episodeGuide) ? seriesInfo.episodeGuide : [])
-    .filter((item) => Number(item?.episodeNumber) > 0)
-    .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber) ||
-      Number(a.episodeNumber) - Number(b.episodeNumber));
-  const tvPickerSeason = tvSeasons.find((item) => Number(item.seasonNumber) === Number(episodePickerSeason));
-  const tvFallbackEpisodeCount = Math.min(300, Math.max(0, Number(tvPickerSeason?.episodeCount) || 0));
-  const tvEpisodeOptions = seasonEpisodes.length
-    ? seasonEpisodes
-    : Array.from({ length: tvFallbackEpisodeCount }, (_, index) => ({
-      episodeNumber: index + 1,
-      name: "Episode " + (index + 1),
-      stillUrl: null,
-      airDate: null
-    }));
-  const animeEpisodeOptions = animeEpisodeGuide.length
-    ? animeEpisodeGuide
-    : Array.from({ length: Math.min(300, Math.max(0, Number(seriesInfo?.episodes) || 0)) }, (_, index) => ({
-      episodeNumber: index + 1,
-      seasonNumber: 1,
-      title: "Episode " + (index + 1),
-      imageUrl: null
-    }));
-
-  function selectPickerEpisode(episodeNumber, seasonNumber = episodePickerSeason) {
-    const selectedEpisode = Number(episodeNumber);
-    if (!Number.isSafeInteger(selectedEpisode) || selectedEpisode < 1) return;
-    setEpisodePickerOpen(false);
-    if (kind === "tv" && tvRoute) {
-      const selectedSeason = Number(seasonNumber);
-      if (!Number.isSafeInteger(selectedSeason) || selectedSeason < 0) return;
-      if (selectedSeason === tvRoute.season && selectedEpisode === tvRoute.episode) return;
-      router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + selectedSeason + "/" + selectedEpisode);
-      return;
-    }
-    if (kind === "anime" && animeRoute) {
-      if (selectedEpisode === animeRoute.episode) return;
-      try {
-        localStorage.setItem("situla:anime-last-episode:v1", JSON.stringify({
-          malId: animeRoute.malId,
-          episode: selectedEpisode,
-          audio: animeRoute.audio
-        }));
-      } catch {}
-      router.push("/watch/anime/" + animeRoute.malId + "/" + selectedEpisode + "/" + animeRoute.audio);
-    }
-  }
-
   function tryAlternateAnimeAudio() {
     if (!animeRoute || kind !== "anime") return;
     const alternate = animeRoute.audio === "sub" ? "dub" : "sub";
@@ -368,105 +269,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           <button type="button" className="series-player-guide" onClick={tryAlternateAnimeAudio} disabled={!animeRoute}>
             Try {audio === "sub" ? "Dub" : "Sub"} instead
           </button>
-          <div className={"episode-picker" + (episodePickerOpen ? " is-open" : "")} ref={episodePickerRef}>
-            <button
-              type="button"
-              className="series-player-next"
-              onClick={() => setEpisodePickerOpen((open) => !open)}
-              aria-expanded={episodePickerOpen}
-              aria-haspopup="true"
-              aria-label="Open episode picker"
-              disabled={!catalogVerified || !animeEpisodeOptions.length}
-            >
-              <i className="bi bi-skip-forward-fill" aria-hidden="true" /> Next Episode
-              <i className="bi bi-chevron-down" aria-hidden="true" />
-            </button>
-            <div className="episode-picker-menu">
-              <div className="episode-picker-heading">
-                <span><strong>Choose an episode</strong><small>{title}</small></span>
-                <button type="button" className="episode-picker-close" onClick={() => setEpisodePickerOpen(false)} aria-label="Close episode picker"><i className="bi bi-x-lg" aria-hidden="true" /></button>
-              </div>
-              <p className="episode-picker-caption">{animeEpisodeOptions.length} available episodes · {String(animeRoute?.audio || "sub").toUpperCase()}</p>
-              <div className="episode-picker-list">
-                {animeEpisodeOptions.map((item, index) => {
-                  const number = Number(item.episodeNumber);
-                  const isCurrent = number === Number(animeRoute?.episode);
-                  return (
-                    <button
-                      key={String(item.seasonNumber || 1) + ":" + number + ":" + index}
-                      type="button"
-                      className={"episode-picker-option" + (isCurrent ? " is-current" : "")}
-                      onClick={() => selectPickerEpisode(number)}
-                      aria-current={isCurrent ? "true" : undefined}
-                    >
-                      {item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" /> : <span className="episode-picker-number">{String(number).padStart(2, "0")}</span>}
-                      <span className="episode-picker-option-copy">
-                        <strong>{item.title || "Episode " + number}</strong>
-                        <small>Episode {number}{item.seasonNumber ? " · Season " + item.seasonNumber : ""}</small>
-                      </span>
-                      {isCurrent && <i className="bi bi-play-fill episode-picker-current" aria-label="Currently playing" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>}
-        {kind === "tv" && <div className="series-player-actions">
-          <div className={"episode-picker" + (episodePickerOpen ? " is-open" : "")} ref={episodePickerRef}>
-            <button
-              type="button"
-              className="series-player-next"
-              onClick={() => setEpisodePickerOpen((open) => !open)}
-              aria-expanded={episodePickerOpen}
-              aria-haspopup="true"
-              aria-label="Open episode picker"
-              disabled={!catalogVerified || !tvSeasons.length}
-            >
-              <i className="bi bi-skip-forward-fill" aria-hidden="true" /> Next Episode
-              <i className="bi bi-chevron-down" aria-hidden="true" />
-            </button>
-            <div className="episode-picker-menu">
-              <div className="episode-picker-heading">
-                <span><strong>Choose an episode</strong><small>{title}</small></span>
-                <button type="button" className="episode-picker-close" onClick={() => setEpisodePickerOpen(false)} aria-label="Close episode picker"><i className="bi bi-x-lg" aria-hidden="true" /></button>
-              </div>
-              <label className="episode-picker-season">
-                <span>Season</span>
-                <select value={episodePickerSeason} onChange={(event) => setEpisodePickerSeason(Number(event.target.value))}>
-                  {tvSeasons.map((item) => <option key={item.seasonNumber} value={item.seasonNumber}>{item.name || "Season " + item.seasonNumber}</option>)}
-                </select>
-              </label>
-              <p className="episode-picker-caption">{tvEpisodeOptions.length} episodes in this season</p>
-              {seasonEpisodesLoading ? (
-                <div className="episode-picker-empty">Loading episode list…</div>
-              ) : (
-                <div className="episode-picker-list">
-                  {tvEpisodeOptions.map((item) => {
-                    const number = Number(item.episodeNumber);
-                    const isCurrent = Number(episodePickerSeason) === Number(tvRoute?.season) && number === Number(tvRoute?.episode);
-                    return (
-                      <button
-                        key={String(episodePickerSeason) + ":" + number}
-                        type="button"
-                        className={"episode-picker-option" + (isCurrent ? " is-current" : "")}
-                        onClick={() => selectPickerEpisode(number, episodePickerSeason)}
-                        aria-current={isCurrent ? "true" : undefined}
-                      >
-                        {item.stillUrl ? <img src={item.stillUrl} alt="" loading="lazy" /> : <span className="episode-picker-number">{String(number).padStart(2, "0")}</span>}
-                        <span className="episode-picker-option-copy">
-                          <strong>{item.name || "Episode " + number}</strong>
-                          <small>Episode {number}{item.airDate ? " · " + item.airDate : ""}</small>
-                        </span>
-                        {isCurrent && <i className="bi bi-play-fill episode-picker-current" aria-label="Currently playing" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {!seasonEpisodesLoading && !tvEpisodeOptions.length && <div className="episode-picker-empty">No episode details are available for this season.</div>}
-            </div>
-          </div>
         </div>}
       </header>
     </main>

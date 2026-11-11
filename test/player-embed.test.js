@@ -293,8 +293,7 @@ test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pr
   assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
   assert.match(player, /function tryAlternateAnimeAudio/);
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
-  assert.match(player, /animeEpisodeOptions\.map/);
-  assert.match(player, /Next Episode/);
+  assert.doesNotMatch(player, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
   assert.match(player, /id="vidbolt-player"/);
   assert.match(player, /attachFullscreenLandscapeLock\(frame\)/);
@@ -321,24 +320,19 @@ test("Anime catalog is a manually curated MAL list and the seed command uses the
 });
 
 
-test("TV and Anime player expose a route-aware Next Episode picker with episode metadata", async () => {
-  const player = await read("../app/components/media-player.jsx");
-  assert.match(player, /className=\{"episode-picker"/);
-  assert.match(player, /aria-label="Open episode picker"/);
-  assert.match(player, /fetch\("\/api\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\) \+ "\/seasons\/" \+ encodeURIComponent\(episodePickerSeason\)/);
-  assert.match(player, /episodePickerSeason/);
-  assert.match(player, /tvEpisodeOptions\.map/);
-  assert.match(player, /animeEpisodeOptions\.map/);
-  assert.match(player, /function selectPickerEpisode\(/);
-  assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\)/);
-  assert.match(player, /router\.push\("\/watch\/anime\/" \+ animeRoute\.malId/);
-  assert.match(player, /aria-current=\{isCurrent \? "true" : undefined\}/);
-  assert.match(player, /Next Episode/);
-  assert.doesNotMatch(player, /Episode guide|Next season|function playNextSeason\(/);
-  assert.doesNotMatch(player, /function playNextSeason\(/);
-  assert.doesNotMatch(player, /Episode guide|Next season/);
-});
+test("Watch pages delegate episode selection to the embedded iframe player", async () => {
+  const seriesPlayer = await read("../app/components/media-player.jsx");
+  const moviePlayer = await read("../app/watch/[imdbId]/player.jsx");
+  const playerUrls = await read("../src/player-urls.js");
 
+  assert.doesNotMatch(seriesPlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
+  assert.doesNotMatch(moviePlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season/);
+  assert.match(seriesPlayer, /<iframe[\\s\\S]*?src=\\{playerUrl\\}/);
+  assert.match(seriesPlayer, /vidboltTvUrl\\(tvRoute\\.tmdbId, tvRoute\\.season, tvRoute\\.episode, startAt\\)/);
+  assert.match(seriesPlayer, /vidboltAnimeUrl\\(animeRoute\\.malId, animeRoute\\.episode, animeRoute\\.audio, startAt\\)/);
+  assert.match(playerUrls, /url\\.searchParams\\.set\\("episodesButton", "true"\\)/);
+  assert.match(playerUrls, /url\\.searchParams\\.set\\("nextEpisodeButton", "false"\\)/);
+});
 
 test("home page omits personal watch-history shelves and shows catalog discovery sections", async () => {
   const app = await read("../app/components/situla-app.jsx");
