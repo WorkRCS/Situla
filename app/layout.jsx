@@ -2,6 +2,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import Script from "next/script";
+import SiteFooter from "./components/site-footer.jsx";
 
 const extensionAttributeCleanup = `(function () {
   var isInjectedAttribute = function (name) {
@@ -47,7 +48,7 @@ export const metadata = {
     default: "Situla — Discover & Watch",
     template: "%s | Situla"
   },
-  description: "Discover movies and watch them in Situla.",
+  description: "Discover movies, TV series, and anime on Situla.",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg"
@@ -72,7 +73,10 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: extensionAttributeCleanup }}
         />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }
