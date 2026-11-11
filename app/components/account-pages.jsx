@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
@@ -51,6 +51,7 @@ function LoginPosterRail({ items, direction }) {
                   <img
                     src={item.heroPoster}
                     alt=""
+                    draggable={false}
                     loading={prioritize ? "eager" : "lazy"}
                     fetchPriority={prioritize ? "high" : "low"}
                     decoding="async"
@@ -73,6 +74,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [posterColumns, setPosterColumns] = useState({ downward: [], upward: [] });
+  const preloadedPosterUrls = useRef(new Set());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -144,6 +146,51 @@ export function LoginPage() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const posterUrls = [...new Set(
+      [...posterColumns.downward, ...posterColumns.upward]
+        .map((poster) => poster.heroPoster)
+        .filter(Boolean)
+    )].filter((url) => !preloadedPosterUrls.current.has(url));
+    let cancelled = false;
+    const chunkSize = 4;
+
+    async function preloadPoster(url) {
+      preloadedPosterUrls.current.add(url);
+      const image = new Image();
+      image.decoding = "async";
+      image.fetchPriority = "low";
+      image.src = url;
+
+      try {
+        if (typeof image.decode === "function") {
+          await image.decode();
+        } else {
+          await new Promise((resolve) => {
+            image.onload = resolve;
+            image.onerror = resolve;
+          });
+        }
+      } catch {}
+    }
+
+    async function preloadPosterChunks() {
+      for (let start = 0; start < posterUrls.length; start += chunkSize) {
+        if (cancelled) return;
+        const chunk = posterUrls.slice(start, start + chunkSize);
+        await Promise.all(chunk.map((url) => preloadPoster(url)));
+        if (start + chunkSize < posterUrls.length) {
+          await new Promise((resolve) => window.setTimeout(resolve, 64));
+        }
+      }
+    }
+
+    void preloadPosterChunks();
+    return () => {
+      cancelled = true;
+    };
+  }, [posterColumns]);
+
   function completeDemoSignIn() {
     setDemoAccountSession(true);
     router.push("/profile");
@@ -157,7 +204,12 @@ export function LoginPage() {
 
   return (
     <main className="account-page login-page">
-      <section className="login-poster-stage" aria-label="Featured movie, TV series and anime posters">
+      <section
+        className="login-poster-stage"
+        aria-label="Featured movie, TV series and anime posters"
+        onContextMenu={(event) => event.preventDefault()}
+        onDragStart={(event) => event.preventDefault()}
+      >
         <div className="login-poster-columns" aria-hidden="true">
           <LoginPosterRail items={posterColumns.downward} direction="down" />
           <LoginPosterRail items={posterColumns.upward} direction="up" />

@@ -25,6 +25,12 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(!pages.includes("random=true"));
   assert.ok(pages.includes("sessionStorage.getItem(cacheKey)"));
   assert.ok(pages.includes("sessionStorage.setItem(cacheKey"));
+  assert.ok(pages.includes("preloadedPosterUrls"));
+  assert.ok(pages.includes("const chunkSize = 4"));
+  assert.ok(pages.includes("await image.decode()"));
+  assert.ok(pages.includes("window.setTimeout(resolve, 64)"));
+  assert.ok(pages.includes("draggable={false}"));
+  assert.ok(pages.includes("onContextMenu={(event) => event.preventDefault()}"));
   assert.ok(pages.includes("https://developers.google.com/static/identity/images/g-logo.png"));
   assert.ok(!pages.includes("THE SITULA EXPERIENCE"));
   const login = pages.slice(pages.indexOf("export function LoginPage"), pages.indexOf("\nfunction formatAccountDate"));
@@ -96,4 +102,8 @@ test("Login showcase mixes live movie, TV and anime posters in opposing vertical
   assert.ok(css.includes("body:has(.login-page) .site-footer"));
   assert.ok(css.includes("height:.35%;"));
   assert.ok(css.includes("#000 .25%,#000 99.75%"));
+  assert.ok(css.includes("border:1px solid rgba(255,255,255,.055)"));
+  assert.ok(css.includes("position:absolute;\n    z-index:0;\n    inset:0;"));
+  assert.ok(css.includes("opacity:.54;"));
+  assert.ok(css.includes("pointer-events:none;\n  user-select:none;\n  -webkit-user-drag:none;"));
 });

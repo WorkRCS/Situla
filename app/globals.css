@@ -3606,16 +3606,19 @@ body:has(.login-page) .site-footer { display:none !important; }
   flex:0 0 auto;
   overflow:hidden;
   aspect-ratio:2 / 3;
-  border:1px solid rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.055);
   border-radius:15px;
   background:linear-gradient(145deg,#202434,#10131d);
-  box-shadow:0 13px 36px rgba(0,0,0,.34);
+  box-shadow:0 9px 24px rgba(0,0,0,.22);
 }
 .login-poster-card img {
   display:block;
   width:100%;
   height:100%;
   object-fit:cover;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 @keyframes login-poster-up {
   from { transform:translate3d(0,0,0); }
@@ -3680,47 +3683,65 @@ body:has(.login-page) .site-footer { display:none !important; }
   object-fit:contain;
 }
 @media (max-width:900px) {
-  .login-form-panel {
-    flex-basis:47%;
-    width:47%;
-    min-width:350px;
-    padding:19px;
+  .account-page.login-page {
+    position:relative;
+    isolation:isolate;
+    min-height:100svh;
+    overflow:hidden;
   }
-  .login-form-panel .login-form-card { padding:22px 20px; }
-  .login-poster-stage { padding:17px; }
-  .login-poster-columns { gap:12px; }
+  .login-poster-stage {
+    position:absolute;
+    z-index:0;
+    inset:0;
+    width:100%;
+    height:100%;
+    min-height:100svh;
+    flex:none;
+    padding:12px;
+  }
+  .login-poster-columns {
+    width:min(100%,680px);
+    height:100%;
+    gap:12px;
+    opacity:.54;
+  }
+  .login-poster-rail { height:100%; }
   .login-poster-card { border-radius:12px; }
+  .login-form-panel {
+    position:relative;
+    z-index:2;
+    flex:1 1 auto;
+    width:100%;
+    min-width:0;
+    min-height:100svh;
+    padding:19px;
+    border:0;
+    background:linear-gradient(90deg,rgba(8,9,14,.48),rgba(8,9,14,.58));
+    pointer-events:none;
+  }
+  .login-form-panel .login-form-card {
+    padding:22px 20px;
+    pointer-events:auto;
+  }
 }
 @media (max-width:640px) {
   .account-page.login-page {
     min-height:100svh;
-    flex-direction:column;
-    overflow:visible;
+    flex-direction:row;
+    overflow:hidden;
   }
-  .login-poster-stage {
-    width:100%;
-    min-height:0;
-    height:30svh;
-    flex:0 0 30svh;
-    padding:8px 22px;
-  }
+  .login-poster-stage { padding:8px 14px; }
   .login-poster-columns {
-    width:min(100%,380px);
-    height:100%;
+    width:100%;
+    height:100svh;
     min-height:0;
     gap:12px;
   }
-  .login-poster-rail { height:100%; }
   .login-poster-set { gap:9px; }
   .login-poster-card { border-radius:9px; }
   .login-form-panel {
-    width:100%;
-    min-width:0;
-    min-height:70svh;
-    flex:1 0 auto;
-    padding:14px 14px 28px;
-    border-top:1px solid rgba(255,255,255,.075);
-    border-left:0;
+    min-height:100svh;
+    padding:14px;
   }
   .login-form-panel .login-form-card {
     width:min(100%,460px);
