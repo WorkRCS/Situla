@@ -22,7 +22,7 @@ const nextConfig = {
         headers: [
           {
             key: "Permissions-Policy",
-            value: 'fullscreen=(self "https://vidbolt.pro"), autoplay=(self "https://vidbolt.pro"), picture-in-picture=(self "https://vidbolt.pro")'
+            value: 'fullscreen=(self "https://vidbolt.pro" "https://vidlink.pro" "https://slast430did.com"), autoplay=(self "https://vidbolt.pro" "https://vidlink.pro" "https://slast430did.com"), picture-in-picture=(self "https://vidbolt.pro" "https://vidlink.pro" "https://slast430did.com")'
           }
         ]
       }

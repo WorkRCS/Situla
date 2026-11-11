@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { hindiMoviePlayerUrl, vidlinkMovieUrl } from "../../../src/player-urls.js";
+import { attachFullscreenLandscapeLock } from "../../../src/player-fullscreen.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 const HINDI_PLAYER_ORIGIN = "https://slast430did.com";
@@ -151,6 +152,12 @@ export default function PlayerExperience({ imdbId }) {
     ? playerLanguage === "hi" ? hindiMoviePlayerUrl(imdbId, startAt) : vidlinkMovieUrl(imdbId, startAt)
     : null;
 
+  useEffect(() => {
+    const frame = iframeRef.current;
+    if (!frame) return;
+    return attachFullscreenLandscapeLock(frame);
+  }, [playerUrl]);
+
   return (
     <main className="watch-screen">
       {playerUrl ? (
@@ -160,8 +167,8 @@ export default function PlayerExperience({ imdbId }) {
           className="watch-frame"
           src={playerUrl}
           title={(movie?.title || "Situla movie") + (playerLanguage === "hi" ? " Hindi player" : " English player")}
-          sandbox={playerLanguage === "hi" ? "allow-scripts allow-same-origin allow-forms allow-presentation" : undefined}
-          allow="autoplay; encrypted-media; fullscreen"
+          sandbox={playerLanguage === "hi" ? "allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock" : undefined}
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />

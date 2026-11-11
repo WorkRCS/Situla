@@ -1,32 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  hasBraveClientHint,
-  hasBraveIOSUserAgent,
-  isAllowedBrowserRequest
-} from "../src/browser-access.js";
+import { readFile } from "node:fs/promises";
 
-test("recognizes Brave desktop and Android using the documented client hint", () => {
-  const hints = '"Chromium";v="138", "Not=A?Brand";v="24", "Brave";v="138"';
-  assert.equal(hasBraveClientHint(hints), true);
-  assert.equal(isAllowedBrowserRequest({ secChUa: hints }), true);
+const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("all browsers can access Situla pages and API routes without a browser gate", async () => {
+  const proxy = await read("../proxy.js");
+  assert.match(proxy, /export function proxy\(\)\s*\{\s*\/\*[\s\S]*?\*\/\s*return NextResponse\.next\(\);\s*\}/);
+  assert.doesNotMatch(proxy, /Brave|browser-check|user-agent|sec-ch-ua|NextResponse\.redirect|cookies/);
+  assert.match(proxy, /matcher:/);
 });
 
-test("recognizes Brave iOS user-agent branding", () => {
-  const braveIos =
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1 Brave/1";
-  assert.equal(hasBraveIOSUserAgent(braveIos), true);
-  assert.equal(isAllowedBrowserRequest({ userAgent: braveIos }), true);
-});
-
-test("blocks Android WebView including the old Situla app user-agent", () => {
-  const androidWebView =
-    "Mozilla/5.0 (Linux; Android 16; sdk_gphone64_x86_64 Build/AB1A) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/138.0.7204.179 Mobile Safari/537.36";
-  assert.equal(isAllowedBrowserRequest({ userAgent: androidWebView }), false);
-});
-
-test("blocks ordinary Chrome, Safari, and Firefox user-agents", () => {
-  assert.equal(isAllowedBrowserRequest({ userAgent: "Mozilla/5.0 Chrome/138.0.0.0 Safari/537.36" }), false);
-  assert.equal(isAllowedBrowserRequest({ userAgent: "Mozilla/5.0 Version/18.0 Safari/605.1.15" }), false);
-  assert.equal(isAllowedBrowserRequest({ userAgent: "Mozilla/5.0 Firefox/139.0" }), false);
+test("the old Brave-only check page and browser access helper are removed", async () => {
+  await assert.rejects(read("../app/browser-check/page.jsx"), { code: "ENOENT" });
+  await assert.rejects(read("../src/browser-access.js"), { code: "ENOENT" });
 });

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { normalizeAnimePlayerRoute } from "../../src/anime-player-route.js";
 import { normalizeTvPlayerRoute, vidboltTvUrl, vidboltAnimeUrl, normalizeVidBoltPlayerEvent, VIDBOLT_ORIGIN } from "../../src/player-urls.js";
+import { attachFullscreenLandscapeLock } from "../../src/player-fullscreen.js";
 
 export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
   const router = useRouter();
@@ -257,6 +258,12 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     if (!animeRoute) return null;
     return vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt);
   })();
+
+  useEffect(() => {
+    const frame = iframeRef.current;
+    if (!frame) return;
+    return attachFullscreenLandscapeLock(frame);
+  }, [playerUrl]);
 
   useEffect(() => {
     lastWrite.current = 0;
