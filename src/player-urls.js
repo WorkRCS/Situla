@@ -87,26 +87,30 @@ const MOVIE_PLAYER_THEME = Object.freeze({
   autoplay: "false"
 });
 
-function withMovieTheme(url) {
+function withMovieTheme(url, startAt = 0) {
   for (const [key, value] of Object.entries(MOVIE_PLAYER_THEME)) {
     url.searchParams.set(key, value);
+  }
+  const resumeAt = Number(startAt);
+  if (Number.isFinite(resumeAt) && resumeAt > 0) {
+    url.searchParams.set("startAt", String(Math.floor(resumeAt)));
   }
   return url;
 }
 
-export function vidlinkMovieUrl(imdbId) {
+export function vidlinkMovieUrl(imdbId, startAt = 0) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
-  return withMovieTheme(new URL(VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(id))).toString();
+  return withMovieTheme(new URL(VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(id)), startAt).toString();
 }
 
-export function hindiMoviePlayerUrl(imdbId) {
+export function hindiMoviePlayerUrl(imdbId, startAt = 0) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
 
   // This provider resolves IMDb titles from the path segment, not ?id=...
   // Keep the verified working shape: https://slast430did.com/play/{imdbId}
   const url = new URL(encodeURIComponent(id), HINDI_MOVIE_PLAYER);
-  withMovieTheme(url);
+  withMovieTheme(url, startAt);
   return url.toString();
 }

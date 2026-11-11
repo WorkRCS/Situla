@@ -263,6 +263,22 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     lastPlayerDuration.current = 0;
   }, [kind, tmdbId, malId, season, episode, audio]);
 
+  function goBackFromPlayer() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    if (kind === "tv" && tvRoute) {
+      router.replace("/tv/" + encodeURIComponent(tvRoute.tmdbId));
+      return;
+    }
+    if (kind === "anime" && animeRoute) {
+      router.replace("/anime/" + encodeURIComponent(animeRoute.malId));
+      return;
+    }
+    router.replace("/");
+  }
+
   return (
     <main className="watch-screen series-watch-screen">
       {playerUrl ? (
@@ -290,7 +306,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         </div>
       )}
       <header className="watch-topbar series-watch-topbar">
-        <button type="button" onClick={() => router.back()} className="watch-control" aria-label="Back to series"><i className="bi bi-arrow-left" aria-hidden="true" /></button>
+        <button type="button" onClick={goBackFromPlayer} className="watch-control" aria-label="Back to series"><i className="bi bi-arrow-left" aria-hidden="true" /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>

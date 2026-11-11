@@ -117,6 +117,8 @@ test("both Movie providers use Situla gold controls without a mute override", ()
   assert.equal(hindi.searchParams.get("muted"), null);
   assert.equal(hindi.searchParams.get("mute"), null);
   assert.equal(hindi.searchParams.get("audio"), null);
+  assert.equal(new URL(vidlinkMovieUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
+  assert.equal(new URL(hindiMoviePlayerUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
 });
 
 

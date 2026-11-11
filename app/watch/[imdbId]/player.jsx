@@ -148,7 +148,7 @@ export default function PlayerExperience({ imdbId }) {
   }, [movie, imdbId]);
 
   const playerUrl = catalogVerified && languageReady
-    ? playerLanguage === "hi" ? hindiMoviePlayerUrl(imdbId) : vidlinkMovieUrl(imdbId)
+    ? playerLanguage === "hi" ? hindiMoviePlayerUrl(imdbId, startAt) : vidlinkMovieUrl(imdbId, startAt)
     : null;
 
   return (

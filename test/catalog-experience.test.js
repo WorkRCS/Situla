@@ -129,3 +129,35 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
   assert.match(app, /function openTvSeries\(series, \{ navigate = true \} = \{\}\)/);
   assert.match(app, /function openAnimeSeries\(series, \{ navigate = true \} = \{\}\)/);
 });
+
+
+test("mobile/tablet bottom navigation replaces Search with a working Back action", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /onClick=\{navigateBack\}/);
+  assert.match(app, /aria-label="Go back to the previous page"/);
+  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
+  assert.doesNotMatch(app, /key=\{item\.id\}[\s\S]*?setSearchOpen\(true\)/);
+  assert.match(app, /className="header-search-wrap"/);
+  assert.match(app, /function navigateBack\(\)[\s\S]*?router\.back\(\)[\s\S]*?router\.replace\("\/"\)/);
+});
+
+test("Settings history cards resume the exact saved movie, TV, or Anime route", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const utility = await read("../src/watch-history.js");
+  assert.match(app, /createHistoryResumeTarget\(item\)/);
+  assert.match(app, /className="history-resume"/);
+  assert.match(app, /onClick=\{\(\) => resumeHistoryItem\(item\)\}/);
+  assert.match(app, /localStorage\.setItem\(target\.storageKey/);
+  assert.match(app, /router\.push\(target\.href\)/);
+  assert.match(utility, /"\/watch\/" \+ encodeURIComponent\(imdbId\)/);
+  assert.match(utility, /"\/watch\/tv\/" \+ tmdbId \+ "\/" \+ season \+ "\/" \+ episode/);
+  assert.match(utility, /"\/watch\/anime\/" \+ malId \+ "\/" \+ episode \+ "\/" \+ audio/);
+});
+
+test("Settings About section credits the ID providers and previews Premium", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /IMDb · TV Series IDs: TMDB · Anime IDs: MyAnimeList/);
+  assert.match(app, /href="https:\/\/myanimelist\.net\//);
+  assert.match(app, /Powered by the/);
+  assert.match(app, /Premium Feature Coming Soon/);
+});

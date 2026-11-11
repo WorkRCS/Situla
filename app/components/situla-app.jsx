@@ -10,6 +10,7 @@ import { Button } from "./ui/button.jsx";
 import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
+import { createHistoryResumeTarget } from "../../src/watch-history.js";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -1074,6 +1075,30 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     } catch {}
   }
 
+  function resumeHistoryItem(item) {
+    const target = createHistoryResumeTarget(item);
+    if (!target) return;
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(target.storageKey) || "[]");
+      const current = Array.isArray(saved) ? saved : [];
+      localStorage.setItem(target.storageKey, JSON.stringify([
+        target.progressEntry,
+        ...current.filter((entry) => !target.matches(entry))
+      ].slice(0, target.limit)));
+    } catch {}
+
+    router.push(target.href);
+  }
+
+  function navigateBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.replace("/");
+  }
+
   function clearWatchHistory() {
     const keys = [
       "situla:watch-history:v1", "situla:progress:v1", "situla:recent:v1",
@@ -1562,13 +1587,21 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                               const progress = duration > 0 ? Math.max(0, Math.min(100, (watched / duration) * 100)) : 0;
                               return (
                                 <article key={item.key} className="history-row">
-                                  {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
-                                  <div className="history-item-copy">
-                                    <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
-                                    <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
-                                    <Progress value={progress} ariaLabel={"Watched progress for " + (item.title || "this title")} className="history-progress" />
-                                    <div className="history-time-labels"><span>{formatClock(watched)} watched</span><span>{formatClock(duration)} total</span></div>
-                                  </div>
+                                  <button
+                                    type="button"
+                                    className="history-resume"
+                                    onClick={() => resumeHistoryItem(item)}
+                                    aria-label={"Continue watching " + (item.title || "this title") + " from " + formatClock(watched)}
+                                  >
+                                    {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <div className="history-poster"><BootstrapIcon icon="film" size={18} /></div>}
+                                    <div className="history-item-copy">
+                                      <p className="truncate text-sm font-semibold">{item.title || "Untitled"}</p>
+                                      <p className="mt-1 text-xs text-[#9297a7]">{String(item.mediaType || "media").toUpperCase()}{item.season ? " · S" + item.season + " E" + item.episode : item.episode ? " · EP " + item.episode : ""}</p>
+                                      <Progress value={progress} ariaLabel={"Watched progress for " + (item.title || "this title")} className="history-progress" />
+                                      <div className="history-time-labels"><span>{formatClock(watched)} watched</span><span>{formatClock(duration)} total</span></div>
+                                      <span className="history-resume-action"><BootstrapIcon icon="play-fill" size={11} /> Continue watching</span>
+                                    </div>
+                                  </button>
                                   <Button type="button" variant="icon" size="icon" className="history-remove" onClick={() => removeHistoryItem(item.key)} aria-label={"Remove " + (item.title || "item") + " from watch history"}><BootstrapIcon icon="x-lg" size={15} /></Button>
                                 </article>
                               );
@@ -1580,10 +1613,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   )}
                 </Disclosure>
               </Card>
-              <div className="rounded-2xl border border-white/10 bg-[#11131b] p-5">
+              <div className="about-situla-card rounded-2xl border border-white/10 bg-[#11131b] p-5">
                 <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Situla uses IMDb IDs for movies, TMDB IDs for TV series, and MAL IDs for anime playback.</p>
-                <p className="mt-3 text-[10px] leading-5 text-[#73798a]">This product uses the <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB API</a> but is not endorsed or certified by TMDB.</p>
+                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Movie IDs: IMDb · TV Series IDs: TMDB · Anime IDs: MyAnimeList (MAL).</p>
+                <div className="about-provider-list">
+                  <span>Identifier providers</span>
+                  <a href="https://www.imdb.com/" target="_blank" rel="noreferrer">IMDb</a>
+                  <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a>
+                  <a href="https://myanimelist.net/" target="_blank" rel="noreferrer">MyAnimeList</a>
+                </div>
+                <p className="mt-3 text-[10px] leading-5 text-[#73798a]">Powered by the <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB API</a>. This product is not endorsed or certified by TMDB. Anime identifiers are provided by MyAnimeList; movie identifiers use IMDb title IDs.</p>
+                <div className="premium-coming-soon">
+                  <span>PREMIUM</span>
+                  <strong>Premium Feature Coming Soon</strong>
+                </div>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
@@ -1596,19 +1639,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.map((item) => item.id === "search" ? (
-          <button
-            key={item.id}
-            type="button"
-            className="nav-button"
-            onClick={() => setSearchOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={searchOpen}
-          >
-            <Icon name={item.icon} size={20} />
-            <span>{item.label}</span>
-          </button>
-        ) : (
+        <button
+          key="back"
+          type="button"
+          className="nav-button"
+          onClick={navigateBack}
+          aria-label="Go back to the previous page"
+        >
+          <BootstrapIcon icon="arrow-left" size={20} />
+          <span>Back</span>
+        </button>
+        {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
           <Link
             key={item.id}
             href={item.href}

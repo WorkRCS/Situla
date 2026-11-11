@@ -2616,3 +2616,107 @@ body { color:#f7f7fa; background:#08090e; }
 @media (prefers-reduced-motion:reduce) {
   .site-footer a { transition:none !important; }
 }
+
+
+/* Settings history actions, provider credits, and the compact premium preview. */
+.history-resume {
+  display:flex;
+  flex:1 1 auto;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+  width:100%;
+  padding:0;
+  border:0;
+  border-radius:9px;
+  color:inherit;
+  background:transparent;
+  text-align:left;
+  cursor:pointer;
+}
+.history-resume:focus-visible {
+  outline:2px solid rgba(232,182,91,.78);
+  outline-offset:4px;
+}
+.history-resume:hover .history-resume-action { color:#ffe0a5; }
+.history-resume > img,.history-resume .history-poster {
+  width:42px;
+  height:60px;
+  flex:none;
+  border-radius:8px;
+  object-fit:cover;
+  background:#252936;
+}
+.history-resume .history-item-copy { flex:1 1 auto; }
+.history-resume-action {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:7px;
+  color:#d9b36f;
+  font-size:10px;
+  font-weight:850;
+  transition:color .16s ease;
+}
+.about-provider-list {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin-top:12px;
+}
+.about-provider-list > span {
+  width:100%;
+  color:#73798a;
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.about-provider-list a {
+  display:inline-flex;
+  min-height:27px;
+  align-items:center;
+  padding:5px 10px;
+  border:1px solid rgba(232,182,91,.2);
+  border-radius:999px;
+  color:#e8c47f;
+  background:rgba(232,182,91,.055);
+  font-size:10px;
+  font-weight:800;
+  text-decoration:none;
+}
+.about-provider-list a:hover {
+  border-color:rgba(232,182,91,.55);
+  color:#ffe0a5;
+}
+.premium-coming-soon {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px 14px;
+  margin-top:17px;
+  padding:11px 13px;
+  border:1px solid rgba(232,182,91,.18);
+  border-radius:12px;
+  background:linear-gradient(100deg,rgba(232,182,91,.09),rgba(232,182,91,.025));
+}
+.premium-coming-soon span {
+  color:#d9b36f;
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:.16em;
+}
+.premium-coming-soon strong {
+  color:#f1d7a9;
+  font-size:11px;
+  font-weight:850;
+}
+@media (max-width:620px) {
+  .history-resume { gap:9px; }
+  .premium-coming-soon { align-items:flex-start; flex-direction:column; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .history-resume-action { transition:none; }
+}
