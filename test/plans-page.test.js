@@ -31,11 +31,34 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(footer.includes('<Link href="/plans">Plans</Link>'));
 });
 
+test("Premium plans expose Monthly, 6-month and Yearly pricing with term-specific viewing policies", async () => {
+  const page = await read("../app/plans/plans-page.jsx");
+  assert.ok(page.includes('id: "monthly"'));
+  assert.ok(page.includes('monthlyPrice: 199'));
+  assert.ok(page.includes('totalPrice: 199'));
+  assert.ok(page.includes('id: "six-months"'));
+  assert.ok(page.includes('monthlyPrice: 149'));
+  assert.ok(page.includes('totalPrice: 894'));
+  assert.ok(page.includes('cooldown: "30 minutes"'));
+  assert.ok(page.includes('id: "yearly"'));
+  assert.ok(page.includes('monthlyPrice: 119'));
+  assert.ok(page.includes('totalPrice: 1428'));
+  assert.ok(page.includes('allowance: "Unlimited"'));
+  assert.ok(page.includes('cooldown: "No periodic cooldown"'));
+  assert.ok(page.includes("Unlimited streaming on the Yearly package"));
+  assert.ok(page.includes("USD_REFERENCE_INR_PER_USD = 93.8075"));
+  assert.ok(page.includes("formatUsd(selectedBilling.totalPrice)"));
+  assert.ok(page.includes("11 Nov 2026"));
+  assert.ok(page.includes('aria-label="Premium billing period"'));
+  assert.ok(page.includes("selectedBilling.cooldown"));
+});
+
 test("Plans page has responsive three-column desktop and stacked mobile layouts", async () => {
   const css = await read("../app/globals.css");
-  assert.ok(css.includes(".plans-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr))"));
+  assert.ok(css.includes(".plans-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)"));
   assert.ok(css.includes("@media (max-width:680px)"));
   assert.ok(css.includes(".plans-cards { grid-template-columns:minmax(0,1fr)"));
   assert.ok(css.includes(".plans-table-wrap { overflow-x:auto"));
   assert.ok(css.includes(".plans-lock-layout { display:grid"));
+  assert.ok(css.includes(".plans-billing-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr))"));
 });

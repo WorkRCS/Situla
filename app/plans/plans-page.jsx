@@ -9,6 +9,49 @@ const MODES = [
   { id: "premium", label: "Premium", short: "Verified" }
 ];
 
+const USD_REFERENCE_INR_PER_USD = 93.8075;
+const USD_REFERENCE_DATE = "11 Nov 2026";
+
+const PREMIUM_BILLING = [
+  {
+    id: "monthly",
+    label: "Monthly",
+    months: 1,
+    monthlyPrice: 199,
+    totalPrice: 199,
+    allowance: "3 hours",
+    cooldown: "2 hours",
+    billingLabel: "Billed monthly"
+  },
+  {
+    id: "six-months",
+    label: "6 Months",
+    months: 6,
+    monthlyPrice: 149,
+    totalPrice: 894,
+    allowance: "3 hours",
+    cooldown: "30 minutes",
+    billingLabel: "Billed every 6 months"
+  },
+  {
+    id: "yearly",
+    label: "Yearly",
+    months: 12,
+    monthlyPrice: 119,
+    totalPrice: 1428,
+    allowance: "Unlimited",
+    cooldown: "No periodic cooldown",
+    billingLabel: "Billed yearly"
+  }
+];
+
+function formatUsd(inrAmount) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD"
+  }).format(Number(inrAmount) / USD_REFERENCE_INR_PER_USD);
+}
+
 const PLANS = [
   {
     id: "guest",
@@ -78,8 +121,6 @@ const PLANS = [
     updates: "Early updates and detailed upcoming-movie information",
     features: [
       "Account and active Premium subscription required",
-      "Up to 3 hours of shared account watch time per cycle",
-      "2-hour watch cooldown after the allowance",
       "Up to 3 registered devices across mobile, computer and TV",
       "One shared account allowance across all registered devices",
       "Premium Verified badge",
@@ -89,7 +130,7 @@ const PLANS = [
     limits: [
       "Maximum 3 registered devices",
       "Watch time is shared across all registered devices",
-      "Price and checkout will be announced separately"
+      "Membership checkout and renewals are not active in this preview"
     ],
     action: "premium"
   }
@@ -97,8 +138,10 @@ const PLANS = [
 
 const COMPARISON = [
   ["Account required", "No", "Yes", "Yes"],
-  ["Watch allowance per cycle", "1 hour", "1 hour", "3 hours"],
-  ["Cooldown after allowance", "5 hours", "2 hours", "2 hours"],
+  ["Watch allowance", "1 hour", "1 hour", "Monthly: 3 hours · 6 Months: 3 hours · Yearly: Unlimited"],
+  ["Cooldown after allowance", "5 hours", "2 hours", "Monthly: 2 hours · 6 Months: 30 minutes · Yearly: none"],
+  ["Premium monthly rate", "—", "—", "₹199 · ₹149 (6 Months) · ₹119 (Yearly)"],
+  ["Premium billing total", "—", "—", "₹199 monthly · ₹894 / 6 months · ₹1,428 / year"],
   ["Restriction scope", "Public IP + guest session", "Account + device", "Account + up to 3 devices"],
   ["Registered devices", "IP/session based", "1", "Up to 3"],
   ["Movie player", "VidLink Pro", "VidLink Pro", "VidBolt (planned)"],
@@ -112,6 +155,7 @@ const COMPARISON = [
 
 export default function PlansPage() {
   const [previewMode, setPreviewMode] = useState("guest");
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [notice, setNotice] = useState("");
 
   function choosePreview(mode) {
@@ -128,8 +172,9 @@ export default function PlansPage() {
   }
 
   const currentMode = MODES.find((item) => item.id === previewMode);
+  const selectedBilling = PREMIUM_BILLING.find((item) => item.id === billingCycle) || PREMIUM_BILLING[0];
   const lockTime = previewMode === "guest" ? "04:42:18" : "01:42:18";
-  const lockDuration = previewMode === "guest" ? "5-hour guest cooldown" : previewMode === "free" ? "2-hour Free cooldown" : "2-hour Premium cooldown";
+  const lockDuration = previewMode === "guest" ? "5-hour guest cooldown" : previewMode === "free" ? "2-hour Free cooldown" : selectedBilling.cooldown + " Premium cooldown";
 
   return (
     <main className="plans-page">
@@ -204,16 +249,41 @@ export default function PlansPage() {
                     <div><h3>{plan.name}</h3><p>{plan.description}</p></div>
                     {plan.id === "premium" ? <span className="plans-plan-icon premium"><i className="bi bi-patch-check-fill" aria-hidden="true" /></span> : plan.id === "free" ? <span className="plans-plan-icon"><i className="bi bi-person-check" aria-hidden="true" /></span> : <span className="plans-plan-icon"><i className="bi bi-person" aria-hidden="true" /></span>}
                   </div>
-                  <div className="plans-price-line"><strong>{plan.price}</strong>{plan.id === "premium" && <small>Pricing announced later</small>}</div>
+                  {plan.id === "premium" ? (
+                    <div className="plans-premium-pricing">
+                      <span className="plans-billing-label">CHOOSE PREMIUM BILLING</span>
+                      <div className="plans-billing-options" role="group" aria-label="Premium billing period">
+                        {PREMIUM_BILLING.map((billing) => (
+                          <button key={billing.id} type="button" className={billingCycle === billing.id ? "active" : ""} onClick={() => setBillingCycle(billing.id)} aria-pressed={billingCycle === billing.id}>
+                            <strong>{billing.label}</strong>
+                            <span>₹{billing.monthlyPrice}/mo</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="plans-price-breakdown">
+                        <div><span>Monthly rate</span><strong>₹{selectedBilling.monthlyPrice}<small>/month</small></strong><em>{formatUsd(selectedBilling.monthlyPrice)} USD / month</em></div>
+                        <div><span>{selectedBilling.billingLabel}</span><strong>₹{selectedBilling.totalPrice.toLocaleString("en-IN")}</strong><em>{formatUsd(selectedBilling.totalPrice)} USD approx.</em></div>
+                      </div>
+                      <p className="plans-fx-note">Approximate USD display · Reference rate: ₹{USD_REFERENCE_INR_PER_USD.toFixed(4)} per $1 · {USD_REFERENCE_DATE}. Actual payment conversion and fees may vary.</p>
+                    </div>
+                  ) : (
+                    <div className="plans-price-line"><strong>{plan.price}</strong></div>
+                  )}
                   <div className="plans-stats">
-                    <div><span>WATCH TIME</span><strong>{plan.allowance}</strong><small>per cycle</small></div>
-                    <div><span>COOLDOWN</span><strong>{plan.cooldown}</strong><small>after limit</small></div>
+                    <div><span>WATCH TIME</span><strong>{plan.id === "premium" ? selectedBilling.allowance : plan.allowance}</strong><small>{plan.id === "premium" && selectedBilling.allowance === "Unlimited" ? "yearly plan" : "per cycle"}</small></div>
+                    <div><span>COOLDOWN</span><strong>{plan.id === "premium" ? selectedBilling.cooldown : plan.cooldown}</strong><small>{plan.id === "premium" && billingCycle === "yearly" ? "while yearly plan is active" : "after limit"}</small></div>
                     <div><span>DEVICES</span><strong>{plan.devices}</strong><small>access policy</small></div>
                   </div>
                   <div className="plans-playback-line"><span><i className="bi bi-play-circle" aria-hidden="true" /> PLAYBACK</span><strong>{plan.player}</strong></div>
                   <div className="plans-feature-block">
                     <h4><i className="bi bi-check2-circle" aria-hidden="true" /> Included</h4>
-                    <ul>{plan.features.map((feature) => <li key={feature}><i className="bi bi-check2" aria-hidden="true" /> <span>{feature}</span></li>)}</ul>
+                    <ul>
+                      {plan.features.map((feature) => <li key={feature}><i className="bi bi-check2" aria-hidden="true" /> <span>{feature}</span></li>)}
+                      {plan.id === "premium" && <>
+                        <li><i className="bi bi-check2" aria-hidden="true" /> <span>{selectedBilling.allowance === "Unlimited" ? "Unlimited streaming on the Yearly package" : "Up to 3 hours of shared account watch time per cycle"}</span></li>
+                        <li><i className="bi bi-check2" aria-hidden="true" /> <span>{selectedBilling.cooldown === "No periodic cooldown" ? "No scheduled watch cooldown while the Yearly package is active" : selectedBilling.cooldown + " cooldown after the watch allowance"}</span></li>
+                      </>}
+                    </ul>
                   </div>
                   <div className="plans-limit-block">
                     <h4><i className="bi bi-info-circle" aria-hidden="true" /> Limits & notes</h4>
