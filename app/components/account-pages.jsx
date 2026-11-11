@@ -44,16 +44,22 @@ function LoginPosterRail({ items, direction }) {
       <div className="login-poster-track">
         {[0, 1].map((copy) => (
           <div className="login-poster-set" key={copy}>
-            {items.map((item) => (
-              <div className="login-poster-card" key={item.heroId + "-" + copy}>
-                <img
-                  src={item.heroPoster}
-                  alt=""
-                  loading={copy === 0 ? "eager" : "lazy"}
-                  decoding="async"
-                />
-              </div>
-            ))}
+            {items.map((item, index) => {
+              const prioritize = copy === 0 && index < 2;
+              return (
+                <div className="login-poster-card" key={item.heroId + "-" + copy}>
+                  <img
+                    src={item.heroPoster}
+                    alt=""
+                    loading={prioritize ? "eager" : "lazy"}
+                    fetchPriority={prioritize ? "high" : "low"}
+                    decoding="async"
+                    width="500"
+                    height="750"
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -66,12 +72,11 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [notice, setNotice] = useState("");
   const [posterColumns, setPosterColumns] = useState({ downward: [], upward: [] });
 
   useEffect(() => {
     const controller = new AbortController();
+    const catalog = { movies: [], tv: [], anime: [] };
 
     async function readCatalog(path) {
       try {
@@ -84,21 +89,12 @@ export function LoginPage() {
       }
     }
 
-    async function loadPosterMix() {
-      const [movies, tv, anime] = await Promise.all([
-        readCatalog("/api/movies?random=true&limit=40"),
-        readCatalog("/api/tv?random=true&limit=40"),
-        readCatalog("/api/anime?random=true&limit=40")
-      ]);
+    function publishPosterColumns() {
       if (controller.signal.aborted) return;
-
-      const mixed = mixHomeSpotlight({
-        movies: movies.map((item) => toHomeSpotlight(item, "movie")),
-        tv: tv.map((item) => toHomeSpotlight(item, "tv")),
-        anime: anime.map((item) => toHomeSpotlight(item, "anime"))
-      });
+      const mixed = mixHomeSpotlight(catalog);
       const posters = mixed
-        .filter((item) => item && typeof item.heroPoster === "string" && (item.heroPoster.startsWith("https://") || item.heroPoster.startsWith("http://")))
+        .filter((item) => item && typeof item.heroPoster === "string" &&
+          (item.heroPoster.startsWith("https://") || item.heroPoster.startsWith("http://")))
         .slice(0, 48);
 
       setPosterColumns({
@@ -107,22 +103,30 @@ export function LoginPage() {
       });
     }
 
-    loadPosterMix();
+    const sources = [
+      { key: "movies", mediaType: "movie", path: "/api/movies?random=true&limit=40" },
+      { key: "tv", mediaType: "tv", path: "/api/tv?random=true&limit=40" },
+      { key: "anime", mediaType: "anime", path: "/api/anime?random=true&limit=40" }
+    ];
+
+    Promise.all(sources.map(async (source) => {
+      const items = await readCatalog(source.path);
+      catalog[source.key] = items.map((item) => toHomeSpotlight(item, source.mediaType));
+      publishPosterColumns();
+    }));
+
     return () => controller.abort();
   }, []);
 
-  function completeDemoSignIn(method) {
+  function completeDemoSignIn() {
     setDemoAccountSession(true);
-    setNotice(method === "google"
-      ? "Google sign-in preview selected. No Google account request was made."
-      : "Email sign-in preview selected. No credentials were sent to a server.");
     router.push("/profile");
   }
 
   function submitEmail(event) {
     event.preventDefault();
     if (!email.trim() || !password) return;
-    completeDemoSignIn("email");
+    completeDemoSignIn();
   }
 
   return (
@@ -134,14 +138,8 @@ export function LoginPage() {
         </div>
       </section>
 
-      <section className="login-form-panel">
-        <section className="login-form-card" aria-labelledby="login-title">
-          <div className="login-form-heading">
-            <span className="login-form-icon"><UserRound size={20} /></span>
-            <span className="account-eyebrow">MEMBER ACCESS</span>
-            <h2 id="login-title">Welcome back.</h2>
-            <p>Sign in to continue to your Situla account.</p>
-          </div>
+      <section className="login-form-panel" aria-label="Sign in">
+        <section className="login-form-card" aria-label="Situla sign-in form">
           <form className="login-form" onSubmit={submitEmail}>
             <label className="account-field">
               <span>Email address</span>
@@ -160,14 +158,9 @@ export function LoginPage() {
                 </button>
               </span>
             </label>
-            <div className="login-form-options">
-              <label className="account-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /><span>Remember me</span></label>
-              <button type="button" className="account-text-button" onClick={() => setNotice("Password recovery will be connected with the authentication service in a later phase.")}>Forgot password?</button>
-            </div>
-            <button type="submit" className="account-primary-button"><LogIn size={17} /> Continue with email <ArrowRight size={16} /></button>
+            <button type="submit" className="account-primary-button">Continue with email</button>
           </form>
-          <div className="account-divider"><span>OR CONTINUE WITH</span></div>
-          <button type="button" className="account-google-button" onClick={() => completeDemoSignIn("google")}>
+          <button type="button" className="account-google-button" onClick={completeDemoSignIn}>
             <img
               className="account-google-logo"
               src="https://developers.google.com/static/identity/images/g-logo.png"
@@ -177,9 +170,6 @@ export function LoginPage() {
             />
             Continue with Google
           </button>
-          <p className="account-demo-disclaimer"><ShieldCheck size={14} /> Preview mode: no password is verified and no Google OAuth request is sent.</p>
-          {notice && <p className="account-action-notice" role="status">{notice}</p>}
-          <p className="login-membership-link">New to Situla? <Link href="/plans">Explore membership <ChevronRight size={13} /></Link></p>
         </section>
       </section>
     </main>
