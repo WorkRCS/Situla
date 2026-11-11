@@ -292,8 +292,8 @@ test("Anime embed keeps Situla MAL/episode/audio routes and uses its configured 
   assert.match(player, /animeSeriesPlaybackUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio, startAt\)/);
   assert.match(player, /event\.origin !== SERIES_PLAYBACK_ORIGIN/);
   assert.match(player, /normalizeSeriesPlaybackEvent\(event\.data\)/);
-  assert.match(player, /function tryAlternateAnimeAudio/);
-  assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
+  assert.doesNotMatch(player, /function tryAlternateAnimeAudio/);
+  assert.doesNotMatch(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
   assert.doesNotMatch(player, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
   assert.match(player, /id="situla-series-player"/);
