@@ -24,7 +24,7 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes("/api/anime?random=true&limit=40"));
   assert.ok(pages.includes("https://developers.google.com/static/identity/images/g-logo.png"));
   assert.ok(!pages.includes("THE SITULA EXPERIENCE"));
-  const login = pages.slice(pages.indexOf("export function LoginPage"), pages.indexOf("\\nfunction formatAccountDate"));
+  const login = pages.slice(pages.indexOf("export function LoginPage"), pages.indexOf("\nfunction formatAccountDate"));
   assert.ok(login.includes("Email address"));
   assert.ok(login.includes("Password"));
   assert.ok(login.includes("Continue with email"));
