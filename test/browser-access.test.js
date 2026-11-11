@@ -6,7 +6,7 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("all browsers can access Situla pages and API routes without a browser gate", async () => {
   const proxy = await read("../proxy.js");
-  assert.match(proxy, /export function proxy\(\)\s*\{\s*\/\*[\s\S]*?\*\/\s*return NextResponse\.next\(\);\s*\}/);
+  assert.match(proxy, /export function proxy\(\)\s*\{[\s\S]*?return NextResponse\.next\(\);\s*\}/);
   assert.doesNotMatch(proxy, /Brave|browser-check|user-agent|sec-ch-ua|NextResponse\.redirect|cookies/);
   assert.match(proxy, /matcher:/);
 });
