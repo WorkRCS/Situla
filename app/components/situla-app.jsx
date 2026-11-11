@@ -546,6 +546,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [searchOpen]);
 
   useEffect(() => {
+    if (!searchOpen) return;
+    setAccountOpen(false);
+    setNotificationsOpen(false);
+  }, [searchOpen]);
+
+  useEffect(() => {
     try {
       const hasValidImdbId = (item) => /^tt\d{5,12}$/i.test(String(item?.imdbId || ""));
       const saved = JSON.parse(localStorage.getItem("situla:saved:v1") || "[]");
@@ -1244,7 +1250,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <button
                 type="button"
                 className="header-search search-box header-search-trigger"
-                onClick={() => { setSearchOpen(true); setAccountOpen(false); setNotificationsOpen(false); }}
+                onClick={() => setSearchOpen(true)}
                 aria-label="Search movies, TV series and anime"
                 aria-haspopup="dialog"
                 aria-expanded={searchOpen}
