@@ -18,7 +18,7 @@ test("global Site footer appears after page content and links to the copyright p
 test("copyright policy explains third-party video embeds without claiming blanket legal immunity", async () => {
   const page = await read("../app/copyright/page.jsx");
   assert.match(page, /does not upload[\s\S]*?store complete[\s\S]*?video files/i);
-  assert.match(page, /embedded players or services operated by third parties/i);
+  assert.match(page, /embedded players or services operated by third[\s\S]*?parties/i);
   assert.match(page, /rights remain with the respective copyright owners/i);
   assert.match(page, /an0-my1@proton\.me/);
   assert.match(page, /exact Situla page URL/);
