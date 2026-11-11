@@ -2,6 +2,8 @@ import { normalizeAnimePlayerRoute } from "./anime-player-route.js";
 export { normalizeAnimePlayerRoute };
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
+export const VIDBOLT_ORIGIN = "https://vidbolt.pro";
+const VIDBOLT_THEME_COLOR = "e8b65b";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const TMDB_TV_ID = /^[0-9]{1,12}$/;
 const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
@@ -23,30 +25,53 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
   return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
 
-// Anime-only embed provider. Existing MAL ID, episode and sub/dub values stay unchanged.
-export const MEGAPLAY_ORIGIN = "https://megaplay.buzz";
-
-export function megaplayAnimeUrl(malId, episode, audio) {
-  const route = normalizeAnimePlayerRoute(malId, episode, audio);
-  if (!route) return null;
-  return new URL("/stream/mal/" + route.malId + "/" + route.episode + "/" + route.audio, MEGAPLAY_ORIGIN).toString();
+// TV and Anime use the requested VidBolt .pro embed domain.
+function withVidBoltTheme(url) {
+  url.searchParams.set("theme", VIDBOLT_THEME_COLOR);
+  url.searchParams.set("title", "false");
+  // Situla owns episode navigation, so hide provider controls that could desync the app route.
+  url.searchParams.set("nextEpisodeButton", "false");
+  url.searchParams.set("episodesButton", "false");
+  return url.toString();
 }
 
-// Adapt MegaPlay's documented player messages to Situla's progress format.
-export function normalizeMegaplayPlayerEvent(payload) {
+export function vidboltTvUrl(tmdbId, season, episode) {
+  const route = normalizeTvPlayerRoute(tmdbId, season, episode);
+  if (!route) return null;
+  const url = new URL("/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode, VIDBOLT_ORIGIN);
+  return withVidBoltTheme(url);
+}
+
+export function vidboltAnimeUrl(malId, episode, audio) {
+  const route = normalizeAnimePlayerRoute(malId, episode, audio);
+  if (!route) return null;
+  const url = new URL("/anime/mal/" + route.malId + "/" + route.episode, VIDBOLT_ORIGIN);
+  // Preserve Situla's existing sub/dub route: prefer original Japanese audio for Sub
+  // and English audio for Dub. Other tracks, including Hindi when available, remain
+  // selectable inside VidBolt's own audio menu.
+  url.searchParams.set("audio", route.audio === "sub" ? "Japanese" : "en");
+  return withVidBoltTheme(url);
+}
+
+const VIDBOLT_PLAYER_EVENTS = new Set(["ready", "play", "pause", "timeupdate", "durationchange", "ended", "error"]);
+
+// VidBolt posts simple iframe events (type/time/duration), not the old provider payload.
+export function normalizeVidBoltPlayerEvent(payload) {
   let data = payload;
   if (typeof data === "string") {
     try { data = JSON.parse(data); } catch { return null; }
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
-  if (data.type === "watching-log") {
-    return { event: "timeupdate", currentTime: Number(data.currentTime), duration: Number(data.duration) };
+  if (data.data && typeof data.data === "object" && data.type === "PLAYER_EVENT") {
+    data = data.data;
   }
-  if (String(data.channel || "").toLowerCase() !== "megacloud") return null;
-  const map = { time: "timeupdate", complete: "ended", error: "error" };
-  const event = String(data.event || "").toLowerCase();
-  if (!map[event]) return null;
-  return { event: map[event], currentTime: Number(data.time ?? data.currentTime), duration: Number(data.duration) };
+  const event = String(data.type || "").toLowerCase();
+  if (!VIDBOLT_PLAYER_EVENTS.has(event)) return null;
+  return {
+    event,
+    currentTime: Number(data.time ?? data.currentTime),
+    duration: Number(data.duration)
+  };
 }
 
 const MOVIE_PLAYER_THEME = Object.freeze({
@@ -71,12 +96,6 @@ export function vidlinkMovieUrl(imdbId) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
   return withMovieTheme(new URL(VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(id))).toString();
-}
-
-export function vidlinkTvUrl(tmdbId, season, episode) {
-  const route = normalizeTvPlayerRoute(tmdbId, season, episode);
-  if (!route) return null;
-  return withMovieTheme(new URL(VIDLINK_ORIGIN + "/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode)).toString();
 }
 
 export function hindiMoviePlayerUrl(imdbId) {

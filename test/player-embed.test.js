@@ -1,33 +1,39 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeMegaplayPlayerEvent, normalizeTvPlayerRoute, megaplayAnimeUrl, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
+import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeVidBoltPlayerEvent, normalizeTvPlayerRoute, vidboltAnimeUrl, vidboltTvUrl, vidlinkMovieUrl } from "../src/player-urls.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Anime routes preserve MAL ID, episode and sub/dub with MegaPlay", () => {
+test("Anime routes keep MAL ID and episode routing while VidBolt receives Sub/Dub preferences", () => {
   assert.deepEqual(normalizeAnimePlayerRoute("40748", "1", "sub"), { malId: 40748, episode: 1, audio: "sub" });
   assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "0", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1.5", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1", "unknown"), null);
-  const sub = new URL(megaplayAnimeUrl("40748", "1", "sub"));
-  assert.equal(sub.origin + sub.pathname, "https://megaplay.buzz/stream/mal/40748/1/sub");
-  const dub = new URL(megaplayAnimeUrl("5114", "64", "dub"));
-  assert.equal(dub.origin + dub.pathname, "https://megaplay.buzz/stream/mal/5114/64/dub");
-  assert.equal(megaplayAnimeUrl(5, 0, "sub"), null);
-  assert.equal(megaplayAnimeUrl(5, 1, "unknown"), null);
+  const sub = new URL(vidboltAnimeUrl("40748", "1", "sub"));
+  assert.equal(sub.origin + sub.pathname, "https://vidbolt.pro/anime/mal/40748/1");
+  assert.equal(sub.searchParams.get("audio"), "Japanese");
+  assert.equal(sub.searchParams.get("theme"), "e8b65b");
+  const dub = new URL(vidboltAnimeUrl("5114", "64", "dub"));
+  assert.equal(dub.origin + dub.pathname, "https://vidbolt.pro/anime/mal/5114/64");
+  assert.equal(dub.searchParams.get("audio"), "en");
+  assert.equal(dub.searchParams.get("theme"), "e8b65b");
+  assert.equal(vidboltAnimeUrl(5, 0, "sub"), null);
+  assert.equal(vidboltAnimeUrl(5, 1, "unknown"), null);
 });
 
-test("MegaPlay time, complete and watching-log events feed Situla progress", () => {
-  assert.deepEqual(normalizeMegaplayPlayerEvent({ channel: "megacloud", event: "time", time: 85, duration: 1440 }),
-    { event: "timeupdate", currentTime: 85, duration: 1440 });
-  assert.deepEqual(normalizeMegaplayPlayerEvent(JSON.stringify({ channel: "megacloud", event: "complete", time: 1440, duration: 1440 })),
+test("VidBolt ready, time, duration and ended events normalize for Situla watch history", () => {
+  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "timeupdate", time: 85 }),
+    { event: "timeupdate", currentTime: 85, duration: NaN });
+  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "durationchange", duration: 1440 }),
+    { event: "durationchange", currentTime: NaN, duration: 1440 });
+  assert.deepEqual(normalizeVidBoltPlayerEvent(JSON.stringify({ type: "ended", time: 1440, duration: 1440 })),
     { event: "ended", currentTime: 1440, duration: 1440 });
-  assert.deepEqual(normalizeMegaplayPlayerEvent({ type: "watching-log", currentTime: 125, duration: 1440 }),
-    { event: "timeupdate", currentTime: 125, duration: 1440 });
-  assert.equal(normalizeMegaplayPlayerEvent({ channel: "other", event: "time", time: 1, duration: 2 }), null);
-  assert.equal(normalizeMegaplayPlayerEvent("not-json"), null);
+  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "ready" }),
+    { event: "ready", currentTime: NaN, duration: NaN });
+  assert.equal(normalizeVidBoltPlayerEvent({ type: "unknown" }), null);
+  assert.equal(normalizeVidBoltPlayerEvent("not-json"), null);
 });
 
 test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or episode params", () => {
@@ -42,11 +48,13 @@ test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or e
   assert.equal(normalizeTvPlayerRoute("1399", "2", "0"), null);
   assert.equal(normalizeTvPlayerRoute("1399", "1.5", "2"), null);
   assert.equal(normalizeTvPlayerRoute("999999999999999999", "2", "2"), null);
-  const tv = new URL(vidlinkTvUrl("1399", "2", "8"));
-  assert.equal(tv.origin + tv.pathname, "https://vidlink.pro/tv/1399/2/8");
-  assert.equal(tv.searchParams.get("primaryColor"), "e8b65b");
-  assert.equal(tv.searchParams.get("secondaryColor"), "171a23");
-  assert.equal(vidlinkTvUrl("tt1234567", "2", "8"), null);
+  const tv = new URL(vidboltTvUrl("1399", "2", "8"));
+  assert.equal(tv.origin + tv.pathname, "https://vidbolt.pro/tv/1399/2/8");
+  assert.equal(tv.searchParams.get("theme"), "e8b65b");
+  assert.equal(tv.searchParams.get("title"), "false");
+  assert.equal(tv.searchParams.get("nextEpisodeButton"), "false");
+  assert.equal(tv.searchParams.get("episodesButton"), "false");
+  assert.equal(vidboltTvUrl("tt1234567", "2", "8"), null);
 });
 
 test("TV episode server route validates params and the player has a route-level recovery boundary", async () => {
@@ -60,7 +68,8 @@ test("TV episode server route validates params and the player has a route-level 
   assert.match(errorBoundary, /onClick=\{\(\) => reset\(\)\}/);
   assert.match(player, /Array\.isArray\(seriesInfo\?\.seasons\)/);
   assert.match(player, /String\(item\.imdbId \|\| ""\)\.toLowerCase\(\)/);
-  assert.match(player, /!tvRoute \|\| String\(data\.mediaType/);
+  assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
+  assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
 });
 
 test("Hindi movie iframe blocks popups and top-level redirects while retaining playback scripts", async () => {
@@ -263,35 +272,19 @@ test("bottom navigation is visible on touch layouts and hidden on desktop", asyn
 });
 
 
-test("MegaPlay Anime URLs use the existing MAL ID, episode and sub/dub route", () => {
-  assert.deepEqual(normalizeAnimePlayerRoute("5", "1", "sub"), { malId: 5, episode: 1, audio: "sub" });
-  assert.deepEqual(normalizeAnimePlayerRoute(5114, 64, "DUB"), { malId: 5114, episode: 64, audio: "dub" });
-  assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
-  assert.equal(normalizeAnimePlayerRoute("0", "1", "sub"), null);
-  assert.equal(normalizeAnimePlayerRoute("5", "0", "sub"), null);
-  assert.equal(normalizeAnimePlayerRoute("5", "1.5", "sub"), null);
-  assert.equal(normalizeAnimePlayerRoute("5", "1", "raw"), null);
-
-  const sub = new URL(megaplayAnimeUrl(5, 1, "sub"));
-  assert.equal(sub.origin + sub.pathname, "https://megaplay.buzz/stream/mal/5/1/sub");
-  const dub = new URL(megaplayAnimeUrl(5114, 64, "dub"));
-  assert.equal(dub.origin + dub.pathname, "https://megaplay.buzz/stream/mal/5114/64/dub");
-  assert.equal(megaplayAnimeUrl(5, 0, "sub"), null);
-  assert.equal(megaplayAnimeUrl(5, 1, "raw"), null);
-});
-
-test("Anime page keeps its Situla route and uses MegaPlay embed and events", async () => {
+test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pro origin", async () => {
   const page = await read("../app/watch/anime/[malId]/[episode]/[audio]/page.jsx");
   const player = await read("../app/components/media-player.jsx");
   assert.match(page, /normalizeAnimePlayerRoute/);
   assert.match(page, /if \(!route\) notFound\(\)/);
-  assert.match(player, /megaplayAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio\)/);
-  assert.match(player, /event\.origin !== MEGAPLAY_ORIGIN/);
-  assert.match(player, /normalizeMegaplayPlayerEvent\(event\.data\)/);
+  assert.match(player, /vidboltAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio\)/);
+  assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
+  assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
   assert.match(player, /function tryAlternateAnimeAudio/);
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
   assert.match(player, /function playNextAnimeEpisode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
+  assert.match(player, /id="vidbolt-player"/);
 });
 
 test("Anime catalog is a manually curated MAL list and the seed command uses the offline bulk seeder", async () => {

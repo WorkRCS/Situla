@@ -13,7 +13,7 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), picture-in-picture=()"
+            value: "camera=(), microphone=(), geolocation=()"
           }
         ]
       },
@@ -22,7 +22,7 @@ const nextConfig = {
         headers: [
           {
             key: "Permissions-Policy",
-            value: 'fullscreen=(self "https://vidlink.pro" "https://megaplay.buzz"), autoplay=(self "https://vidlink.pro" "https://megaplay.buzz"), picture-in-picture=()'
+            value: 'fullscreen=(self "https://vidbolt.pro"), autoplay=(self "https://vidbolt.pro"), picture-in-picture=(self "https://vidbolt.pro")'
           }
         ]
       }
