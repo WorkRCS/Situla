@@ -3517,6 +3517,211 @@ body { color:#f7f7fa; background:#08090e; }
 .login-membership-link a { display:inline-flex; align-items:center; gap:2px; color:#e8b65b; font-weight:800; text-decoration:none; }
 .login-membership-link a:hover { color:#ffda91; }
 
+
+/* Login: database-backed poster columns with opposing seamless motion. */
+.login-page {
+  display:flex;
+  align-items:stretch;
+  width:100%;
+  max-width:none;
+  min-height:100dvh;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:#08090e;
+}
+.login-page::before,.login-page::after { display:none; }
+body:has(.login-page) .site-footer { display:none !important; }
+.login-poster-stage {
+  position:relative;
+  display:flex;
+  flex:1 1 auto;
+  min-width:0;
+  min-height:100dvh;
+  align-items:stretch;
+  justify-content:center;
+  overflow:hidden;
+  padding:clamp(18px,3vw,42px);
+  background:
+    radial-gradient(ellipse at 22% 18%,rgba(232,182,91,.13),transparent 43%),
+    radial-gradient(ellipse at 76% 82%,rgba(67,83,135,.13),transparent 46%),
+    #090b12;
+}
+.login-poster-stage::before,.login-poster-stage::after {
+  position:absolute;
+  z-index:2;
+  right:0;
+  left:0;
+  height:11%;
+  content:"";
+  pointer-events:none;
+}
+.login-poster-stage::before {
+  top:0;
+  background:linear-gradient(180deg,#090b12 0%,rgba(9,11,18,0) 100%);
+}
+.login-poster-stage::after {
+  bottom:0;
+  background:linear-gradient(0deg,#090b12 0%,rgba(9,11,18,0) 100%);
+}
+.login-poster-columns {
+  display:grid;
+  width:min(100%,680px);
+  min-height:calc(100dvh - 2 * clamp(18px,3vw,42px));
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:clamp(12px,1.8vw,24px);
+  margin:auto;
+}
+.login-poster-rail {
+  position:relative;
+  min-width:0;
+  height:100%;
+  overflow:hidden;
+  mask-image:linear-gradient(180deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+}
+.login-poster-track {
+  display:flex;
+  width:100%;
+  flex-direction:column;
+  will-change:transform;
+}
+.login-poster-set {
+  display:flex;
+  width:100%;
+  flex:0 0 auto;
+  flex-direction:column;
+  gap:clamp(12px,1.5vh,20px);
+}
+.login-poster-rail--up .login-poster-track {
+  animation:login-poster-up 78s linear infinite;
+}
+.login-poster-rail--down .login-poster-track {
+  animation:login-poster-down 78s linear infinite;
+}
+.login-poster-card {
+  position:relative;
+  width:100%;
+  flex:0 0 auto;
+  overflow:hidden;
+  aspect-ratio:2 / 3;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:15px;
+  background:linear-gradient(145deg,#202434,#10131d);
+  box-shadow:0 13px 36px rgba(0,0,0,.34);
+}
+.login-poster-card img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+@keyframes login-poster-up {
+  from { transform:translate3d(0,0,0); }
+  to { transform:translate3d(0,-50%,0); }
+}
+@keyframes login-poster-down {
+  from { transform:translate3d(0,-50%,0); }
+  to { transform:translate3d(0,0,0); }
+}
+.login-form-panel {
+  display:flex;
+  flex:0 0 min(43%,640px);
+  width:min(43%,640px);
+  min-width:390px;
+  min-height:100dvh;
+  align-items:center;
+  justify-content:center;
+  padding:clamp(18px,3.4vw,48px);
+  border-left:1px solid rgba(255,255,255,.075);
+  background:
+    radial-gradient(ellipse at 82% 12%,rgba(232,182,91,.07),transparent 42%),
+    linear-gradient(155deg,#10131c,#0b0d14 72%);
+}
+.login-form-panel .login-form-card {
+  width:min(100%,460px);
+  margin:auto;
+  padding:clamp(22px,2.7vw,34px);
+  border-color:rgba(255,255,255,.12);
+  border-radius:22px;
+}
+.account-google-button {
+  min-height:48px;
+  border:1px solid #747775;
+  border-radius:12px;
+  color:#1f1f1f;
+  background:#fff;
+  font-size:13px;
+  font-weight:650;
+}
+.account-google-button:hover {
+  border-color:#5f6368;
+  color:#1f1f1f;
+  background:#f7f8f8;
+}
+.account-google-logo {
+  display:block;
+  width:20px;
+  height:20px;
+  flex:none;
+  object-fit:contain;
+}
+@media (max-width:900px) {
+  .login-form-panel {
+    flex-basis:47%;
+    width:47%;
+    min-width:350px;
+    padding:19px;
+  }
+  .login-form-panel .login-form-card { padding:22px 20px; }
+  .login-poster-stage { padding:17px; }
+  .login-poster-columns { gap:12px; }
+  .login-poster-card { border-radius:12px; }
+}
+@media (max-width:640px) {
+  .login-page {
+    min-height:100svh;
+    flex-direction:column;
+    overflow:visible;
+  }
+  .login-poster-stage {
+    width:100%;
+    min-height:0;
+    height:30svh;
+    flex:0 0 30svh;
+    padding:8px 22px;
+  }
+  .login-poster-columns {
+    width:min(100%,380px);
+    height:100%;
+    min-height:0;
+    gap:12px;
+  }
+  .login-poster-rail { height:100%; }
+  .login-poster-set { gap:9px; }
+  .login-poster-card { border-radius:9px; }
+  .login-form-panel {
+    width:100%;
+    min-width:0;
+    min-height:70svh;
+    flex:1 0 auto;
+    padding:14px 14px 28px;
+    border-top:1px solid rgba(255,255,255,.075);
+    border-left:0;
+  }
+  .login-form-panel .login-form-card {
+    width:min(100%,460px);
+    padding:21px 19px;
+  }
+}
+@media (max-width:380px) {
+  .login-form-panel .login-form-card { padding:18px 15px; }
+  .login-form-heading h2 { font-size:24px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .login-poster-track { animation:none !important; transform:none !important; }
+}
+
 /* Profile: identity, account locks, current plan and upcoming renewal. */
 .profile-content { width:min(1210px,100%); margin:38px auto 0; }
 .profile-page-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:19px; }

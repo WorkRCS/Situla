@@ -14,6 +14,13 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.match(profileRoute, /ProfilePage/);
   assert.ok(pages.includes("Continue with email"));
   assert.ok(pages.includes("Continue with Google"));
+  assert.ok(pages.includes("mixHomeSpotlight"));
+  assert.ok(pages.includes("toHomeSpotlight"));
+  assert.ok(pages.includes("/api/movies?random=true&limit=40"));
+  assert.ok(pages.includes("/api/tv?random=true&limit=40"));
+  assert.ok(pages.includes("/api/anime?random=true&limit=40"));
+  assert.ok(pages.includes("https://developers.google.com/static/identity/images/g-logo.png"));
+  assert.ok(!pages.includes("THE SITULA EXPERIENCE"));
   assert.ok(pages.includes("Forgot password?"));
   assert.ok(pages.includes("no password is verified"));
   assert.ok(pages.includes("Purchased · Enjoy Premium"));
@@ -54,4 +61,20 @@ test("Premium pricing data is shared by Plans and the demo membership profile", 
   assert.ok(membership.includes("monthlyPrice: 199"));
   assert.ok(membership.includes("monthlyPrice: 149"));
   assert.ok(membership.includes("monthlyPrice: 119"));
+});
+
+
+test("Login showcase mixes live movie, TV and anime posters in opposing vertical loops", async () => {
+  const pages = await read("../app/components/account-pages.jsx");
+  const css = await read("../app/globals.css");
+
+  assert.ok(pages.includes("login-poster-rail"));
+  assert.ok(pages.includes('direction="down"'));
+  assert.ok(pages.includes('direction="up"'));
+  assert.ok(pages.includes('loading: copy === 0 ? "eager" : "lazy"'));
+  assert.ok(css.includes("@keyframes login-poster-up"));
+  assert.ok(css.includes("@keyframes login-poster-down"));
+  assert.ok(css.includes("animation:login-poster-up"));
+  assert.ok(css.includes("animation:login-poster-down"));
+  assert.ok(css.includes("body:has(.login-page) .site-footer"));
 });

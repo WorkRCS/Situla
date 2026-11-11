@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2,
   ChevronRight, Clock3, CreditCard, Crown, Eye, EyeOff, Film, Fingerprint,
@@ -37,6 +38,29 @@ function AccountPageTopbar({ profile = false }) {
   );
 }
 
+function LoginPosterRail({ items, direction }) {
+  return (
+    <div className={"login-poster-rail login-poster-rail--" + direction}>
+      <div className="login-poster-track">
+        {[0, 1].map((copy) => (
+          <div className="login-poster-set" key={copy}>
+            {items.map((item) => (
+              <div className="login-poster-card" key={item.heroId + "-" + copy}>
+                <img
+                  src={item.heroPoster}
+                  alt=""
+                  loading={copy === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -44,6 +68,48 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [notice, setNotice] = useState("");
+  const [posterColumns, setPosterColumns] = useState({ downward: [], upward: [] });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function readCatalog(path) {
+      try {
+        const response = await fetch(path, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) return [];
+        const payload = await response.json().catch(() => ({}));
+        return Array.isArray(payload.items) ? payload.items : [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function loadPosterMix() {
+      const [movies, tv, anime] = await Promise.all([
+        readCatalog("/api/movies?random=true&limit=40"),
+        readCatalog("/api/tv?random=true&limit=40"),
+        readCatalog("/api/anime?random=true&limit=40")
+      ]);
+      if (controller.signal.aborted) return;
+
+      const mixed = mixHomeSpotlight({
+        movies: movies.map((item) => toHomeSpotlight(item, "movie")),
+        tv: tv.map((item) => toHomeSpotlight(item, "tv")),
+        anime: anime.map((item) => toHomeSpotlight(item, "anime"))
+      });
+      const posters = mixed
+        .filter((item) => item && typeof item.heroPoster === "string" && /^https?:\\/\\//i.test(item.heroPoster))
+        .slice(0, 48);
+
+      setPosterColumns({
+        downward: posters.filter((item, index) => index % 2 === 0),
+        upward: posters.filter((item, index) => index % 2 === 1)
+      });
+    }
+
+    loadPosterMix();
+    return () => controller.abort();
+  }, []);
 
   function completeDemoSignIn(method) {
     setDemoAccountSession(true);
@@ -61,24 +127,14 @@ export function LoginPage() {
 
   return (
     <main className="account-page login-page">
-      <AccountPageTopbar />
-      <div className="login-layout">
-        <section className="login-showcase">
-          <span className="account-eyebrow"><Sparkles size={14} /> THE SITULA EXPERIENCE</span>
-          <h1>Your next great watch starts <em>here.</em></h1>
-          <p className="login-showcase-description">Sign in to keep your membership details together, see your access status and make the most of every story.</p>
-          <div className="login-showcase-points">
-            <div><ShieldCheck size={18} /><span><strong>One account, all in one place</strong><small>Your account and membership at a glance.</small></span></div>
-            <div><Crown size={18} /><span><strong>Premium member experience</strong><small>Benefits, renewal timing and plan details.</small></span></div>
-            <div><MonitorSmartphone size={18} /><span><strong>Made for every screen</strong><small>A considered experience on phone, tablet and desktop.</small></span></div>
-          </div>
-          <div className="login-showcase-foot">
-            <span className="login-showcase-orbit"><span /><span /><span /></span>
-            <span><strong>Discover more with Situla</strong><small>Movies · TV series · Anime</small></span>
-            <BadgeCheck size={20} />
-          </div>
-        </section>
+      <section className="login-poster-stage" aria-label="Featured movie, TV series and anime posters">
+        <div className="login-poster-columns" aria-hidden="true">
+          <LoginPosterRail items={posterColumns.downward} direction="down" />
+          <LoginPosterRail items={posterColumns.upward} direction="up" />
+        </div>
+      </section>
 
+      <section className="login-form-panel">
         <section className="login-form-card" aria-labelledby="login-title">
           <div className="login-form-heading">
             <span className="login-form-icon"><UserRound size={20} /></span>
@@ -111,13 +167,21 @@ export function LoginPage() {
             <button type="submit" className="account-primary-button"><LogIn size={17} /> Continue with email <ArrowRight size={16} /></button>
           </form>
           <div className="account-divider"><span>OR CONTINUE WITH</span></div>
-          <button type="button" className="account-google-button" onClick={() => completeDemoSignIn("google")}><span className="account-google-mark" aria-hidden="true">G</span>Continue with Google</button>
+          <button type="button" className="account-google-button" onClick={() => completeDemoSignIn("google")}>
+            <img
+              className="account-google-logo"
+              src="https://developers.google.com/static/identity/images/g-logo.png"
+              alt=""
+              width="20"
+              height="20"
+            />
+            Continue with Google
+          </button>
           <p className="account-demo-disclaimer"><ShieldCheck size={14} /> Preview mode: no password is verified and no Google OAuth request is sent.</p>
           {notice && <p className="account-action-notice" role="status">{notice}</p>}
           <p className="login-membership-link">New to Situla? <Link href="/plans">Explore membership <ChevronRight size={13} /></Link></p>
         </section>
-      </div>
-      <p className="account-page-caption">SITULA ACCOUNT EXPERIENCE <span>·</span> UI PREVIEW</p>
+      </section>
     </main>
   );
 }
