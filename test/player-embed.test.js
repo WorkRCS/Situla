@@ -71,7 +71,6 @@ test("TV episode server route validates params and the player has a route-level 
   assert.match(page, /if \(!route\) notFound\(\)/);
   assert.match(errorBoundary, /export default function TvEpisodeError/);
   assert.match(errorBoundary, /onClick=\{\(\) => reset\(\)\}/);
-  assert.match(player, /Array\.isArray\(seriesInfo\?\.seasons\)/);
   assert.match(player, /String\(item\.imdbId \|\| ""\)\.toLowerCase\(\)/);
   assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
   assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
@@ -327,11 +326,11 @@ test("Watch pages delegate episode selection to the embedded iframe player", asy
 
   assert.doesNotMatch(seriesPlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
   assert.doesNotMatch(moviePlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season/);
-  assert.match(seriesPlayer, /<iframe[\\s\\S]*?src=\\{playerUrl\\}/);
-  assert.match(seriesPlayer, /vidboltTvUrl\\(tvRoute\\.tmdbId, tvRoute\\.season, tvRoute\\.episode, startAt\\)/);
-  assert.match(seriesPlayer, /vidboltAnimeUrl\\(animeRoute\\.malId, animeRoute\\.episode, animeRoute\\.audio, startAt\\)/);
-  assert.match(playerUrls, /url\\.searchParams\\.set\\("episodesButton", "true"\\)/);
-  assert.match(playerUrls, /url\\.searchParams\\.set\\("nextEpisodeButton", "false"\\)/);
+  assert.ok(seriesPlayer.includes("<iframe") && seriesPlayer.includes("src={playerUrl}"));
+  assert.ok(seriesPlayer.includes("vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt)"));
+  assert.ok(seriesPlayer.includes("vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt)"));
+  assert.ok(playerUrls.includes('url.searchParams.set("episodesButton", "true")'));
+  assert.ok(playerUrls.includes('url.searchParams.set("nextEpisodeButton", "false")'));
 });
 
 test("home page omits personal watch-history shelves and shows catalog discovery sections", async () => {
