@@ -24,6 +24,7 @@ export default function SiteFooter() {
           </Link>
           <nav className="site-footer-links" aria-label="Footer navigation">
             <Link href="/">Home</Link>
+            <Link href="/plans">Plans</Link>
             <Link href="/copyright">Copyright &amp; Content Policy</Link>
             <a href={"mailto:" + COPYRIGHT_EMAIL}>Copyright contact</a>
           </nav>
