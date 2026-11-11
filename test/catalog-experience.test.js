@@ -155,7 +155,7 @@ test("mobile/tablet navigation uses six balanced iOS-style glass slots and a con
   assert.doesNotMatch(css, /\.bottom-nav,\.rating-pill,\.save-button/);
   assert.match(css, /animation:premium-glass-sheen-forward 1s linear infinite/);
   assert.match(css, /@keyframes premium-glass-sheen-forward[\s\S]*?translateX\(520%\)/);
-  assert.equal((css.match(/premium-coming-soon::after/g) || []).length, 1);
+  assert.equal((css.match(/animation:premium-glass-sheen-forward/g) || []).length, 1);
 });
 
 test("all Situla page text is non-selectable", async () => {
