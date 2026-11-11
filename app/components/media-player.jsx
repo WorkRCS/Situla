@@ -252,10 +252,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified || !tvRoute) return null;
-      return vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode);
+      return vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt);
     }
     if (!animeRoute) return null;
-    return vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio);
+    return vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt);
   })();
 
   useEffect(() => {

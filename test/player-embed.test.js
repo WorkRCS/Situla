@@ -15,6 +15,8 @@ test("Anime routes keep MAL ID and episode routing while VidBolt receives Sub/Du
   assert.equal(sub.origin + sub.pathname, "https://vidbolt.pro/anime/mal/40748/1");
   assert.equal(sub.searchParams.get("audio"), "Japanese");
   assert.equal(sub.searchParams.get("theme"), "e8b65b");
+  const resumedSub = new URL(vidboltAnimeUrl("40748", "1", "sub", 95));
+  assert.equal(resumedSub.searchParams.get("startAt"), "95");
   const dub = new URL(vidboltAnimeUrl("5114", "64", "dub"));
   assert.equal(dub.origin + dub.pathname, "https://vidbolt.pro/anime/mal/5114/64");
   assert.equal(dub.searchParams.get("audio"), "en");
@@ -54,6 +56,8 @@ test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or e
   assert.equal(tv.searchParams.get("title"), "false");
   assert.equal(tv.searchParams.get("nextEpisodeButton"), "false");
   assert.equal(tv.searchParams.get("episodesButton"), "false");
+  const resumedTv = new URL(vidboltTvUrl("1399", "2", "8", 128));
+  assert.equal(resumedTv.searchParams.get("startAt"), "128");
   assert.equal(vidboltTvUrl("tt1234567", "2", "8"), null);
 });
 

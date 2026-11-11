@@ -26,7 +26,9 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
 }
 
 // TV and Anime use the requested VidBolt .pro embed domain.
-function withVidBoltTheme(url) {
+function withVidBoltTheme(url, startAt = 0) {
+  const resumeAt = Number(startAt);
+  if (Number.isFinite(resumeAt) && resumeAt > 0) url.searchParams.set("startAt", String(Math.floor(resumeAt)));
   url.searchParams.set("theme", VIDBOLT_THEME_COLOR);
   url.searchParams.set("title", "false");
   // Situla owns episode navigation, so hide provider controls that could desync the app route.
@@ -35,14 +37,14 @@ function withVidBoltTheme(url) {
   return url.toString();
 }
 
-export function vidboltTvUrl(tmdbId, season, episode) {
+export function vidboltTvUrl(tmdbId, season, episode, startAt = 0) {
   const route = normalizeTvPlayerRoute(tmdbId, season, episode);
   if (!route) return null;
   const url = new URL("/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode, VIDBOLT_ORIGIN);
-  return withVidBoltTheme(url);
+  return withVidBoltTheme(url, startAt);
 }
 
-export function vidboltAnimeUrl(malId, episode, audio) {
+export function vidboltAnimeUrl(malId, episode, audio, startAt = 0) {
   const route = normalizeAnimePlayerRoute(malId, episode, audio);
   if (!route) return null;
   const url = new URL("/anime/mal/" + route.malId + "/" + route.episode, VIDBOLT_ORIGIN);
@@ -50,7 +52,7 @@ export function vidboltAnimeUrl(malId, episode, audio) {
   // and English audio for Dub. Other tracks, including Hindi when available, remain
   // selectable inside VidBolt's own audio menu.
   url.searchParams.set("audio", route.audio === "sub" ? "Japanese" : "en");
-  return withVidBoltTheme(url);
+  return withVidBoltTheme(url, startAt);
 }
 
 const VIDBOLT_PLAYER_EVENTS = new Set(["ready", "play", "pause", "timeupdate", "durationchange", "ended", "error"]);
