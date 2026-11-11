@@ -243,14 +243,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const tvSeasons = (Array.isArray(seriesInfo?.seasons) ? seriesInfo.seasons : [])
     .filter((item) => item && Number(item.episodeCount) > 0 && Number(item.seasonNumber) > 0)
     .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber));
-  const nextSeason = tvRoute
-    ? tvSeasons.find((item) => Number(item.seasonNumber) > tvRoute.season)
-    : null;
-  function playNextSeason() {
-    if (!nextSeason || !tvRoute || kind !== "tv" || !catalogVerified) return;
-    router.push("/watch/tv/" + encodeURIComponent(tvRoute.tmdbId) + "/" + Number(nextSeason.seasonNumber) + "/1");
-  }
-
   const animeEpisodeGuide = (Array.isArray(seriesInfo?.episodeGuide) ? seriesInfo.episodeGuide : [])
     .filter((item) => Number(item?.episodeNumber) > 0)
     .sort((a, b) => Number(a.seasonNumber) - Number(b.seasonNumber) ||
@@ -421,12 +413,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           </div>
         </div>}
         {kind === "tv" && <div className="series-player-actions">
-          <button
-            type="button"
-            className="series-player-guide"
-            onClick={() => tvRoute && router.push("/tv/" + encodeURIComponent(tvRoute.tmdbId))}
-            disabled={!tvRoute}
-          >Episode guide</button>
           <div className={"episode-picker" + (episodePickerOpen ? " is-open" : "")} ref={episodePickerRef}>
             <button
               type="button"
@@ -481,9 +467,6 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
               {!seasonEpisodesLoading && !tvEpisodeOptions.length && <div className="episode-picker-empty">No episode details are available for this season.</div>}
             </div>
           </div>
-          <button type="button" className="series-player-guide" onClick={playNextSeason} disabled={!nextSeason || !catalogVerified}>
-            Next season <i className="bi bi-chevron-double-right" aria-hidden="true" />
-          </button>
         </div>}
       </header>
     </main>

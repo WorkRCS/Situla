@@ -1097,14 +1097,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     router.push(target.href);
   }
 
-  function navigateBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.replace("/");
-  }
-
   function clearWatchHistory() {
     const keys = [
       "situla:watch-history:v1", "situla:progress:v1", "situla:recent:v1",
@@ -1667,16 +1659,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        <button
-          key="back"
-          type="button"
-          className="nav-button"
-          onClick={navigateBack}
-          aria-label="Go back to the previous page"
-        >
-          <BootstrapIcon icon="arrow-left" size={20} />
-          <span>Back</span>
-        </button>
         {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
           <Link
             key={item.id}

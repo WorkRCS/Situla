@@ -17,6 +17,10 @@
 }
 
 * { box-sizing: border-box; }
+*, *::before, *::after {
+  -webkit-user-select:none !important;
+  user-select:none !important;
+}
 button { -webkit-user-select: none; user-select: none; }
 html, body { min-height: 100%; background: var(--background); }
 html { scroll-behavior: smooth; }
@@ -548,8 +552,8 @@ body { overflow-x:clip; }
 }
 
 
-/* Seven dedicated catalog routes share a compact, stable navigation bar. */
-.bottom-nav { grid-template-columns:repeat(7,minmax(0,1fr)); }
+/* Six primary sections share a compact, stable navigation bar. */
+.bottom-nav { grid-template-columns:repeat(6,minmax(0,1fr)); }
 .bottom-nav .nav-button { text-decoration:none; padding-inline:2px; }
 .bottom-nav .nav-button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 @media (min-width:768px) {
