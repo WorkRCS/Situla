@@ -23,34 +23,30 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
   return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
 
-// Shared Situla warm-gold player theme for Movie and TV VidLink embeds.
-// No mute parameter is added: playback remains under the provider's normal
-// user-initiated audio controls, with the iframe autoplay permission retained.
-// Anime playback uses the provider's MyAnimeList ID, one-based episode number,
- // and an explicit sub/dub track. fallback=true asks VidLink to try the other track.
-const ANIME_PLAYER_THEME = Object.freeze({
-  primaryColor: "e8b65b",
-  secondaryColor: "171a23",
-  iconColor: "ffffff",
-  icons: "default",
-  player: "default",
-  title: "false",
-  poster: "true",
-  autoplay: "false"
-});
+// Anime-only embed provider. Existing MAL ID, episode and sub/dub values stay unchanged.
+export const MEGAPLAY_ORIGIN = "https://megaplay.buzz";
 
-export function vidlinkAnimeUrl(malId, episode, audio, { fallback = true, startAt = 0 } = {}) {
+export function megaplayAnimeUrl(malId, episode, audio) {
   const route = normalizeAnimePlayerRoute(malId, episode, audio);
   if (!route) return null;
-  const url = new URL(
-    "/anime/" + route.malId + "/" + route.episode + "/" + route.audio,
-    VIDLINK_ORIGIN
-  );
-  for (const [key, value] of Object.entries(ANIME_PLAYER_THEME)) url.searchParams.set(key, value);
-  if (fallback) url.searchParams.set("fallback", "true");
-  const resumeAt = Number(startAt);
-  if (Number.isSafeInteger(resumeAt) && resumeAt > 0) url.searchParams.set("startAt", String(resumeAt));
-  return url.toString();
+  return new URL("/stream/mal/" + route.malId + "/" + route.episode + "/" + route.audio, MEGAPLAY_ORIGIN).toString();
+}
+
+// Adapt MegaPlay's documented player messages to Situla's progress format.
+export function normalizeMegaplayPlayerEvent(payload) {
+  let data = payload;
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); } catch { return null; }
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  if (data.type === "watching-log") {
+    return { event: "timeupdate", currentTime: Number(data.currentTime), duration: Number(data.duration) };
+  }
+  if (String(data.channel || "").toLowerCase() !== "megacloud") return null;
+  const map = { time: "timeupdate", complete: "ended", error: "error" };
+  const event = String(data.event || "").toLowerCase();
+  if (!map[event]) return null;
+  return { event: map[event], currentTime: Number(data.time ?? data.currentTime), duration: Number(data.duration) };
 }
 
 const MOVIE_PLAYER_THEME = Object.freeze({

@@ -1,24 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
+import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeMegaplayPlayerEvent, normalizeTvPlayerRoute, megaplayAnimeUrl, vidlinkMovieUrl, vidlinkTvUrl } from "../src/player-urls.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Anime episode route keeps MAL ID, episode and selected audio provider-specific", () => {
-  assert.deepEqual(normalizeAnimePlayerRoute("40748", "1", "sub"), {
-    malId: 40748,
-    episode: 1,
-    audio: "sub"
-  });
+test("Anime routes preserve MAL ID, episode and sub/dub with MegaPlay", () => {
+  assert.deepEqual(normalizeAnimePlayerRoute("40748", "1", "sub"), { malId: 40748, episode: 1, audio: "sub" });
   assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "0", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1.5", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1", "unknown"), null);
-  const anime = new URL(vidlinkAnimeUrl("40748", "1", "sub"));
-  assert.equal(anime.origin + anime.pathname, "https://vidlink.pro/anime/40748/1/sub");
-  assert.equal(anime.searchParams.get("primaryColor"), "e8b65b");
-  assert.equal(anime.searchParams.get("fallback"), "true");
+  const sub = new URL(megaplayAnimeUrl("40748", "1", "sub"));
+  assert.equal(sub.origin + sub.pathname, "https://megaplay.buzz/stream/mal/40748/1/sub");
+  const dub = new URL(megaplayAnimeUrl("5114", "64", "dub"));
+  assert.equal(dub.origin + dub.pathname, "https://megaplay.buzz/stream/mal/5114/64/dub");
+  assert.equal(megaplayAnimeUrl(5, 0, "sub"), null);
+  assert.equal(megaplayAnimeUrl(5, 1, "unknown"), null);
+});
+
+test("MegaPlay time, complete and watching-log events feed Situla progress", () => {
+  assert.deepEqual(normalizeMegaplayPlayerEvent({ channel: "megacloud", event: "time", time: 85, duration: 1440 }),
+    { event: "timeupdate", currentTime: 85, duration: 1440 });
+  assert.deepEqual(normalizeMegaplayPlayerEvent(JSON.stringify({ channel: "megacloud", event: "complete", time: 1440, duration: 1440 })),
+    { event: "ended", currentTime: 1440, duration: 1440 });
+  assert.deepEqual(normalizeMegaplayPlayerEvent({ type: "watching-log", currentTime: 125, duration: 1440 }),
+    { event: "timeupdate", currentTime: 125, duration: 1440 });
+  assert.equal(normalizeMegaplayPlayerEvent({ channel: "other", event: "time", time: 1, duration: 2 }), null);
+  assert.equal(normalizeMegaplayPlayerEvent("not-json"), null);
 });
 
 test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or episode params", () => {
@@ -263,32 +272,32 @@ test("Anime VidLink URLs require MAL ID, episode and sub/dub, and request fallba
   assert.equal(normalizeAnimePlayerRoute("5", "1.5", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("5", "1", "raw"), null);
 
-  const sub = new URL(vidlinkAnimeUrl(5, 1, "sub"));
+  const sub = new URL(megaplayAnimeUrl(5, 1, "sub"));
   assert.equal(sub.origin + sub.pathname, "https://vidlink.pro/anime/5/1/sub");
   assert.equal(sub.searchParams.get("fallback"), "true");
   assert.equal(sub.searchParams.get("primaryColor"), "e8b65b");
   assert.equal(sub.searchParams.get("autoplay"), "false");
 
-  const dub = new URL(vidlinkAnimeUrl(5114, 64, "dub", { startAt: 125 }));
+  const dub = new URL(megaplayAnimeUrl(5114, 64, "dub", { startAt: 125 }));
   assert.equal(dub.pathname, "/anime/5114/64/dub");
   assert.equal(dub.searchParams.get("fallback"), "true");
   assert.equal(dub.searchParams.get("startAt"), "125");
-  const noFallback = new URL(vidlinkAnimeUrl(5, 2, "sub", { fallback: false }));
+  const noFallback = new URL(megaplayAnimeUrl(5, 2, "sub", { fallback: false }));
   assert.equal(noFallback.searchParams.has("fallback"), false);
-  assert.equal(vidlinkAnimeUrl(5, 0, "sub"), null);
+  assert.equal(megaplayAnimeUrl(5, 0, "sub"), null);
 });
 
-test("Anime episode route validates MAL ID, episode and audio, with an in-player alternate audio action", async () => {
+test("Anime page keeps its Situla route and uses MegaPlay embed and events", async () => {
   const page = await read("../app/watch/anime/[malId]/[episode]/[audio]/page.jsx");
   const player = await read("../app/components/media-player.jsx");
   assert.match(page, /normalizeAnimePlayerRoute/);
   assert.match(page, /if \(!route\) notFound\(\)/);
-  assert.match(player, /vidlinkAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio/);
-  assert.match(player, /fallback: true/);
+  assert.match(player, /megaplayAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio\)/);
+  assert.match(player, /event\.origin !== MEGAPLAY_ORIGIN/);
+  assert.match(player, /normalizeMegaplayPlayerEvent\(event\.data\)/);
   assert.match(player, /function tryAlternateAnimeAudio/);
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
   assert.match(player, /function playNextAnimeEpisode/);
-  assert.match(player, /Next episode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
 });
 

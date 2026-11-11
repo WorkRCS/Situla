@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { normalizeAnimePlayerRoute } from "../../src/anime-player-route.js";
-import { normalizeTvPlayerRoute, vidlinkAnimeUrl, vidlinkTvUrl } from "../../src/player-urls.js";
+import { normalizeTvPlayerRoute, megaplayAnimeUrl, normalizeMegaplayPlayerEvent, MEGAPLAY_ORIGIN, vidlinkTvUrl } from "../../src/player-urls.js";
 
 const VIDLINK_ORIGIN = "https://vidlink.pro";
 
@@ -20,6 +20,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef(null);
   const lastWrite = useRef(0);
+  const lastAnimeDuration = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -97,32 +98,34 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.origin !== VIDLINK_ORIGIN || event.source !== iframeRef.current?.contentWindow) return;
-      const payload = event.data;
-      if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" ||
-          !payload.data || typeof payload.data !== "object") return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
 
-      const data = payload.data;
       let eventName;
       let watchedValue;
       let durationValue;
       if (kind === "tv") {
+        if (event.origin !== VIDLINK_ORIGIN) return;
+        const payload = event.data;
+        if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" ||
+            !payload.data || typeof payload.data !== "object") return;
+        const data = payload.data;
         if (!tvRoute || String(data.mediaType || "").toLowerCase() !== "tv") return;
         if (Number(data.season) !== tvRoute.season || Number(data.episode) !== tvRoute.episode) return;
         eventName = String(data.event || "");
         watchedValue = Number(data.currentTime);
         durationValue = Number(data.duration);
       } else {
-        const incomingType = String(data.mediaType || "").toLowerCase();
-        if (incomingType && incomingType !== "anime") return;
-        const incomingMalId = Number(data.malId ?? data.mal_id ?? data.mediaId ?? data.id);
-        if (incomingMalId && incomingMalId !== Number(malId)) return;
-        if (Number(data.episode) && Number(data.episode) !== Number(episode)) return;
-        eventName = String(data.event || "");
-        watchedValue = Number(data.currentTime);
-        durationValue = Number(data.duration);
+        if (event.origin !== MEGAPLAY_ORIGIN) return;
+        const data = normalizeMegaplayPlayerEvent(event.data);
+        if (!data) return;
+        eventName = data.event;
+        watchedValue = data.currentTime;
+        durationValue = data.duration;
+        if (Number.isFinite(durationValue) && durationValue > 0) lastAnimeDuration.current = durationValue;
+        else if (eventName === "ended") durationValue = lastAnimeDuration.current;
       }
 
+      if (eventName === "error") return;
       if (!["play", "pause", "seeked", "ended", "timeupdate"].includes(eventName)) return;
       if (eventName === "timeupdate" && Date.now() - lastWrite.current < 5000) return;
       lastWrite.current = Date.now();
@@ -267,10 +270,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       return vidlinkTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode);
     }
     if (!animeRoute) return null;
-    return vidlinkAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, {
-      fallback: true,
-      startAt
-    });
+    return megaplayAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio);
   })();
 
   return (
