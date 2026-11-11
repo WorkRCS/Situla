@@ -82,7 +82,7 @@ test("Hindi movie iframe blocks popups and top-level redirects while retaining p
   const seriesPlayer = await read("../app/components/media-player.jsx");
 
   assert.match(moviePlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
-  assert.match(moviePlayer, /attachFullscreenLandscapeLock\\(frame\\)/);
+  assert.match(moviePlayer, /attachFullscreenLandscapeLock\(frame\)/);
   assert.match(moviePlayer, /sandbox=\{playerLanguage === "hi" \? "allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock" : undefined\}/);
   assert.doesNotMatch(moviePlayer, /allow-popups|allow-top-navigation/i);
   assert.match(seriesPlayer, /<iframe[\s\S]*?src=\{playerUrl\}/);
@@ -293,7 +293,7 @@ test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pr
   assert.match(player, /function playNextAnimeEpisode/);
   assert.match(player, /episodeGuide: Array\.isArray\(payload\.item\.episodeGuide\)/);
   assert.match(player, /id="vidbolt-player"/);
-  assert.match(player, /attachFullscreenLandscapeLock\\(frame\\)/);
+  assert.match(player, /attachFullscreenLandscapeLock\(frame\)/);
 });
 
 test("Anime catalog is a manually curated MAL list and the seed command uses the offline bulk seeder", async () => {
