@@ -143,6 +143,21 @@ test("mobile/tablet bottom navigation has no in-app Back or Search button", asyn
   assert.match(css, /\.bottom-nav \{ grid-template-columns:repeat\(6,minmax\(0,1fr\)\);/);
 });
 
+test("mobile/tablet navigation uses six balanced iOS-style glass slots and a continuous single-beam shine", async () => {
+  const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
+  const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
+  assert.match(bottomNav, /NAV_ITEMS\\.filter/);
+  assert.match(css, /left:50% !important/);
+  assert.match(css, /width:min\\(760px,calc\\(100% - 24px\\)\\) !important/);
+  assert.match(css, /grid-template-columns:repeat\\(6,minmax\\(0,1fr\\)\\) !important/);
+  assert.match(css, /-webkit-backdrop-filter:blur\\(26px\\) saturate\\(180%\\) !important/);
+  assert.doesNotMatch(css, /\\.bottom-nav,\\.rating-pill,\\.save-button/);
+  assert.match(css, /animation:premium-glass-sheen-forward 1s linear infinite/);
+  assert.match(css, /@keyframes premium-glass-sheen-forward[\\s\\S]*?translateX\\(520%\\)/);
+  assert.equal((css.match(/premium-coming-soon::after/g) || []).length, 1);
+});
+
 test("all Situla page text is non-selectable", async () => {
   const css = await read("../app/globals.css");
   assert.match(css, /\*, \*::before, \*::after \{[\s\S]*?-webkit-user-select:none !important;[\s\S]*?user-select:none !important;/);
