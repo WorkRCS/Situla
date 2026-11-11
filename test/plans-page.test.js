@@ -33,18 +33,19 @@ test("Plans page presents the three Situla access modes and their agreed limits"
 
 test("Premium plans expose Monthly, 6-month and Yearly pricing with term-specific viewing policies", async () => {
   const page = await read("../app/plans/plans-page.jsx");
-  assert.ok(page.includes('id: "monthly"'));
-  assert.ok(page.includes('monthlyPrice: 199'));
-  assert.ok(page.includes('totalPrice: 199'));
-  assert.ok(page.includes('id: "six-months"'));
-  assert.ok(page.includes('monthlyPrice: 149'));
-  assert.ok(page.includes('totalPrice: 894'));
-  assert.ok(page.includes('cooldown: "30 minutes"'));
-  assert.ok(page.includes('id: "yearly"'));
-  assert.ok(page.includes('monthlyPrice: 119'));
-  assert.ok(page.includes('totalPrice: 1428'));
-  assert.ok(page.includes('allowance: "Unlimited"'));
-  assert.ok(page.includes('cooldown: "No periodic cooldown"'));
+  const membership = await read("../src/membership-preview.js");
+  assert.ok(membership.includes('id: "monthly"'));
+  assert.ok(membership.includes('monthlyPrice: 199'));
+  assert.ok(membership.includes('totalPrice: 199'));
+  assert.ok(membership.includes('id: "six-months"'));
+  assert.ok(membership.includes('monthlyPrice: 149'));
+  assert.ok(membership.includes('totalPrice: 894'));
+  assert.ok(membership.includes('cooldown: "30 minutes"'));
+  assert.ok(membership.includes('id: "yearly"'));
+  assert.ok(membership.includes('monthlyPrice: 119'));
+  assert.ok(membership.includes('totalPrice: 1428'));
+  assert.ok(membership.includes('allowance: "Unlimited"'));
+  assert.ok(membership.includes('cooldown: "No periodic cooldown"'));
   assert.ok(page.includes("Unlimited streaming on the Yearly package"));
   assert.ok(page.includes("USD_REFERENCE_INR_PER_USD = 93.8075"));
   assert.ok(page.includes("formatUsd(selectedBilling.totalPrice)"));

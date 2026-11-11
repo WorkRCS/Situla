@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PREMIUM_BILLING } from "../../src/membership-preview.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, CircleX,
   Clock3, Compass, CreditCard, Crown, Eye, Film, Globe2, Info, Layers3,
@@ -18,38 +19,7 @@ const MODES = [
 const USD_REFERENCE_INR_PER_USD = 93.8075;
 const USD_REFERENCE_DATE = "11 Nov 2026";
 
-const PREMIUM_BILLING = [
-  {
-    id: "monthly",
-    label: "Monthly",
-    months: 1,
-    monthlyPrice: 199,
-    totalPrice: 199,
-    allowance: "3 hours",
-    cooldown: "2 hours",
-    billingLabel: "Billed monthly"
-  },
-  {
-    id: "six-months",
-    label: "6 Months",
-    months: 6,
-    monthlyPrice: 149,
-    totalPrice: 894,
-    allowance: "3 hours",
-    cooldown: "30 minutes",
-    billingLabel: "Billed every 6 months"
-  },
-  {
-    id: "yearly",
-    label: "Yearly",
-    months: 12,
-    monthlyPrice: 119,
-    totalPrice: 1428,
-    allowance: "Unlimited",
-    cooldown: "No periodic cooldown",
-    billingLabel: "Billed yearly"
-  }
-];
+
 
 function formatUsd(inrAmount) {
   return new Intl.NumberFormat("en-US", {

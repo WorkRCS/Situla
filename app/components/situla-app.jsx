@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
+import { DEMO_ACCOUNT, readDemoAccountSession, setDemoAccountSession } from "../../src/membership-preview.js";
+import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, Sparkles, UserRound } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -484,6 +486,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchResults, setSearchResults] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsRead, setNotificationsRead] = useState(false);
+  const [demoSignedIn, setDemoSignedIn] = useState(true);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
@@ -520,6 +526,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setCatalogSpotlightItems([]);
     setPendingHomeNavigation("");
   }, [tab]);
+
+  useEffect(() => {
+    const syncDemoAccount = () => setDemoSignedIn(readDemoAccountSession());
+    syncDemoAccount();
+    window.addEventListener("storage", syncDemoAccount);
+    window.addEventListener("situla:demo-account", syncDemoAccount);
+    return () => {
+      window.removeEventListener("storage", syncDemoAccount);
+      window.removeEventListener("situla:demo-account", syncDemoAccount);
+    };
+  }, []);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -1145,18 +1162,97 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </Link>
             ))}
           </nav>
-          <div className="header-search-wrap">
-            <button
-              type="button"
-              className="header-search search-box header-search-trigger"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search movies, TV series and anime"
-              aria-haspopup="dialog"
-              aria-expanded={searchOpen}
-            >
-              <BootstrapIcon icon="search" size={18} />
-              <span className="header-search-label">Search movies, TV & anime</span>
-            </button>
+          <div className="header-actions">
+            <div className="header-account-wrap">
+              <button
+                type="button"
+                className="header-avatar-trigger"
+                onClick={() => { setAccountOpen((open) => !open); setNotificationsOpen(false); }}
+                aria-label="Open user account menu"
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+              >
+                <span className="header-avatar-initials">{DEMO_ACCOUNT.initials}</span>
+                {demoSignedIn && <span className="header-avatar-online" aria-hidden="true" />}
+              </button>
+              {accountOpen && (
+                <div className="header-account-popover" role="menu" aria-label="User account">
+                  <div className="header-popover-identity">
+                    <span className="header-popover-avatar">{DEMO_ACCOUNT.initials}</span>
+                    <span>
+                      <strong>{demoSignedIn ? DEMO_ACCOUNT.name : "Welcome to Situla"}</strong>
+                      <small>{demoSignedIn ? DEMO_ACCOUNT.email : "Sign in to access your account"}</small>
+                    </span>
+                    {demoSignedIn && <BadgeCheck size={16} aria-label="Verified Premium member" />}
+                  </div>
+                  <div className="header-popover-divider" />
+                  {demoSignedIn ? (
+                    <>
+                      <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/profile"); }}>
+                        <UserRound size={16} /> <span>Visit profile</span> <ArrowUpRight size={14} />
+                      </button>
+                      <button type="button" className="header-popover-action is-danger" role="menuitem" onClick={() => {
+                        setDemoAccountSession(false);
+                        setDemoSignedIn(false);
+                        setAccountOpen(false);
+                        router.push("/login");
+                      }}>
+                        <LogOut size={16} /> <span>Log out</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/login"); }}>
+                      <LogOut size={16} /> <span>Sign in</span> <ArrowUpRight size={14} />
+                    </button>
+                  )}
+                  <p className="header-popover-demo-note">Demo account preview · No live authentication</p>
+                </div>
+              )}
+            </div>
+            <div className="header-notifications-wrap">
+              <button
+                type="button"
+                className="header-notification-trigger"
+                onClick={() => { setNotificationsOpen((open) => !open); setAccountOpen(false); }}
+                aria-label="Notifications"
+                aria-haspopup="dialog"
+                aria-expanded={notificationsOpen}
+              >
+                <Bell size={19} strokeWidth={1.9} />
+                {!notificationsRead && <span className="header-notification-dot" aria-label="Unread notifications" />}
+              </button>
+              {notificationsOpen && (
+                <section className="header-notification-popover" role="dialog" aria-label="Notifications">
+                  <div className="header-notification-heading">
+                    <span><strong>Notifications</strong><small>YOUR SITULA UPDATES</small></span>
+                    <button type="button" onClick={() => setNotificationsRead(true)}>Mark read</button>
+                  </div>
+                  <article className="header-notification-item">
+                    <span className="header-notification-icon"><Crown size={16} /></span>
+                    <span><strong>Premium is active</strong><small>Your Premium membership is in good standing.</small></span>
+                    {!notificationsRead && <i aria-hidden="true" />}
+                  </article>
+                  <article className="header-notification-item">
+                    <span className="header-notification-icon"><Sparkles size={16} /></span>
+                    <span><strong>Early updates unlocked</strong><small>Premium movie updates are ready in your account.</small></span>
+                  </article>
+                  <p className="header-popover-demo-note">Sample notifications · UI preview only</p>
+                </section>
+              )}
+            </div>
+            <div className="header-search-wrap">
+              <button
+                type="button"
+                className="header-search search-box header-search-trigger"
+                onClick={() => { setSearchOpen(true); setAccountOpen(false); setNotificationsOpen(false); }}
+                aria-label="Search movies, TV series and anime"
+                aria-haspopup="dialog"
+                aria-expanded={searchOpen}
+              >
+                <Search size={18} strokeWidth={2} aria-hidden="true" />
+                <span className="header-search-label">Search movies, TV & anime</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
