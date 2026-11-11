@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { normalizeAnimePlayerRoute } from "../../src/anime-player-route.js";
-import { normalizeTvPlayerRoute, vidboltTvUrl, vidboltAnimeUrl, normalizeVidBoltPlayerEvent, VIDBOLT_ORIGIN } from "../../src/player-urls.js";
+import { normalizeTvPlayerRoute, tvSeriesPlaybackUrl, animeSeriesPlaybackUrl, normalizeSeriesPlaybackEvent, SERIES_PLAYBACK_ORIGIN } from "../../src/player-urls.js";
 import { attachFullscreenLandscapeLock } from "../../src/player-fullscreen.js";
 
 export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
@@ -97,9 +97,9 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if (event.source !== iframeRef.current?.contentWindow || event.origin !== VIDBOLT_ORIGIN) return;
+      if (event.source !== iframeRef.current?.contentWindow || event.origin !== SERIES_PLAYBACK_ORIGIN) return;
 
-      const data = normalizeVidBoltPlayerEvent(event.data);
+      const data = normalizeSeriesPlaybackEvent(event.data);
       if (!data) return;
       const eventName = data.event;
       const watchedValue = data.currentTime;
@@ -200,10 +200,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const playerUrl = (() => {
     if (kind === "tv") {
       if (!catalogVerified || !tvRoute) return null;
-      return vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt);
+      return tvSeriesPlaybackUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt);
     }
     if (!animeRoute) return null;
-    return vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt);
+    return animeSeriesPlaybackUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt);
   })();
 
   useEffect(() => {

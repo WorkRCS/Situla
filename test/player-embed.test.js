@@ -1,44 +1,44 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { hindiMoviePlayerUrl, normalizeAnimePlayerRoute, normalizeVidBoltPlayerEvent, normalizeTvPlayerRoute, vidboltAnimeUrl, vidboltTvUrl, vidlinkMovieUrl } from "../src/player-urls.js";
+import { hindiMoviePlaybackUrl, normalizeAnimePlayerRoute, normalizeSeriesPlaybackEvent, normalizeTvPlayerRoute, animeSeriesPlaybackUrl, tvSeriesPlaybackUrl, moviePlaybackUrl } from "../src/player-urls.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Anime routes keep MAL ID and episode routing while VidBolt receives Sub/Dub preferences", () => {
+test("Anime routes keep MAL ID and episode routing while series playback receives Sub/Dub preferences", () => {
   assert.deepEqual(normalizeAnimePlayerRoute("40748", "1", "sub"), { malId: 40748, episode: 1, audio: "sub" });
   assert.equal(normalizeAnimePlayerRoute("tt1234567", "1", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "0", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1.5", "sub"), null);
   assert.equal(normalizeAnimePlayerRoute("40748", "1", "unknown"), null);
-  const sub = new URL(vidboltAnimeUrl("40748", "1", "sub"));
+  const sub = new URL(animeSeriesPlaybackUrl("40748", "1", "sub"));
   assert.equal(sub.origin + sub.pathname, "https://vidbolt.pro/anime/mal/40748/1");
   assert.equal(sub.searchParams.get("audio"), "Japanese");
   assert.equal(sub.searchParams.get("theme"), "e8b65b");
   assert.equal(sub.searchParams.get("episodesButton"), "true");
   assert.equal(sub.searchParams.get("nextEpisodeButton"), "true");
-  const resumedSub = new URL(vidboltAnimeUrl("40748", "1", "sub", 95));
+  const resumedSub = new URL(animeSeriesPlaybackUrl("40748", "1", "sub", 95));
   assert.equal(resumedSub.searchParams.get("startAt"), "95");
-  const dub = new URL(vidboltAnimeUrl("5114", "64", "dub"));
+  const dub = new URL(animeSeriesPlaybackUrl("5114", "64", "dub"));
   assert.equal(dub.origin + dub.pathname, "https://vidbolt.pro/anime/mal/5114/64");
   assert.equal(dub.searchParams.get("audio"), "en");
   assert.equal(dub.searchParams.get("theme"), "e8b65b");
   assert.equal(dub.searchParams.get("nextEpisodeButton"), "true");
-  assert.equal(vidboltAnimeUrl(5, 0, "sub"), null);
-  assert.equal(vidboltAnimeUrl(5, 1, "unknown"), null);
+  assert.equal(animeSeriesPlaybackUrl(5, 0, "sub"), null);
+  assert.equal(animeSeriesPlaybackUrl(5, 1, "unknown"), null);
 });
 
-test("VidBolt ready, time, duration and ended events normalize for Situla watch history", () => {
-  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "timeupdate", time: 85 }),
+test("Series playback ready, time, duration and ended events normalize for Situla watch history", () => {
+  assert.deepEqual(normalizeSeriesPlaybackEvent({ type: "timeupdate", time: 85 }),
     { event: "timeupdate", currentTime: 85, duration: NaN });
-  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "durationchange", duration: 1440 }),
+  assert.deepEqual(normalizeSeriesPlaybackEvent({ type: "durationchange", duration: 1440 }),
     { event: "durationchange", currentTime: NaN, duration: 1440 });
-  assert.deepEqual(normalizeVidBoltPlayerEvent(JSON.stringify({ type: "ended", time: 1440, duration: 1440 })),
+  assert.deepEqual(normalizeSeriesPlaybackEvent(JSON.stringify({ type: "ended", time: 1440, duration: 1440 })),
     { event: "ended", currentTime: 1440, duration: 1440 });
-  assert.deepEqual(normalizeVidBoltPlayerEvent({ type: "ready" }),
+  assert.deepEqual(normalizeSeriesPlaybackEvent({ type: "ready" }),
     { event: "ready", currentTime: NaN, duration: NaN });
-  assert.equal(normalizeVidBoltPlayerEvent({ type: "unknown" }), null);
-  assert.equal(normalizeVidBoltPlayerEvent("not-json"), null);
+  assert.equal(normalizeSeriesPlaybackEvent({ type: "unknown" }), null);
+  assert.equal(normalizeSeriesPlaybackEvent("not-json"), null);
 });
 
 test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or episode params", () => {
@@ -53,15 +53,15 @@ test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or e
   assert.equal(normalizeTvPlayerRoute("1399", "2", "0"), null);
   assert.equal(normalizeTvPlayerRoute("1399", "1.5", "2"), null);
   assert.equal(normalizeTvPlayerRoute("999999999999999999", "2", "2"), null);
-  const tv = new URL(vidboltTvUrl("1399", "2", "8"));
+  const tv = new URL(tvSeriesPlaybackUrl("1399", "2", "8"));
   assert.equal(tv.origin + tv.pathname, "https://vidbolt.pro/tv/1399/2/8");
   assert.equal(tv.searchParams.get("theme"), "e8b65b");
   assert.equal(tv.searchParams.get("title"), "false");
   assert.equal(tv.searchParams.get("nextEpisodeButton"), "true");
   assert.equal(tv.searchParams.get("episodesButton"), "true");
-  const resumedTv = new URL(vidboltTvUrl("1399", "2", "8", 128));
+  const resumedTv = new URL(tvSeriesPlaybackUrl("1399", "2", "8", 128));
   assert.equal(resumedTv.searchParams.get("startAt"), "128");
-  assert.equal(vidboltTvUrl("tt1234567", "2", "8"), null);
+  assert.equal(tvSeriesPlaybackUrl("tt1234567", "2", "8"), null);
 });
 
 test("TV episode server route validates params and the player has a route-level recovery boundary", async () => {
@@ -74,8 +74,8 @@ test("TV episode server route validates params and the player has a route-level 
   assert.match(errorBoundary, /export default function TvEpisodeError/);
   assert.match(errorBoundary, /onClick=\{\(\) => reset\(\)\}/);
   assert.match(player, /String\(item\.imdbId \|\| ""\)\.toLowerCase\(\)/);
-  assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
-  assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
+  assert.match(player, /event\.origin !== SERIES_PLAYBACK_ORIGIN/);
+  assert.match(player, /normalizeSeriesPlaybackEvent\(event\.data\)/);
 });
 
 test("Hindi movie iframe blocks popups and top-level redirects while retaining playback scripts", async () => {
@@ -94,16 +94,16 @@ test("Hindi/English player switch is restricted to the Movie watch page", async 
   const moviePlayer = await read("../app/watch/[imdbId]/player.jsx");
   const seriesPlayer = await read("../app/components/media-player.jsx");
 
-  assert.match(moviePlayer, /hindiMoviePlayerUrl/);
+  assert.match(moviePlayer, /hindiMoviePlaybackUrl/);
   assert.match(moviePlayer, /playerLanguage === "hi"/);
   assert.match(moviePlayer, /Switch to /);
   assert.match(moviePlayer, /situla:movie-player-language:v1/);
-  assert.doesNotMatch(seriesPlayer, /slast430did|hindiMoviePlayerUrl/);
+  assert.doesNotMatch(seriesPlayer, /slast430did|hindiMoviePlaybackUrl/);
 });
 
 test("both Movie providers use Situla gold controls without a mute override", () => {
-  const english = new URL(vidlinkMovieUrl("tt0133093"));
-  const hindi = new URL(hindiMoviePlayerUrl("tt0133093"));
+  const english = new URL(moviePlaybackUrl("tt0133093"));
+  const hindi = new URL(hindiMoviePlaybackUrl("tt0133093"));
 
   for (const url of [english, hindi]) {
     assert.equal(url.searchParams.get("primaryColor"), "e8b65b");
@@ -119,8 +119,8 @@ test("both Movie providers use Situla gold controls without a mute override", ()
   assert.equal(hindi.searchParams.get("muted"), null);
   assert.equal(hindi.searchParams.get("mute"), null);
   assert.equal(hindi.searchParams.get("audio"), null);
-  assert.equal(new URL(vidlinkMovieUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
-  assert.equal(new URL(hindiMoviePlayerUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
+  assert.equal(new URL(moviePlaybackUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
+  assert.equal(new URL(hindiMoviePlaybackUrl("tt0133093", 345)).searchParams.get("startAt"), "345");
 });
 
 
@@ -284,14 +284,14 @@ test("bottom navigation is visible on touch layouts and hidden on desktop", asyn
 });
 
 
-test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pro origin", async () => {
+test("Anime embed keeps Situla MAL/episode/audio routes and uses its configured origin", async () => {
   const page = await read("../app/watch/anime/[malId]/[episode]/[audio]/page.jsx");
   const player = await read("../app/components/media-player.jsx");
   assert.match(page, /normalizeAnimePlayerRoute/);
   assert.match(page, /if \(!route\) notFound\(\)/);
-  assert.match(player, /vidboltAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio, startAt\)/);
-  assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
-  assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
+  assert.match(player, /animeSeriesPlaybackUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio, startAt\)/);
+  assert.match(player, /event\.origin !== SERIES_PLAYBACK_ORIGIN/);
+  assert.match(player, /normalizeSeriesPlaybackEvent\(event\.data\)/);
   assert.match(player, /function tryAlternateAnimeAudio/);
   assert.match(player, /Try \{audio === "sub" \? "Dub" : "Sub"\} instead/);
   assert.doesNotMatch(player, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
@@ -329,8 +329,8 @@ test("Watch pages delegate episode selection to the embedded iframe player", asy
   assert.doesNotMatch(seriesPlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season|selectPickerEpisode/);
   assert.doesNotMatch(moviePlayer, /episode-picker|Open episode picker|Next Episode|Episode guide|Next season/);
   assert.ok(seriesPlayer.includes("<iframe") && seriesPlayer.includes("src={playerUrl}"));
-  assert.ok(seriesPlayer.includes("vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt)"));
-  assert.ok(seriesPlayer.includes("vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt)"));
+  assert.ok(seriesPlayer.includes("tvSeriesPlaybackUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt)"));
+  assert.ok(seriesPlayer.includes("animeSeriesPlaybackUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt)"));
   assert.ok(playerUrls.includes('url.searchParams.set("episodesButton", "true")'));
   assert.ok(playerUrls.includes('url.searchParams.set("nextEpisodeButton", "true")'));
 });

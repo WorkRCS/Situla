@@ -2,11 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { hindiMoviePlayerUrl, vidlinkMovieUrl } from "../../../src/player-urls.js";
+import { hindiMoviePlaybackUrl, moviePlaybackUrl, MOVIE_PLAYBACK_ORIGIN, HINDI_PLAYBACK_ORIGIN } from "../../../src/player-urls.js";
 import { attachFullscreenLandscapeLock } from "../../../src/player-fullscreen.js";
 
-const VIDLINK_ORIGIN = "https://vidlink.pro";
-const HINDI_PLAYER_ORIGIN = "https://slast430did.com";
 
 export default function PlayerExperience({ imdbId }) {
   const [movie, setMovie] = useState(null);
@@ -87,7 +85,7 @@ export default function PlayerExperience({ imdbId }) {
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
-      if ((event.origin !== VIDLINK_ORIGIN && event.origin !== HINDI_PLAYER_ORIGIN) || event.source !== iframeRef.current?.contentWindow) return;
+      if ((event.origin !== MOVIE_PLAYBACK_ORIGIN && event.origin !== HINDI_PLAYBACK_ORIGIN) || event.source !== iframeRef.current?.contentWindow) return;
       const payload = event.data;
       if (!payload || typeof payload !== "object" || payload.type !== "PLAYER_EVENT" || !payload.data) return;
       const data = payload.data;
@@ -149,7 +147,7 @@ export default function PlayerExperience({ imdbId }) {
   }, [movie, imdbId]);
 
   const playerUrl = catalogVerified && languageReady
-    ? playerLanguage === "hi" ? hindiMoviePlayerUrl(imdbId, startAt) : vidlinkMovieUrl(imdbId, startAt)
+    ? playerLanguage === "hi" ? hindiMoviePlaybackUrl(imdbId, startAt) : moviePlaybackUrl(imdbId, startAt)
     : null;
 
   useEffect(() => {

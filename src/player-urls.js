@@ -1,12 +1,13 @@
 import { normalizeAnimePlayerRoute } from "./anime-player-route.js";
 export { normalizeAnimePlayerRoute };
 
-const VIDLINK_ORIGIN = "https://vidlink.pro";
-export const VIDBOLT_ORIGIN = "https://vidbolt.pro";
-const VIDBOLT_THEME_COLOR = "e8b65b";
+export const MOVIE_PLAYBACK_ORIGIN = "https://vidlink.pro";
+export const SERIES_PLAYBACK_ORIGIN = "https://vidbolt.pro";
+const SERIES_THEME_COLOR = "e8b65b";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const TMDB_TV_ID = /^[0-9]{1,12}$/;
-const HINDI_MOVIE_PLAYER = "https://slast430did.com/play/";
+export const HINDI_PLAYBACK_ORIGIN = "https://slast430did.com";
+const HINDI_PLAYBACK_BASE_URL = HINDI_PLAYBACK_ORIGIN + "/play/";
 
 // Normalize route params before they are used by Server or Client Components.
 export function normalizeTvPlayerRoute(tmdbId, season, episode) {
@@ -25,40 +26,40 @@ export function normalizeTvPlayerRoute(tmdbId, season, episode) {
   return { tmdbId: tmdbNumber, season: seasonNumber, episode: episodeNumber };
 }
 
-// TV and Anime use the requested VidBolt .pro embed domain.
-function withVidBoltTheme(url, startAt = 0) {
+// TV and Anime use Situla's configured series playback source.
+function withSeriesPlaybackTheme(url, startAt = 0) {
   const resumeAt = Number(startAt);
   if (Number.isFinite(resumeAt) && resumeAt > 0) url.searchParams.set("startAt", String(Math.floor(resumeAt)));
-  url.searchParams.set("theme", VIDBOLT_THEME_COLOR);
+  url.searchParams.set("theme", SERIES_THEME_COLOR);
   url.searchParams.set("title", "false");
-  // Keep episode navigation inside VidBolt's own player controls for TV and Anime.
+  // Keep episode navigation inside the series viewing controls.
   url.searchParams.set("nextEpisodeButton", "true");
   url.searchParams.set("episodesButton", "true");
   return url.toString();
 }
 
-export function vidboltTvUrl(tmdbId, season, episode, startAt = 0) {
+export function tvSeriesPlaybackUrl(tmdbId, season, episode, startAt = 0) {
   const route = normalizeTvPlayerRoute(tmdbId, season, episode);
   if (!route) return null;
-  const url = new URL("/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode, VIDBOLT_ORIGIN);
-  return withVidBoltTheme(url, startAt);
+  const url = new URL("/tv/" + route.tmdbId + "/" + route.season + "/" + route.episode, SERIES_PLAYBACK_ORIGIN);
+  return withSeriesPlaybackTheme(url, startAt);
 }
 
-export function vidboltAnimeUrl(malId, episode, audio, startAt = 0) {
+export function animeSeriesPlaybackUrl(malId, episode, audio, startAt = 0) {
   const route = normalizeAnimePlayerRoute(malId, episode, audio);
   if (!route) return null;
-  const url = new URL("/anime/mal/" + route.malId + "/" + route.episode, VIDBOLT_ORIGIN);
+  const url = new URL("/anime/mal/" + route.malId + "/" + route.episode, SERIES_PLAYBACK_ORIGIN);
   // Preserve Situla's existing sub/dub route: prefer original Japanese audio for Sub
   // and English audio for Dub. Other tracks, including Hindi when available, remain
-  // selectable inside VidBolt's own audio menu.
+  // selectable inside the audio menu.
   url.searchParams.set("audio", route.audio === "sub" ? "Japanese" : "en");
-  return withVidBoltTheme(url, startAt);
+  return withSeriesPlaybackTheme(url, startAt);
 }
 
-const VIDBOLT_PLAYER_EVENTS = new Set(["ready", "play", "pause", "timeupdate", "durationchange", "ended", "error"]);
+const SERIES_PLAYER_EVENTS = new Set(["ready", "play", "pause", "timeupdate", "durationchange", "ended", "error"]);
 
-// VidBolt posts simple iframe events (type/time/duration), not the old provider payload.
-export function normalizeVidBoltPlayerEvent(payload) {
+// Series playback posts simple frame events (type/time/duration).
+export function normalizeSeriesPlaybackEvent(payload) {
   let data = payload;
   if (typeof data === "string") {
     try { data = JSON.parse(data); } catch { return null; }
@@ -68,7 +69,7 @@ export function normalizeVidBoltPlayerEvent(payload) {
     data = data.data;
   }
   const event = String(data.type || "").toLowerCase();
-  if (!VIDBOLT_PLAYER_EVENTS.has(event)) return null;
+  if (!SERIES_PLAYER_EVENTS.has(event)) return null;
   return {
     event,
     currentTime: Number(data.time ?? data.currentTime),
@@ -98,19 +99,19 @@ function withMovieTheme(url, startAt = 0) {
   return url;
 }
 
-export function vidlinkMovieUrl(imdbId, startAt = 0) {
+export function moviePlaybackUrl(imdbId, startAt = 0) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
-  return withMovieTheme(new URL(VIDLINK_ORIGIN + "/movie/" + encodeURIComponent(id)), startAt).toString();
+  return withMovieTheme(new URL(MOVIE_PLAYBACK_ORIGIN + "/movie/" + encodeURIComponent(id)), startAt).toString();
 }
 
-export function hindiMoviePlayerUrl(imdbId, startAt = 0) {
+export function hindiMoviePlaybackUrl(imdbId, startAt = 0) {
   const id = String(imdbId || "").trim().toLowerCase();
   if (!IMDB_TITLE_ID.test(id)) return null;
 
-  // This provider resolves IMDb titles from the path segment, not ?id=...
-  // Keep the verified working shape: https://slast430did.com/play/{imdbId}
-  const url = new URL(encodeURIComponent(id), HINDI_MOVIE_PLAYER);
+  // The playback service resolves IMDb titles from the path segment, not ?id=...
+  // Keep the verified path shape for supported Hindi movie playback.
+  const url = new URL(encodeURIComponent(id), HINDI_PLAYBACK_BASE_URL);
   withMovieTheme(url, startAt);
   return url.toString();
 }
