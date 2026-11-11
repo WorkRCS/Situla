@@ -281,7 +281,7 @@ test("VidBolt Anime embed keeps Situla MAL/episode/audio routes and uses the .pr
   const player = await read("../app/components/media-player.jsx");
   assert.match(page, /normalizeAnimePlayerRoute/);
   assert.match(page, /if \(!route\) notFound\(\)/);
-  assert.match(player, /vidboltAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio\)/);
+  assert.match(player, /vidboltAnimeUrl\(animeRoute\.malId, animeRoute\.episode, animeRoute\.audio, startAt\)/);
   assert.match(player, /event\.origin !== VIDBOLT_ORIGIN/);
   assert.match(player, /normalizeVidBoltPlayerEvent\(event\.data\)/);
   assert.match(player, /function tryAlternateAnimeAudio/);
