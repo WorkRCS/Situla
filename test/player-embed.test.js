@@ -333,8 +333,10 @@ test("TV and Anime player expose a route-aware Next Episode picker with episode 
   assert.match(player, /router\.push\("\/watch\/tv\/" \+ encodeURIComponent\(tvRoute\.tmdbId\)/);
   assert.match(player, /router\.push\("\/watch\/anime\/" \+ animeRoute\.malId/);
   assert.match(player, /aria-current=\{isCurrent \? "true" : undefined\}/);
-  assert.match(player, /function playNextSeason\(\)/);
-  assert.match(player, /onClick=\{playNextSeason\} disabled=\{!nextSeason \|\| !catalogVerified\}/);
+  assert.match(player, /Next Episode/);
+  assert.doesNotMatch(player, /Episode guide|Next season|function playNextSeason\(/);
+  assert.doesNotMatch(player, /function playNextSeason\(/);
+  assert.doesNotMatch(player, /Episode guide|Next season/);
 });
 
 

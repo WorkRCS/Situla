@@ -131,15 +131,21 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
 });
 
 
-test("mobile/tablet bottom navigation replaces Search with a working Back action", async () => {
+test("mobile/tablet bottom navigation has no in-app Back or Search button", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /onClick=\{navigateBack\}/);
-  assert.match(app, /aria-label="Go back to the previous page"/);
-  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
+  const css = await read("../app/globals.css");
   const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
+  assert.doesNotMatch(bottomNav, /navigateBack|aria-label="Go back|>Back</);
   assert.doesNotMatch(bottomNav, /setSearchOpen|>Search</);
+  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
   assert.match(app, /className="header-search-wrap"/);
-  assert.match(app, /function navigateBack\(\)[\s\S]*?router\.back\(\)[\s\S]*?router\.replace\("\/"\)/);
+  assert.doesNotMatch(app, /function navigateBack\(/);
+  assert.match(css, /\.bottom-nav \{ grid-template-columns:repeat\(6,minmax\(0,1fr\)\);/);
+});
+
+test("all Situla page text is non-selectable", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /\*, \*::before, \*::after \{[\s\S]*?-webkit-user-select:none !important;[\s\S]*?user-select:none !important;/);
 });
 
 test("Settings history cards resume the exact saved movie, TV, or Anime route", async () => {
