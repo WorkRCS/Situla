@@ -33,7 +33,7 @@ function withVidBoltTheme(url, startAt = 0) {
   url.searchParams.set("title", "false");
   // Situla owns episode navigation, so hide provider controls that could desync the app route.
   url.searchParams.set("nextEpisodeButton", "false");
-  url.searchParams.set("episodesButton", "false");
+  url.searchParams.set("episodesButton", "true");
   return url.toString();
 }
 
