@@ -16,12 +16,14 @@ test("Anime routes keep MAL ID and episode routing while VidBolt receives Sub/Du
   assert.equal(sub.searchParams.get("audio"), "Japanese");
   assert.equal(sub.searchParams.get("theme"), "e8b65b");
   assert.equal(sub.searchParams.get("episodesButton"), "true");
+  assert.equal(sub.searchParams.get("nextEpisodeButton"), "true");
   const resumedSub = new URL(vidboltAnimeUrl("40748", "1", "sub", 95));
   assert.equal(resumedSub.searchParams.get("startAt"), "95");
   const dub = new URL(vidboltAnimeUrl("5114", "64", "dub"));
   assert.equal(dub.origin + dub.pathname, "https://vidbolt.pro/anime/mal/5114/64");
   assert.equal(dub.searchParams.get("audio"), "en");
   assert.equal(dub.searchParams.get("theme"), "e8b65b");
+  assert.equal(dub.searchParams.get("nextEpisodeButton"), "true");
   assert.equal(vidboltAnimeUrl(5, 0, "sub"), null);
   assert.equal(vidboltAnimeUrl(5, 1, "unknown"), null);
 });
@@ -55,7 +57,7 @@ test("TV episode routes normalize numeric TMDB IDs and reject unsafe season or e
   assert.equal(tv.origin + tv.pathname, "https://vidbolt.pro/tv/1399/2/8");
   assert.equal(tv.searchParams.get("theme"), "e8b65b");
   assert.equal(tv.searchParams.get("title"), "false");
-  assert.equal(tv.searchParams.get("nextEpisodeButton"), "false");
+  assert.equal(tv.searchParams.get("nextEpisodeButton"), "true");
   assert.equal(tv.searchParams.get("episodesButton"), "true");
   const resumedTv = new URL(vidboltTvUrl("1399", "2", "8", 128));
   assert.equal(resumedTv.searchParams.get("startAt"), "128");
@@ -330,7 +332,7 @@ test("Watch pages delegate episode selection to the embedded iframe player", asy
   assert.ok(seriesPlayer.includes("vidboltTvUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt)"));
   assert.ok(seriesPlayer.includes("vidboltAnimeUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt)"));
   assert.ok(playerUrls.includes('url.searchParams.set("episodesButton", "true")'));
-  assert.ok(playerUrls.includes('url.searchParams.set("nextEpisodeButton", "false")'));
+  assert.ok(playerUrls.includes('url.searchParams.set("nextEpisodeButton", "true")'));
 });
 
 test("home page omits personal watch-history shelves and shows catalog discovery sections", async () => {

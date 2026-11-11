@@ -31,8 +31,8 @@ function withVidBoltTheme(url, startAt = 0) {
   if (Number.isFinite(resumeAt) && resumeAt > 0) url.searchParams.set("startAt", String(Math.floor(resumeAt)));
   url.searchParams.set("theme", VIDBOLT_THEME_COLOR);
   url.searchParams.set("title", "false");
-  // Situla owns episode navigation, so hide provider controls that could desync the app route.
-  url.searchParams.set("nextEpisodeButton", "false");
+  // Keep episode navigation inside VidBolt's own player controls for TV and Anime.
+  url.searchParams.set("nextEpisodeButton", "true");
   url.searchParams.set("episodesButton", "true");
   return url.toString();
 }
