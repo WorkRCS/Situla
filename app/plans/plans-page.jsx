@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, CircleX,
+  Clock3, Compass, CreditCard, Crown, Eye, Film, Globe2, Info, Layers3,
+  LockKeyhole, LogIn, PlayCircle, ShieldCheck, Sparkles, Tv, Unlock,
+  UserRound, UserRoundCheck
+} from "lucide-react";
 
 const MODES = [
   { id: "guest", label: "Guest", short: "Anonymous" },
@@ -50,6 +56,16 @@ function formatUsd(inrAmount) {
     style: "currency",
     currency: "USD"
   }).format(Number(inrAmount) / USD_REFERENCE_INR_PER_USD);
+}
+
+function FeatureStatusCell({ available, detail }) {
+  const StatusIcon = available ? CheckCircle2 : CircleX;
+  return (
+    <span className={"plans-feature-status " + (available ? "is-included" : "is-unavailable")} aria-label={(available ? "Included: " : "Not included: ") + (detail || (available ? "Yes" : "No"))}>
+      <StatusIcon size={15} strokeWidth={2.5} aria-hidden="true" />
+      <span>{detail || (available ? "Included" : "Not included")}</span>
+    </span>
+  );
 }
 
 const PLANS = [
@@ -136,22 +152,7 @@ const PLANS = [
   }
 ];
 
-const COMPARISON = [
-  ["Account required", "No", "Yes", "Yes"],
-  ["Watch allowance", "1 hour", "1 hour", "Monthly: 3 hours · 6 Months: 3 hours · Yearly: Unlimited"],
-  ["Cooldown after allowance", "5 hours", "2 hours", "Monthly: 2 hours · 6 Months: 30 minutes · Yearly: none"],
-  ["Premium monthly rate", "—", "—", "₹199 · ₹149 (6 Months) · ₹119 (Yearly)"],
-  ["Premium billing total", "—", "—", "₹199 monthly · ₹894 / 6 months · ₹1,428 / year"],
-  ["Restriction scope", "Public IP + guest session", "Account + device", "Account + up to 3 devices"],
-  ["Registered devices", "IP/session based", "1", "Up to 3"],
-  ["Movie player", "VidLink Pro", "VidLink Pro", "VidBolt (planned)"],
-  ["TV & Anime player", "VidBolt", "VidBolt", "VidBolt"],
-  ["Premium Verified badge", "No", "No", "Yes"],
-  ["Upcoming movie updates", "Public updates", "Public updates", "Early + detailed"],
-  ["Watch-page cooldown", "Movie, TV & Anime", "Movie, TV & Anime", "Movie, TV & Anime"],
-  ["Browse catalog during cooldown", "Yes", "Yes", "Yes"],
-  ["Android TV browser", "Web experience", "Web experience", "Web experience"]
-];
+
 
 export default function PlansPage() {
   const [previewMode, setPreviewMode] = useState("guest");
@@ -175,6 +176,50 @@ export default function PlansPage() {
   const selectedBilling = PREMIUM_BILLING.find((item) => item.id === billingCycle) || PREMIUM_BILLING[0];
   const lockTime = previewMode === "guest" ? "04:42:18" : "01:42:18";
   const lockDuration = previewMode === "guest" ? "5-hour guest cooldown" : previewMode === "free" ? "2-hour Free cooldown" : selectedBilling.cooldown + " Premium cooldown";
+  const featureRows = [
+    { label: "Browse catalog during cooldown", cells: [
+      { available: true, detail: "Available" }, { available: true, detail: "Available" }, { available: true, detail: "Available" }
+    ]},
+    { label: "Use Situla without an account", cells: [
+      { available: true, detail: "Guest access" }, { available: false }, { available: false }
+    ]},
+    { label: "Account-based watch tracking", cells: [
+      { available: false }, { available: true, detail: "Included" }, { available: true, detail: "Included" }
+    ]},
+    { label: "IP + anonymous guest-session limit", cells: [
+      { available: true, detail: "Included" }, { available: false }, { available: false }
+    ]},
+    { label: "Watch allowance per cycle", cells: [
+      { available: true, detail: "1 hour" }, { available: true, detail: "1 hour" }, { available: true, detail: selectedBilling.allowance }
+    ]},
+    { label: "Cooldown after watch allowance", cells: [
+      { available: true, detail: "5 hours" }, { available: true, detail: "2 hours" }, { available: true, detail: selectedBilling.cooldown }
+    ]},
+    { label: "30-minute cooldown (6-month billing)", cells: [
+      { available: false }, { available: false }, { available: billingCycle === "six-months", detail: billingCycle === "six-months" ? "Included" : "6-month plan only" }
+    ]},
+    { label: "Unlimited streaming (Yearly billing)", cells: [
+      { available: false }, { available: false }, { available: billingCycle === "yearly", detail: billingCycle === "yearly" ? "Included" : "Yearly plan only" }
+    ]},
+    { label: "Registered device management", cells: [
+      { available: false, detail: "IP/session based" }, { available: true, detail: "1 device" }, { available: true, detail: "Up to 3" }
+    ]},
+    { label: "Premium Verified badge", cells: [
+      { available: false }, { available: false }, { available: true, detail: "Included" }
+    ]},
+    { label: "Early upcoming-movie updates", cells: [
+      { available: false }, { available: false }, { available: true, detail: "Included" }
+    ]},
+    { label: "VidBolt for Premium movie playback", cells: [
+      { available: false, detail: "VidLink Pro" }, { available: false, detail: "VidLink Pro" }, { available: false, detail: "Planned, not active" }
+    ]},
+    { label: "VidBolt for TV & Anime", cells: [
+      { available: true, detail: "Included" }, { available: true, detail: "Included" }, { available: true, detail: "Included" }
+    ]},
+    { label: "Android / Smart TV browser access", cells: [
+      { available: true, detail: "Web access" }, { available: true, detail: "Web access" }, { available: true, detail: "Web access" }
+    ]}
+  ];
 
   return (
     <main className="plans-page">
@@ -184,18 +229,18 @@ export default function PlansPage() {
             <img src="/icon.svg" alt="" width="38" height="38" />
             <span><strong>SITULA</strong><small>MEMBERSHIP & ACCESS</small></span>
           </Link>
-          <Link href="/" className="plans-back-link"><i className="bi bi-arrow-left" aria-hidden="true" /> Back to Situla</Link>
+          <Link href="/" className="plans-back-link"><ArrowLeft size={15} strokeWidth={2.2} aria-hidden="true" /> Back to Situla</Link>
         </header>
 
         <section className="plans-hero">
           <div className="plans-hero-copy">
-            <span className="plans-eyebrow"><i className="bi bi-layers" aria-hidden="true" /> THREE WAYS TO WATCH</span>
+            <span className="plans-eyebrow"><Layers3 size={15} strokeWidth={2} aria-hidden="true" /> THREE WAYS TO WATCH</span>
             <h1>Choose your way to <em>watch more.</em></h1>
             <p>Explore Situla as an anonymous guest, a Free member, or a Premium member. Compare viewing time, cooldowns, devices and playback access before choosing a plan.</p>
             <div className="plans-hero-points">
-              <span><i className="bi bi-check-circle-fill" aria-hidden="true" /> Browse remains open</span>
-              <span><i className="bi bi-shield-check" aria-hidden="true" /> Watch access is checked</span>
-              <span><i className="bi bi-tv" aria-hidden="true" /> TV browser experience</span>
+              <span><CheckCircle2 size={14} strokeWidth={2.3} aria-hidden="true" /> Browse remains open</span>
+              <span><ShieldCheck size={14} strokeWidth={2.1} aria-hidden="true" /> Watch access is checked</span>
+              <span><Tv size={14} strokeWidth={2.1} aria-hidden="true" /> TV browser experience</span>
             </div>
           </div>
           <aside className="plans-hero-side">
@@ -214,7 +259,7 @@ export default function PlansPage() {
               <h2 id="plans-preview-title">Preview the plan button states</h2>
               <p>Switch the sample visitor type to see how the plan actions and status labels will look.</p>
             </div>
-            <span className="plans-demo-tag"><i className="bi bi-eye" aria-hidden="true" /> UI PREVIEW ONLY</span>
+            <span className="plans-demo-tag"><Eye size={13} strokeWidth={2} aria-hidden="true" /> UI PREVIEW ONLY</span>
           </div>
           <div className="plans-mode-switch" role="group" aria-label="Preview visitor type">
             {MODES.map((mode) => (
@@ -228,7 +273,7 @@ export default function PlansPage() {
             <span>Previewing <strong>{currentMode.label}</strong> mode</span>
             <span className="plans-preview-disclaimer">Changing this preview does not change your real account or permissions.</span>
           </div>
-          {notice && <div className="plans-action-notice" role="status"><i className="bi bi-info-circle" aria-hidden="true" /> {notice}</div>}
+          {notice && <div className="plans-action-notice" role="status"><Info size={13} strokeWidth={2} aria-hidden="true" /> {notice}</div>}
         </section>
 
         <section className="plans-cards-section" aria-labelledby="plans-heading">
@@ -243,11 +288,11 @@ export default function PlansPage() {
                 <article key={plan.id} className={"plans-card plans-card-" + plan.id + (isCurrent ? " is-preview-current" : "")}>
                   <div className="plans-card-topline">
                     <span>{plan.eyebrow}</span>
-                    {plan.id === "premium" ? <span className="plans-recommended"><i className="bi bi-stars" aria-hidden="true" /> PREMIUM</span> : isCurrent ? <span className="plans-current-tag">PREVIEWING</span> : null}
+                    {plan.id === "premium" ? <span className="plans-recommended"><Sparkles size={12} strokeWidth={2.1} aria-hidden="true" /> PREMIUM</span> : isCurrent ? <span className="plans-current-tag">PREVIEWING</span> : null}
                   </div>
                   <div className="plans-card-title-row">
                     <div><h3>{plan.name}</h3><p>{plan.description}</p></div>
-                    {plan.id === "premium" ? <span className="plans-plan-icon premium"><i className="bi bi-patch-check-fill" aria-hidden="true" /></span> : plan.id === "free" ? <span className="plans-plan-icon"><i className="bi bi-person-check" aria-hidden="true" /></span> : <span className="plans-plan-icon"><i className="bi bi-person" aria-hidden="true" /></span>}
+                    {plan.id === "premium" ? <span className="plans-plan-icon premium"><Crown size={18} strokeWidth={1.9} aria-hidden="true" /></span> : plan.id === "free" ? <span className="plans-plan-icon"><UserRoundCheck size={17} strokeWidth={1.9} aria-hidden="true" /></span> : <span className="plans-plan-icon"><UserRound size={17} strokeWidth={1.9} aria-hidden="true" /></span>}
                   </div>
                   {plan.id === "premium" ? (
                     <div className="plans-premium-pricing">
@@ -274,31 +319,31 @@ export default function PlansPage() {
                     <div><span>COOLDOWN</span><strong>{plan.id === "premium" ? selectedBilling.cooldown : plan.cooldown}</strong><small>{plan.id === "premium" && billingCycle === "yearly" ? "while yearly plan is active" : "after limit"}</small></div>
                     <div><span>DEVICES</span><strong>{plan.devices}</strong><small>access policy</small></div>
                   </div>
-                  <div className="plans-playback-line"><span><i className="bi bi-play-circle" aria-hidden="true" /> PLAYBACK</span><strong>{plan.player}</strong></div>
+                  <div className="plans-playback-line"><span><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /> PLAYBACK</span><strong>{plan.player}</strong></div>
                   <div className="plans-feature-block">
-                    <h4><i className="bi bi-check2-circle" aria-hidden="true" /> Included</h4>
+                    <h4><CheckCircle2 size={13} strokeWidth={2.2} aria-hidden="true" /> Included</h4>
                     <ul>
-                      {plan.features.map((feature) => <li key={feature}><i className="bi bi-check2" aria-hidden="true" /> <span>{feature}</span></li>)}
+                      {plan.features.map((feature) => <li key={feature}><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{feature}</span></li>)}
                       {plan.id === "premium" && <>
-                        <li><i className="bi bi-check2" aria-hidden="true" /> <span>{selectedBilling.allowance === "Unlimited" ? "Unlimited streaming on the Yearly package" : "Up to 3 hours of shared account watch time per cycle"}</span></li>
-                        <li><i className="bi bi-check2" aria-hidden="true" /> <span>{selectedBilling.cooldown === "No periodic cooldown" ? "No scheduled watch cooldown while the Yearly package is active" : selectedBilling.cooldown + " cooldown after the watch allowance"}</span></li>
+                        <li><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{selectedBilling.allowance === "Unlimited" ? "Unlimited streaming on the Yearly package" : "Up to 3 hours of shared account watch time per cycle"}</span></li>
+                        <li><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{selectedBilling.cooldown === "No periodic cooldown" ? "No scheduled watch cooldown while the Yearly package is active" : selectedBilling.cooldown + " cooldown after the watch allowance"}</span></li>
                       </>}
                     </ul>
                   </div>
                   <div className="plans-limit-block">
-                    <h4><i className="bi bi-info-circle" aria-hidden="true" /> Limits & notes</h4>
+                    <h4><Info size={13} strokeWidth={2} aria-hidden="true" /> Limits & notes</h4>
                     <ul>{plan.limits.map((limit) => <li key={limit}>{limit}</li>)}</ul>
                   </div>
                   {plan.id === "guest" ? (
-                    <Link href="/" className="plans-action plans-action-guest"><i className="bi bi-arrow-right-circle" aria-hidden="true" /> Continue as Guest</Link>
+                    <Link href="/" className="plans-action plans-action-guest"><ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" /> Continue as Guest</Link>
                   ) : plan.id === "free" ? (
                     <button type="button" className="plans-action plans-action-free" onClick={() => showActionNotice("free")} disabled={previewMode === "free"}>
-                      <i className={previewMode === "free" ? "bi bi-check-circle-fill" : "bi bi-box-arrow-in-right"} aria-hidden="true" />
+                      {previewMode === "free" ? <CheckCircle2 size={16} aria-hidden="true" /> : <LogIn size={16} aria-hidden="true" />}
                       {previewMode === "free" ? "Logged in · Preview" : "Login"}
                     </button>
                   ) : (
                     <button type="button" className="plans-action plans-action-premium" onClick={() => showActionNotice("premium")} disabled={previewMode === "premium"}>
-                      <i className={previewMode === "premium" ? "bi bi-patch-check-fill" : "bi bi-stars"} aria-hidden="true" />
+                      {previewMode === "premium" ? <BadgeCheck size={16} aria-hidden="true" /> : <CreditCard size={16} strokeWidth={2} aria-hidden="true" />}
                       {previewMode === "premium" ? "Current plan · Preview" : "Buy Premium"}
                     </button>
                   )}
@@ -319,19 +364,19 @@ export default function PlansPage() {
               <h3>Keep exploring while your watch timer rests.</h3>
               <p>When a plan's watch allowance is used, Movie, TV Episode and Anime Watch Pages show a server-controlled countdown instead of loading the player.</p>
               <ul>
-                <li><i className="bi bi-check-circle" aria-hidden="true" /> Home, Search and catalog browsing stay available.</li>
-                <li><i className="bi bi-check-circle" aria-hidden="true" /> Movie, TV and Anime Watch Pages share the same access decision for that plan.</li>
-                <li><i className="bi bi-check-circle" aria-hidden="true" /> When cooldown ends, the server can allow a new watch cycle.</li>
+                <li><CheckCircle2 size={13} strokeWidth={2.3} aria-hidden="true" /> Home, Search and catalog browsing stay available.</li>
+                <li><CheckCircle2 size={13} strokeWidth={2.3} aria-hidden="true" /> Movie, TV and Anime Watch Pages share the same access decision for that plan.</li>
+                <li><CheckCircle2 size={13} strokeWidth={2.3} aria-hidden="true" /> When cooldown ends, the server can allow a new watch cycle.</li>
               </ul>
             </div>
             <div className="plans-lock-demo">
-              <div className="plans-lock-demo-head"><span><i className="bi bi-lock-fill" aria-hidden="true" /> WATCH ACCESS PAUSED</span><span className="plans-lock-demo-pill">LOCKED</span></div>
+              <div className="plans-lock-demo-head"><span><LockKeyhole size={13} strokeWidth={2.1} aria-hidden="true" /> WATCH ACCESS PAUSED</span><span className="plans-lock-demo-pill">LOCKED</span></div>
               <div className="plans-lock-timer-label">EXAMPLE · {lockDuration.toUpperCase()}</div>
               <strong className="plans-lock-timer">{lockTime}</strong>
               <p>Time remaining in this illustrative cooldown</p>
               <div className="plans-lock-demo-divider" />
-              <div className="plans-lock-categories"><span><i className="bi bi-film" aria-hidden="true" /> Movies</span><span><i className="bi bi-tv" aria-hidden="true" /> TV</span><span><i className="bi bi-play-btn" aria-hidden="true" /> Anime</span></div>
-              <div className="plans-lock-foot"><i className="bi bi-unlock" aria-hidden="true" /> Catalog browsing remains available</div>
+              <div className="plans-lock-categories"><span><Film size={13} strokeWidth={2} aria-hidden="true" /> Movies</span><span><Tv size={14} strokeWidth={2.1} aria-hidden="true" /> TV</span><span><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /> Anime</span></div>
+              <div className="plans-lock-foot"><Unlock size={13} strokeWidth={2} aria-hidden="true" /> Catalog browsing remains available</div>
             </div>
           </div>
         </section>
@@ -340,25 +385,43 @@ export default function PlansPage() {
           <div className="plans-section-heading">
             <div><span className="plans-section-kicker">SIDE-BY-SIDE DETAILS</span><h2 id="plans-compare-title">Every plan, clearly compared</h2></div>
           </div>
-          <div className="plans-table-wrap" tabIndex="0" aria-label="Scrollable plan comparison">
-            <table className="plans-table">
-              <thead><tr><th scope="col">Feature</th><th scope="col">Anonymous Guest</th><th scope="col">Free</th><th scope="col">Premium <span className="plans-table-verified"><i className="bi bi-patch-check-fill" aria-hidden="true" /> Verified</span></th></tr></thead>
-              <tbody>{COMPARISON.map((row) => <tr key={row[0]}><th scope="row">{row[0]}</th><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td></tr>)}</tbody>
-            </table>
+          <div className="plans-feature-matrix" role="table" aria-label="Plan feature availability comparison">
+            <div className="plans-matrix-header" role="row">
+              <div role="columnheader">Feature</div>
+              <div role="columnheader"><UserRound size={14} aria-hidden="true" /> Guest</div>
+              <div role="columnheader"><UserRoundCheck size={14} aria-hidden="true" /> Free</div>
+              <div role="columnheader"><Crown size={14} aria-hidden="true" /> Premium</div>
+            </div>
+            {featureRows.map((row) => (
+              <div className="plans-matrix-row" role="row" key={row.label}>
+                <div className="plans-matrix-feature" role="rowheader">{row.label}</div>
+                <div className="plans-matrix-cells" role="presentation">
+                  {row.cells.map((cell, index) => (
+                    <div className="plans-matrix-cell" role="cell" key={index}>
+                      <span className="plans-matrix-mobile-label">{MODES[index].label}</span>
+                      <FeatureStatusCell available={cell.available} detail={cell.detail} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-          <p className="plans-table-hint"><i className="bi bi-arrows" aria-hidden="true" /> On smaller screens, swipe the comparison table horizontally.</p>
+          <div className="plans-matrix-legend" aria-label="Feature availability legend">
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Included</span>
+            <span><CircleX size={14} aria-hidden="true" /> Not included</span>
+          </div>
         </section>
 
         <section className="plans-tv-section" aria-labelledby="plans-tv-title">
-          <div className="plans-tv-icon"><i className="bi bi-tv" aria-hidden="true" /></div>
+          <div className="plans-tv-icon"><Tv size={14} strokeWidth={2.1} aria-hidden="true" /></div>
           <div className="plans-tv-copy">
             <span className="plans-section-kicker">ONE WEBSITE · NO TV APP</span>
             <h2 id="plans-tv-title">Use Situla in your TV browser</h2>
             <p>Open the same Situla website in a compatible browser installed on an Android or Smart TV. No separate Situla TV app is planned.</p>
             <div className="plans-tv-points">
-              <span><i className="bi bi-check2" aria-hidden="true" /> TV-sized responsive layout</span>
-              <span><i className="bi bi-check2" aria-hidden="true" /> Remote-friendly navigation design</span>
-              <span><i className="bi bi-check2" aria-hidden="true" /> Same plan and Watch Page rules</span>
+              <span><Check size={13} strokeWidth={2.7} aria-hidden="true" /> TV-sized responsive layout</span>
+              <span><Check size={13} strokeWidth={2.7} aria-hidden="true" /> Remote-friendly navigation design</span>
+              <span><Check size={13} strokeWidth={2.7} aria-hidden="true" /> Same plan and Watch Page rules</span>
             </div>
             <small>Compatibility depends on the TV model, installed browser, video codecs and third-party embedded player support. Not every TV/browser combination can be guaranteed.</small>
           </div>
@@ -369,21 +432,21 @@ export default function PlansPage() {
             <div><span className="plans-section-kicker">POLICIES & IMPORTANT NOTES</span><h2 id="plans-policy-title">Know what the limits mean</h2></div>
           </div>
           <div className="plans-policy-grid">
-            <article><span className="plans-policy-icon"><i className="bi bi-globe2" aria-hidden="true" /></span><h3>Guest IP policy</h3><p>Guest cooldown uses the public IP seen by Situla together with an anonymous session. People sharing one Wi-Fi or carrier network may share an IP, while VPNs or network changes can change the IP. IP is not a unique person identifier.</p></article>
-            <article><span className="plans-policy-icon"><i className="bi bi-person-lock" aria-hidden="true" /></span><h3>Account & device policy</h3><p>Free usage belongs to one account and one registered device. Premium usage is shared across the account's registered devices, up to three. A device switch or revoked device will need server-side verification.</p></article>
-            <article><span className="plans-policy-icon"><i className="bi bi-hourglass-split" aria-hidden="true" /></span><h3>Watch timer policy</h3><p>Watch limits are intended to count playback usage, not ordinary catalog browsing. The server is the source of truth for allowance and cooldown; browser clocks must not control access.</p></article>
-            <article><span className="plans-policy-icon"><i className="bi bi-play-circle" aria-hidden="true" /></span><h3>Third-party player policy</h3><p>Situla can gate Watch Pages and prevent a player from loading during cooldown. Strictly stopping an already-running third-party stream also depends on provider support for expiring playback sessions or server-side playback authorization.</p></article>
+            <article><span className="plans-policy-icon"><Globe2 size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Guest IP policy</h3><p>Guest cooldown uses the public IP seen by Situla together with an anonymous session. People sharing one Wi-Fi or carrier network may share an IP, while VPNs or network changes can change the IP. IP is not a unique person identifier.</p></article>
+            <article><span className="plans-policy-icon"><ShieldCheck size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Account & device policy</h3><p>Free usage belongs to one account and one registered device. Premium usage is shared across the account's registered devices, up to three. A device switch or revoked device will need server-side verification.</p></article>
+            <article><span className="plans-policy-icon"><Clock3 size={16} strokeWidth={2} aria-hidden="true" /></span><h3>Watch timer policy</h3><p>Watch limits are intended to count playback usage, not ordinary catalog browsing. The server is the source of truth for allowance and cooldown; browser clocks must not control access.</p></article>
+            <article><span className="plans-policy-icon"><PlayCircle size={13} strokeWidth={2} aria-hidden="true" /></span><h3>Third-party player policy</h3><p>Situla can gate Watch Pages and prevent a player from loading during cooldown. Strictly stopping an already-running third-party stream also depends on provider support for expiring playback sessions or server-side playback authorization.</p></article>
           </div>
         </section>
 
         <section className="plans-launch-note">
-          <i className="bi bi-info-circle" aria-hidden="true" />
+          <Info size={13} strokeWidth={2} aria-hidden="true" />
           <div><strong>Plan page preview — membership systems are not active yet.</strong><p>Account sign-in, Premium checkout, verified status, device registration, IP restrictions and server-side watch enforcement will be implemented separately. Prices and launch dates have not been announced. The demo controls above do not create accounts, take payments or grant access.</p></div>
         </section>
 
         <div className="plans-bottom-cta">
           <div><span className="plans-section-kicker">READY WHEN YOU ARE</span><h2>Start with Situla, your way.</h2><p>Browse now, or explore the membership options before they launch.</p></div>
-          <Link href="/" className="plans-action plans-action-guest"><i className="bi bi-arrow-right-circle" aria-hidden="true" /> Explore Situla</Link>
+          <Link href="/" className="plans-action plans-action-guest"><Compass size={16} strokeWidth={2.1} aria-hidden="true" /> Explore Situla</Link>
         </div>
       </div>
     </main>

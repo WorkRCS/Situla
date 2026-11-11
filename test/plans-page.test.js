@@ -53,12 +53,30 @@ test("Premium plans expose Monthly, 6-month and Yearly pricing with term-specifi
   assert.ok(page.includes("selectedBilling.cooldown"));
 });
 
-test("Plans page has responsive three-column desktop and stacked mobile layouts", async () => {
+test("Plans page uses Lucide icons and explicit included/missing feature states", async () => {
+  const page = await read("../app/plans/plans-page.jsx");
+  assert.ok(page.includes('from "lucide-react"'));
+  assert.ok(page.includes("<ArrowLeft"));
+  assert.ok(page.includes("<LogIn"));
+  assert.ok(page.includes("<CreditCard"));
+  assert.ok(page.includes("<Compass"));
+  assert.ok(page.includes("<CircleX"));
+  assert.ok(page.includes("plans-feature-status"));
+  assert.ok(page.includes("plans-matrix-mobile-label"));
+  assert.ok(page.includes('available: false'));
+  assert.ok(page.includes("30-minute cooldown (6-month billing)"));
+  assert.ok(page.includes("Unlimited streaming (Yearly billing)"));
+  assert.ok(!page.includes('className="bi '));
+});
+
+test("Plans comparison is responsive without a forced wide table", async () => {
   const css = await read("../app/globals.css");
   assert.ok(css.includes(".plans-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)"));
   assert.ok(css.includes("@media (max-width:680px)"));
   assert.ok(css.includes(".plans-cards { grid-template-columns:minmax(0,1fr)"));
-  assert.ok(css.includes(".plans-table-wrap { overflow-x:auto"));
-  assert.ok(css.includes(".plans-lock-layout { display:grid"));
-  assert.ok(css.includes(".plans-billing-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr))"));
+  assert.ok(css.includes(".plans-feature-matrix"));
+  assert.ok(css.includes(".plans-matrix-mobile-label"));
+  assert.ok(css.includes(".plans-feature-status.is-included"));
+  assert.ok(css.includes(".plans-feature-status.is-unavailable"));
+  assert.ok(css.includes("@media (max-width:360px)"));
 });
