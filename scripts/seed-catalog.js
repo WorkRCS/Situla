@@ -11,7 +11,6 @@ import { TV_SERIES_CANDIDATES } from "../data/tv-additions.js";
 import { MANUAL_TV_SERIES_2020_2026 } from "../data/tv-curated-2020-2026.js";
 import { MANUAL_ANIME_CATALOG } from "../data/anime-catalog.js";
 import { NEW_ANIME_CATALOG } from "../data/anime-additions.js";
-import { isPopularCatalogItem } from "../src/catalog-popularity.js";
 
 export const CATALOG_YEAR_START = 2020;
 export const CATALOG_YEAR_END = 2026;
@@ -203,10 +202,7 @@ async function insertNewOnly({ label, kind, Model, idField, records }) {
     const title = kind === "anime" ? record.titleEnglish || record.title : record.title;
     const key = titleKey(title) + "|" + String(catalogReleaseYear(record, kind) || "");
     return !existingIds.has(id) && !existingTitles.has(key);
-  }).map((record) => ({
-    ...record,
-    isPopular: isPopularCatalogItem(record, kind)
-  }));
+  }).map((record) => ({ ...record }));
 
   if (pending.length) {
     await Model.insertMany(pending, { ordered: false });
