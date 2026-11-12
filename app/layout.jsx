@@ -9,10 +9,15 @@ const extensionAttributeCleanup = `(function () {
   var isInjectedAttribute = function (name) {
     return name === "bis_skin_checked" ||
       name === "bis_register" ||
+      name === "data-temp-mail-org" ||
       name.indexOf("__processed_") === 0;
   };
   var cleanElement = function (element) {
     if (!element || element.nodeType !== 1 || !element.attributes) return;
+    var tempMailInjected = element.hasAttribute("data-temp-mail-org");
+    var injectedEmailIcon = element.tagName === "INPUT" && element.type === "email" &&
+      element.style && /data:image\\//i.test(element.style.backgroundImage || "");
+    if (tempMailInjected || injectedEmailIcon) element.removeAttribute("style");
     for (var i = element.attributes.length - 1; i >= 0; i -= 1) {
       var attributeName = element.attributes[i].name;
       if (isInjectedAttribute(attributeName)) element.removeAttribute(attributeName);
@@ -39,7 +44,7 @@ const extensionAttributeCleanup = `(function () {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["bis_skin_checked", "bis_register"]
+      attributeFilter: ["bis_skin_checked", "bis_register", "data-temp-mail-org", "style"]
     });
   }
 })();`;

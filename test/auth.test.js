@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole
+  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp
 } from "../src/auth.js";
 
 test("Email and password validation normalizes account identifiers", () => {
@@ -45,6 +45,35 @@ test("AUTH_SECRET must contain at least 32 bytes before account operations are a
   }
 });
 
+
+test("AUTH_SECRET configuration errors are returned as an explicit service-unavailable code", () => {
+  const previous = process.env.AUTH_SECRET;
+  try {
+    delete process.env.AUTH_SECRET;
+    assert.throws(() => authSecret(), (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "AUTH_SECRET_NOT_CONFIGURED");
+      return true;
+    });
+  } finally {
+    if (previous === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = previous;
+  }
+});
+
+test("Local development resolves loopback IP when proxy headers are absent", () => {
+  const previous = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = "development";
+    const context = { req: { header: () => undefined, url: "http://localhost:3000/api/presence" } };
+    assert.equal(getClientIp(context), "127.0.0.1");
+    process.env.NODE_ENV = "production";
+    assert.equal(getClientIp(context), "");
+  } finally {
+    if (previous === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
+  }
+});
 
 test("Device entitlements retain the primary slot and discard secondary Premium devices after expiry", () => {
   const devices = [

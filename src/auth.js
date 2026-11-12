@@ -19,7 +19,12 @@ let oauthClient;
 
 export function authSecret() {
   const value = String(process.env.AUTH_SECRET || '');
-  if (Buffer.byteLength(value) < 32) throw new Error('AUTH_SECRET must contain at least 32 bytes.');
+  if (Buffer.byteLength(value) < 32) {
+    const error = new Error('AUTH_SECRET must contain at least 32 bytes. Generate one and add it to .env.');
+    error.status = 503;
+    error.code = 'AUTH_SECRET_NOT_CONFIGURED';
+    throw error;
+  }
   return value;
 }
 
@@ -94,6 +99,14 @@ export function getClientIp(c) {
   for (const value of candidates) {
     const ip = String(value || '').trim();
     if (ip && ip.length <= 64 && !/[\s,]/.test(ip)) return ip;
+  }
+  // Next.js local development may not populate proxy IP headers. Use a
+  // loopback-only identity there; never apply this fallback in production.
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const hostname = new URL(c.req.url).hostname.toLowerCase();
+      if (['localhost', '127.0.0.1', '::1'].includes(hostname)) return '127.0.0.1';
+    } catch {}
   }
   return '';
 }

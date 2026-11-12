@@ -545,7 +545,6 @@ app.post('/api/presence', async (c) => {
     const userAgent = String(c.req.header('user-agent') || '').slice(0, 500);
     const parsedAgent = parseUserAgent(userAgent);
     const existing = await ActivitySession.findOne({ sessionKey });
-    const isNewVisit = !existing || Boolean(existing.endedAt);
     const deltaSeconds = existing && !existing.endedAt
       ? Math.min(90, Math.max(0, Math.floor((now.getTime() - new Date(existing.lastSeenAt).getTime()) / 1000)))
       : 0;
@@ -566,23 +565,33 @@ app.post('/api/presence', async (c) => {
     };
     if (body.active === true && body.stop !== true) set.lastActiveAt = now;
     if (existing?.endedAt) {
-      await ActivitySession.updateOne({ _id: existing._id }, { $set: {
-        ...set, startedAt: now, activeSeconds: 0, lastActiveAt: body.active === true ? now : null
+      await ActivitySession.updateOne({ _id: existing._id, endedAt: existing.endedAt }, { $set: {
+        ...set, startedAt: now, activeSeconds: 0, lastActiveAt: body.active === true && body.stop !== true ? now : null
       } });
     } else if (existing) {
       if (body.active === true && body.stop !== true && deltaSeconds > 0) {
-        await ActivitySession.updateOne(
-          { _id: existing._id, endedAt: null },
+        const update = await ActivitySession.updateOne(
+          { _id: existing._id, endedAt: null, lastSeenAt: existing.lastSeenAt },
           { $set: set, $inc: { activeSeconds: deltaSeconds } }
         );
+        // Only one concurrent heartbeat may credit the same time interval.
+        if (!update.matchedCount) {
+          await ActivitySession.updateOne({ _id: existing._id, endedAt: null }, { $set: set });
+        }
       } else {
-        await ActivitySession.updateOne({ _id: existing._id }, { $set: set });
+        await ActivitySession.updateOne({ _id: existing._id, endedAt: null }, { $set: set });
       }
     } else {
-      await ActivitySession.create({
-        sessionKey, ...set, startedAt: now, activeSeconds: 0,
-        lastActiveAt: body.active === true && body.stop !== true ? now : null
-      });
+      try {
+        await ActivitySession.create({
+          sessionKey, ...set, startedAt: now, activeSeconds: 0,
+          lastActiveAt: body.active === true && body.stop !== true ? now : null
+        });
+      } catch (error) {
+        // Strict Mode or a second tab can win the unique sessionKey race.
+        if (error?.code !== 11000) throw error;
+        await ActivitySession.updateOne({ sessionKey, endedAt: null }, { $set: set });
+      }
     }
     if (body.stop === true) return c.json({ tracked: true, stopped: true });
     return c.json({ tracked: true, ownerType: principal.ownerType });

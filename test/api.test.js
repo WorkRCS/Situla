@@ -44,6 +44,16 @@ test('Email auth validates email and password before touching the database', asy
   assert.equal((await missingPassword.json()).code, 'INVALID_PASSWORD');
 });
 
+test('Presence endpoint validates its payload before database access', async () => {
+  const response = await app.request('/api/presence', {
+    method: 'POST',
+    headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' },
+    body: JSON.stringify({ activityId: 'invalid', active: true })
+  });
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, 'Invalid activity heartbeat.');
+});
+
 test('Playback heartbeats validate session identifiers and playing state before database access', async () => {
   const response = await app.request('/api/playback/heartbeat', {
     method: 'POST',

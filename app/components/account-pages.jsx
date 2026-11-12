@@ -250,7 +250,7 @@ export function LoginPage() {
               <span>Email address</span>
               <span className="account-input-wrap">
                 <Mail size={17} />
-                <input type="email" name="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
+                <input type="email" name="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required suppressHydrationWarning />
               </span>
             </label>
             <label className="account-field">
