@@ -2,7 +2,23 @@ import 'dotenv/config';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { connectDatabase } from './db.js';
-import { Movie, TvSeries, AnimeSeries } from './models.js';
+import mongoose from 'mongoose';
+import { getCookie, setCookie } from 'hono/cookie';
+import {
+  User, AuthSession, Device, Movie, TvSeries, AnimeSeries
+} from './models.js';
+import {
+  SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
+  authSecret, normalizeEmail, validEmail, validPassword, hashPassword, verifyPassword,
+  getClientIp, isSameOriginRequest, enforceRateLimit, isConfiguredAdmin,
+  createLoginSession, getAuthenticatedSession, revokeCurrentSession, safeUser,
+  getGoogleOAuthClient, randomToken, safeEqual, clearOAuthCookies
+} from './auth.js';
+import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
+import {
+  resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
+  heartbeatPlaybackSession, stopPlaybackSession
+} from './access-control.js';
 
 const app = new Hono();
 const IMDB_ID = /^tt\d{5,12}$/i;
@@ -225,6 +241,416 @@ app.get('/api/health', async (c) => {
     return c.json({ status: 'error', database: 'unavailable' }, 503);
   }
 });
+
+
+// Authentication and server-owned access control.
+function apiError(c, error, fallback = 'The request could not be completed.') {
+  const status = Number.isInteger(error?.status) ? error.status : 500;
+  if (status >= 500) console.error('Authentication/access request failed:', error?.message || fallback);
+  return c.json({
+    error: status >= 500 ? fallback : (error?.message || fallback),
+    code: error?.code || 'REQUEST_FAILED',
+    ...(error?.access ? { access: error.access } : {})
+  }, status);
+}
+
+function requireSameOrigin(c) {
+  if (isSameOriginRequest(c)) return null;
+  return c.json({ error: 'Cross-origin request rejected.', code: 'ORIGIN_CHECK_FAILED' }, 403);
+}
+
+function displayNameFromEmail(email) {
+  const local = email.split('@')[0].replace(/[._+-]+/g, ' ').trim();
+  return local.replace(/\b\w/g, (letter) => letter.toUpperCase()).slice(0, 80) || 'Situla Member';
+}
+
+app.post('/api/auth/email', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    authSecret();
+    const body = await c.req.json().catch(() => ({}));
+    const email = normalizeEmail(body.email);
+    const password = body.password;
+    const rememberMe = body.rememberMe !== false;
+    if (!validEmail(email) || !validPassword(password)) {
+      return c.json({ error: 'Enter a valid email and a password of at least 10 characters.', code: 'INVALID_CREDENTIALS_FORMAT' }, 400);
+    }
+    const ip = getClientIp(c) || 'unknown';
+    if (!await enforceRateLimit('email-login:' + ip + ':' + email, 8, 15 * 60)) {
+      return c.json({ error: 'Too many sign-in attempts. Please try again later.', code: 'RATE_LIMITED' }, 429);
+    }
+
+    let user = await User.findOne({ email }).select('+passwordHash');
+    let created = false;
+    if (user) {
+      if (user.status !== 'active') return c.json({ error: 'This account is unavailable.', code: 'ACCOUNT_UNAVAILABLE' }, 403);
+      if (isConfiguredAdmin(email) && user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
+      if (!user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
+        return c.json({ error: 'Email or password is incorrect. Use Google Sign-in if this account was created with Google.', code: 'INVALID_CREDENTIALS' }, 401);
+      }
+    } else {
+      const passwordHash = await hashPassword(password);
+      try {
+        user = await User.create({
+          email,
+          displayName: displayNameFromEmail(email),
+          passwordHash,
+          emailVerified: false,
+          role: isConfiguredAdmin(email) ? 'admin' : 'user',
+          planId: 'free',
+          membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null },
+          status: 'active'
+        });
+        created = true;
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+        user = await User.findOne({ email }).select('+passwordHash');
+        if (!user || !user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
+          return c.json({ error: 'Email or password is incorrect.', code: 'INVALID_CREDENTIALS' }, 401);
+        }
+      }
+    }
+
+    const session = await createLoginSession(c, user, rememberMe);
+    return c.json({ user: safeUser(user), created, sessionExpiresAt: session.expiresAt }, created ? 201 : 200);
+  } catch (error) {
+    return apiError(c, error, 'Email sign-in is temporarily unavailable.');
+  }
+});
+
+app.get('/api/auth/google', async (c) => {
+  try {
+    await connectDatabase();
+    authSecret();
+    const ip = getClientIp(c) || 'unknown';
+    if (!await enforceRateLimit('google-oauth:' + ip, 10, 15 * 60)) {
+      return c.json({ error: 'Too many Google sign-in attempts. Try again later.', code: 'RATE_LIMITED' }, 429);
+    }
+    const state = randomToken(32);
+    const nonce = randomToken(32);
+    const client = getGoogleOAuthClient();
+    const options = {
+      access_type: 'online',
+      prompt: 'select_account',
+      response_type: 'code',
+      scope: ['openid', 'email', 'profile'],
+      state,
+      nonce
+    };
+    setCookie(c, OAUTH_STATE_COOKIE, state, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax', path: '/api/auth/google', maxAge: 600
+    });
+    setCookie(c, OAUTH_NONCE_COOKIE, nonce, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax', path: '/api/auth/google', maxAge: 600
+    });
+    return c.redirect(client.generateAuthUrl(options), 302);
+  } catch (error) {
+    return apiError(c, error, 'Google Sign-in is not available yet. Check the server configuration.');
+  }
+});
+
+app.get('/api/auth/google/callback', async (c) => {
+  try {
+    await connectDatabase();
+    authSecret();
+    const query = c.req.query();
+    const expectedState = getCookie(c, OAUTH_STATE_COOKIE);
+    const expectedNonce = getCookie(c, OAUTH_NONCE_COOKIE);
+    if (query.error || !query.code || !safeEqual(query.state, expectedState) || !expectedNonce) {
+      clearOAuthCookies(c);
+      return c.redirect('/login?authError=google', 302);
+    }
+
+    const client = getGoogleOAuthClient();
+    const tokenResponse = await client.getToken(query.code);
+    if (!tokenResponse.tokens?.id_token) throw new Error('Google did not return an ID token.');
+    const ticket = await client.verifyIdToken({
+      idToken: tokenResponse.tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const identity = ticket.getPayload();
+    if (!identity?.sub || !identity.email || identity.email_verified !== true ||
+        !safeEqual(identity.nonce, expectedNonce)) {
+      throw new Error('Google identity verification failed.');
+    }
+
+    const email = normalizeEmail(identity.email);
+    if (!validEmail(email)) throw new Error('Google returned an invalid account email.');
+    let user = await User.findOne({ googleSub: String(identity.sub) }).select('+passwordHash');
+    if (user && user.email !== email) throw new Error('Google account identity does not match the saved account.');
+    if (!user) {
+      user = await User.findOne({ email }).select('+passwordHash');
+      if (user) {
+        if (user.status !== 'active') throw new Error('This account is unavailable.');
+        if (user.googleSub && user.googleSub !== String(identity.sub)) throw new Error('This email is already linked to another Google identity.');
+        user.googleSub = String(identity.sub);
+        user.emailVerified = true;
+        if (isConfiguredAdmin(email)) user.role = 'admin';
+        await user.save();
+      } else {
+        try {
+          user = await User.create({
+            email,
+            displayName: String(identity.name || displayNameFromEmail(email)).slice(0, 80),
+            googleSub: String(identity.sub),
+            emailVerified: true,
+            role: isConfiguredAdmin(email) ? 'admin' : 'user',
+            status: 'active',
+            planId: 'free',
+            membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null }
+          });
+        } catch (error) {
+          if (error?.code !== 11000) throw error;
+          user = await User.findOne({ $or: [{ email }, { googleSub: String(identity.sub) }] }).select('+passwordHash');
+          if (!user || user.email !== email || (user.googleSub && user.googleSub !== String(identity.sub))) throw error;
+          if (!user.googleSub) {
+            user.googleSub = String(identity.sub);
+            user.emailVerified = true;
+            await user.save();
+          }
+        }
+      }
+    }
+    if (user.status !== 'active') throw new Error('This account is unavailable.');
+    if (isConfiguredAdmin(email) && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+    await createLoginSession(c, user, true);
+    clearOAuthCookies(c);
+    return c.redirect('/profile', 302);
+  } catch (error) {
+    console.error('Google OAuth callback failed:', error?.message || 'Unknown OAuth error');
+    clearOAuthCookies(c);
+    return c.redirect('/login?authError=google', 302);
+  }
+});
+
+app.get('/api/auth/me', async (c) => {
+  try {
+    await connectDatabase();
+    const authenticated = await getAuthenticatedSession(c);
+    if (!authenticated) return c.json({ error: 'Sign-in required.', code: 'UNAUTHENTICATED' }, 401);
+    const user = authenticated.user;
+    const [deviceCount, access] = await Promise.all([
+      Device.countDocuments({ userId: user._id, revokedAt: null }),
+      readAccessStatus({ ownerType: 'user', ownerId: user._id, user })
+    ]);
+    const safe = safeUser(user);
+    return c.json({
+      user: safe,
+      devices: { active: deviceCount, limit: getWatchPolicy(user).deviceLimit },
+      access
+    });
+  } catch (error) {
+    return apiError(c, error, 'Could not load the account session.');
+  }
+});
+
+app.post('/api/auth/logout', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    await revokeCurrentSession(c);
+    return c.json({ signedOut: true });
+  } catch (error) {
+    return apiError(c, error, 'Sign-out is temporarily unavailable.');
+  }
+});
+
+app.get('/api/auth/devices', async (c) => {
+  try {
+    await connectDatabase();
+    const authenticated = await getAuthenticatedSession(c);
+    if (!authenticated) return c.json({ error: 'Sign-in required.' }, 401);
+    const devices = await Device.find({ userId: authenticated.user._id, revokedAt: null })
+      .sort({ lastSeenAt: -1 }).lean();
+    return c.json({
+      items: devices.map((device) => ({
+        id: String(device._id),
+        label: device.label,
+        lastSeenAt: device.lastSeenAt,
+        current: String(device._id) === String(authenticated.device._id)
+      })),
+      limit: getWatchPolicy(authenticated.user).deviceLimit
+    });
+  } catch (error) {
+    return apiError(c, error, 'Could not load registered devices.');
+  }
+});
+
+app.delete('/api/auth/devices/:deviceId', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const authenticated = await getAuthenticatedSession(c);
+    if (!authenticated) return c.json({ error: 'Sign-in required.' }, 401);
+    const deviceId = c.req.param('deviceId');
+    if (!/^[a-f0-9]{24}$/i.test(deviceId)) return c.json({ error: 'Invalid device ID.' }, 400);
+    const device = await Device.findOne({ _id: deviceId, userId: authenticated.user._id, revokedAt: null });
+    if (!device) return c.json({ error: 'Device not found.' }, 404);
+    const now = new Date();
+    device.revokedAt = now;
+    await device.save();
+    await AuthSession.updateMany({ deviceId: device._id, revokedAt: null }, { $set: { revokedAt: now } });
+    const isCurrent = String(device._id) === String(authenticated.device._id);
+    if (isCurrent) await revokeCurrentSession(c);
+    return c.json({ revoked: true, currentDevice: isCurrent });
+  } catch (error) {
+    return apiError(c, error, 'Could not revoke the device.');
+  }
+});
+
+app.patch('/api/admin/users/:userId/membership', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const authenticated = await getAuthenticatedSession(c);
+    if (!authenticated || authenticated.user.role !== 'admin' || !isConfiguredAdmin(authenticated.user.email)) {
+      return c.json({ error: 'Administrator access required.' }, 403);
+    }
+    const userId = c.req.param('userId');
+    if (!/^[a-f0-9]{24}$/i.test(userId)) return c.json({ error: 'Invalid user ID.' }, 400);
+    const body = await c.req.json().catch(() => ({}));
+    if (body.planId === 'free') {
+      const user = await User.findByIdAndUpdate(userId, {
+        $set: {
+          planId: 'free',
+          membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null, activatedBy: authenticated.user._id }
+        }
+      }, { new: true });
+      if (!user) return c.json({ error: 'User not found.' }, 404);
+      return c.json({ user: safeUser(user), payment: 'not_connected' });
+    }
+    if (body.planId !== 'premium' || !['monthly', 'six-months', 'yearly'].includes(body.billingCycle)) {
+      return c.json({ error: 'Select a valid plan and Premium billing cycle.' }, 400);
+    }
+    const months = body.billingCycle === 'monthly' ? 1 : body.billingCycle === 'six-months' ? 6 : 12;
+    const startedAt = new Date();
+    const expiresAt = addCalendarMonths(startedAt, months);
+    const user = await User.findByIdAndUpdate(userId, {
+      $set: {
+        planId: 'premium',
+        membership: {
+          status: 'active',
+          billingCycle: body.billingCycle,
+          startedAt,
+          expiresAt,
+          activatedBy: authenticated.user._id
+        }
+      }
+    }, { new: true });
+    if (!user) return c.json({ error: 'User not found.' }, 404);
+    return c.json({ user: safeUser(user), payment: 'not_connected' });
+  } catch (error) {
+    return apiError(c, error, 'Membership could not be updated.');
+  }
+});
+
+app.get('/api/access/status', async (c) => {
+  try {
+    await connectDatabase();
+    const principal = await resolvePlaybackPrincipal(c);
+    return c.json({ access: await readAccessStatus(principal) });
+  } catch (error) {
+    return apiError(c, error, 'Could not verify watch access.');
+  }
+});
+
+app.post('/api/playback/start', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const body = await c.req.json().catch(() => ({}));
+    const mediaType = String(body.mediaType || '').toLowerCase();
+    const mediaId = String(body.mediaId || '').trim();
+    const media = { mediaType, mediaId };
+
+    if (mediaType === 'movie') {
+      if (!/^tt\d{5,12}$/i.test(mediaId)) return c.json({ error: 'Invalid movie ID.' }, 400);
+      const exists = await Movie.exists({ imdbId: mediaId.toLowerCase(), adult: { $ne: true } });
+      if (!exists) return c.json({ error: 'Movie is not available in the Situla catalog.' }, 404);
+    } else if (mediaType === 'tv') {
+      const tmdbId = Number(mediaId);
+      const season = Number(body.season);
+      const episode = Number(body.episode);
+      if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
+          !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
+        return c.json({ error: 'Invalid TV episode route.' }, 400);
+      }
+      const series = await TvSeries.findOne({ tmdbId, adult: { $ne: true } }).select('seasons').lean();
+      const targetSeason = series?.seasons?.find((item) => Number(item.seasonNumber) === season);
+      const targetEpisode = targetSeason?.episodes?.find((item) => Number(item.episodeNumber) === episode);
+      if (!targetEpisode) return c.json({ error: 'TV episode is not available in the Situla catalog.' }, 404);
+      media.season = season;
+      media.episode = episode;
+    } else if (mediaType === 'anime') {
+      const malId = Number(mediaId);
+      const episode = Number(body.episode);
+      const audio = String(body.audio || 'sub').toLowerCase();
+      if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(malId) || malId < 1 ||
+          !Number.isSafeInteger(episode) || episode < 1 || !['sub', 'dub'].includes(audio)) {
+        return c.json({ error: 'Invalid Anime episode route.' }, 400);
+      }
+      const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
+      if (!anime || (Number(anime.episodes) > 0 && episode > Number(anime.episodes))) {
+        return c.json({ error: 'Anime episode is not available in the Situla catalog.' }, 404);
+      }
+      media.episode = episode;
+      media.audio = audio;
+    } else {
+      return c.json({ error: 'Unsupported playback type.' }, 400);
+    }
+
+    const principal = await resolvePlaybackPrincipal(c);
+    const result = await startPlaybackSession(principal, media);
+    return c.json(result, 201);
+  } catch (error) {
+    return apiError(c, error, 'Playback access could not be started.');
+  }
+});
+
+app.post('/api/playback/heartbeat', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const body = await c.req.json().catch(() => ({}));
+    if (!/^[a-f0-9]{24}$/i.test(String(body.sessionId || '')) || typeof body.playing !== 'boolean') {
+      return c.json({ error: 'Invalid playback heartbeat.' }, 400);
+    }
+    const principal = await resolvePlaybackPrincipal(c);
+    return c.json(await heartbeatPlaybackSession(principal, body.sessionId, body.playing));
+  } catch (error) {
+    return apiError(c, error, 'Playback heartbeat failed.');
+  }
+});
+
+app.post('/api/playback/stop', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const body = await c.req.json().catch(() => ({}));
+    if (!/^[a-f0-9]{24}$/i.test(String(body.sessionId || ''))) return c.json({ error: 'Invalid playback session.' }, 400);
+    const principal = await resolvePlaybackPrincipal(c);
+    return c.json(await stopPlaybackSession(principal, body.sessionId));
+  } catch (error) {
+    return apiError(c, error, 'Playback session could not be stopped.');
+  }
+});
+
 
 const MOVIE_CATEGORIES = [
   { key: 'action', name: 'Action' },
