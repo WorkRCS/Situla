@@ -317,7 +317,7 @@ img { display: block; }
   scroll-snap-type:x proximity;
   scrollbar-width:thin;
   scrollbar-color:#343946 transparent;
-  touch-action:pan-x;
+  touch-action:pan-x pan-y pinch-zoom;
 }
 .media-row:active { cursor:grabbing; }
 .media-row > * { scroll-snap-align:start; }
@@ -4754,4 +4754,104 @@ body:has(.login-page) .site-footer { display:none !important; }
     width:clamp(178px,20vw,205px);
     flex-basis:clamp(178px,20vw,205px);
   }
+}
+
+
+/* Professional finish: preserve Situla's charcoal/gold identity while improving
+   card readability, pointer feedback, and native touch scrolling. */
+.media-row {
+  touch-action:pan-x pan-y pinch-zoom;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-block:auto;
+  scroll-padding-inline:12px;
+}
+.media-row.is-pointer-dragging {
+  cursor:grabbing;
+  scroll-snap-type:none;
+}
+.movies-catalog-page,
+.tv-catalog-page,
+.anime-catalog-page {
+  padding-top:clamp(8px,1vw,14px) !important;
+}
+.catalog-grid .movie-card {
+  align-self:stretch;
+  min-width:0;
+}
+.catalog-grid .movie-card > .media-open-button {
+  display:flex;
+  height:100%;
+  min-width:0;
+  flex-direction:column;
+  align-items:stretch;
+}
+.catalog-grid .movie-card .movie-poster {
+  width:100%;
+  flex:none;
+  aspect-ratio:2/3;
+}
+.catalog-grid .movie-card h3 {
+  display:-webkit-box;
+  min-height:2.6em;
+  margin:10px 2px 0;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  text-overflow:ellipsis;
+  white-space:normal !important;
+  line-height:1.3;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.catalog-grid .movie-card > .media-open-button > p {
+  max-width:100%;
+  margin-inline:2px;
+  overflow-wrap:anywhere;
+}
+.catalog-grid .movie-card .series-card-meta,
+.catalog-grid .movie-card .series-card-category {
+  display:-webkit-box;
+  min-height:2.7em;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  white-space:normal;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+
+/* A restrained dimensional edge and tactile focus state; no palette changes. */
+.hero-card {
+  border:1px solid rgba(232,182,91,.13);
+  box-shadow:0 22px 54px rgba(0,0,0,.3),inset 0 1px 0 rgba(232,182,91,.055);
+}
+.movie-card .movie-poster {
+  box-shadow:0 13px 28px rgba(0,0,0,.3),0 2px 7px rgba(0,0,0,.2),inset 0 1px 0 rgba(232,182,91,.06);
+}
+:is(button,a,[role="button"]):focus-visible {
+  outline:2px solid rgba(232,182,91,.76);
+  outline-offset:3px;
+  box-shadow:0 0 0 4px rgba(232,182,91,.1);
+}
+@media (hover:hover) and (pointer:fine) {
+  .discovery-card:hover {
+    border-color:rgba(232,182,91,.34);
+    box-shadow:0 15px 34px rgba(0,0,0,.25),inset 0 1px 0 rgba(232,182,91,.07);
+  }
+}
+@media (max-width:599px) {
+  .movies-catalog-page,
+  .tv-catalog-page,
+  .anime-catalog-page {
+    padding-top:8px !important;
+  }
+  .catalog-grid .movie-card .series-card-meta,
+  .catalog-grid .movie-card .series-card-category {
+    min-height:2.7em;
+    font-size:10px !important;
+    line-height:1.35;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .media-row { scroll-behavior:auto !important; }
+  .media-row.is-pointer-dragging { scroll-snap-type:x proximity; }
+  :is(button,a,[role="button"]):focus-visible { transition:none !important; }
 }
