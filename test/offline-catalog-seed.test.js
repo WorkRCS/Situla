@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { STATIC_MOVIES } from "../data/movie-catalog.js";
+import { MANUAL_MOVIES_2020_2026 } from "../data/movie-curated-2020-2026.js";
 import { STATIC_TV_SERIES } from "../data/tv-catalog.js";
 import { TV_SERIES_CANDIDATES } from "../data/tv-additions.js";
 import { NEW_ANIME_CATALOG } from "../data/anime-additions.js";
@@ -72,6 +73,8 @@ test("year helper reads canonical date fields without changing canonical IDs", (
   assert.equal(catalogReleaseYear({ firstAirDate: "2021-04-01" }, "tv"), 2021);
   assert.equal(catalogReleaseYear({ airedFrom: "2022-05-01" }, "anime"), 2022);
   assert.ok(STATIC_MOVIES.every((item) => /^tt\d{5,12}$/.test(item.imdbId)));
+  assert.equal(MANUAL_MOVIES_2020_2026.length, 38);
+  assert.ok(MANUAL_MOVIES_2020_2026.every((item) => /^tt\d{5,12}$/.test(item.imdbId)));
   assert.ok(STATIC_TV_SERIES.every((item) => Number(item.tmdbId) > 0));
   assert.ok(TV_SERIES_CANDIDATES.every((item) => Number(item.tmdbId) > 0));
   assert.ok(NEW_ANIME_CATALOG.every((item) => Number(item.malId) > 0));
@@ -85,7 +88,8 @@ test("prepared offline packs report real gaps instead of lowering the completene
       assert.ok(year >= CATALOG_YEAR_START && year <= CATALOG_YEAR_END);
     }
   }
-  assert.equal(prepared.movie.records.length, 0);
+  assert.equal(prepared.movie.records.length, 38);
+  assert.ok(prepared.movie.records.every((item) => validateOfflineMovie(item)));
   assert.equal(prepared.tv.records.length, 0);
   assert.ok(prepared.anime.records.length >= 190);
   assert.ok(prepared.movie.rejected["synopsis shorter than 80 characters"] > 0);
