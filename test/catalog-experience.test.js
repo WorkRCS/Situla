@@ -58,6 +58,15 @@ test("global search uses a separate modal with type/year filters and direct medi
   assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 
+test("premium homepage keeps TV and Anime shelves in the server-provided newest-first order", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /const premiumCatalog = accountUser\?\.planId === "premium"/);
+  assert.match(app, /const topTvShows = useMemo\(\(\) => premiumCatalog\s*\? homeTvShows\.slice\(0, 20\)/);
+  assert.match(app, /const topAnimeShows = useMemo\(\(\) => premiumCatalog\s*\? homeAnimeShows\.slice\(0, 20\)/);
+  assert.match(app, /title=\{premiumCatalog \? "Latest TV series" : "Top TV series"\}/);
+  assert.match(app, /title=\{premiumCatalog \? "Latest anime series" : "Top anime series"\}/);
+});
+
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");

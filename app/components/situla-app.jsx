@@ -915,13 +915,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     })
     .slice(0, 20), [homeSeriesMix]);
 
-  const topTvShows = useMemo(() => [...homeTvShows]
-    .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0))
-    .slice(0, 20), [homeTvShows]);
+  const premiumCatalog = accountUser?.planId === "premium";
+  const topTvShows = useMemo(() => premiumCatalog
+    ? homeTvShows.slice(0, 20)
+    : [...homeTvShows]
+      .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0))
+      .slice(0, 20), [homeTvShows, premiumCatalog]);
 
-  const topAnimeShows = useMemo(() => [...homeAnimeShows]
-    .sort((a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) || Number(b.score || 0) - Number(a.score || 0))
-    .slice(0, 20), [homeAnimeShows]);
+  const topAnimeShows = useMemo(() => premiumCatalog
+    ? homeAnimeShows.slice(0, 20)
+    : [...homeAnimeShows]
+      .sort((a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) || Number(b.score || 0) - Number(a.score || 0))
+      .slice(0, 20), [homeAnimeShows, premiumCatalog]);
 
   useEffect(() => {
     if (tab !== "home" || !homeSeriesReady || !homeHeroItems.length) return;
@@ -1718,8 +1723,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <>
                 <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
                 <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={openHomeTvSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={openHomeAnimeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title={premiumCatalog ? "Latest TV series" : "Top TV series"} eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "POPULAR TELEVISION"} items={topTvShows} kind="tv" onOpen={openHomeTvSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title={premiumCatalog ? "Latest anime series" : "Top anime series"} eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "TOP-RANKED ANIME"} items={topAnimeShows} kind="anime" onOpen={openHomeAnimeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
               </>
             )}
 

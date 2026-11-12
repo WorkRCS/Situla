@@ -60,6 +60,10 @@ export function getCatalogCachePolicy(method, requestUrl) {
 
 export function buildCatalogCacheKey(requestUrl, variant = 'public', namespace = CACHE_NAMESPACE) {
   const url = new URL(requestUrl, 'http://localhost');
+  if (variant === 'premium') {
+    url.searchParams.delete('random');
+    url.searchParams.delete('exclude');
+  }
   url.searchParams.sort();
   const canonical = url.pathname + url.search + '|variant=' + String(variant || 'public');
   const digest = createHash('sha256').update(canonical).digest('hex');
@@ -168,6 +172,7 @@ export function createCatalogResponseCache({
     }
 
     const key = buildCatalogCacheKey(c.req.url, policy.premiumAware ? variant : 'public');
+    const cacheTtlSeconds = variant === 'premium' ? Math.min(policy.ttl, 10) : policy.ttl;
     const now = Date.now();
     let staleCandidate = readMemory(key, now);
 
@@ -207,13 +212,13 @@ export function createCatalogResponseCache({
       const body = await response.clone().text();
       const bytes = Buffer.byteLength(body, 'utf8');
       if (bytes <= maxCacheBytes) {
-        const freshUntil = Date.now() + policy.ttl * 1000;
+        const freshUntil = Date.now() + cacheTtlSeconds * 1000;
         const staleUntil = freshUntil + STALE_WINDOW_SECONDS * 1000;
         writeMemory(key, body, freshUntil, staleUntil, bytes);
         if (redis) {
           // Cache writes never delay successful API responses.
           void redis.set(key, { status: 200, body, freshUntil, staleUntil }, {
-            ex: policy.ttl + STALE_WINDOW_SECONDS
+            ex: cacheTtlSeconds + STALE_WINDOW_SECONDS
           }).catch(() => {});
         }
       }

@@ -46,6 +46,16 @@ test('canonical cache key ignores parameter order but preserves filters and prem
   assert.notEqual(first, pageTwo);
 });
 
+test('premium catalog cache ignores random/exclude while preserving page and premium isolation', () => {
+  const first = buildCatalogCacheKey('https://situla.example/api/tv?page=1&limit=10&random=true&exclude=1,2,3', 'premium');
+  const refreshed = buildCatalogCacheKey('https://situla.example/api/tv?exclude=88,99&limit=10&page=1&random=false', 'premium');
+  const nextPage = buildCatalogCacheKey('https://situla.example/api/tv?page=2&limit=10&random=true&exclude=1,2,3', 'premium');
+  const standard = buildCatalogCacheKey('https://situla.example/api/tv?page=1&limit=10&random=true&exclude=1,2,3', 'standard');
+  assert.equal(first, refreshed);
+  assert.notEqual(first, nextPage);
+  assert.notEqual(first, standard);
+});
+
 test('Redis cache serves hits and writes successful JSON misses', async () => {
   const store = new Map();
   const redis = {

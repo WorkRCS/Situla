@@ -22,9 +22,7 @@ import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
 import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './search-ranking.js';
 import adminRouter from './admin.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
-import {
-  getRollingTenYearWindow, buildRecentDateWindowFilter, PREMIUM_FEED_LIMIT
-} from './premium-feed.js';
+import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import {
   resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
   heartbeatPlaybackSession, stopPlaybackSession
@@ -66,7 +64,7 @@ app.use('*', async (c, next) => {
 const catalogResponseCache = createCatalogResponseCache({
   getVariant: async (c, policy) => {
     if (!policy.premiumAware) return 'public';
-    return await getPremiumFeedWindow(c) ? 'premium' : 'standard';
+    return await getPremiumCatalogAccess(c) ? 'premium' : 'standard';
   }
 });
 
@@ -94,11 +92,11 @@ export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
   };
 }
 
-const catalogTierMemo = new Map();
-const CATALOG_TIER_MEMO_TTL_MS = 5_000;
-const CATALOG_TIER_MEMO_MAX_ENTRIES = 1_000;
+const catalogAccessMemo = new Map();
+const CATALOG_ACCESS_MEMO_TTL_MS = 5_000;
+const CATALOG_ACCESS_MEMO_MAX_ENTRIES = 1_000;
 
-async function resolveCatalogTierWindow(sessionToken, deviceToken) {
+async function resolveCatalogAccess(sessionToken, deviceToken) {
   // This middleware runs before route handlers, so establish Mongo before any Mongoose query.
   await connectDatabase();
   const now = new Date();
@@ -123,73 +121,64 @@ async function resolveCatalogTierWindow(sessionToken, deviceToken) {
   const suspensionExpired = user.status === 'suspended' && user.suspendedUntil &&
     new Date(user.suspendedUntil) <= now;
   if (user.status !== 'active' && !suspensionExpired) return null;
-  return getWatchPolicy(user, now).planId === 'premium' ? getRollingTenYearWindow() : null;
+  return getWatchPolicy(user, now).planId === 'premium' ? { plan: 'premium' } : null;
 }
 
-async function getMemoizedCatalogTierWindow(sessionToken, deviceToken) {
+async function getMemoizedCatalogAccess(sessionToken, deviceToken) {
   const key = hashToken('catalog-tier:' + sessionToken + ':' + deviceToken);
   const now = Date.now();
-  const existing = catalogTierMemo.get(key);
+  const existing = catalogAccessMemo.get(key);
   if (existing && existing.expiresAt > now) {
-    catalogTierMemo.delete(key);
-    catalogTierMemo.set(key, existing);
+    catalogAccessMemo.delete(key);
+    catalogAccessMemo.set(key, existing);
     return existing.promise;
   }
-  if (existing) catalogTierMemo.delete(key);
+  if (existing) catalogAccessMemo.delete(key);
 
   const entry = { expiresAt: Number.POSITIVE_INFINITY, promise: null };
-  entry.promise = resolveCatalogTierWindow(sessionToken, deviceToken).then((window) => {
-    entry.expiresAt = Date.now() + CATALOG_TIER_MEMO_TTL_MS;
-    return window;
+  entry.promise = resolveCatalogAccess(sessionToken, deviceToken).then((access) => {
+    entry.expiresAt = Date.now() + CATALOG_ACCESS_MEMO_TTL_MS;
+    return access;
   }).catch((error) => {
-    catalogTierMemo.delete(key);
+    catalogAccessMemo.delete(key);
     throw error;
   });
-  catalogTierMemo.set(key, entry);
-  while (catalogTierMemo.size > CATALOG_TIER_MEMO_MAX_ENTRIES) {
-    const oldestKey = catalogTierMemo.keys().next().value;
+  catalogAccessMemo.set(key, entry);
+  while (catalogAccessMemo.size > CATALOG_ACCESS_MEMO_MAX_ENTRIES) {
+    const oldestKey = catalogAccessMemo.keys().next().value;
     if (oldestKey === key) break;
-    catalogTierMemo.delete(oldestKey);
+    catalogAccessMemo.delete(oldestKey);
   }
   return entry.promise;
 }
 
-async function getPremiumFeedWindow(c) {
-  if (c.get('premiumFeedWindowResolved')) return c.get('premiumFeedWindow');
+async function getPremiumCatalogAccess(c) {
+  if (c.get('premiumCatalogAccessResolved')) return c.get('premiumCatalogAccess');
 
   const sessionToken = getCookie(c, SESSION_COOKIE);
   const deviceToken = getCookie(c, DEVICE_COOKIE);
   // Anonymous traffic stays on the public feed and never opens a database connection for cache lookup.
   if (!sessionToken || !deviceToken) {
-    c.set('premiumFeedWindowResolved', true);
-    c.set('premiumFeedWindow', null);
+    c.set('premiumCatalogAccessResolved', true);
+    c.set('premiumCatalogAccess', null);
     return null;
   }
 
-  const window = await getMemoizedCatalogTierWindow(sessionToken, deviceToken);
-  c.set('premiumFeedWindowResolved', true);
-  c.set('premiumFeedWindow', window);
-  return window;
+  const access = await getMemoizedCatalogAccess(sessionToken, deviceToken);
+  c.set('premiumCatalogAccessResolved', true);
+  c.set('premiumCatalogAccess', access);
+  return access;
 }
 
-async function findDatePrioritizedFeedPage({ Model, filter, countFilter = filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
-  const window = getRollingTenYearWindow();
-  const recentClause = buildRecentDateWindowFilter(dateField, yearField, window);
-  const recentFilter = { $and: [filter, recentClause] };
-  const recentCountFilter = { $and: [countFilter, recentClause] };
-  const offset = ignorePageOffset ? 0 : (page - 1) * limit;
-
-  async function readRecentPage() {
-    let query = Model.find(recentFilter);
-    if (select) query = query.select(select);
-    return query.sort(sort).skip(offset).limit(limit).lean();
-  }
-
+async function findNewestFeedPage({ Model, filter, sort, page, limit, select }) {
+  const offset = (page - 1) * limit;
+  let query = Model.find(filter);
+  if (select) query = query.select(select);
   const [items, total] = await Promise.all([
-    readRecentPage(),
-    Model.countDocuments(recentCountFilter)
+    query.sort(sort).skip(offset).limit(limit).lean(),
+    Model.countDocuments(filter)
   ]);
-  return { items, total, window };
+  return { items, total };
 }
 
 function safeText(value) {
@@ -879,48 +868,47 @@ app.get('/api/movies/discover', async (c) => {
   try {
     await connectDatabase();
     const baseFilter = { imdbId: IMDB_ID, adult: { $ne: true } };
-    const countFilter = { ...baseFilter };
+    const publicFilter = { ...baseFilter };
     const excludedIds = [...new Set(String(c.req.query('exclude') || '')
       .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 120);
-    if (excludedIds.length) baseFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
+    if (excludedIds.length) publicFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
 
-    const premiumWindow = await getPremiumFeedWindow(c);
-    if (premiumWindow) {
-      const recentClause = buildRecentDateWindowFilter('releaseDate', 'releaseYear', premiumWindow);
-      const dateSort = { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 };
+    const premiumAccess = await getPremiumCatalogAccess(c);
+    if (premiumAccess) {
+      const dateSort = buildNewestFirstSort('releaseDate', { popularity: -1 });
       const facets = {
-        featuredRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: 1 }],
-        itemsRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }]
+        featuredLatest: [{ $limit: 1 }],
+        itemsLatest: [{ $limit: PREMIUM_FEED_LIMIT }]
       };
       for (const category of MOVIE_CATEGORIES) {
-        facets[category.key + 'Recent'] = [
-          { $match: { $and: [recentClause, { genres: category.name }] } },
-          { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }
+        facets[category.key + 'Latest'] = [
+          { $match: { genres: category.name } },
+          { $limit: PREMIUM_FEED_LIMIT }
         ];
       }
       const [result, total] = await Promise.all([
-        Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]),
-        Movie.countDocuments({ $and: [countFilter, recentClause] })
+        Movie.aggregate([{ $match: baseFilter }, { $sort: dateSort }, { $facet: facets }]),
+        Movie.countDocuments(baseFilter)
       ]);
       const categories = MOVIE_CATEGORIES.map((category) => ({
         key: category.key,
         name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
         genre: category.name,
-        items: (result?.[category.key + 'Recent'] || []).map(movieDto)
+        items: (result?.[category.key + 'Latest'] || []).map(movieDto)
       })).filter((category) => category.items.length > 0);
-      const featured = result?.featuredRecent?.[0] || null;
+      const featured = result?.featuredLatest?.[0] || null;
       return c.json({
         featured: featured ? movieDto(featured) : null,
-        items: (result?.itemsRecent || []).map(movieDto),
+        items: (result?.itemsLatest || []).map(movieDto),
         categories,
-        personalizedFeed: { plan: 'premium', startYear: premiumWindow.startYear, endYear: premiumWindow.endYear },
+        personalizedFeed: { plan: 'premium', sort: 'newest_first' },
         pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
       });
     }
 
     const facets = {
       featured: [{ $sample: { size: 1 } }],
-      items: [{ $sample: { size: PREMIUM_FEED_LIMIT } }],
+      items: [{ $sample: { size: PREMIUM_FEED_LIMIT } }]
     };
     for (const category of MOVIE_CATEGORIES) {
       facets[category.key] = [
@@ -928,14 +916,14 @@ app.get('/api/movies/discover', async (c) => {
         { $sample: { size: PREMIUM_FEED_LIMIT } }
       ];
     }
-    const [result] = await Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]);
+    const [result] = await Movie.aggregate([{ $match: publicFilter }, { $facet: facets }]);
     const categories = MOVIE_CATEGORIES.map((category) => ({
       key: category.key,
       name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
       genre: category.name,
       items: (result?.[category.key] || []).map(movieDto)
     })).filter((category) => category.items.length > 0);
-    const total = await Movie.countDocuments(countFilter);
+    const total = await Movie.countDocuments(publicFilter);
     return c.json({
       featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
       items: (result?.items || []).map(movieDto),
@@ -1149,20 +1137,17 @@ app.get('/api/movies', async (c) => {
     const randomFilter = { ...filter };
     if (randomOrder && excludedIds.length) randomFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
 
-    const premiumWindow = !query && !year ? await getPremiumFeedWindow(c) : null;
-    if (premiumWindow) {
-      const feed = await findDatePrioritizedFeedPage({
+    const premiumAccess = !query && !year ? await getPremiumCatalogAccess(c) : null;
+    if (premiumAccess) {
+      const feed = await findNewestFeedPage({
         Model: Movie,
-        filter: randomOrder ? randomFilter : filter,
-        countFilter: filter,
-        dateField: 'releaseDate',
-        yearField: 'releaseYear',
-        sort: { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
-        page, limit, ignorePageOffset: randomOrder
+        filter,
+        sort: buildNewestFirstSort('releaseDate', { popularity: -1 }),
+        page, limit
       });
       return c.json({
         items: feed.items.map(movieDto),
-        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        personalizedFeed: { plan: 'premium', sort: 'newest_first' },
         pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
       });
     }
@@ -1211,20 +1196,17 @@ app.get('/api/tv', async (c) => {
     const randomFilter = { ...filter };
     if (randomOrder && excludedIds.length) randomFilter.tmdbId = { $nin: excludedIds, $type: 'number', $gt: 0 };
 
-    const premiumWindow = !query ? await getPremiumFeedWindow(c) : null;
-    if (premiumWindow) {
-      const feed = await findDatePrioritizedFeedPage({
+    const premiumAccess = !query ? await getPremiumCatalogAccess(c) : null;
+    if (premiumAccess) {
+      const feed = await findNewestFeedPage({
         Model: TvSeries,
-        filter: randomOrder ? randomFilter : filter,
-        countFilter: filter,
-        dateField: 'firstAirDate',
-        yearField: 'releaseYear',
-        sort: { firstAirDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
-        page, limit, select: '-seasons.episodes', ignorePageOffset: randomOrder
+        filter,
+        sort: buildNewestFirstSort('firstAirDate', { popularity: -1 }),
+        page, limit, select: '-seasons.episodes'
       });
       return c.json({
         items: feed.items.map(tvSeriesDto),
-        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        personalizedFeed: { plan: 'premium', sort: 'newest_first' },
         pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
       });
     }
@@ -1297,20 +1279,17 @@ app.get('/api/anime', async (c) => {
     const randomFilter = { ...filter };
     if (randomOrder && excludedIds.length) randomFilter.malId = { $nin: excludedIds, $type: 'number', $gt: 0 };
 
-    const premiumWindow = !query ? await getPremiumFeedWindow(c) : null;
-    if (premiumWindow) {
-      const feed = await findDatePrioritizedFeedPage({
+    const premiumAccess = !query ? await getPremiumCatalogAccess(c) : null;
+    if (premiumAccess) {
+      const feed = await findNewestFeedPage({
         Model: AnimeSeries,
-        filter: randomOrder ? randomFilter : filter,
-        countFilter: filter,
-        dateField: 'airedFrom',
-        yearField: 'releaseYear',
-        sort: { airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1, _id: 1 },
-        page, limit, select: '-episodeGuide -relatedAnime', ignorePageOffset: randomOrder
+        filter,
+        sort: buildNewestFirstSort('airedFrom', { score: -1, rank: 1, popularity: 1 }),
+        page, limit, select: '-episodeGuide -relatedAnime'
       });
       return c.json({
         items: feed.items.map(animeSeriesDto),
-        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        personalizedFeed: { plan: 'premium', sort: 'newest_first' },
         pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
       });
     }
