@@ -21,7 +21,8 @@ test("Rate-limit aggregation updates explicitly enable Mongoose 9 update pipelin
     assert.equal(Array.isArray(captured.pipeline), true);
     assert.equal(captured.options.updatePipeline, true);
     assert.equal(captured.options.upsert, true);
-    assert.equal(captured.options.new, true);
+    assert.equal(captured.options.returnDocument, 'after');
+    assert.equal(Object.hasOwn(captured.options, 'new'), false);
   } finally {
     AuthRateLimit.findOneAndUpdate = originalFindOneAndUpdate;
     if (previousSecret === undefined) delete process.env.AUTH_SECRET;
