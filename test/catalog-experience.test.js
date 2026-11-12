@@ -303,14 +303,25 @@ test("Settings history cards resume the exact saved movie, TV, or Anime route", 
   assert.match(utility, /"\/watch\/anime\/" \+ malId \+ "\/" \+ episode \+ "\/" \+ audio/);
 });
 
-test("Settings About section credits the ID providers and previews Premium", async () => {
+test("Settings About credits media identifier sources and links the Premium entry to plans", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /IMDb · TV Series IDs: TMDB · Anime IDs: MyAnimeList/);
-  assert.match(app, /href="https:\/\/myanimelist\.net\//);
-  assert.match(app, /Powered by the/);
-  assert.match(app, /Premium Feature/);
-  assert.match(app, /premium-status/);
-  assert.match(app, /COMING SOON/);
+  const css = await read("../app/globals.css");
+  const about = app.slice(app.indexOf('<div className="about-situla-card'), app.indexOf("SITULA · WEB APP"));
+
+  assert.match(about, /POWERED BY/);
+  assert.match(about, /IMDb[\s\S]*?Movie identifiers/);
+  assert.match(about, /TMDB[\s\S]*?TV series identifiers/);
+  assert.match(about, /MyAnimeList[\s\S]*?Anime identifiers/);
+  assert.match(about, /src="https:\/\/cdn\.simpleicons\.org\/imdb\/F5C518"/);
+  assert.match(about, /src="https:\/\/cdn\.simpleicons\.org\/themoviedatabase\/01B4E4"/);
+  assert.match(about, /src="https:\/\/cdn\.simpleicons\.org\/myanimelist\/2E51A2"/);
+  assert.match(about, /href="\/plans" className="premium-coming-soon premium-plan-link"/);
+  assert.match(about, /MousePointerClick/);
+  assert.match(about, /VIEW PLANS/);
+  assert.doesNotMatch(about, /TMDB API|COMING SOON|premium-status/);
+  assert.match(css, /@keyframes premium-pointer-tap/);
+  assert.match(css, /\.premium-plan-link:active/);
+  assert.match(css, /\.premium-plan-pointer \{ animation:none; \}/);
 });
 
 test("TV and Anime cards expose the same Save control as Movie cards and feed one My List", async () => {
