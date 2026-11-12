@@ -76,6 +76,13 @@ The assistant must never describe this as “the seed script crawls the whole in
 - The factual candidate set (IMDb IDs, release dates, director, runtime, and genre leads) was cross-checked against [Vetustas Archiva's movies dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets), whose dataset license is **CC BY-SA 4.0**. Preserve this attribution and ShareAlike notice when adapting those factual rows. Descriptions and selected credits were independently curated; they are not copied plot text.
 - This is a researched first batch, not a complete global filmography. It does not claim to include every film released worldwide in the date range. Additional verified rows must be added to the same part-file format before global coverage can be claimed.
 
+
+### 3.2.1 Manually curated TV mini-series pack (offline)
+
+- `data/tv-curated-2020-2026.js` contains the first validated static TV record: *Mare of Easttown* (TMDB TV ID `115004`, IMDb `tt10155688`, TVmaze show ID `40546`). It includes a series synopsis, portrait poster, separate landscape backdrop, release year, genres, creator, network, certification, and a full 7-episode season guide with air dates, descriptions, runtimes and matching episode still URLs.
+- TVmaze show/episode facts and descriptions are licensed under **CC BY-SA 4.0**. Credit and link to [TVmaze](https://www.tvmaze.com/shows/40546/mare-of-easttown), preserve the CC BY-SA attribution and share-alike terms for the adapted metadata. Episode stills and poster remain direct hotlinks to TVmaze-hosted images; they are not downloaded or rehosted. The separate landscape banner is linked from Apple TV artwork.
+- This is a first complete TV record, not a complete global 2020–2026 television catalogue. Add more titles only when their canonical TMDB ID, exact title/year match, description, poster/backdrop and complete per-episode still guide can be verified.
+
 ### 3.2 TV series — Vetustas Archiva candidates + TVmaze detail/episode API
 
 **Candidate ID/title/year source:** [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets) (CC BY-SA 4.0 dataset; retain attribution and ShareAlike notice for adapted rows).
