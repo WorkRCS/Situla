@@ -44,7 +44,7 @@ const extensionAttributeCleanup = `(function () {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ["bis_skin_checked", "bis_register", "data-temp-mail-org", "style"]
+      attributeFilter: ["bis_skin_checked", "bis_register", "data-temp-mail-org"]
     });
   }
 })();`;

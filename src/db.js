@@ -4,10 +4,22 @@ import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, G
 let connectionPromise;
 let indexesPromise;
 
+function databaseError(message, code, cause) {
+  const error = new Error(message, cause ? { cause } : undefined);
+  error.status = 503;
+  error.code = code;
+  return error;
+}
+
 export async function connectDatabase() {
   const uri = process.env.MONGODB_URI;
   const dbName = process.env.MONGODB_DB_NAME;
-  if (!uri || !dbName) throw new Error('MONGODB_URI and MONGODB_DB_NAME must be configured.');
+  if (!uri || !dbName) {
+    throw databaseError(
+      'MONGODB_URI and MONGODB_DB_NAME must be configured in .env.',
+      'DATABASE_NOT_CONFIGURED'
+    );
+  }
 
   if (mongoose.connection.readyState !== 1) {
     if (!connectionPromise) {
@@ -20,7 +32,7 @@ export async function connectDatabase() {
         autoIndex: false
       }).then(() => mongoose.connection).catch((error) => {
         connectionPromise = undefined;
-        throw error;
+        throw databaseError('MongoDB is unavailable. Check the connection string and network access.', 'DATABASE_UNAVAILABLE', error);
       });
     }
     await connectionPromise;
@@ -45,7 +57,7 @@ export async function connectDatabase() {
       AdminAuditLog.createIndexes()
     ]).catch((error) => {
       indexesPromise = undefined;
-      throw error;
+      throw databaseError('MongoDB indexes could not be initialized.', 'DATABASE_INDEX_ERROR', error);
     });
   }
   await indexesPromise;

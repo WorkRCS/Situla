@@ -85,6 +85,22 @@ test('admin dashboard requires an authenticated role and legacy admin/crawler ro
   }
 });
 
+test('Database configuration failures use a service-unavailable status and actionable code', async (t) => {
+  const names = ['MONGODB_URI', 'MONGODB_DB_NAME'];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  t.after(() => {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+  for (const name of names) delete process.env[name];
+  const response = await app.request('/api/auth/me');
+  assert.equal(response.status, 503);
+  const body = await response.json();
+  assert.equal(body.code, 'DATABASE_NOT_CONFIGURED');
+});
+
 test('health route requires only MongoDB settings and does not connect if absent', async (t) => {
   const names = ['MONGODB_URI', 'MONGODB_DB_NAME', 'AUTH_SECRET'];
   const previous = new Map(names.map((name) => [name, process.env[name]]));

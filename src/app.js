@@ -306,9 +306,11 @@ app.get('/api/health', async (c) => {
 // Authentication and server-owned access control.
 function apiError(c, error, fallback = 'The request could not be completed.') {
   const status = Number.isInteger(error?.status) ? error.status : 500;
-  if (status >= 500) console.error('Authentication/access request failed:', error?.message || fallback);
+  if (status >= 500) console.error('Authentication/access request failed:', error?.cause?.message || error?.message || fallback);
+  const safeConfigurationMessage = ['AUTH_SECRET_NOT_CONFIGURED', 'DATABASE_NOT_CONFIGURED']
+    .includes(error?.code);
   return c.json({
-    error: status >= 500 ? fallback : (error?.message || fallback),
+    error: status >= 500 && !safeConfigurationMessage ? fallback : (error?.message || fallback),
     code: error?.code || 'REQUEST_FAILED',
     ...(error?.access ? { access: error.access } : {})
   }, status);
