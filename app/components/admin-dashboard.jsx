@@ -383,7 +383,7 @@ export default function AdminDashboard() {
         <footer className="admin-footer"><span><ShieldCheck size={14} /> Admin-only data · API role-verified</span><span>Activity retention: 180 days</span></footer>
       </div>
 
-      {modal && <ModalFrame title={modal === "guests" ? "Guest management" : modal === "users" ? "User management" : "Sales records"} subtitle={modal === "guests" ? "Guest visits, IP history, browser and active/idle time." : modal === "users" ? "Free and Premium members, activity, devices and account controls." : "Provider transaction records, status and revenue."} onClose={closeModal}>
+      {modal && <ModalFrame title={modal === "guests" ? "Guest management" : modal === "users" ? "User management" : "Sales records"} subtitle={modal === "guests" ? "Guest visits, IP history, browser and active/idle time." : modal === "users" ? "Search members, review complete account profiles, devices, membership and activity." : "Provider transaction records, status and revenue."} onClose={closeModal}>
         {modal === "guests" && selectedGuest ? <div className="admin-detail-view">
           <button className="admin-back-button" onClick={() => { setSelectedGuest(null); setGuestDetail(null); }}><ArrowLeft size={15} /> Back to guests</button>
           {guestLoading && !guestDetail ? <EmptyState title="Loading guest activity" detail="Fetching IP and visit history securely." /> : guestDetail && <>
@@ -402,9 +402,34 @@ export default function AdminDashboard() {
         </div> : modal === "users" && selectedUser ? <div className="admin-detail-view">
           <button className="admin-back-button" onClick={() => { setSelectedUser(null); setUserDetail(null); }}><ArrowLeft size={15} /> Back to users</button>
           {detailLoading || !userDetail ? <EmptyState title="Loading member profile" detail="Fetching membership, sessions and registered devices." /> : <>
-            <div className="admin-user-profile-head"><span className="admin-user-avatar">{(userDetail.user.name || "U").slice(0,1).toUpperCase()}</span><div><h3>{userDetail.user.name}</h3><p>{userDetail.user.email}</p><span className={"admin-status-pill " + (userDetail.user.status === "active" ? "status-online" : "status-danger")}>{userDetail.user.status}</span> <span className="admin-plan-pill">{userDetail.user.planId.toUpperCase()}</span></div></div>
+            <div className="admin-user-profile-head">
+              <span className="admin-user-avatar">{userName(userDetail.user).slice(0, 1).toUpperCase()}</span>
+              <div className="admin-user-identity">
+                <h3>{userName(userDetail.user)}</h3>
+                <p>{userDetail.user.email || "Email unavailable"}</p>
+                <div className="admin-user-card-badges">
+                  <span className={"admin-status-pill " + (userDetail.user.status === "active" ? "status-online" : "status-danger")}>{userDetail.user.status === "suspended" ? "Suspended" : "Active account"}</span>
+                  <span className={"admin-plan-pill " + (userDetail.user.planId === "premium" ? "premium" : "")}>{userDetail.user.planId.toUpperCase()} PLAN</span>
+                  <span className={"admin-user-meta-pill " + (userDetail.user.emailVerified ? "is-verified" : "is-unverified")}>{userDetail.user.emailVerified ? "Email verified" : "Email not verified"}</span>
+                  <span className="admin-user-meta-pill">{userDetail.user.loginMethod || "Email & Password"}</span>
+                  <span className="admin-user-meta-pill">Role: {userDetail.user.role || "user"}</span>
+                </div>
+              </div>
+            </div>
+            <div className="admin-user-id"><span>USER ID</span><code>{userDetail.user.id}</code></div>
             {userDetail.user.status === "suspended" && <div className="admin-info-note admin-info-warning"><Ban size={17}/><p>This account is suspended {userDetail.user.suspendedUntil ? "until " + dateTime(userDetail.user.suspendedUntil) : "permanently"}.{userDetail.user.suspensionReason ? " Reason: " + userDetail.user.suspensionReason : ""}</p></div>}
-            <div className="admin-detail-summary"><div><span>JOINED</span><strong>{dateTime(userDetail.user.createdAt)}</strong></div><div><span>LAST LOGIN</span><strong>{dateTime(userDetail.user.lastLoginAt)}</strong></div><div><span>PREMIUM STARTED</span><strong>{dateTime(userDetail.user.membership.startedAt)}</strong></div><div><span>EXPIRES</span><strong>{dateTime(userDetail.user.membership.expiresAt)}</strong></div><div><span>ACTIVE TIME</span><strong>{duration(userDetail.totals.activeSeconds)}</strong></div><div><span>WATCH TIME</span><strong>{duration(userDetail.usage.watchedSeconds)}</strong></div></div>
+            <div className="admin-detail-summary admin-user-detail-summary">
+              <div><span>JOINED</span><strong>{dateTime(userDetail.user.createdAt)}</strong></div>
+              <div><span>LAST LOGIN</span><strong>{dateTime(userDetail.user.lastLoginAt)}</strong></div>
+              <div><span>ACCESS STATUS</span><strong>{userDetail.user.planId === "premium" ? "Active Premium" : "Free access"}</strong></div>
+              <div><span>PLAN DURATION</span><strong>{userDetail.user.membership.durationMonths ? userDetail.user.membership.durationMonths + " months" : "—"}</strong></div>
+              <div><span>BILLING CYCLE</span><strong>{userDetail.user.membership.billingCycle || "—"}</strong></div>
+              <div><span>PREMIUM STARTED</span><strong>{dateTime(userDetail.user.membership.startedAt)}</strong></div>
+              <div><span>PREMIUM EXPIRES</span><strong>{dateTime(userDetail.user.membership.expiresAt)}</strong></div>
+              <div><span>ACTIVE TIME</span><strong>{duration(userDetail.totals.activeSeconds)}</strong></div>
+              <div><span>WATCH TIME</span><strong>{duration(userDetail.usage.watchedSeconds)}</strong></div>
+              <div><span>RECORDED SESSIONS</span><strong>{userDetail.activityPage.total.toLocaleString("en-IN")}</strong></div>
+            </div>
             <div className="admin-detail-actions">
               {userDetail.user.planId === "premium" ? <button className="admin-danger-button" onClick={() => removePremium({ id: userDetail.user.id, email: userDetail.user.email })}>Remove Premium</button> : <button className="admin-primary-button" onClick={() => setAssignUser({ id: userDetail.user.id, email: userDetail.user.email })}><Crown size={15} /> Assign Premium</button>}
               {userDetail.user.status === "suspended" ? <button className="admin-secondary-button" onClick={() => unsuspendAccount({ id: userDetail.user.id, email: userDetail.user.email })}>Restore access</button> : <button className="admin-danger-button" onClick={() => setSuspendUser({ id: userDetail.user.id, email: userDetail.user.email })}><Ban size={15} /> Suspend account</button>}
@@ -424,6 +449,7 @@ export default function AdminDashboard() {
         </div> : <>
           {modal === "users" && <div className="admin-modal-toolbar admin-user-toolbar">
             <div className="admin-inner-tabs"><button className={segment === "free" ? "active" : ""} onClick={() => { setSegment("free"); setSearch(""); }}>Free users</button><button className={segment === "premium" ? "active" : ""} onClick={() => { setSegment("premium"); setSearch(""); }}>Premium users</button></div>
+            <span className="admin-result-count">{total.toLocaleString("en-IN")} users · 10 per page</span>
             <label className="admin-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by email address" type="search" /></label>
           </div>}
           {modal === "sales" && <div className="admin-modal-toolbar"><div className="admin-inner-tabs">{["all","succeeded","failed","pending"].map((value)=><button key={value} className={salesStatus===value?"active":""} onClick={()=>setSalesStatus(value)}>{value === "all" ? "All" : value[0].toUpperCase()+value.slice(1)}</button>)}</div><span className="admin-result-count">{total.toLocaleString("en-IN")} records</span></div>}
@@ -431,7 +457,36 @@ export default function AdminDashboard() {
           {error && <p className="admin-inline-error">{error}</p>}
           <div className="admin-table-wrap" ref={listBodyRef}>
             {modal === "guests" && rows.length > 0 && <table className="admin-table"><thead><tr><th>#</th><th>Guest</th><th>First visit</th><th>Last seen</th><th>Active time</th><th>Device</th><th></th></tr></thead><tbody>{rows.map((guest,index)=><tr key={guest.id}><td>{(page - 1) * PAGE_SIZE + index + 1}</td><td><strong>Guest · {guest.id.slice(-6)}</strong><small>{guest.online ? "Online now" : guest.sessions + " visits"}</small></td><td>{dateTime(guest.firstSeenAt)}</td><td>{dateTime(guest.lastSeenAt)}</td><td>{duration(guest.activeSeconds)}</td><td>{guest.browser}<small>{guest.operatingSystem} · {guest.deviceType}</small></td><td><button className="admin-row-action" onClick={()=>openGuest(guest)}>Details <ChevronDown size={14}/></button></td></tr>)}</tbody></table>}
-            {modal === "users" && rows.length > 0 && <table className="admin-table"><thead><tr><th>#</th><th>Member</th><th>Joined</th><th>Membership</th><th>Activity</th><th>Account</th><th>Actions</th></tr></thead><tbody>{rows.map((user,index)=><tr key={user.id}><td>{(page - 1) * PAGE_SIZE + index + 1}</td><td><strong>{user.name}</strong><small>{user.email}</small><button className="admin-text-link" onClick={()=>openUser(user)}>View profile & devices</button></td><td>{dateOnly(user.createdAt)}</td><td>{user.planId === "premium" ? <><span className="admin-plan-pill premium">PREMIUM</span><small>From {dateOnly(user.membership.startedAt)}</small><small>Expires {dateOnly(user.membership.expiresAt)}</small></> : <span className="admin-plan-pill">FREE</span>}</td><td>{duration(user.activeSeconds)} active<small>Last {dateTime(user.lastSeenAt)}</small><span className={"admin-status-pill " + (user.online ? "status-online" : "")}>{user.online ? "Online now" : "Offline"}</span></td><td><span className={"admin-status-pill " + (user.status === "active" ? "status-online" : "status-danger")}>{user.status}</span>{user.status==="suspended" && <small>{user.suspendedUntil ? "Until "+dateTime(user.suspendedUntil) : "Permanent"}</small>}</td><td><div className="admin-row-actions">{user.planId === "premium" ? <button className="admin-mini-danger" onClick={()=>removePremium(user)}>Remove</button> : <button className="admin-mini-primary" onClick={()=>setAssignUser(user)}>Assign</button>}{user.status==="suspended" ? <button className="admin-mini-neutral" onClick={()=>unsuspendAccount(user)}>Restore</button> : <button className="admin-mini-neutral" onClick={()=>setSuspendUser(user)}>Suspend</button>}</div></td></tr>)}</tbody></table>}
+            {modal === "users" && rows.length > 0 && <div className="admin-user-list">
+              {rows.map((user, index) => <article className="admin-user-card" key={user.id}>
+                <div className="admin-user-card-header">
+                  <span className="admin-user-avatar">{userName(user).slice(0, 1).toUpperCase()}</span>
+                  <div className="admin-user-card-identity">
+                    <strong>{userName(user)}</strong>
+                    <span className="admin-user-card-email">{user.email || "Email unavailable"}</span>
+                    <div className="admin-user-card-badges">
+                      <span className={"admin-plan-pill " + (user.planId === "premium" ? "premium" : "")}>{user.planId === "premium" ? "PREMIUM" : "FREE"}</span>
+                      <span className={"admin-status-pill " + (user.status === "suspended" ? "status-danger" : "status-online")}>{user.status === "suspended" ? "Suspended" : "Active account"}</span>
+                      <span className={"admin-status-pill " + (user.online ? "status-online" : "")}>{user.online ? "Online now" : "Offline"}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="admin-user-card-facts">
+                  <div><span>JOINED</span><strong>{dateOnly(user.createdAt)}</strong></div>
+                  <div><span>MEMBERSHIP</span><strong>{user.planId === "premium" ? (user.membership.durationMonths ? user.membership.durationMonths + " months · Premium" : "Premium") : "Free plan"}</strong><small>{user.planId === "premium" ? "Expires " + dateOnly(user.membership.expiresAt) : "No active Premium access"}</small></div>
+                  <div><span>ACTIVE TIME</span><strong>{duration(user.activeSeconds)}</strong><small>Last seen {dateTime(user.lastSeenAt)}</small></div>
+                  <div><span>DEVICE & BROWSER</span><strong>{user.browser || "Unknown"} · {user.operatingSystem || "Unknown"}</strong><small>{user.deviceType || "Device not recorded"}</small></div>
+                </div>
+                {user.status === "suspended" && <p className="admin-user-suspension-note">Suspended {user.suspendedUntil ? "until " + dateTime(user.suspendedUntil) : "permanently"}{user.suspensionReason ? " · " + user.suspensionReason : ""}</p>}
+                <div className="admin-user-card-actions">
+                  <button className="admin-row-action" onClick={() => openUser(user)}><Eye size={14} /> View full profile</button>
+                  <div className="admin-row-actions">
+                    {user.planId === "premium" ? <button className="admin-mini-danger" onClick={() => removePremium(user)}>Remove Premium</button> : <button className="admin-mini-primary" onClick={() => setAssignUser(user)}>Assign Premium</button>}
+                    {user.status === "suspended" ? <button className="admin-mini-neutral" onClick={() => unsuspendAccount(user)}>Restore</button> : <button className="admin-mini-neutral" onClick={() => setSuspendUser(user)}>Suspend</button>}
+                  </div>
+                </div>
+              </article>)}
+            </div>}
             {modal === "sales" && rows.length > 0 && <table className="admin-table"><thead><tr><th>#</th><th>Customer</th><th>Provider / Ref</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>{rows.map((sale,index)=><tr key={sale.id}><td>{(page - 1) * PAGE_SIZE + index + 1}</td><td><strong>{sale.email || "Guest checkout"}</strong><small>{sale.userId || "No member id"}</small></td><td>{sale.provider}<small>{sale.transactionRef}</small></td><td>{sale.planId} · {sale.billingCycle || "—"}</td><td><strong>{sale.currency} {(sale.amountMinor/100).toLocaleString("en-IN",{maximumFractionDigits:2})}</strong></td><td><span className={"admin-status-pill " + (sale.status==="succeeded"?"status-online":sale.status==="failed"?"status-danger":"")}>{sale.status}</span></td><td>{dateTime(sale.paidAt || sale.createdAt)}</td></tr>)}</tbody></table>}
             {!listLoading && rows.length === 0 && <EmptyState title={modal === "sales" ? "No payment records yet" : modal === "guests" ? "No guest records yet" : "No users match this search"} detail={modal === "sales" ? "Sales will appear after a payment provider sends verified transaction results." : modal === "guests" ? "Guest visits will appear after the telemetry heartbeat is collected." : search ? "Try another email address or switch the user segment." : "New registered accounts will appear here."} />}
             {listLoading && <div className="admin-list-loading"><LoaderCircle className="admin-spin" size={18} /> Loading records…</div>}
