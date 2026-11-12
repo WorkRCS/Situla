@@ -165,7 +165,7 @@ export async function enforceRateLimit(key, limit, windowSeconds = 900) {
       } },
       { $set: { expiresAt: { $add: ['$windowEndsAt', 60000] } } }
     ],
-    { new: true, upsert: true, setDefaultsOnInsert: false }
+    { new: true, upsert: true, setDefaultsOnInsert: false, updatePipeline: true }
   );
   return Number(state?.count || 0) <= limit;
 }

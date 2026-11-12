@@ -1,9 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { AuthRateLimit } from "../src/models.js";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp, isAccountSuspended
+  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp, isAccountSuspended, enforceRateLimit
 } from "../src/auth.js";
+
+test("Rate-limit aggregation updates explicitly enable Mongoose 9 update pipelines", async () => {
+  const previousSecret = process.env.AUTH_SECRET;
+  const originalFindOneAndUpdate = AuthRateLimit.findOneAndUpdate;
+  let captured;
+  try {
+    process.env.AUTH_SECRET = "r".repeat(48);
+    AuthRateLimit.findOneAndUpdate = async (filter, pipeline, options) => {
+      captured = { filter, pipeline, options };
+      return { count: 1 };
+    };
+    assert.equal(await enforceRateLimit("test-key", 5, 60), true);
+    assert.equal(captured.filter.keyHash.length, 64);
+    assert.equal(Array.isArray(captured.pipeline), true);
+    assert.equal(captured.options.updatePipeline, true);
+    assert.equal(captured.options.upsert, true);
+    assert.equal(captured.options.new, true);
+  } finally {
+    AuthRateLimit.findOneAndUpdate = originalFindOneAndUpdate;
+    if (previousSecret === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = previousSecret;
+  }
+});
 
 test("Email and password validation normalizes account identifiers", () => {
   assert.equal(normalizeEmail("  Member@Example.COM "), "member@example.com");
