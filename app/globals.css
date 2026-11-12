@@ -4971,3 +4971,25 @@ body:has(.login-page) .site-footer { display:none !important; }
     top:calc(clamp(8px,4cqi,11px) + 2 * clamp(37px,20cqi,46px) + clamp(7px,3.5cqi,10px) + 6px);
   }
 }
+
+
+/* Compact card title-to-metadata spacing across Movie, TV and Anime cards. */
+.movie-card h3 {
+  min-height:0 !important;
+  margin-bottom:0 !important;
+}
+.catalog-grid .movie-card h3 {
+  min-height:0 !important;
+}
+.movie-card .media-open-button > p:not(.series-card-meta):not(.series-card-category) {
+  margin-top:4px !important;
+}
+.movie-card .series-card-meta {
+  margin-top:4px;
+}
+.catalog-grid .series-card h3 {
+  margin-top:4px;
+}
+.movie-card .series-card-category {
+  margin-top:3px;
+}
