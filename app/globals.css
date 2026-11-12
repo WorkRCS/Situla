@@ -4160,3 +4160,35 @@ body:has(.login-page) .site-footer { display:none !important; }
 .admin-metric-grid-five{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:1150px){.admin-metric-grid-five{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.admin-metric-grid-five{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Consistent card-by-card records across every admin management popup. */
+.admin-record-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:12px;padding:12px;min-width:0}
+.admin-record-card{display:flex;flex-direction:column;gap:13px;min-width:0;padding:16px;border:1px solid rgba(255,255,255,.085);border-radius:14px;background:linear-gradient(150deg,#151b25,#10151d);color:#e8ebef}
+.admin-record-card-heading{display:flex;align-items:flex-start;gap:11px;min-width:0}
+.admin-record-avatar{display:flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;border-radius:11px;background:#222b38;color:#d7b477}
+.admin-record-card-identity{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.admin-record-card-identity strong{color:#f4f1eb;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.admin-record-card-identity small{color:#909baa;font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.admin-record-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-record-facts>div{display:flex;flex-direction:column;gap:5px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.055);border-radius:9px;background:rgba(255,255,255,.025)}
+.admin-record-facts span,.admin-record-reference>span,.admin-sale-amount>span{color:#7e8998;font-size:9px;font-weight:800;letter-spacing:.08em}
+.admin-record-facts strong{color:#e4e8ed;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+.admin-record-card-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:3px}
+.admin-record-id{color:#8692a1;font-size:9px;line-height:1.45;overflow-wrap:anywhere}
+.admin-sale-amount{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(210,174,113,.16);border-radius:10px;background:rgba(190,151,87,.06)}
+.admin-sale-amount strong{color:#e8c78e;font-size:16px;font-weight:800;text-align:right;overflow-wrap:anywhere}
+.admin-record-reference{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.06);border-radius:9px;background:#0d1219}
+.admin-record-reference code{color:#b6c0cd;font-size:10px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.admin-record-warning{margin:0;padding:9px 10px;border:1px solid rgba(205,87,87,.2);border-radius:8px;background:rgba(173,64,70,.08);color:#ffb5b8;font-size:10px;overflow-wrap:anywhere}
+.admin-record-card .admin-row-action{white-space:nowrap}
+@media(max-width:640px){
+  .admin-record-list{grid-template-columns:minmax(0,1fr);padding:9px;gap:9px}
+  .admin-record-card{padding:13px;gap:11px}
+  .admin-record-card-footer{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:380px){
+  .admin-record-facts{grid-template-columns:minmax(0,1fr)}
+  .admin-sale-amount{align-items:flex-start;flex-direction:column}
+  .admin-sale-amount strong{text-align:left}
+}

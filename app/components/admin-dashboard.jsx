@@ -242,10 +242,11 @@ export default function AdminDashboard() {
     if (!modal || !listReady || rows.length === 0 || !hasMore || listLoading || selectedGuest || selectedUser) return;
     const root = listBodyRef.current;
     const target = sentinelRef.current;
+    const requestVersion = listRequestVersion.current;
     if (!root || !target || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting) && !requestLock.current) {
-        loadPage(page + 1, false, listRequestVersion.current);
+        loadPage(page + 1, false, requestVersion);
       }
     }, { root, rootMargin: "100px", threshold: 0.1 });
     observer.observe(target);
@@ -253,6 +254,11 @@ export default function AdminDashboard() {
   }, [modal, listReady, rows.length, hasMore, listLoading, page, loadPage, selectedGuest, selectedUser]);
 
   const openModal = (name, userSegment = "all") => {
+    listRequestVersion.current += 1;
+    listAbortController.current?.abort();
+    listAbortController.current = null;
+    requestLock.current = false;
+    setListLoading(false);
     setModal(name);
     setRows([]);
     setPage(0);
@@ -385,6 +391,12 @@ export default function AdminDashboard() {
   }
 
   function closeModal() {
+    listRequestVersion.current += 1;
+    listAbortController.current?.abort();
+    listAbortController.current = null;
+    requestLock.current = false;
+    setListLoading(false);
+    setListReady(false);
     setModal("");
     setSelectedGuest(null); setGuestDetail(null);
     setSelectedUser(null); setUserDetail(null);
@@ -532,7 +544,30 @@ export default function AdminDashboard() {
           {modal === "guests" && <div className="admin-modal-toolbar"><span className="admin-result-count">{total.toLocaleString("en-IN")} unique guest identities · 10 per page</span></div>}
           {error && <p className="admin-inline-error">{error}</p>}
           <div className="admin-table-wrap" ref={listBodyRef}>
-            {modal === "guests" && rows.length > 0 && <table className="admin-table"><thead><tr><th>#</th><th>Guest</th><th>First visit</th><th>Last seen</th><th>Active time</th><th>Device</th><th></th></tr></thead><tbody>{rows.map((guest,index)=><tr key={guest.id}><td>{(page - 1) * PAGE_SIZE + index + 1}</td><td><strong>Guest · {guest.id.slice(-6)}</strong><small>{guest.online ? "Online now" : guest.sessions + " visits"}</small></td><td>{dateTime(guest.firstSeenAt)}</td><td>{dateTime(guest.lastSeenAt)}</td><td>{duration(guest.activeSeconds)}</td><td>{guest.browser}<small>{guest.operatingSystem} · {guest.deviceType}</small></td><td><button className="admin-row-action" onClick={()=>openGuest(guest)}>Details <ChevronDown size={14}/></button></td></tr>)}</tbody></table>}
+            {modal === "guests" && rows.length > 0 && <div className="admin-record-list admin-guest-record-list">
+              {rows.map((guest, index) => <article className="admin-record-card admin-guest-card" key={guest.id}>
+                <div className="admin-record-card-heading">
+                  <span className="admin-record-avatar"><Globe2 size={17} /></span>
+                  <div className="admin-record-card-identity">
+                    <strong>Guest · {guest.id.slice(-6)}</strong>
+                    <small>Record {(page - 1) * PAGE_SIZE + index + 1} · First seen {dateTime(guest.firstSeenAt)}</small>
+                  </div>
+                  <span className={"admin-status-pill " + (guest.online ? "status-online" : "")}>{guest.online ? "Online now" : "Offline"}</span>
+                </div>
+                <div className="admin-record-facts">
+                  <div><span>LAST SEEN</span><strong>{dateTime(guest.lastSeenAt)}</strong></div>
+                  <div><span>VISITS</span><strong>{Number(guest.sessions || 0).toLocaleString("en-IN")}</strong></div>
+                  <div><span>TOTAL ACTIVE</span><strong>{duration(guest.activeSeconds)}</strong></div>
+                  <div><span>BROWSER</span><strong>{guest.browser || "Unknown"}</strong></div>
+                  <div><span>OPERATING SYSTEM</span><strong>{guest.operatingSystem || "Unknown"}</strong></div>
+                  <div><span>DEVICE</span><strong>{guest.deviceType || "Unknown"}</strong></div>
+                </div>
+                <div className="admin-record-card-footer">
+                  <span className="admin-record-id">ID · {guest.id}</span>
+                  <button className="admin-row-action" onClick={() => openGuest(guest)}><Eye size={14} /> View guest details</button>
+                </div>
+              </article>)}
+            </div>}
             {modal === "users" && rows.length > 0 && <div className="admin-user-list">
               {rows.map((user, index) => <article className="admin-user-card" key={user.id}>
                 <div className="admin-user-card-header">
@@ -563,8 +598,37 @@ export default function AdminDashboard() {
                 </div>
               </article>)}
             </div>}
-            {modal === "sales" && rows.length > 0 && <table className="admin-table"><thead><tr><th>#</th><th>Customer</th><th>Provider / Ref</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>{rows.map((sale,index)=><tr key={sale.id}><td>{(page - 1) * PAGE_SIZE + index + 1}</td><td><strong>{sale.email || "Guest checkout"}</strong><small>{sale.userId || "No member id"}</small></td><td>{sale.provider}<small>{sale.transactionRef}</small></td><td>{sale.planId} · {sale.billingCycle || "—"}</td><td><strong>{sale.currency} {(sale.amountMinor/100).toLocaleString("en-IN",{maximumFractionDigits:2})}</strong></td><td><span className={"admin-status-pill " + (sale.status==="succeeded"?"status-online":sale.status==="failed"?"status-danger":"")}>{sale.status}</span></td><td>{dateTime(sale.paidAt || sale.createdAt)}</td></tr>)}</tbody></table>}
-            {!listLoading && rows.length === 0 && <EmptyState title={modal === "sales" ? "No payment records yet" : modal === "guests" ? "No guest records yet" : "No users match this search"} detail={modal === "sales" ? "Sales will appear after a payment provider sends verified transaction results." : modal === "guests" ? "Guest visits will appear after the telemetry heartbeat is collected." : search ? "Try another email address or switch the user segment." : "New registered accounts will appear here."} />}
+            {modal === "sales" && rows.length > 0 && <div className="admin-record-list admin-sales-record-list">
+              {rows.map((sale, index) => <article className="admin-record-card admin-sales-card" key={sale.id}>
+                <div className="admin-record-card-heading">
+                  <span className="admin-record-avatar"><CreditCard size={17} /></span>
+                  <div className="admin-record-card-identity">
+                    <strong>{sale.email || "Guest checkout"}</strong>
+                    <small>Transaction {(page - 1) * PAGE_SIZE + index + 1} · {sale.provider || "Unknown provider"}</small>
+                  </div>
+                  <span className={"admin-status-pill " + (sale.status === "succeeded" ? "status-online" : sale.status === "failed" ? "status-danger" : "")}>{sale.status || "Unknown"}</span>
+                </div>
+                <div className="admin-sale-amount">
+                  <span>TRANSACTION AMOUNT</span>
+                  <strong>{sale.currency || ""} {(Number(sale.amountMinor || 0) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</strong>
+                </div>
+                <div className="admin-record-facts">
+                  <div><span>PLAN</span><strong>{sale.planId || "—"}</strong></div>
+                  <div><span>BILLING CYCLE</span><strong>{sale.billingCycle || "—"}</strong></div>
+                  <div><span>TRANSACTION DATE</span><strong>{dateTime(sale.paidAt || sale.createdAt)}</strong></div>
+                  <div><span>PROVIDER</span><strong>{sale.provider || "—"}</strong></div>
+                </div>
+                <div className="admin-record-reference">
+                  <span>TRANSACTION REFERENCE</span>
+                  <code>{sale.transactionRef || "Not supplied by provider"}</code>
+                </div>
+                {sale.failureCode && <p className="admin-record-warning">Failure code: {sale.failureCode}</p>}
+                <div className="admin-record-card-footer">
+                  <span className="admin-record-id">{sale.userId ? "User · " + sale.userId : "Guest / no linked member"}</span>
+                </div>
+              </article>)}
+            </div>}
+            {listReady && !listLoading && rows.length === 0 && !error && <EmptyState title={modal === "sales" ? "No payment records yet" : modal === "guests" ? "No guest records yet" : "No users match this search"} detail={modal === "sales" ? "No transactions were returned for this filter. Payment checkout integration is not connected yet." : modal === "guests" ? "No guest identities have been recorded yet. A guest record appears after guest activity is captured." : search ? "Try another email address or switch the user segment." : "No registered member accounts were returned for this segment."} />}
             {listLoading && <div className="admin-list-loading"><LoaderCircle className="admin-spin" size={18} /> Loading records…</div>}
             <div className="admin-load-sentinel" ref={sentinelRef} />
             {rows.length > 0 && hasMore && <button className="admin-load-more" disabled={listLoading} onClick={()=>loadPage(page + 1, false, listRequestVersion.current)}>{listLoading ? "Loading…" : "Load 10 more"}</button>}

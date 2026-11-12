@@ -38,3 +38,11 @@ export function onlineActivityFilter(ownerType, now = new Date(), ownerIds) {
   if (Array.isArray(ownerIds)) filter.ownerId = { $in: ownerIds };
   return filter;
 }
+
+export function clampPage(requestedPage, total, pageSize = 10) {
+  const safePageSize = Number.isSafeInteger(pageSize) && pageSize > 0 ? pageSize : 10;
+  const safeTotal = Number.isFinite(Number(total)) ? Math.max(0, Number(total)) : 0;
+  const lastPage = Math.max(1, Math.ceil(safeTotal / safePageSize));
+  const safeRequestedPage = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  return Math.min(safeRequestedPage, lastPage);
+}

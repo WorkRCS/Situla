@@ -8,7 +8,7 @@ import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
 import { addCalendarMonths } from './membership-policy.js';
 import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
-import { memberFilter, onlineActivityFilter } from './admin-queries.js';
+import { memberFilter, onlineActivityFilter, clampPage } from './admin-queries.js';
 
 const router = new Hono();
 const PAGE_SIZE = 10;
@@ -134,8 +134,7 @@ router.get('/dashboard', async (c) => {
 router.get('/guests', async (c) => {
   const requestedPage = pageNumber(c.req.query('page'));
   const total = await GuestAccess.countDocuments({});
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(requestedPage, lastPage);
+  const page = clampPage(requestedPage, total, PAGE_SIZE);
   const guests = await GuestAccess.find({})
     .sort({ lastSeenAt: -1, _id: -1 })
     .skip((page - 1) * PAGE_SIZE)
@@ -172,16 +171,18 @@ router.get('/guests/:guestId', async (c) => {
   if (!objectId(guestId)) return c.json({ error: 'Invalid guest ID.' }, 400);
   const guest = await GuestAccess.findById(guestId).lean();
   if (!guest) return c.json({ error: 'Guest not found.' }, 404);
-  const page = pageNumber(c.req.query('page'));
-  const [activities, activityTotal, usage, playback, totalAggregate] = await Promise.all([
-    ActivitySession.find({ ownerType: 'guest', ownerId: guest._id, expiresAt: { $gt: new Date() } })
+  const activityFilter = { ownerType: 'guest', ownerId: guest._id, expiresAt: { $gt: new Date() } };
+  const requestedPage = pageNumber(c.req.query('page'));
+  const activityTotal = await ActivitySession.countDocuments(activityFilter);
+  const page = clampPage(requestedPage, activityTotal, PAGE_SIZE);
+  const [activities, usage, playback, totalAggregate] = await Promise.all([
+    ActivitySession.find(activityFilter)
       .sort({ startedAt: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean(),
-    ActivitySession.countDocuments({ ownerType: 'guest', ownerId: guest._id, expiresAt: { $gt: new Date() } }),
     UsageState.findOne({ ownerType: 'guest', ownerId: guest._id }).lean(),
     PlaybackSession.find({ ownerType: 'guest', ownerId: guest._id })
       .sort({ startedAt: -1 }).limit(PAGE_SIZE).lean(),
     ActivitySession.aggregate([
-      { $match: { ownerType: 'guest', ownerId: guest._id, expiresAt: { $gt: new Date() } } },
+      { $match: activityFilter },
       { $group: { _id: null, activeSeconds: { $sum: '$activeSeconds' }, sessions: { $sum: 1 } } }
     ])
   ]);
@@ -218,8 +219,7 @@ router.get('/users', async (c) => {
   const filter = memberFilter(segment, now);
   if (search) filter.email = { $regex: escapeSearchPattern(search), $options: 'i' };
   const total = await User.countDocuments(filter);
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const page = Math.min(requestedPage, lastPage);
+  const page = clampPage(requestedPage, total, PAGE_SIZE);
   const users = await User.find(filter)
     .select('email displayName role status suspendedUntil suspensionReason planId membership createdAt lastLoginAt')
     .sort({ createdAt: -1, _id: -1 })
@@ -263,12 +263,13 @@ router.get('/users/:userId', async (c) => {
   const user = await User.findById(userId).select('email displayName role status suspendedUntil suspensionReason planId membership createdAt lastLoginAt emailVerified googleSub hasPassword').lean();
   if (!user || user.role === 'admin') return c.json({ error: 'User not found.' }, 404);
   await audit(c.get('adminAuth').user._id, 'user_sensitive_details_viewed', 'user', userId, {});
-  const activityPage = pageNumber(c.req.query('activityPage'));
+  const requestedActivityPage = pageNumber(c.req.query('activityPage'));
   const activityFilter = { ownerType: 'user', ownerId: user._id, expiresAt: { $gt: new Date() } };
-  const [devices, activities, activityCount, events, usage, payments, authSessions, totalAggregate] = await Promise.all([
+  const activityCount = await ActivitySession.countDocuments(activityFilter);
+  const activityPage = clampPage(requestedActivityPage, activityCount, PAGE_SIZE);
+  const [devices, activities, events, usage, payments, authSessions, totalAggregate] = await Promise.all([
     Device.find({ userId: user._id }).sort({ lastSeenAt: -1 }).limit(PAGE_SIZE).lean(),
     ActivitySession.find(activityFilter).sort({ startedAt: -1 }).skip((activityPage - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean(),
-    ActivitySession.countDocuments(activityFilter),
     MembershipEvent.find({ userId: user._id }).sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
     UsageState.findOne({ ownerType: 'user', ownerId: user._id }).lean(),
     PaymentTransaction.find({ userId: user._id }).sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
@@ -415,11 +416,12 @@ router.delete('/users/:userId/suspension', async (c) => {
 });
 
 router.get('/sales', async (c) => {
-  const page = pageNumber(c.req.query('page'));
+  const requestedPage = pageNumber(c.req.query('page'));
   const status = ['succeeded', 'failed', 'pending'].includes(c.req.query('status')) ? c.req.query('status') : 'all';
   const filter = status === 'all' ? {} : { status };
-  const [total, items, grouped] = await Promise.all([
-    PaymentTransaction.countDocuments(filter),
+  const total = await PaymentTransaction.countDocuments(filter);
+  const page = clampPage(requestedPage, total, PAGE_SIZE);
+  const [items, grouped] = await Promise.all([
     PaymentTransaction.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE)
       .select('userId email provider transactionRef status amountMinor currency planId billingCycle paidAt createdAt failureCode').lean(),
     PaymentTransaction.aggregate([
