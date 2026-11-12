@@ -4439,12 +4439,12 @@ body:has(.login-page) .site-footer { display:none !important; }
   display:flex;
   flex-direction:column;
   min-width:0;
-  padding:7px;
-  border:1px solid rgba(255,255,255,.075);
-  border-radius:17px;
-  background:linear-gradient(155deg,rgba(28,32,43,.97),rgba(13,15,22,.99) 76%);
-  box-shadow:0 10px 26px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.035);
-  transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  transition:transform .2s ease;
 }
 .movie-card > .media-open-button {
   display:block;
@@ -4459,11 +4459,24 @@ body:has(.login-page) .site-footer { display:none !important; }
   width:100%;
   aspect-ratio:2/3;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.09);
+  border:1px solid rgba(202,160,86,.19);
   border-radius:12px;
-  background:#151923;
-  box-shadow:0 8px 20px rgba(0,0,0,.25);
+  background:#08090e;
+  box-shadow:
+    0 13px 25px rgba(0,0,0,.42),
+    0 3px 7px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(244,210,145,.075),
+    inset 0 -1px 0 rgba(0,0,0,.72);
   transition:border-color .2s ease,box-shadow .2s ease;
+}
+.movie-card .movie-poster::after {
+  position:absolute;
+  inset:0;
+  border:1px solid rgba(5,7,11,.36);
+  border-radius:inherit;
+  box-shadow:inset 0 1px 0 rgba(244,210,145,.075),inset 0 0 18px rgba(4,6,10,.12);
+  content:"";
+  pointer-events:none;
 }
 .movie-card .movie-poster img {
   width:100%;
@@ -4477,11 +4490,12 @@ body:has(.login-page) .site-footer { display:none !important; }
   min-height:2.5em;
   margin:9px 2px 0 !important;
   overflow:hidden;
-  color:#f4f6fb;
+  color:#f4f3ef;
   font-size:clamp(11px,1vw,14px) !important;
   font-weight:800 !important;
   line-height:1.25 !important;
   letter-spacing:-.015em;
+  text-shadow:0 1px 2px rgba(0,0,0,.42);
   text-overflow:ellipsis;
   white-space:normal !important;
   -webkit-line-clamp:2;
@@ -4494,26 +4508,25 @@ body:has(.login-page) .site-footer { display:none !important; }
   line-height:1.35;
 }
 .movie-card .series-card-meta {
-  display:inline-flex;
-  align-items:center;
-  width:max-content;
+  display:block;
+  width:auto;
   max-width:calc(100% - 4px);
   margin:6px 2px 0;
-  padding:4px 7px;
+  padding:0;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.075);
-  border-radius:7px;
-  background:rgba(255,255,255,.035);
-  color:#b0b9c7;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#9da4b2;
   font-size:9px;
-  line-height:1.25;
+  line-height:1.3;
   text-overflow:ellipsis;
   white-space:nowrap;
 }
 .movie-card .series-card-category {
   margin:5px 2px 2px;
   overflow:hidden;
-  color:#c5a36e;
+  color:#bea06e;
   font-size:9px;
   line-height:1.35;
   text-overflow:ellipsis;
@@ -4524,39 +4537,37 @@ body:has(.login-page) .site-footer { display:none !important; }
   left:8px;
   display:inline-flex;
   align-items:center;
-  gap:6px;
-  min-height:24px;
+  justify-content:center;
+  gap:0;
+  min-height:23px;
   padding:6px 9px;
   border-width:1px;
-  border-radius:8px;
+  border-radius:7px;
   font-size:9px;
-  letter-spacing:.08em;
-  box-shadow:0 6px 18px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.13);
+  font-weight:850;
+  letter-spacing:.075em;
+  box-shadow:0 3px 10px rgba(0,0,0,.24);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
 .movie-card .catalog-badge::before {
-  content:"";
-  width:5px;
-  height:5px;
-  flex:none;
-  border-radius:50%;
-  background:currentColor;
-  box-shadow:0 0 8px currentColor;
-  opacity:.95;
+  display:none;
+  content:none;
 }
 .movie-card .catalog-badge-hot {
-  border-color:rgba(248,113,113,.82);
-  background:linear-gradient(135deg,rgba(115,25,32,.98),rgba(220,38,38,.97));
-  color:#fff0f0;
+  border-color:rgba(214,76,82,.55);
+  background:rgba(76,22,28,.96);
+  color:#ffdfe1;
 }
 .movie-card .catalog-badge-popular {
-  border-color:rgba(74,222,128,.78);
-  background:linear-gradient(135deg,rgba(17,78,47,.98),rgba(22,163,74,.96));
-  color:#edfff2;
+  border-color:rgba(69,166,105,.52);
+  background:rgba(19,61,40,.96);
+  color:#dff8e6;
 }
 .movie-card .catalog-badge-featured {
-  border-color:rgba(250,204,21,.86);
-  background:linear-gradient(135deg,rgba(115,78,17,.98),rgba(234,179,8,.97));
-  color:#fffbea;
+  border-color:rgba(194,151,70,.58);
+  background:rgba(73,53,19,.97);
+  color:#f7e8c5;
 }
 .movie-card .rating-pill {
   left:8px;
@@ -4576,48 +4587,50 @@ body:has(.login-page) .site-footer { display:none !important; }
   right:8px;
   width:32px;
   height:32px;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.15);
   border-radius:10px;
-  background:rgba(6,8,12,.82);
-  box-shadow:0 5px 14px rgba(0,0,0,.22);
+  background:rgba(6,8,12,.9);
+  box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.045);
 }
 .movie-card > .share-button {
   right:8px;
   top:47px;
   width:32px;
   height:32px;
-  border:1px solid rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.14);
   border-radius:10px;
-  background:rgba(6,8,12,.82);
-  box-shadow:0 5px 14px rgba(0,0,0,.22);
+  background:rgba(6,8,12,.9);
+  box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04);
 }
 .movie-card > .share-feedback {
   right:7px;
   top:84px;
-  border:1px solid rgba(255,255,255,.13);
+  border:1px solid rgba(202,160,86,.18);
   border-radius:7px;
-  background:#111720;
+  background:#11130f;
   color:#f1e7d3;
 }
 .movie-card:hover {
-  transform:translateY(-3px);
-  border-color:rgba(232,182,91,.28);
-  background:linear-gradient(155deg,rgba(34,38,50,.99),rgba(14,17,24,.99) 76%);
-  box-shadow:0 16px 34px rgba(0,0,0,.3),0 0 0 1px rgba(232,182,91,.035);
+  transform:translateY(-2px);
+  background:transparent;
+  box-shadow:none;
 }
 .movie-card:hover .movie-poster {
   transform:none;
-  border-color:rgba(232,182,91,.28);
-  box-shadow:0 10px 24px rgba(0,0,0,.32);
+  border-color:rgba(205,164,92,.34);
+  box-shadow:
+    0 17px 29px rgba(0,0,0,.47),
+    0 4px 9px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(244,210,145,.1);
 }
-.movie-card:hover .movie-poster img { transform:scale(1.035); }
+.movie-card:hover .movie-poster img { transform:scale(1.025); }
 .movie-card:focus-within {
-  border-color:rgba(232,182,91,.5);
-  box-shadow:0 0 0 2px rgba(232,182,91,.1),0 12px 28px rgba(0,0,0,.25);
+  border:0;
+  box-shadow:none;
 }
 .movie-card .media-open-button:focus-visible {
-  outline:2px solid rgba(247,213,139,.9);
-  outline-offset:3px;
+  outline:2px solid rgba(224,187,115,.82);
+  outline-offset:4px;
   border-radius:12px;
 }
 .catalog-grid {
@@ -4651,30 +4664,27 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 @media(max-width:760px) {
   .movie-card {
-    padding:6px;
-    border-radius:14px;
-    box-shadow:0 7px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.03);
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
   }
   .movie-card .movie-poster { border-radius:10px; }
-  .movie-card h3 { margin-top:8px !important; }
   .movie-card:hover {
     transform:none;
-    border-color:rgba(255,255,255,.075);
-    box-shadow:0 7px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.03);
+    border:0;
+    background:transparent;
+    box-shadow:none;
   }
   .movie-card:hover .movie-poster {
     transform:none;
-    border-color:rgba(255,255,255,.09);
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    border-color:rgba(202,160,86,.19);
+    box-shadow:0 13px 25px rgba(0,0,0,.42),0 3px 7px rgba(0,0,0,.28),inset 0 1px 0 rgba(244,210,145,.075);
   }
   .movie-card:hover .movie-poster img { transform:none; }
 }
-@media(max-width:380px) {
-  .movie-card { padding:5px; border-radius:13px; }
-  .movie-card .catalog-badge { top:7px; left:7px; min-height:22px; padding:5px 7px; font-size:8px; }
-  .movie-card > .save-button { top:7px; right:7px; width:29px; height:29px; }
-  .movie-card > .share-button { top:43px; right:7px; width:29px; height:29px; }
-}
+
 @media(prefers-reduced-motion:reduce) {
   .movie-card,.movie-card .movie-poster,.movie-card .movie-poster img {
     transition:none !important;
