@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
-import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, Sparkles, UserRound } from "lucide-react";
+import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",

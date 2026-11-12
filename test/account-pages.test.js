@@ -4,6 +4,13 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
+test("Admin dashboard menu icon is imported before it is rendered", async () => {
+  const shell = await read("../app/components/situla-app.jsx");
+  const iconImport = shell.match(/import \{[^}]*\} from "lucide-react"/);
+  assert.ok(iconImport?.[0].includes("ShieldCheck"));
+  assert.match(shell, /<ShieldCheck size=\{16\} \/>/);
+});
+
 test("Login and profile routes provide the requested demo account experience", async () => {
   const loginRoute = await read("../app/login/page.jsx");
   const profileRoute = await read("../app/profile/page.jsx");
