@@ -27,27 +27,3 @@ export function buildRecentDateWindowFilter(dateField, yearField, window) {
     { $and: [dateMissingFilter(dateField), { [yearField]: { $gte: window.startYear, $lte: window.endYear } }] }
   ] };
 }
-
-export function buildOlderDateWindowFilter(dateField, yearField, window) {
-  if (!dateField || !yearField || !window) throw new TypeError('A date field, year field and calendar window are required.');
-  return { $or: [
-    { [dateField]: { $lt: window.startDate } },
-    { $and: [dateMissingFilter(dateField), { [yearField]: { $lt: window.startYear } }] }
-  ] };
-}
-
-export function mergeRecentAndOlderFeedItems(recentItems = [], olderItems = [], limit = PREMIUM_FEED_LIMIT) {
-  const maxItems = Math.max(0, Math.min(PREMIUM_FEED_LIMIT, Math.floor(Number(limit) || 0)));
-  const merged = [];
-  const seen = new Set();
-  for (const item of [...recentItems, ...olderItems]) {
-    if (!item || merged.length >= maxItems) continue;
-    const identity = item._id ?? item.imdbId ?? item.tmdbId ?? item.malId;
-    if (identity === undefined || identity === null) continue;
-    const key = String(identity);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(item);
-  }
-  return merged;
-}

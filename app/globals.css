@@ -4308,8 +4308,9 @@ body:has(.login-page) .site-footer { display:none !important; }
   .announcement-editor-form{padding:15px}
 }
 
-.series-card-tv .share-button{top:8px}
-.series-card-tv .share-feedback{top:45px}
+.series-card-tv .save-button{top:8px}
+.series-card-tv .share-button{top:47px}
+.series-card-tv .share-feedback{top:85px}
 
 
 /* Low-end mobile: keep sticky navigation and poster controls on a cheap paint path. */

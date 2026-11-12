@@ -133,6 +133,7 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
 
 test("TV and Anime series cards both share their poster, title, and canonical detail link", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
   const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
   assert.match(seriesCard, /const isAnime = kind === "anime"/);
   assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\)\) return/);
@@ -145,6 +146,9 @@ test("TV and Anime series cards both share their poster, title, and canonical de
   assert.match(app, /navigator\.share\(data\)/);
   assert.match(app, /navigator\.clipboard\.writeText\(url\)/);
   assert.match(app, /"\/anime\/" \+ encodeURIComponent\(malId\)/);
+  assert.match(css, /\.series-card-tv \.save-button\{top:8px\}/);
+  assert.match(css, /\.series-card-tv \.share-button\{top:47px\}/);
+  assert.match(css, /\.series-card-tv \.share-feedback\{top:85px\}/);
 });
 
 test("mobile/tablet bottom navigation has no in-app Back or Search button", async () => {

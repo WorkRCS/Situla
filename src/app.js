@@ -22,8 +22,7 @@ import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
 import adminRouter from './admin.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import {
-  getRollingTenYearWindow, buildRecentDateWindowFilter, buildOlderDateWindowFilter,
-  mergeRecentAndOlderFeedItems, PREMIUM_FEED_LIMIT
+  getRollingTenYearWindow, buildRecentDateWindowFilter, PREMIUM_FEED_LIMIT
 } from './premium-feed.js';
 import {
   resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
@@ -175,35 +174,21 @@ async function getPremiumFeedWindow(c) {
 async function findDatePrioritizedFeedPage({ Model, filter, countFilter = filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
   const window = getRollingTenYearWindow();
   const recentClause = buildRecentDateWindowFilter(dateField, yearField, window);
-  const olderClause = buildOlderDateWindowFilter(dateField, yearField, window);
   const recentFilter = { $and: [filter, recentClause] };
-  const olderFilter = { $and: [filter, olderClause] };
   const recentCountFilter = { $and: [countFilter, recentClause] };
-  const olderCountFilter = { $and: [countFilter, olderClause] };
-  const [recentTotal, olderTotal] = await Promise.all([
-    Model.countDocuments(recentCountFilter),
-    Model.countDocuments(olderCountFilter)
-  ]);
-  const total = recentTotal + olderTotal;
   const offset = ignorePageOffset ? 0 : (page - 1) * limit;
 
-  async function read(filterForQuery, skip, take) {
-    if (take <= 0) return [];
-    let query = Model.find(filterForQuery);
+  async function readRecentPage() {
+    let query = Model.find(recentFilter);
     if (select) query = query.select(select);
-    return query.sort(sort).skip(skip).limit(take).lean();
+    return query.sort(sort).skip(offset).limit(limit).lean();
   }
 
-  let recentItems = [];
-  let olderItems = [];
-  if (offset < recentTotal) {
-    recentItems = await read(recentFilter, offset, limit);
-    const remaining = limit - recentItems.length;
-    if (remaining > 0) olderItems = await read(olderFilter, 0, remaining);
-  } else {
-    olderItems = await read(olderFilter, Math.max(0, offset - recentTotal), limit);
-  }
-  return { items: mergeRecentAndOlderFeedItems(recentItems, olderItems, limit), total, recentTotal, window };
+  const [items, total] = await Promise.all([
+    readRecentPage(),
+    Model.countDocuments(recentCountFilter)
+  ]);
+  return { items, total, window };
 }
 
 function safeText(value) {
@@ -901,41 +886,31 @@ app.get('/api/movies/discover', async (c) => {
     const premiumWindow = await getPremiumFeedWindow(c);
     if (premiumWindow) {
       const recentClause = buildRecentDateWindowFilter('releaseDate', 'releaseYear', premiumWindow);
-      const olderClause = buildOlderDateWindowFilter('releaseDate', 'releaseYear', premiumWindow);
       const dateSort = { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 };
       const facets = {
         featuredRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: 1 }],
-        featuredOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: 1 }],
-        itemsRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
-        itemsOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
+        itemsRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }]
       };
       for (const category of MOVIE_CATEGORIES) {
         facets[category.key + 'Recent'] = [
           { $match: { $and: [recentClause, { genres: category.name }] } },
           { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }
         ];
-        facets[category.key + 'Older'] = [
-          { $match: { $and: [olderClause, { genres: category.name }] } },
-          { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }
-        ];
       }
-      const [result] = await Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]);
-      const items = mergeRecentAndOlderFeedItems(result?.itemsRecent, result?.itemsOlder, PREMIUM_FEED_LIMIT);
+      const [result, total] = await Promise.all([
+        Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]),
+        Movie.countDocuments({ $and: [countFilter, recentClause] })
+      ]);
       const categories = MOVIE_CATEGORIES.map((category) => ({
         key: category.key,
         name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
         genre: category.name,
-        items: mergeRecentAndOlderFeedItems(result?.[category.key + 'Recent'], result?.[category.key + 'Older'], PREMIUM_FEED_LIMIT).map(movieDto)
+        items: (result?.[category.key + 'Recent'] || []).map(movieDto)
       })).filter((category) => category.items.length > 0);
-      const [recentTotal, olderTotal] = await Promise.all([
-        Movie.countDocuments({ $and: [countFilter, recentClause] }),
-        Movie.countDocuments({ $and: [countFilter, olderClause] })
-      ]);
-      const featured = result?.featuredRecent?.[0] || result?.featuredOlder?.[0] || null;
-      const total = recentTotal + olderTotal;
+      const featured = result?.featuredRecent?.[0] || null;
       return c.json({
         featured: featured ? movieDto(featured) : null,
-        items: items.map(movieDto),
+        items: (result?.itemsRecent || []).map(movieDto),
         categories,
         personalizedFeed: { plan: 'premium', startYear: premiumWindow.startYear, endYear: premiumWindow.endYear },
         pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
