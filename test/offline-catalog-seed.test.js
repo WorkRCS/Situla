@@ -37,7 +37,7 @@ test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/n
 test("canonical catalogue keys and complete-content validators remain separate", () => {
   assert.equal(validateOfflineMovie({
     imdbId: "tt1234567", title: "Example", originalTitle: "Example",
-    overview: "A complete plot summary with more than eighty characters for the example title.",
+    overview: "A complete plot summary for this example title that comfortably exceeds the eighty character minimum.",
     posterUrl: "https://images.example/poster.jpg", backdropUrl: "https://images.example/backdrop.jpg",
     releaseDate: "2022-01-01", releaseYear: 2022, runtime: 100, genres: ["Drama"],
     cast: [{ name: "Actor" }], directors: ["Director"], adult: false,
