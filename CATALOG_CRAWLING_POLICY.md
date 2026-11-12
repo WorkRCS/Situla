@@ -69,9 +69,16 @@ The assistant must never describe this as “the seed script crawls the whole in
 
 **The 500 additions are a target, not permission to weaken validation.** If fewer than 500 fully valid new records can be found, the seeder must stop before beginning its insert and report what was missing. Do not fill the gap with duplicates, guessed metadata, broken artwork, or unrelated IDs.
 
+
+### 3.1.1 Manually curated Movie pack (offline)
+
+- `data/movie-curated-2020-2026.js` contains 38 manually curated 2020–2026 Movie records with IMDb IDs, title/original title, original synopsis text, release dates, runtime, genres, cast and director credits, canonical IMDb source links, and distinct keyless Metahub poster/backdrop URLs.
+- The factual candidate set (IMDb IDs, release dates, director, runtime, and genre leads) was cross-checked against [Vetustas Archiva's movies dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets), whose dataset license is **CC BY-SA 4.0**. Preserve this attribution and ShareAlike notice when adapting those factual rows. Descriptions and selected credits were independently curated; they are not copied plot text.
+- This is a researched first batch, not a complete global filmography. It does not claim to include every film released worldwide in the date range. Additional verified rows must be added to the same part-file format before global coverage can be claimed.
+
 ### 3.2 TV series — Vetustas Archiva candidates + TVmaze detail/episode API
 
-**Candidate ID/title/year source:** [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets) (MIT-licensed candidate data, as identified by the repository README).
+**Candidate ID/title/year source:** [Vetustas Archiva TV dataset](https://github.com/0xShady/vetustas-archiva/tree/main/datasets) (CC BY-SA 4.0 dataset; retain attribution and ShareAlike notice for adapted rows).
 
 - Candidate file: `data/tv-additions.js`.
 - Canonical Situla key: `tmdbId`.
@@ -100,7 +107,7 @@ The assistant must never describe this as “the seed script crawls the whole in
 **TV attribution/licensing:**
 
 - The TVmaze API is licensed under [CC BY-SA](https://www.tvmaze.com/api). Preserve a clickable TVmaze source link in the app and comply with its attribution and ShareAlike conditions.
-- Preserve Vetustas Archiva attribution and its MIT license for candidate data.
+- Preserve Vetustas Archiva attribution and the dataset's CC BY-SA 4.0 terms. The code in its separate `scripts/` directory is MIT-licensed; do not confuse that code license with the data license.
 - Do not remove attribution fields when changing DTOs, schemas, seeders, or detail pages.
 
 ### 3.3 Anime — MyAnimeList IDs with committed Anime Mapper snapshots
