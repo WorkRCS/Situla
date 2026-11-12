@@ -210,12 +210,8 @@ function shareMediaCard({ title, href, posterUrl }) {
   const url = new URL(href, window.location.origin).toString();
   const file = createSharePosterFile(title, blob);
   const data = { files: [file], title, text: title, url };
-  try {
-    if (!navigator.canShare(data)) return null;
-    return navigator.share(data).then(() => "Shared");
-  } catch {
-    return null;
-  }
+  if (!navigator.canShare(data)) return null;
+  return navigator.share(data).then(() => "Shared");
 }
 
 async function copyContentUrl(url) {
