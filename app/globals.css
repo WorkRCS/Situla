@@ -4865,3 +4865,109 @@ body:has(.login-page) .site-footer { display:none !important; }
 :where(.search-dialog,.history-card,.about-situla-card,.series-detail-hero,.series-detail-panel,.plans-table-wrap,.admin-record-card,.announcement-admin-card,.premium-coming-soon) {
   box-shadow:0 16px 38px rgba(0,0,0,.2),inset 0 1px 0 rgba(232,182,91,.04);
 }
+
+
+/* Balanced media-card controls: larger, proportional badges and actions. */
+.movie-card {
+  container-type:inline-size;
+}
+.movie-card .catalog-badge {
+  top:8px;
+  left:8px;
+  min-height:27px;
+  padding:7px 10px;
+  font-size:11px;
+  line-height:1;
+  letter-spacing:.07em;
+}
+.movie-card .rating-pill {
+  left:8px;
+  bottom:8px;
+  min-height:28px;
+  gap:5px;
+  padding:6px 10px;
+  font-size:12px;
+}
+.movie-card .rating-pill .bi {
+  font-size:14px !important;
+}
+.movie-card > .save-button,
+.movie-card.series-card-tv > .save-button {
+  top:8px;
+  right:8px;
+  width:37px;
+  height:37px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+}
+.movie-card > .share-button,
+.movie-card.series-card-tv > .share-button {
+  top:52px;
+  right:8px;
+  width:37px;
+  height:37px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+}
+.movie-card > .save-button .bi {
+  font-size:19px !important;
+  line-height:1;
+}
+.movie-card > .share-button svg {
+  width:19px !important;
+  height:19px !important;
+}
+.movie-card > .share-feedback,
+.movie-card.series-card-tv > .share-feedback {
+  top:96px;
+}
+
+@supports (width: 1cqi) {
+  .movie-card .catalog-badge {
+    top:clamp(8px,4cqi,11px);
+    left:clamp(8px,4cqi,11px);
+    min-height:clamp(27px,15cqi,34px);
+    padding:clamp(7px,3.8cqi,10px) clamp(10px,5.4cqi,14px);
+    font-size:clamp(11px,6cqi,14px);
+  }
+  .movie-card .rating-pill {
+    left:clamp(8px,4cqi,11px);
+    bottom:clamp(8px,4cqi,11px);
+    min-height:clamp(28px,15.5cqi,35px);
+    gap:clamp(5px,2.5cqi,7px);
+    padding:clamp(6px,3cqi,9px) clamp(10px,4.7cqi,13px);
+    font-size:clamp(12px,6.2cqi,14px);
+  }
+  .movie-card .rating-pill .bi {
+    font-size:clamp(14px,7cqi,16px) !important;
+  }
+  .movie-card > .save-button,
+  .movie-card.series-card-tv > .save-button {
+    top:clamp(8px,4cqi,11px);
+    right:clamp(8px,4cqi,11px);
+    width:clamp(37px,20cqi,46px);
+    height:clamp(37px,20cqi,46px);
+    border-radius:clamp(11px,5cqi,13px);
+  }
+  .movie-card > .share-button,
+  .movie-card.series-card-tv > .share-button {
+    top:calc(clamp(8px,4cqi,11px) + clamp(37px,20cqi,46px) + clamp(7px,3.5cqi,10px));
+    right:clamp(8px,4cqi,11px);
+    width:clamp(37px,20cqi,46px);
+    height:clamp(37px,20cqi,46px);
+    border-radius:clamp(11px,5cqi,13px);
+  }
+  .movie-card > .save-button .bi {
+    font-size:clamp(19px,9cqi,22px) !important;
+  }
+  .movie-card > .share-button svg {
+    width:clamp(19px,9cqi,22px) !important;
+    height:clamp(19px,9cqi,22px) !important;
+  }
+  .movie-card > .share-feedback,
+  .movie-card.series-card-tv > .share-feedback {
+    top:calc(clamp(8px,4cqi,11px) + 2 * clamp(37px,20cqi,46px) + clamp(7px,3.5cqi,10px) + 6px);
+  }
+}
