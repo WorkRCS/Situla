@@ -5125,3 +5125,12 @@ body:has(.login-page) .site-footer { display:none !important; }
   .about-provider-card,.premium-plan-link { transition:none; }
   .premium-plan-pointer { animation:none; }
 }
+
+.premium-plan-copy .premium-status-available {
+  justify-self:start;
+  width:max-content;
+  margin-top:1px;
+  border-color:rgba(93,195,129,.34);
+  color:#9ad8ad;
+  background:rgba(37,117,69,.16);
+}
