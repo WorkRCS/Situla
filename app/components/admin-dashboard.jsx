@@ -98,6 +98,11 @@ export default function AdminDashboard() {
   const [suspendReason, setSuspendReason] = useState("");
   const [mutationLoading, setMutationLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [catalogType, setCatalogType] = useState("movie");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogItems, setCatalogItems] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogSavingId, setCatalogSavingId] = useState("");
   const listBodyRef = useRef(null);
   const sentinelRef = useRef(null);
   const requestLock = useRef(false);
@@ -109,6 +114,54 @@ export default function AdminDashboard() {
     if (!response.ok) throw new Error("Dashboard data could not be loaded.");
     setStats(await response.json());
   }, []);
+
+  const loadCatalogItems = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const params = new URLSearchParams({ type: catalogType, q: catalogSearch.trim() });
+      const response = await fetch("/api/admin/catalog?" + params.toString(), {
+        cache: "no-store", credentials: "same-origin"
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Catalogue curation list could not be loaded.");
+      setCatalogItems(Array.isArray(payload.items) ? payload.items : []);
+    } catch (loadError) {
+      setError(loadError.message || "Catalogue curation list could not be loaded.");
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [catalogType, catalogSearch]);
+
+  const updateCatalogFeatured = useCallback(async (item) => {
+    const key = item.mediaType + ":" + item.id;
+    if (catalogSavingId) return;
+    setCatalogSavingId(key);
+    setError("");
+    try {
+      const response = await fetch(
+        "/api/admin/catalog/" + encodeURIComponent(item.mediaType) + "/" +
+        encodeURIComponent(item.id) + "/featured",
+        {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isFeatured: !item.isFeatured })
+        }
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Featured status could not be updated.");
+      setCatalogItems((current) => current.map((entry) =>
+        entry.mediaType === item.mediaType && entry.id === item.id
+          ? { ...entry, isFeatured: payload.isFeatured }
+          : entry
+      ));
+      setNotice(payload.isFeatured ? "Featured pick added." : "Featured pick removed.");
+    } catch (updateError) {
+      setError(updateError.message || "Featured status could not be updated.");
+    } finally {
+      setCatalogSavingId("");
+    }
+  }, [catalogSavingId]);
 
   useEffect(() => {
     let alive = true;
@@ -136,6 +189,12 @@ export default function AdminDashboard() {
     })();
     return () => { alive = false; };
   }, [refreshStats]);
+
+  useEffect(() => {
+    if (!authorized || activeTab !== "catalog") return undefined;
+    const timer = window.setTimeout(() => loadCatalogItems(), 180);
+    return () => window.clearTimeout(timer);
+  }, [authorized, activeTab, loadCatalogItems]);
 
   useEffect(() => {
     if (!authorized) return undefined;
@@ -429,6 +488,7 @@ export default function AdminDashboard() {
           <button className={activeTab === "users" ? "active" : ""} onClick={() => setActiveTab("users")}><Users size={17} /> Users <span>{stats?.users?.total ?? "—"}</span></button>
           <button className={activeTab === "sales" ? "active" : ""} onClick={() => setActiveTab("sales")}><CircleDollarSign size={17} /> Sales <span>{stats?.sales?.total ?? "—"}</span></button>
           <button className={activeTab === "announcements" ? "active" : ""} onClick={() => setActiveTab("announcements")}><Megaphone size={17} /> Announcements</button>
+          <button className={activeTab === "catalog" ? "active" : ""} onClick={() => setActiveTab("catalog")}><BadgeCheck size={17} /> Featured picks</button>
         </nav>
 
         {activeTab === "guests" && <section className="admin-section-panel">
@@ -469,6 +529,79 @@ export default function AdminDashboard() {
         </section>}
 
         {activeTab === "announcements" && <AnnouncementManager />}
+
+        {activeTab === "catalog" && <section className="admin-section-panel">
+          <div className="admin-panel-heading">
+            <div>
+              <span className="admin-kicker">EDITORIAL CURATION</span>
+              <h2>Featured picks</h2>
+              <p>Choose titles to spotlight. Hot and Popular are calculated automatically from trend and market signals.</p>
+            </div>
+            <button type="button" onClick={() => loadCatalogItems()} className="admin-refresh" disabled={catalogLoading}>
+              <RefreshCw size={15} /> Refresh
+            </button>
+          </div>
+          <div className="admin-catalog-controls">
+            <label>
+              <span>Catalogue</span>
+              <select value={catalogType} onChange={(event) => setCatalogType(event.target.value)}>
+                <option value="movie">Movies</option>
+                <option value="tv">TV series</option>
+                <option value="anime">Anime</option>
+              </select>
+            </label>
+            <label className="admin-catalog-search">
+              <span>Find a title</span>
+              <input
+                value={catalogSearch}
+                onChange={(event) => setCatalogSearch(event.target.value)}
+                placeholder="Search by title"
+                maxLength={80}
+              />
+            </label>
+          </div>
+          {catalogLoading ? (
+            <EmptyState title="Loading catalogue" detail="Reading matching titles from MongoDB." />
+          ) : catalogItems.length ? (
+            <div className="admin-catalog-list">
+              {catalogItems.map((item) => {
+                const key = item.mediaType + ":" + item.id;
+                const busy = catalogSavingId === key;
+                return (
+                  <article className="admin-catalog-row" key={key}>
+                    <div className="admin-catalog-art">
+                      {item.posterUrl
+                        ? <img src={item.posterUrl} alt="" loading="lazy" />
+                        : <span><Eye size={18} /></span>}
+                    </div>
+                    <div className="admin-catalog-copy">
+                      <strong>{item.title}</strong>
+                      <small>
+                        {item.year || "Year unknown"} · {item.rating > 0 ? item.rating.toFixed(1) + "/10" : "No rating"}
+                        {item.votes > 0 ? " · " + item.votes.toLocaleString("en-IN") + " votes" : ""}
+                      </small>
+                      <span className={item.isFeatured ? "admin-catalog-state is-featured" : "admin-catalog-state"}>
+                        {item.isFeatured ? "💖 Featured" : "Not featured"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={item.isFeatured ? "admin-catalog-toggle is-featured" : "admin-catalog-toggle"}
+                      disabled={Boolean(catalogSavingId)}
+                      onClick={() => updateCatalogFeatured(item)}
+                    >
+                      {busy ? <LoaderCircle size={15} className="animate-spin" /> : <BadgeCheck size={15} />}
+                      {item.isFeatured ? "Remove featured" : "Set featured"}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState title="No matching titles" detail="Try another title or choose a different catalogue." />
+          )}
+          <p className="admin-catalog-footnote">Only items explicitly selected here get the Featured badge. Hot and Popular remain fully automatic.</p>
+        </section>}
 
         {notice && <div className="admin-toast admin-toast-success"><Check size={16} /> {notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
         {error && <div className="admin-toast admin-toast-error">{error}<button onClick={() => setError("")}><X size={14} /></button></div>}
