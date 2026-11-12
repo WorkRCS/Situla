@@ -137,7 +137,7 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
     voteAverage: 7.8, voteCount: 300, popularity: 5
   }, "movie", now)?.key, "featured");
   assert.equal(getCatalogBadge({
-    score: 7.9, scoredBy: 180, rank: 1500, popularity: 900
+    score: 7.9, scoredBy: 400, rank: 1500, popularity: 900
   }, "anime", now)?.key, "featured");
   assert.equal(getCatalogBadge({
     voteAverage: 4.1, voteCount: 0
