@@ -45,8 +45,8 @@ jobs:
             echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets."
             exit 1
           fi
-          echo "Movie seed uses public Cinemeta metadata by IMDb ID; no TMDb token is required."
-          echo "TV seed verifies public TVmaze metadata and artwork before writing; no video files or stream URLs are imported."
+          echo "Default catalogue seed reads committed data files only; no Movie, TV or Anime metadata API is called."
+          echo "The import is year-bounded (2020–2026), insert-only and rejects incomplete or adult records."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund

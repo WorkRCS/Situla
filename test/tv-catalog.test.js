@@ -167,7 +167,8 @@ test("TV seed is new-only and cannot overwrite an existing series document", asy
   const workflow = await read("../.github/workflows/seed-tv-series.yml");
   const api = await read("../src/app.js");
 
-  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-static-catalog.js --tv && node scripts/seed-tv-series.js");
+  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
+  assert.equal(pkg.scripts["seed:tv:legacy-online"], "node scripts/seed-static-catalog.js --tv && node scripts/seed-tv-series.js");
   assert.equal(pkg.scripts["check:tv"], "node --test test/tv-catalog.test.js");
   assert.match(script, /TV_SERIES_TARGET_ADDITIONS = 200/);
   assert.match(script, /TvSeries\.insertMany\(newRecords/);
@@ -180,7 +181,7 @@ test("TV seed is new-only and cannot overwrite an existing series document", asy
   assert.match(api, /'seasons\.episodes': 0/);
   assert.match(ci, /npm run check:tv/);
   assert.match(workflow, /timeout-minutes: 60/);
-  assert.match(workflow, /TVmaze metadata/);
-  assert.match(workflow, /Cinemeta metadata by IMDb ID/);
+  assert.match(workflow, /Default catalogue seed reads committed data files only/);
+  assert.doesNotMatch(workflow, /TVmaze metadata|Cinemeta metadata by IMDb ID/);
   assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
 });

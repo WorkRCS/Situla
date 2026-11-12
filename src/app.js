@@ -23,6 +23,7 @@ import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './s
 import adminRouter from './admin.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
+import { isPopularCatalogItem } from './catalog-popularity.js';
 import {
   resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
   heartbeatPlaybackSession, stopPlaybackSession
@@ -202,6 +203,7 @@ export function movieDto(movie) {
     voteAverage: Number(movie.voteAverage) || 0,
     voteCount: Number(movie.voteCount) || 0,
     popularity: Number(movie.popularity) || 0,
+    isPopular: isPopularCatalogItem(movie, 'movie'),
     genres: Array.isArray(movie.genres) ? movie.genres : [],
     keywords: Array.isArray(movie.keywords) ? movie.keywords : [],
     certification: movie.certification || '',
@@ -261,6 +263,7 @@ export function tvSeriesDto(series) {
     voteAverage: Number(series.voteAverage) || 0,
     voteCount: Number(series.voteCount) || 0,
     popularity: Number(series.popularity) || 0,
+    isPopular: isPopularCatalogItem(series, 'tv'),
     genres: Array.isArray(series.genres) ? series.genres : [],
     keywords: Array.isArray(series.keywords) ? series.keywords : [],
     metadataSource: series.metadataSource || '',
@@ -326,6 +329,7 @@ export function animeSeriesDto(anime) {
     scoredBy: Number(anime.scoredBy) || 0,
     rank: anime.rank ?? null,
     popularity: anime.popularity ?? null,
+    isPopular: isPopularCatalogItem(anime, 'anime'),
     status: anime.status || '',
     season: anime.season || '',
     type: anime.type || 'TV',

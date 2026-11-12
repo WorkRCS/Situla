@@ -130,9 +130,10 @@ test("Movie additions seeder uses Cinemeta, validates before insert, and never c
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
   const workflow = await readFile(new URL("../.github/workflows/seed-tv-series.yml", import.meta.url), "utf8");
-  assert.equal(pkg.scripts["seed:movie-additions"], "node scripts/seed-movie-additions.js");
+  assert.equal(pkg.scripts["seed:movie-additions:legacy-online"], "node scripts/seed-movie-additions.js");
   assert.equal(pkg.scripts["check:movies"], "node --test test/movie-catalog.test.js");
-  assert.match(pkg.scripts["seed:movies"], /seed-static-catalog\.js --movies.*seed:movie-additions/);
+  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
+  assert.match(pkg.scripts["seed:movies:legacy-online"], /seed-static-catalog\.js --movies.*seed:movie-additions:legacy-online/);
   assert.match(script, /https:\/\/v3-cinemeta\.strem\.io/);
   assert.match(script, /Movie\.insertMany\(newRecords/);
   assert.match(script, /existingAdditionCount/);
