@@ -52,7 +52,7 @@ test("TV and Anime load-more requests exclude already visible canonical IDs", as
   assert.equal((api.match(/\$sample: \{ size: limit \}/g) || []).length, 3);
 });
 
-test("global search supports shared type/year/tag filters across Movie, TV and Anime", async () => {
+test("global search uses shared type/year filters and direct media navigation", async () => {
   const api = await read("../src/app.js");
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
@@ -60,12 +60,6 @@ test("global search supports shared type/year/tag filters across Movie, TV and A
   assert.match(api, /buildSearchYearFilter/);
   assert.match(api, /rankSearchResults\(uniqueItems, query\)/);
   assert.match(api, /candidateLimit/);
-  assert.match(api, /const allowedTags = new Set\(\['all', 'hot', 'popular', 'featured'\]\)/);
-  assert.match(api, /tag === 'all' \|\| item\.catalogBadge\?\.key === tag/);
-  assert.match(api, /: 1800;/);
-  assert.ok(api.includes("const pageLimit = tag === 'all' ? 20 : 90;"));
-  assert.match(api, /const hasMore = page < pageLimit/);
-  assert.match(api, /if \(!query && selectedType === 'all' && year === null && tag === 'all'\)/);
   assert.match(api, /fuzzyPattern/);
   assert.match(api, /Promise\.allSettled\(\[textTask, partialTask\]\)/);
   assert.match(api, /hasMoreCandidate/);
@@ -74,14 +68,6 @@ test("global search supports shared type/year/tag filters across Movie, TV and A
   assert.match(app, /role="dialog" aria-modal="true"/);
   assert.match(app, /search-type-filters/);
   assert.match(app, /search-year-filter/);
-  assert.match(app, /const \[searchTag, setSearchTag\] = useState\("all"\)/);
-  assert.match(app, /search-tag-filters/);
-  assert.equal(app.split('params.set("tag", searchTag)').length - 1, 2);
-  assert.match(app, /params\.set\("tag", searchTag\)/);
-  assert.match(app, /searchType, searchYear, searchTag/);
-  assert.match(css, /\.search-tag-button\.search-tag-hot\.active/);
-  assert.match(css, /\.search-tag-button\.search-tag-popular\.active/);
-  assert.match(css, /\.search-tag-button\.search-tag-featured\.active/);
   assert.match(app, /searchInput\.trim\(\)\.length < 3/);
   assert.match(app, /setSearchInput\(event\.target\.value\)/);
   assert.match(app, /loadMoreSearch/);
