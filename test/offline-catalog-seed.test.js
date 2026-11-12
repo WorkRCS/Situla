@@ -95,7 +95,7 @@ test("prepared offline packs report real gaps instead of lowering the completene
   assert.ok(prepared.movie.records.every((item) => validateOfflineMovie(item)));
   assert.equal(prepared.tv.records.length, 8);
   assert.ok(prepared.tv.records.every((item) => validateOfflineTv(item)));
-  assert.ok(prepared.anime.records.length >= 190);
+  assert.equal(prepared.anime.records.length, 200);
   assert.ok(prepared.movie.rejected["synopsis shorter than 80 characters"] > 0);
   assert.ok(prepared.tv.rejected["synopsis shorter than 80 characters"] > 0);
   assert.ok(prepared.anime.records.every((item) => validateOfflineAnime(item)));
