@@ -21,7 +21,7 @@ test("Movie discovery falls back when recent exclusions exhaust the catalog and 
   assert.match(discover, /if \(!result\.items\?\.length && total > 0\)/);
   assert.match(discover, /Movie\.find\(baseFilter\)/);
   assert.match(discover, /featured: result\.featured\?\.length \? result\.featured : \[fallbackItems\[0\]\]/);
-  assert.match(app, /if \(isDiscover && !items\.length\)/);
+  assert.match(app, /if \(isDiscover && !items\.length && \(recentIds\.length > 0 \|\| Number\(payload\.pagination\?\.total\) > 0\)\)/);
   assert.match(app, /fetch\("\/api\/movies\?page=1&limit=10"/);
   assert.match(app, /const hasMoreMovies = movies\.length > 0 && movies\.length < moviesTotal/);
 });
