@@ -17,6 +17,7 @@ import {
   validateOfflineTv
 } from "../scripts/seed-catalog.js";
 import { calculateDecayedTrendScore, getCatalogBadge } from "../src/catalog-popularity.js";
+import { calculateVoteVelocity7d } from "../scripts/refresh-catalog-market-data.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -101,23 +102,26 @@ test("prepared offline packs report real gaps instead of lowering the completene
   assert.ok(prepared.anime.records.every((item) => validateOfflineAnime(item)));
 });
 
-test("Hot, Popular and Featured badges use separate market, trend and editorial signals", async () => {
+test("Hot, Popular and Featured badges are all automatic public-market classifications", async () => {
   const now = Date.now();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
-  // Legacy booleans must not force a badge on any catalogue item.
-  assert.equal(getCatalogBadge({ isPopular: true }, "movie", now), null);
-  assert.equal(getCatalogBadge({ isPopular: false }, "movie", now), null);
+  // Removed legacy/manual flags cannot influence the outcome.
+  assert.equal(getCatalogBadge({ isPopular: true, isFeatured: true }, "movie", now), null);
+  assert.equal(getCatalogBadge({ isPopular: false, isFeatured: false }, "tv", now), null);
 
-  // A strong, well-supported external rating plus provider reach can qualify.
+  // Real vote volume, Bayesian-smoothed rating and provider reach qualify Popular.
   assert.equal(getCatalogBadge({
     voteAverage: 8.1, voteCount: 120000, popularity: 150
   }, "movie", now)?.key, "popular");
   assert.equal(getCatalogBadge({
     score: 8.3, scoredBy: 50000, rank: 150, popularity: 180
   }, "anime", now)?.key, "popular");
+  assert.equal(getCatalogBadge({
+    voteAverage: 8.0, voteCount: 5000, popularity: 90
+  }, "tv", now)?.key, "popular");
 
-  // A large vote count cannot rescue a weak rating; tiny samples are not popular.
+  // Vote count alone cannot rescue poor quality; a tiny sample is not Popular.
   assert.equal(getCatalogBadge({
     voteAverage: 5.4, voteCount: 250000, popularity: 150
   }, "movie", now), null);
@@ -128,16 +132,31 @@ test("Hot, Popular and Featured badges use separate market, trend and editorial 
     voteAverage: 6.8, voteCount: 0, popularity: 0
   }, "movie", now), null);
 
-  // Hot is driven by recent playback momentum, not by the rating.
-  const accessControl = await read("../src/access-control.js");
-  const appRoutes = await read("../src/app.js");
-  assert.match(accessControl, /startedPlaying: Boolean\(playing\) && !Boolean\(session\.isPlaying\)/);
-  assert.match(appRoutes, /if \(result\.startedPlaying\)/);
-  assert.doesNotMatch(appRoutes.slice(appRoutes.indexOf("app.post('/api/playback/start'"), appRoutes.indexOf("app.post('/api/playback/heartbeat'")), /recordCatalogPlaybackStart/);
+  // Featured is an automatic quality spotlight, never an Admin flag or low-rating bucket.
+  assert.equal(getCatalogBadge({
+    voteAverage: 7.8, voteCount: 300, popularity: 5
+  }, "movie", now)?.key, "featured");
+  assert.equal(getCatalogBadge({
+    score: 7.9, scoredBy: 180, rank: 1500, popularity: 900
+  }, "anime", now)?.key, "featured");
+  assert.equal(getCatalogBadge({
+    voteAverage: 4.1, voteCount: 0
+  }, "movie", now), null);
+
+  // Hot responds to actual Situla playback activity or public vote growth.
   assert.equal(getCatalogBadge({
     trendScore: 9, trendUpdatedAt: new Date(now).toISOString(),
     voteAverage: 4.2, voteCount: 500000
   }, "tv", now)?.key, "hot");
+  assert.equal(getCatalogBadge({
+    voteAverage: 7.1, voteCount: 1000, voteVelocity7d: 250,
+    releaseDate: new Date(now - (30 * 24 * 60 * 60 * 1000)).toISOString()
+  }, "movie", now)?.key, "hot");
+  assert.equal(getCatalogBadge({
+    score: 8.0, scoredBy: 5000, rank: 30, popularity: 30,
+    airedFrom: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
+  }, "anime", now)?.key, "hot");
+
   const staleTrend = {
     trendScore: 12,
     trendUpdatedAt: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
@@ -145,26 +164,38 @@ test("Hot, Popular and Featured badges use separate market, trend and editorial 
   assert.notEqual(getCatalogBadge(staleTrend, "tv", now)?.key, "hot");
   assert.ok(Math.abs(calculateDecayedTrendScore(8, new Date(now - sevenDays), now) - 4) < 0.01);
 
-  // Featured is an editorial choice, not a fallback for low-rated content.
-  assert.equal(getCatalogBadge({ isFeatured: true }, "anime", now)?.key, "featured");
-  assert.equal(getCatalogBadge({ voteAverage: 4.1, voteCount: 0 }, "movie", now), null);
+  assert.equal(
+    calculateVoteVelocity7d(1000, new Date(now - sevenDays), 1200, now),
+    200
+  );
+  assert.equal(calculateVoteVelocity7d(0, null, 200, now), 0);
 });
 
-test("Featured can be curated securely from the admin dashboard for all three catalogues", async () => {
+test("all three badges use cached public data and require no Admin curation", async () => {
   const adminApi = await read("../src/admin.js");
   const adminUi = await read("../app/components/admin-dashboard.jsx");
-  const css = await read("../app/globals.css");
-  assert.match(adminApi, /router\.get\('\/catalog'/);
-  assert.match(adminApi, /router\.patch\('\/catalog\/:mediaType\/:mediaId\/featured'/);
-  assert.match(adminApi, /validCatalogTarget/);
-  assert.match(adminApi, /catalog_featured_updated/);
-  assert.match(adminUi, /Featured picks/);
-  assert.match(adminUi, /Set featured/);
-  assert.match(adminUi, /Remove featured/);
-  assert.match(css, /\.admin-catalog-row/);
+  const models = await read("../src/models.js");
+  const app = await read("../src/app.js");
+  const refresh = await read("../scripts/refresh-catalog-market-data.js");
+  const workflow = await read("../.github/workflows/catalogue-market-data.yml");
+  const pkg = JSON.parse(await read("../package.json"));
+
+  assert.doesNotMatch(adminApi, /catalog_featured_updated|validCatalogTarget|isFeatured/);
+  assert.doesNotMatch(adminUi, /Featured picks|Set featured|Remove featured|updateCatalogFeatured/);
+  assert.doesNotMatch(models, /isFeatured|isPopular/);
+  assert.match(models, /voteVelocity7d/);
+  assert.match(models, /marketDataUpdatedAt/);
+  assert.match(app, /catalogBadge: getCatalogBadge/);
+  assert.match(refresh, /datasets\.imdbws\.com/);
+  assert.match(refresh, /api\.jikan\.moe/);
+  assert.match(refresh, /externalImdbId/);
+  assert.match(refresh, /calculateVoteVelocity7d/);
+  assert.equal(pkg.scripts["refresh:catalog-signals"], "node scripts/refresh-catalog-market-data.js");
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /MONGODB_URI/);
 });
 
-test("catalog cards render differentiated badges and search asks for a title only", async () => {
+test("catalog cards render differentiated automatic badges and search asks for a title only", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
   assert.match(app, /movie\.catalogBadge\.label/);
