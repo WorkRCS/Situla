@@ -2175,7 +2175,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <p className="about-provider-disclaimer">IMDb, TMDB and MyAnimeList are referenced for their respective title identifiers. Situla is an independent product and is not affiliated with or endorsed by these services.</p>
                 <Link href="/plans" className="premium-coming-soon premium-plan-link" aria-label="Explore Situla Premium plans">
                   <span className="premium-kicker">SITULA PREMIUM</span>
-                  <span className="premium-plan-copy"><strong>Explore Situla Premium</strong><small>Compare plans and discover membership benefits.</small></span>
+                  <span className="premium-plan-copy"><strong>Explore Situla Premium</strong><em className="premium-status premium-status-available">AVAILABLE</em><small>Compare plans and discover membership benefits.</small></span>
                   <span className="premium-plan-action"><MousePointerClick className="premium-plan-pointer" size={18} aria-hidden="true" /><span>VIEW PLANS</span><ArrowUpRight size={14} aria-hidden="true" /></span>
                 </Link>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
