@@ -19,6 +19,7 @@ import {
   getGoogleOAuthClient, randomToken, safeEqual, clearOAuthCookies
 } from './auth.js';
 import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
+import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './search-ranking.js';
 import adminRouter from './admin.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import {
@@ -949,49 +950,155 @@ app.get('/api/movies/discover', async (c) => {
 
 app.get('/api/search', async (c) => {
   const query = safeText(c.req.query('q'));
-  if (query.length < 2) return c.json({ items: [] });
+  const selectedType = String(c.req.query('type') || 'all').toLowerCase();
+  const allowedTypes = new Set(['all', 'movie', 'tv', 'anime']);
+  if (!allowedTypes.has(selectedType)) return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
+
+  const yearText = String(c.req.query('year') || '').trim();
+  const year = yearText ? Number(yearText) : null;
+  if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
+      year < 1870 || year > new Date().getFullYear())) {
+    return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
+  }
+  if (query && query.length < 3) {
+    return c.json({ items: [], hasMore: false, page: 1, limit: 20, minQueryLength: 3 });
+  }
+  if (!query && selectedType === 'all' && year === null) {
+    return c.json({ items: [], hasMore: false, page: 1, limit: 20, minQueryLength: 3 });
+  }
+
+  const requestedPage = Number(c.req.query('page') || 1);
+  const requestedLimit = Number(c.req.query('limit') || 20);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 20) : 1;
+  const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 30) : 20;
+  const offset = (page - 1) * limit;
+  const candidateLimit = Math.min(600, Math.max(80, offset + limit + 1));
+  const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
+  const normalizedId = query.toLowerCase();
+  const escapedQuery = escapeSearchRegex(query);
+  const titlePattern = query ? new RegExp(escapedQuery, 'i') : null;
+  const fuzzyTokens = query.split(/\s+/).filter((token) => token.length >= 5 && token.length <= 24).slice(0, 3);
+  const fuzzyAlternatives = fuzzyTokens.flatMap((token) =>
+    Array.from({ length: token.length }, (_, index) =>
+      escapeSearchRegex(token.slice(0, index)) + '.' + escapeSearchRegex(token.slice(index + 1))
+    )
+  );
+  const fuzzyPattern = fuzzyAlternatives.length ? new RegExp('(?:' + fuzzyAlternatives.join('|') + ')', 'i') : null;
+
+  const catalogs = [
+    {
+      type: 'movie',
+      Model: Movie,
+      dateField: 'releaseDate',
+      searchFields: ['title', 'originalTitle'],
+      baseFilter: { imdbId: IMDB_ID, adult: { $ne: true } },
+      exactFilter: IMDB_ID.test(normalizedId) ? { imdbId: normalizedId } : null,
+      select: 'imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime voteAverage voteCount popularity genres adult',
+      toDto: movieDto
+    },
+    {
+      type: 'tv',
+      Model: TvSeries,
+      dateField: 'firstAirDate',
+      searchFields: ['title', 'originalTitle'],
+      baseFilter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } },
+      exactFilter: numericId ? { tmdbId: numericId } : null,
+      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity genres numberOfSeasons numberOfEpisodes status',
+      toDto: tvSeriesDto
+    },
+    {
+      type: 'anime',
+      Model: AnimeSeries,
+      dateField: 'airedFrom',
+      searchFields: ['title', 'titleEnglish', 'titleJapanese'],
+      baseFilter: { type: { $in: ['TV', 'ONA'] } },
+      exactFilter: numericId ? { malId: numericId } : null,
+      select: 'malId title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity status season type source genres themes demographics studios producers rating',
+      toDto: animeSeriesDto
+    }
+  ].filter((catalog) => selectedType === 'all' || catalog.type === selectedType);
+
   try {
     await connectDatabase();
-    const id = query.toLowerCase();
-    const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
-    const movieFilter = IMDB_ID.test(id)
-      ? { adult: { $ne: true }, imdbId: id }
-      : { adult: { $ne: true }, $text: { $search: query } };
-    const tvFilter = numericId
-      ? { adult: { $ne: true }, tmdbId: numericId }
-      : { adult: { $ne: true }, $text: { $search: query } };
-    const animeFilter = numericId
-      ? { type: { $in: ['TV', 'ONA'] }, malId: numericId }
-      : { type: { $in: ['TV', 'ONA'] }, $text: { $search: query } };
-    const [movies, shows, anime] = await Promise.all([
-      Movie.find(movieFilter)
-        .sort(IMDB_ID.test(id) ? { popularity: -1, releaseDate: -1 } : { score: { $meta: 'textScore' }, popularity: -1 })
-        .limit(8).lean(),
-      TvSeries.find(tvFilter).select('-seasons.episodes')
-        .sort(numericId ? { popularity: -1, firstAirDate: -1 } : { score: { $meta: 'textScore' }, popularity: -1 })
-        .limit(8).lean(),
-      AnimeSeries.find(animeFilter).select('-episodeGuide -relatedAnime')
-        .sort(numericId ? { score: -1, rank: 1, popularity: 1 } : { score: { $meta: 'textScore' }, rank: 1, popularity: 1 })
-        .limit(8).lean()
-    ]);
-    const groups = [
-      movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
-      shows.map((item) => ({ ...tvSeriesDto(item), mediaType: 'tv' })),
-      anime.map((item) => ({ ...animeSeriesDto(item), mediaType: 'anime' }))
-    ];
-    const items = [];
-    while (groups.some((group) => group.length)) {
-      const activeGroups = groups.filter((group) => group.length);
-      for (let index = activeGroups.length - 1; index > 0; index -= 1) {
-        const swapIndex = Math.floor(Math.random() * (index + 1));
-        [activeGroups[index], activeGroups[swapIndex]] = [activeGroups[swapIndex], activeGroups[index]];
+    const groups = await Promise.all(catalogs.map(async (catalog) => {
+      const scope = [catalog.baseFilter];
+      if (year !== null) scope.push(buildSearchYearFilter(catalog.dateField, 'releaseYear', year));
+      const dateSort = { [catalog.dateField]: -1, releaseYear: -1, _id: 1 };
+      const projection = (builder) => builder.select(catalog.select).lean();
+
+      if (!query) {
+        const records = await projection(
+          catalog.Model.find(scope.length === 1 ? scope[0] : { $and: scope })
+            .sort(dateSort).limit(candidateLimit)
+        );
+        return {
+          items: records.map((record) => ({ ...catalog.toDto(record), mediaType: catalog.type })),
+          hasMoreCandidate: records.length === candidateLimit
+        };
       }
-      for (const group of activeGroups) items.push(group.shift());
+
+      const textFilter = { $and: [...scope, { $text: { $search: query } }] };
+      const textTask = projection(
+        catalog.Model.find(textFilter)
+          .sort({ score: { $meta: 'textScore' }, ...dateSort })
+          .limit(candidateLimit)
+      );
+
+      const partialAlternatives = catalog.searchFields.map((field) => ({ [field]: titlePattern }));
+      if (fuzzyPattern) {
+        for (const field of catalog.searchFields) partialAlternatives.push({ [field]: fuzzyPattern });
+      }
+      if (catalog.exactFilter) partialAlternatives.push(catalog.exactFilter);
+      const partialFilter = { $and: [...scope, { $or: partialAlternatives }] };
+      const partialTask = projection(
+        catalog.Model.find(partialFilter).sort(dateSort).limit(candidateLimit)
+      );
+      const batches = await Promise.allSettled([textTask, partialTask]);
+      const successful = batches.filter((batch) => batch.status === 'fulfilled').map((batch) => batch.value);
+      if (!successful.length) throw batches.find((batch) => batch.status === 'rejected')?.reason || new Error('Search query failed.');
+
+      const recordsById = new Map();
+      for (const records of successful) {
+        for (const record of records) recordsById.set(String(record._id), record);
+      }
+      return {
+        items: [...recordsById.values()].map((record) => ({
+          ...catalog.toDto(record),
+          mediaType: catalog.type
+        })),
+        hasMoreCandidate: successful.some((batch) => batch.length === candidateLimit)
+      };
+    }));
+
+    const uniqueItems = [];
+    const seen = new Set();
+    for (const item of groups.flatMap((group) => group.items)) {
+      const identity = item.mediaType === 'movie' ? item.imdbId
+        : item.mediaType === 'tv' ? item.tmdbId : item.malId;
+      const key = item.mediaType + ':' + String(identity || '');
+      if (!identity || seen.has(key)) continue;
+      seen.add(key);
+      uniqueItems.push(item);
     }
-    return c.json({ items, total: items.length });
+
+    const rankedItems = rankSearchResults(uniqueItems, query);
+    const items = rankedItems.slice(offset, offset + limit);
+    const hasMore = page < 20 && (
+      rankedItems.length > offset + limit ||
+      groups.some((group) => group.hasMoreCandidate)
+    );
+    return c.json({
+      items,
+      hasMore,
+      page,
+      limit,
+      returned: items.length,
+      minQueryLength: 3,
+      sort: query ? 'relevance_then_newest' : 'newest_first'
+    });
   } catch (error) {
-    console.error('Global title search failed:', error.message);
-    return c.json({ error: 'Search is temporarily unavailable.', items: [] }, 503);
+    console.error('Global catalog search failed:', error?.message || 'Unknown error');
+    return c.json({ error: 'Search is temporarily unavailable. Please retry.', items: [], hasMore: false }, 503);
   }
 });
 

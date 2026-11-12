@@ -30,18 +30,32 @@ test("TV and Anime load-more requests exclude already visible canonical IDs", as
   assert.equal((api.match(/\$sample: \{ size: limit \}/g) || []).length, 3);
 });
 
-test("global search interleaves Movies, TV series, and Anime", async () => {
+test("global search uses a separate modal with type/year filters and direct media navigation", async () => {
   const api = await read("../src/app.js");
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(api, /movies\.map\(\(item\) => \(\{ \.\.\.movieDto\(item\), mediaType: 'movie' \}\)\)/);
-  assert.match(api, /shows\.map\(\(item\) => \(\{ \.\.\.tvSeriesDto\(item\), mediaType: 'tv' \}\)\)/);
-  assert.match(api, /anime\.map\(\(item\) => \(\{ \.\.\.animeSeriesDto\(item\), mediaType: 'anime' \}\)\)/);
-  assert.match(api, /activeGroups.*Math\.random\(\)/s);
+  const css = await read("../app/globals.css");
+  assert.match(api, /app\.get\('\/api\/search'/);
+  assert.match(api, /buildSearchYearFilter/);
+  assert.match(api, /rankSearchResults\(uniqueItems, query\)/);
+  assert.match(api, /candidateLimit/);
+  assert.match(api, /fuzzyPattern/);
+  assert.match(api, /Promise\.allSettled\(\[textTask, partialTask\]\)/);
+  assert.match(api, /hasMoreCandidate/);
+  assert.match(api, /hasMore/);
   assert.match(app, /className="search-overlay"/);
   assert.match(app, /role="dialog" aria-modal="true"/);
-  assert.match(app, /Mixed results · Movies · TV series · Anime/);
-  assert.match(app, /View full search page/);
-  assert.match(app, /onClick=\{\(\) => setSearchOpen\(true\)\}/);
+  assert.match(app, /search-type-filters/);
+  assert.match(app, /search-year-filter/);
+  assert.match(app, /searchInput\.trim\(\)\.length < 3/);
+  assert.match(app, /setSearchInput\(event\.target\.value\)/);
+  assert.match(app, /loadMoreSearch/);
+  assert.match(app, /onClick=\{\(\) => openSearchResult\(item\)\}/);
+  assert.match(app, /router\.push\("\/watch\/" \+ encodeURIComponent\(imdbId\)\)/);
+  assert.match(app, /router\.push\("\/tv\/" \+ tmdbId\)/);
+  assert.match(app, /router\.push\("\/anime\/" \+ encodeURIComponent\(malId\)\)/);
+  assert.match(css, /\.search-type-button\.active/);
+  assert.match(css, /\.search-year-filter select/);
+  assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {

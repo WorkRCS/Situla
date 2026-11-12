@@ -586,10 +586,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const router = useRouter();
   const tab = view;
   const [query, setQuery] = useState(initialQuery);
+  const [searchInput, setSearchInput] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchType, setSearchType] = useState("all");
+  const [searchYear, setSearchYear] = useState("all");
+  const [searchError, setSearchError] = useState("");
+  const [searchHasMore, setSearchHasMore] = useState(false);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchLoadingMore, setSearchLoadingMore] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
   const demoSignedIn = Boolean(accountUser);
@@ -716,36 +723,57 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [tab, storageReady]);
 
   useEffect(() => {
-    const value = query.trim();
-    if (value.length < 2) {
+    if (!searchOpen) return;
+    const value = searchInput.trim();
+    if (value.length > 0 && value.length < 3) {
       setSuggestions([]);
       setSuggestionsLoading(false);
+      setSearchError("");
+      setSearchHasMore(false);
+      setSearchPage(1);
       return;
     }
+    const hasFilters = searchType !== "all" || searchYear !== "all";
+    if (!value && !hasFilters) {
+      setSuggestions([]);
+      setSuggestionsLoading(false);
+      setSearchError("");
+      setSearchHasMore(false);
+      setSearchPage(1);
+      return;
+    }
+
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSuggestionsLoading(true);
+      setSearchError("");
+      const params = new URLSearchParams({ page: "1", limit: "20", type: searchType });
+      if (value.length >= 3) params.set("q", value);
+      if (searchYear !== "all") params.set("year", searchYear);
       try {
         const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
-        const response = await fetch("/api/search?q=" + encodeURIComponent(value), {
-          cache: "no-store",
-          signal
-        });
+        const response = await fetch("/api/search?" + params.toString(), { cache: "no-store", signal });
         const payload = await response.json().catch(() => ({}));
-        if (response.ok && !controller.signal.aborted) {
+        if (!response.ok) throw new Error(payload.error || "Search is temporarily unavailable. Please retry.");
+        if (!controller.signal.aborted) {
           setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+          setSearchHasMore(payload.hasMore === true);
+          setSearchPage(Number(payload.page) || 1);
         }
       } catch {
-        if (!controller.signal.aborted) setSuggestions([]);
+        if (!controller.signal.aborted) {
+          setSearchError("Search could not load right now. Check your connection and try again.");
+          setSearchHasMore(false);
+        }
       } finally {
         if (!controller.signal.aborted) setSuggestionsLoading(false);
       }
-    }, 220);
+    }, value.length >= 3 ? 180 : 0);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [searchInput, searchOpen, searchType, searchYear]);
 
   useEffect(() => {
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
@@ -1027,6 +1055,45 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setSearchOpen(false);
     if (navigate) router.push("/watch/" + encodeURIComponent(imdbId));
   }, [router]);
+
+  async function loadMoreSearch() {
+    if (searchLoadingMore || !searchHasMore) return;
+    const nextPage = searchPage + 1;
+    const value = searchInput.trim();
+    const params = new URLSearchParams({ page: String(nextPage), limit: "20", type: searchType });
+    if (value.length >= 3) params.set("q", value);
+    if (searchYear !== "all") params.set("year", searchYear);
+    setSearchLoadingMore(true);
+    setSearchError("");
+    try {
+      const response = await fetch("/api/search?" + params.toString(), {
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000)
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "More search results are unavailable.");
+      const nextItems = Array.isArray(payload.items) ? payload.items : [];
+      setSuggestions((current) => {
+        const ids = new Set(current.map((item) => item.mediaType + ":" + String(
+          item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId
+        )));
+        return [...current, ...nextItems.filter((item) => {
+          const id = item.mediaType + ":" + String(
+            item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId
+          );
+          if (ids.has(id)) return false;
+          ids.add(id);
+          return true;
+        })];
+      });
+      setSearchPage(Number(payload.page) || nextPage);
+      setSearchHasMore(payload.hasMore === true);
+    } catch {
+      setSearchError("More results could not load. Your current results are still available.");
+    } finally {
+      setSearchLoadingMore(false);
+    }
+  }
 
   function openSearchResult(item) {
     setSearchOpen(false);
@@ -1377,8 +1444,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
             <div className="search-dialog-heading">
               <div>
-                <span>ALL SITULA CATALOGS</span>
-                <h2 id="search-dialog-title">Search movies, TV & anime</h2>
+                <span>SMART CATALOG SEARCH</span>
+                <h2 id="search-dialog-title">Find your next watch</h2>
+                <p>Movies, TV series and Anime · sorted by release date</p>
               </div>
               <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
                 <BootstrapIcon icon="x-lg" size={19} />
@@ -1388,34 +1456,68 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <BootstrapIcon icon="search" size={18} />
               <input
                 autoFocus
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") setSearchOpen(false);
-                  if (event.key === "Enter" && query.trim().length >= 2) {
-                    setSearchOpen(false);
-                    router.push("/search?q=" + encodeURIComponent(query.trim()));
-                  }
                 }}
-                placeholder="Type a title, person or IMDb/MAL ID…"
-                aria-label="Search all media types"
+                placeholder="Search a title or IMDb / TMDB / MAL ID…"
+                aria-label="Search all Situla catalogs"
               />
-              {query && (
-                <button type="button" onClick={() => { setQuery(""); setSuggestions([]); }} aria-label="Clear search">
+              {searchInput && (
+                <button type="button" onClick={() => { setSearchInput(""); setSuggestions([]); setSearchError(""); }} aria-label="Clear search">
                   <BootstrapIcon icon="x-lg" size={16} />
                 </button>
               )}
             </label>
-            {query.trim().length < 2 ? (
-              <div className="suggestion-empty">Type at least two characters to search across Movies, TV series and Anime.</div>
+            <div className="search-filter-row">
+              <div className="search-type-filters" role="group" aria-label="Filter by media type">
+                {[
+                  { value: "all", label: "All" },
+                  { value: "movie", label: "Movies" },
+                  { value: "tv", label: "TV series" },
+                  { value: "anime", label: "Anime" }
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    className={"search-type-button" + (searchType === filter.value ? " active" : "")}
+                    aria-pressed={searchType === filter.value}
+                    onClick={() => setSearchType(filter.value)}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              <label className="search-year-filter">
+                <span>Release year</span>
+                <select value={searchYear} onChange={(event) => setSearchYear(event.target.value)} aria-label="Filter by release year">
+                  <option value="all">All years</option>
+                  {Array.from({ length: Math.max(0, new Date().getFullYear() - 1869) }, (_, index) => new Date().getFullYear() - index)
+                    .map((year) => <option key={year} value={String(year)}>{year}</option>)}
+                </select>
+              </label>
+            </div>
+
+            {searchInput.trim().length > 0 && searchInput.trim().length < 3 ? (
+              <div className="suggestion-empty">Enter at least 3 characters to start smart search.</div>
+            ) : !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
+              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog or release year to browse the newest titles.</div>
             ) : suggestionsLoading ? (
-              <div className="suggestion-loading"><span className="suggestion-spinner" /> Finding matching titles…</div>
+              <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
+            ) : searchError && !suggestions.length ? (
+              <div className="suggestion-empty" role="alert">{searchError}</div>
             ) : suggestions.length ? (
               <>
-                <div className="search-results-caption">Mixed results · Movies · TV series · Anime</div>
-                <div className="search-results-list" role="listbox" aria-label="Mixed search results">
+                <div className="search-results-caption">
+                  {suggestions.length} results shown · {searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
+                  {searchYear !== "all" ? " · " + searchYear : ""}
+                  {searchInput.trim().length >= 3 ? " · Smart relevance + newest first" : " · Newest first"}
+                </div>
+                <div className="search-results-list" role="listbox" aria-label="Search results">
                   {suggestions.map((item) => {
                     const identity = item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+                    const date = item.releaseDate || item.firstAirDate || item.airedFrom || (item.releaseYear ? String(item.releaseYear) : "Release date unavailable");
                     return (
                       <button
                         key={item.mediaType + ":" + identity}
@@ -1425,34 +1527,30 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         aria-selected="false"
                         onClick={() => openSearchResult(item)}
                       >
-                        {item.posterUrl
-                          ? <img src={optimizeTmdbImageUrl(item.posterUrl, "w92")} alt="" loading="lazy" decoding="async" />
+                        {item.posterUrl || item.posterFallbackUrl
+                          ? <img src={optimizeTmdbImageUrl(item.posterUrl || item.posterFallbackUrl, "w92")} alt="" loading="lazy" decoding="async" />
                           : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
                         <span className="suggestion-title">
                           <strong>{item.titleEnglish || item.title}</strong>
-                          <small>{String(item.mediaType || "movie").toUpperCase()} · {item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "Release year unknown"}</small>
+                          <small>{String(item.mediaType || "movie").toUpperCase()} · {date}</small>
                         </span>
                         <BootstrapIcon icon="play-fill" size={16} />
                       </button>
                     );
                   })}
                 </div>
+                {searchError && <div className="search-inline-error" role="status">{searchError}</div>}
                 <div className="search-dialog-footer">
-                  <span>{suggestions.length} mixed catalog matches</span>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => {
-                      setSearchOpen(false);
-                      router.push("/search?q=" + encodeURIComponent(query.trim()));
-                    }}
-                  >
-                    View full search page
-                  </button>
+                  <span>{searchHasMore ? "More matches available" : "End of matching results"}</span>
+                  {searchHasMore && (
+                    <button type="button" className="ghost-button" onClick={loadMoreSearch} disabled={searchLoadingMore}>
+                      {searchLoadingMore ? "Loading…" : "Load more"}
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
-              <div className="suggestion-empty">No matching movies, TV series or anime found.</div>
+              <div className="suggestion-empty">No matching titles found for these filters.</div>
             )}
           </section>
         </div>,
@@ -1743,7 +1841,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 )}
               </div>
             ) : (
-              <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim() ? "No matching titles found" : "Search the full catalog"}</p><p className="mt-2 text-xs">{query.trim() ? "Try another title or a shorter search." : "Search movies, TV series and anime together."}</p></div>
+              <div className="empty-panel"><Icon name="search" size={30} /><p className="mt-3 font-bold text-white">{query.trim().length >= 3 ? "No matching titles found" : "Search the full catalog"}</p><p className="mt-2 text-xs">{query.trim().length > 0 && query.trim().length < 3 ? "Enter at least 3 characters to search." : query.trim() ? "Try another title or a different spelling." : "Search movies, TV series and anime together."}</p></div>
             )}
           </section>
         )}

@@ -4324,3 +4324,78 @@ body:has(.login-page) .site-footer { display:none !important; }
     backdrop-filter:none !important;
   }
 }
+
+
+/* Search dialog filters and paginated catalog results. */
+.search-dialog {
+  width:min(860px,100%);
+  max-height:min(88dvh,820px);
+}
+.search-dialog-heading p {
+  margin:5px 0 0;
+  color:#9297a7;
+  font-size:10px;
+}
+.search-filter-row {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+.search-type-filters {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  min-width:0;
+}
+.search-type-button {
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:9px;
+  color:#aeb4c2;
+  background:rgba(255,255,255,.035);
+  font-size:11px;
+  font-weight:750;
+}
+.search-type-button:hover,.search-type-button.active {
+  color:#f4cf88;
+  border-color:rgba(232,182,91,.48);
+  background:rgba(232,182,91,.11);
+}
+.search-year-filter {
+  display:grid;
+  flex:none;
+  gap:4px;
+  color:#9297a7;
+  font-size:9px;
+  font-weight:800;
+}
+.search-year-filter select {
+  min-width:118px;
+  min-height:34px;
+  padding:6px 28px 6px 9px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  color:#f4f5f8;
+  background:#090b11;
+  font-size:11px;
+}
+.search-results-list {
+  flex:1 1 auto;
+  max-height:48dvh;
+  gap:3px;
+}
+.search-inline-error {
+  padding:6px 9px;
+  border-radius:8px;
+  color:#f2b8b8;
+  background:rgba(180,64,64,.10);
+  font-size:10px;
+}
+@media(max-width:620px) {
+  .search-filter-row { align-items:stretch; flex-direction:column; }
+  .search-year-filter { grid-template-columns:auto 1fr; align-items:center; }
+  .search-year-filter select { width:100%; }
+  .search-results-list { max-height:50dvh; }
+}
