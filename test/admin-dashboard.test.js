@@ -47,6 +47,10 @@ test("Admin member directory renders readable responsive member cards", async ()
   assert.match(dashboard, /Online now/);
   assert.match(dashboard, /Offline/);
   assert.match(dashboard, /setInterval\(refreshVisibleStats, 15 \* 1000\)/);
+  const tracker = await read("../app/components/presence-tracker.jsx");
+  assert.match(tracker, /heartbeatRetryTimer/);
+  assert.match(tracker, /sendHeartbeat\(false\)/);
+
   assert.match(dashboard, /openModal\("users", "all"\)/);
   assert.match(styles, /\.admin-user-list\s*\{/);
   assert.match(styles, /\.admin-user-card-facts\s*\{/);

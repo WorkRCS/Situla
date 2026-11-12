@@ -20,6 +20,7 @@ export default function PresenceTracker() {
     let lastInteractionAt = Date.now();
     let lastHeartbeatAt = 0;
     let heartbeatInFlight = false;
+    let heartbeatRetryTimer = null;
     let suspendedRedirected = false;
 
     const markInteraction = () => {
@@ -29,7 +30,33 @@ export default function PresenceTracker() {
 
     async function sendHeartbeat(stop = false, force = false) {
       const now = Date.now();
-      if (!stop && !force && (heartbeatInFlight || now - lastHeartbeatAt < 15 * 1000)) return;
+      if (force && heartbeatRetryTimer) {
+        window.clearTimeout(heartbeatRetryTimer);
+        heartbeatRetryTimer = null;
+      }
+      if (!stop && heartbeatInFlight) {
+        if (!heartbeatRetryTimer) {
+          heartbeatRetryTimer = window.setTimeout(() => {
+            heartbeatRetryTimer = null;
+            sendHeartbeat(false, force);
+          }, 250);
+        }
+        return;
+      }
+      const cooldownRemaining = 15 * 1000 - (now - lastHeartbeatAt);
+      if (!stop && !force && cooldownRemaining > 0) {
+        if (!heartbeatRetryTimer) {
+          heartbeatRetryTimer = window.setTimeout(() => {
+            heartbeatRetryTimer = null;
+            sendHeartbeat(false);
+          }, Math.max(50, cooldownRemaining));
+        }
+        return;
+      }
+      if (heartbeatRetryTimer) {
+        window.clearTimeout(heartbeatRetryTimer);
+        heartbeatRetryTimer = null;
+      }
       if (!stop) {
         lastHeartbeatAt = now;
         heartbeatInFlight = true;
@@ -65,6 +92,10 @@ export default function PresenceTracker() {
     interactionEvents.forEach((eventName) => window.addEventListener(eventName, markInteraction, { passive: true }));
     const onVisibility = () => sendHeartbeat(false, true);
     const onPageHide = () => {
+      if (heartbeatRetryTimer) {
+        window.clearTimeout(heartbeatRetryTimer);
+        heartbeatRetryTimer = null;
+      }
       sendHeartbeat(true);
       try { sessionStorage.removeItem("situla:activity-id:v1"); } catch {}
     };
@@ -75,6 +106,7 @@ export default function PresenceTracker() {
 
     return () => {
       window.clearInterval(interval);
+      if (heartbeatRetryTimer) window.clearTimeout(heartbeatRetryTimer);
       interactionEvents.forEach((eventName) => window.removeEventListener(eventName, markInteraction));
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
