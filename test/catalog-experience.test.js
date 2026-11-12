@@ -131,6 +131,22 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
 });
 
 
+test("TV and Anime series cards both share their poster, title, and canonical detail link", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("\\nfunction CatalogSpotlight"));
+  assert.match(seriesCard, /const isAnime = kind === "anime"/);
+  assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\)\) return/);
+  assert.match(seriesCard, /title: title \|\| \(isTv \? "TV series" : "Anime"\)/);
+  assert.match(seriesCard, /posterUrl: item\.posterUrl \|\| item\.posterFallbackUrl/);
+  assert.match(seriesCard, /\{\(isTv \|\| isAnime\) && href &&/);
+  assert.match(seriesCard, /title=\{isTv \? "Share TV series" : "Share anime"\}/);
+  assert.match(app, /navigator\.canShare\(withFile\)/);
+  assert.match(app, /new File\(\[blob\]/);
+  assert.match(app, /navigator\.share\(data\)/);
+  assert.match(app, /navigator\.clipboard\.writeText\(url\)/);
+  assert.match(app, /"\/anime\/" \+ encodeURIComponent\(malId\)/);
+});
+
 test("mobile/tablet bottom navigation has no in-app Back or Search button", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");

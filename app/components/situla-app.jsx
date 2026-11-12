@@ -277,6 +277,7 @@ function movieNavigationKey(movie) {
 function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
   const isTv = kind === "tv";
+  const isAnime = kind === "anime";
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
@@ -297,10 +298,10 @@ function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
   async function handleShare(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (!href || !isTv) return;
+    if (!href || (!isTv && !isAnime)) return;
     try {
       const result = await shareMediaCard({
-        title: item.title || "TV series",
+        title: title || (isTv ? "TV series" : "Anime"),
         href,
         posterUrl: item.posterUrl || item.posterFallbackUrl
       });
@@ -350,8 +351,8 @@ function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
           {cardContent}
         </button>
       )}
-      {isTv && href && <>
-        <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (title || "TV series")} title="Share TV series"><Share2 size={15} /></button>
+      {(isTv || isAnime) && href && <>
+        <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (title || (isTv ? "TV series" : "anime"))} title={isTv ? "Share TV series" : "Share anime"}><Share2 size={15} /></button>
         {shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
       </>}
     </article>
