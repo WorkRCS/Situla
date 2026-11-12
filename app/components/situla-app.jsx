@@ -13,7 +13,6 @@ import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
-import { isPopularCatalogItem } from "../../src/catalog-popularity.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
 import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2 } from "lucide-react";
 const BOOTSTRAP_ICONS = {
@@ -193,7 +192,11 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
     <>
       <div className="movie-poster">
         <MoviePosterImage movie={movie} />
-        {isPopularCatalogItem(movie, "movie") && <span className="popular-pill">Popular</span>}
+        {movie.catalogBadge && (
+          <span className={"catalog-badge catalog-badge-" + movie.catalogBadge.key}>
+            <span aria-hidden="true">{movie.catalogBadge.icon}</span> {movie.catalogBadge.label}
+          </span>
+        )}
         {movie.voteAverage > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
         )}
@@ -325,7 +328,11 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
     <>
       <div className="movie-poster">
         <SeriesPosterImage item={item} title={title} />
-        {isPopularCatalogItem(item, kind) && <span className="popular-pill">Popular</span>}
+        {item.catalogBadge && (
+          <span className={"catalog-badge catalog-badge-" + item.catalogBadge.key}>
+            <span aria-hidden="true">{item.catalogBadge.icon}</span> {item.catalogBadge.label}
+          </span>
+        )}
         {rating > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
         )}
