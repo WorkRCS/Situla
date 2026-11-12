@@ -27,7 +27,7 @@ test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/n
   assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
   assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
   assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
-  assert.doesNotMatch(script, /fetch\\s*\\(|axios|api\.themoviedb|api\.tvmaze|cinemeta/i);
+  assert.doesNotMatch(script, /fetch\s*\(|axios|api\.themoviedb|api\.tvmaze|cinemeta/i);
   assert.match(script, /\.insertMany\(pending/);
   assert.match(script, /TvSeries/);
   assert.match(script, /AnimeSeries/);
