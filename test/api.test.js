@@ -22,6 +22,28 @@ test('Auth and playback mutation endpoints reject requests without a same-origin
   }
 });
 
+
+test('Email auth validates email and password before touching the database', async () => {
+  const headers = { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' };
+  const invalidEmail = await app.request('/api/auth/email', {
+    method: 'POST', headers, body: JSON.stringify({ email: 'not-an-email', password: 'valid-password-123' })
+  });
+  assert.equal(invalidEmail.status, 400);
+  assert.equal((await invalidEmail.json()).code, 'INVALID_EMAIL');
+
+  const shortPassword = await app.request('/api/auth/email', {
+    method: 'POST', headers, body: JSON.stringify({ email: 'first@example.com', password: 'short' })
+  });
+  assert.equal(shortPassword.status, 400);
+  assert.equal((await shortPassword.json()).code, 'INVALID_PASSWORD');
+
+  const missingPassword = await app.request('/api/auth/email', {
+    method: 'POST', headers, body: JSON.stringify({ email: 'first@example.com' })
+  });
+  assert.equal(missingPassword.status, 400);
+  assert.equal((await missingPassword.json()).code, 'INVALID_PASSWORD');
+});
+
 test('Playback heartbeats validate session identifiers and playing state before database access', async () => {
   const response = await app.request('/api/playback/heartbeat', {
     method: 'POST',

@@ -200,6 +200,16 @@ export function LoginPage() {
   async function submitEmail(event) {
     event.preventDefault();
     if (submitting || !email.trim() || !password) return;
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setAuthError("Enter a valid email address.");
+      return;
+    }
+    const passwordBytes = new TextEncoder().encode(password).length;
+    if (passwordBytes < 10 || passwordBytes > 128) {
+      setAuthError("Use a password with at least 10 characters (maximum 128 bytes).");
+      return;
+    }
     setSubmitting(true);
     setAuthError("");
     try {
@@ -207,7 +217,7 @@ export function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ email, password, rememberMe })
+        body: JSON.stringify({ email: normalizedEmail, password, rememberMe })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Sign-in failed. Please try again.");
@@ -247,12 +257,13 @@ export function LoginPage() {
               <span>Password</span>
               <span className="account-input-wrap">
                 <LockKeyhole size={17} />
-                <input type={showPassword ? "text" : "password"} name="password" autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+                <input type={showPassword ? "text" : "password"} name="password" autoComplete="current-password" placeholder="At least 10 characters" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} maxLength={128} required />
                 <button type="button" className="account-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </span>
             </label>
+            <p className="login-auth-hint">New email? Situla will create a Free account automatically. Existing email? Enter your account password to sign in. Password: 10–128 bytes.</p>
             <div className="login-form-options">
               <label className="account-remember">
                 <input type="checkbox" name="rememberMe" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />

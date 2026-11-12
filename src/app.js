@@ -327,16 +327,19 @@ function displayNameFromEmail(email) {
 app.post('/api/auth/email', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
+  const body = await c.req.json().catch(() => ({}));
+  const email = normalizeEmail(body.email);
+  const password = body.password;
+  const rememberMe = body.rememberMe !== false;
+  if (!validEmail(email)) {
+    return c.json({ error: 'Enter a valid email address.', code: 'INVALID_EMAIL' }, 400);
+  }
+  if (!validPassword(password)) {
+    return c.json({ error: 'Password must contain at least 10 characters and no more than 128 bytes.', code: 'INVALID_PASSWORD' }, 400);
+  }
   try {
     await connectDatabase();
     authSecret();
-    const body = await c.req.json().catch(() => ({}));
-    const email = normalizeEmail(body.email);
-    const password = body.password;
-    const rememberMe = body.rememberMe !== false;
-    if (!validEmail(email) || !validPassword(password)) {
-      return c.json({ error: 'Enter a valid email and a password of at least 10 characters.', code: 'INVALID_CREDENTIALS_FORMAT' }, 400);
-    }
     const ip = getClientIp(c) || 'unknown';
     if (!await enforceRateLimit('email-login:' + ip + ':' + email, 8, 15 * 60)) {
       return c.json({ error: 'Too many sign-in attempts. Please try again later.', code: 'RATE_LIMITED' }, 429);
