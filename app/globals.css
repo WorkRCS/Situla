@@ -4429,3 +4429,83 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 
 
+
+
+/* Cross-catalog search tag filters use the same Hot/Popular/Featured palette as cards. */
+.search-tag-filter-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.search-tag-filter-label {
+  flex:none;
+  color:#9297a7;
+  font-size:10px;
+  font-weight:800;
+}
+.search-tag-filters {
+  display:flex;
+  flex:1 1 auto;
+  flex-wrap:wrap;
+  gap:7px;
+  min-width:0;
+}
+.search-tag-button {
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  background:rgba(255,255,255,.035);
+  color:#c0c5d0;
+  font-size:11px;
+  font-weight:800;
+  transition:background .16s,border-color .16s,box-shadow .16s;
+}
+.search-tag-button.search-tag-hot {
+  border-color:rgba(248,113,113,.3);
+  background:rgba(127,29,29,.18);
+  color:#ffb7b7;
+}
+.search-tag-button.search-tag-popular {
+  border-color:rgba(74,222,128,.3);
+  background:rgba(20,83,45,.2);
+  color:#b8f5ca;
+}
+.search-tag-button.search-tag-featured {
+  border-color:rgba(250,204,21,.34);
+  background:rgba(133,77,14,.2);
+  color:#ffe49a;
+}
+.search-tag-button.search-tag-hot.active {
+  border-color:rgba(248,113,113,.85);
+  background:linear-gradient(135deg,rgba(127,29,29,.98),rgba(220,38,38,.96));
+  color:#fff1f2;
+  box-shadow:0 4px 14px rgba(220,38,38,.22);
+}
+.search-tag-button.search-tag-popular.active {
+  border-color:rgba(74,222,128,.8);
+  background:linear-gradient(135deg,rgba(20,83,45,.98),rgba(22,163,74,.96));
+  color:#ecfff1;
+  box-shadow:0 4px 14px rgba(22,163,74,.2);
+}
+.search-tag-button.search-tag-featured.active {
+  border-color:rgba(250,204,21,.88);
+  background:linear-gradient(135deg,rgba(133,77,14,.98),rgba(234,179,8,.96));
+  color:#fffbea;
+  box-shadow:0 4px 14px rgba(234,179,8,.2);
+}
+.search-tag-button.search-tag-all.active {
+  border-color:rgba(232,182,91,.52);
+  background:rgba(232,182,91,.13);
+  color:#f4cf88;
+}
+.search-tag-button:focus-visible {
+  outline:2px solid rgba(255,255,255,.7);
+  outline-offset:2px;
+}
+@media(max-width:620px) {
+  .search-tag-filter-row { align-items:flex-start; flex-direction:column; gap:7px; }
+  .search-tag-filters { width:100%; }
+}
