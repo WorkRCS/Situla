@@ -397,4 +397,5 @@ test("catalog card titles and TV/Anime metadata wrap cleanly at mobile and table
   assert.match(responsivePolish, /\.catalog-grid \.movie-card \.series-card-meta/);
   assert.match(responsivePolish, /\.movies-catalog-page,[\s\S]*?\.tv-catalog-page,[\s\S]*?\.anime-catalog-page/);
   assert.match(responsivePolish, /:is\(button,a,\[role="button"\]\):focus-visible/);
+  assert.match(responsivePolish, /:where\(\.search-dialog,\.history-card,\.about-situla-card/);
 });
