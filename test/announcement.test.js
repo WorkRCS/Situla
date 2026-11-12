@@ -125,7 +125,9 @@ test('movie and TV poster cards invoke native share with canonical links and pos
   assert.match(cards, /navigator\.share/);
   assert.match(cards, /navigator\.canShare/);
   assert.match(cards, /files: \[file\]/);
-  assert.match(cards, /Poster:/);
+  assert.doesNotMatch(cards, /Poster:/);
+  assert.match(cards, /\/api\/share-poster\?url=/);
+  assert.match(cards, /text: title, url/);
   assert.match(cards, /className="share-button"/);
   assert.match(cards, /function movieCardHref/);
   assert.match(cards, /function seriesCardHref/);
