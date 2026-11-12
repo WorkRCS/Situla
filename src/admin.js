@@ -60,7 +60,6 @@ router.use('*', async (c, next) => {
   const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || ''));
   const knownRoute =
     (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales', '/announcements'].includes(path)) ||
-    validCatalogTarget ||
     (method === 'GET' && segments.length === 2 && ['guests', 'users'].includes(segments[0]) && isObjectId(segments[1])) ||
     (method === 'GET' && segments.length === 3 && segments[0] === 'announcements' && isObjectId(segments[1]) && segments[2] === 'image') ||
     (method === 'PATCH' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'membership') ||
