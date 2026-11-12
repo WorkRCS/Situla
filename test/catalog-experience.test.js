@@ -199,6 +199,31 @@ test("TV and Anime series cards both share their poster, title, and canonical de
   assert.match(css, /\.series-card-tv \.share-feedback\{top:85px\}/);
 });
 
+test("Movie, TV and Anime shares attach poster files and keep exact detail links separate", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const api = await read("../src/app.js");
+  const share = app.slice(app.indexOf("function shareMediaCard"), app.indexOf("const MovieCard"));
+  const movie = app.slice(app.indexOf("const MovieCard"), app.indexOf("function SeriesPosterImage"));
+  const series = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  const proxy = api.slice(api.indexOf("app.get('/api/share-poster'"), api.indexOf("app.route('/api/admin'"));
+  assert.match(share, /const data = \{ files: \[file\], title, text: title, url \}/);
+  assert.match(share, /navigator\.canShare\(data\)/);
+  assert.match(share, /navigator\.share\(data\)/);
+  assert.doesNotMatch(share, /Poster:\\s*\+|posterUrl\s*\}/);
+  assert.match(share, /\/api\/share-poster\?url=/);
+  assert.match(share, /new File\(\[blob\]/);
+  assert.match(movie, /shareMediaCard\(\{ title, href, posterUrl \}\)/);
+  assert.match(movie, /onPointerEnter=\{prepareSharePoster\}/);
+  assert.match(series, /shareMediaCard\(\{ title: shareTitle, href, posterUrl \}\)/);
+  assert.match(series, /item\.posterUrl \|\| item\.posterFallbackUrl/);
+  assert.match(series, /onPointerEnter=\{prepareSharePoster\}/);
+  assert.match(proxy, /normalizeSharePosterUrl/);
+  assert.match(proxy, /detectSharePosterMimeType/);
+  assert.match(proxy, /redirect: 'manual'/);
+  assert.match(proxy, /SHARE_POSTER_MAX_BYTES/);
+  assert.match(proxy, /Content-Type/);
+});
+ 
 test("Movie, TV and Anime catalogue cards use the same polished card and badge system", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
