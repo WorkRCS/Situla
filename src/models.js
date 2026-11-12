@@ -201,12 +201,15 @@ const userSchema = new mongoose.Schema({
   emailVerified: { type: Boolean, default: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  suspendedUntil: { type: Date, default: null },
+  suspensionReason: { type: String, default: '', maxlength: 240 },
   planId: { type: String, enum: ['free', 'premium'], default: 'free' },
   membership: {
-    billingCycle: { type: String, enum: ['monthly', 'six-months', 'yearly', null], default: null },
+    billingCycle: { type: String, enum: ['monthly', 'six-months', 'yearly', 'custom', null], default: null },
     status: { type: String, enum: ['inactive', 'active', 'expired'], default: 'inactive' },
     startedAt: { type: Date, default: null },
     expiresAt: { type: Date, default: null },
+    durationMonths: { type: Number, min: 1, max: 24, default: null },
     activatedBy: { type: mongoose.Schema.Types.ObjectId, default: null }
   },
   lastLoginAt: { type: Date, default: null }
@@ -293,6 +296,70 @@ playbackSessionSchema.index(
 playbackSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 playbackSessionSchema.index({ userId: 1, status: 1 });
 
+
+const activitySessionSchema = new mongoose.Schema({
+  sessionKey: { type: String, required: true, unique: true },
+  ownerType: { type: String, enum: ['user', 'guest'], required: true },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', default: null },
+  startedAt: { type: Date, required: true },
+  lastSeenAt: { type: Date, required: true },
+  lastActiveAt: { type: Date, default: null },
+  endedAt: { type: Date, default: null },
+  activeSeconds: { type: Number, min: 0, default: 0 },
+  isActive: { type: Boolean, default: false },
+  ipHash: { type: String, default: null },
+  ipEncrypted: { type: String, default: null },
+  userAgent: { type: String, default: '', maxlength: 500 },
+  browser: { type: String, default: 'Unknown', maxlength: 80 },
+  operatingSystem: { type: String, default: 'Unknown', maxlength: 80 },
+  deviceType: { type: String, default: 'Unknown', maxlength: 40 },
+  expiresAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+activitySessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+activitySessionSchema.index({ ownerType: 1, ownerId: 1, lastSeenAt: -1 });
+activitySessionSchema.index({ guestAccessId: 1, lastSeenAt: -1 });
+
+const membershipEventSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  action: { type: String, enum: ['assigned', 'removed'], required: true },
+  planId: { type: String, enum: ['free', 'premium'], required: true },
+  billingCycle: { type: String, default: null },
+  durationMonths: { type: Number, min: 1, max: 24, default: null },
+  startedAt: { type: Date, default: null },
+  expiresAt: { type: Date, default: null },
+  reason: { type: String, default: 'Admin assignment', maxlength: 240 }
+}, { timestamps: true, versionKey: false, strict: true });
+membershipEventSchema.index({ userId: 1, createdAt: -1 });
+
+const paymentTransactionSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  email: { type: String, trim: true, lowercase: true, maxlength: 254, default: '' },
+  provider: { type: String, required: true, maxlength: 60 },
+  transactionRef: { type: String, required: true, maxlength: 180 },
+  status: { type: String, enum: ['pending', 'succeeded', 'failed'], required: true },
+  amountMinor: { type: Number, min: 0, required: true },
+  currency: { type: String, required: true, uppercase: true, maxlength: 3 },
+  planId: { type: String, default: 'premium' },
+  billingCycle: { type: String, default: null },
+  paidAt: { type: Date, default: null },
+  failureCode: { type: String, default: '', maxlength: 100 }
+}, { timestamps: true, versionKey: false, strict: true });
+paymentTransactionSchema.index({ provider: 1, transactionRef: 1 }, { unique: true });
+paymentTransactionSchema.index({ status: 1, createdAt: -1 });
+
+const adminAuditLogSchema = new mongoose.Schema({
+  actorUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  action: { type: String, required: true, maxlength: 100 },
+  targetType: { type: String, required: true, maxlength: 40 },
+  targetId: { type: String, default: '', maxlength: 100 },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  expiresAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+adminAuditLogSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+adminAuditLogSchema.index({ actorUserId: 1, createdAt: -1 });
+
 const authRateLimitSchema = new mongoose.Schema({
   keyHash: { type: String, required: true, unique: true },
   count: { type: Number, min: 0, default: 0 },
@@ -309,3 +376,7 @@ export const GuestSession = mongoose.models.GuestSession || mongoose.model('Gues
 export const UsageState = mongoose.models.UsageState || mongoose.model('UsageState', usageStateSchema);
 export const PlaybackSession = mongoose.models.PlaybackSession || mongoose.model('PlaybackSession', playbackSessionSchema);
 export const AuthRateLimit = mongoose.models.AuthRateLimit || mongoose.model('AuthRateLimit', authRateLimitSchema);
+export const ActivitySession = mongoose.models.ActivitySession || mongoose.model('ActivitySession', activitySessionSchema);
+export const MembershipEvent = mongoose.models.MembershipEvent || mongoose.model('MembershipEvent', membershipEventSchema);
+export const PaymentTransaction = mongoose.models.PaymentTransaction || mongoose.model('PaymentTransaction', paymentTransactionSchema);
+export const AdminAuditLog = mongoose.models.AdminAuditLog || mongoose.model('AdminAuditLog', adminAuditLogSchema);

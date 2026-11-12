@@ -5,16 +5,19 @@ import { connectDatabase } from './db.js';
 import mongoose from 'mongoose';
 import { getCookie, setCookie } from 'hono/cookie';
 import {
-  User, AuthSession, Device, Movie, TvSeries, AnimeSeries
+  User, AuthSession, Device, ActivitySession, Movie, TvSeries, AnimeSeries
 } from './models.js';
 import {
   SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
   authSecret, normalizeEmail, validEmail, validPassword, hashPassword, verifyPassword,
-  getClientIp, isSameOriginRequest, enforceRateLimit, hasAdminRole,
+  getClientIp, isSameOriginRequest, enforceRateLimit, hasAdminRole, keyedHash,
+  getSuspendedSession, isAccountSuspended,
   createLoginSession, getAuthenticatedSession, revokeCurrentSession, safeUser,
   getGoogleOAuthClient, randomToken, safeEqual, clearOAuthCookies
 } from './auth.js';
 import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
+import adminRouter from './admin.js';
+import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import {
   getRollingTenYearWindow, buildRecentDateWindowFilter, buildOlderDateWindowFilter,
   mergeRecentAndOlderFeedItems, PREMIUM_FEED_LIMIT
@@ -40,6 +43,8 @@ app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
   await next();
 });
+
+app.route('/api/admin', adminRouter);
 
 export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
   const requestedPage = Number(c.req.query('page') || 1);
@@ -340,7 +345,7 @@ app.post('/api/auth/email', async (c) => {
     let user = await User.findOne({ email }).select('+passwordHash');
     let created = false;
     if (user) {
-      if (user.status !== 'active') return c.json({ error: 'This account is unavailable.', code: 'ACCOUNT_UNAVAILABLE' }, 403);
+      if (await isAccountSuspended(user)) return c.json({ error: 'This account is suspended.', code: 'ACCOUNT_SUSPENDED', suspendedUntil: user.suspendedUntil || null, reason: user.suspensionReason || '' }, 403);
       if (!user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
         return c.json({ error: 'Email or password is incorrect.', code: 'INVALID_CREDENTIALS' }, 401);
       }
@@ -445,7 +450,7 @@ app.get('/api/auth/google/callback', async (c) => {
     if (!user) {
       user = await User.findOne({ email }).select('+passwordHash');
       if (user) {
-        if (user.status !== 'active') throw new Error('This account is unavailable.');
+        if (await isAccountSuspended(user)) throw new Error('This account is suspended.');
         if (user.googleSub && user.googleSub !== String(identity.sub)) throw new Error('This email is already linked to another Google identity.');
         user.googleSub = String(identity.sub);
         user.emailVerified = true;
@@ -489,6 +494,15 @@ app.get('/api/auth/google/callback', async (c) => {
 app.get('/api/auth/me', async (c) => {
   try {
     await connectDatabase();
+    const suspended = await getSuspendedSession(c);
+    if (suspended) {
+      return c.json({
+        error: 'This account is temporarily suspended.',
+        code: 'ACCOUNT_SUSPENDED',
+        suspendedUntil: suspended.user.suspendedUntil || null,
+        reason: suspended.user.suspensionReason || ''
+      }, 403);
+    }
     const authenticated = await getAuthenticatedSession(c);
     if (!authenticated) return c.json({ error: 'Sign-in required.', code: 'UNAUTHENTICATED' }, 401);
     const user = authenticated.user;
@@ -504,6 +518,76 @@ app.get('/api/auth/me', async (c) => {
     });
   } catch (error) {
     return apiError(c, error, 'Could not load the account session.');
+  }
+});
+
+app.post('/api/presence', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  try {
+    await connectDatabase();
+    const body = await c.req.json().catch(() => ({}));
+    const activityId = String(body.activityId || '');
+    if (!/^[a-zA-Z0-9_-]{16,100}$/.test(activityId) ||
+        (body.active !== undefined && typeof body.active !== 'boolean') ||
+        (body.stop !== undefined && typeof body.stop !== 'boolean')) {
+      return c.json({ error: 'Invalid activity heartbeat.' }, 400);
+    }
+    const principal = await resolvePlaybackPrincipal(c);
+    const sourceSessionId = principal.ownerType === 'user'
+      ? principal.session._id : principal.guestSession._id;
+    const sessionKey = keyedHash('activity-session:' + principal.ownerType + ':' + sourceSessionId + ':' + activityId);
+    const now = new Date();
+    const ip = getClientIp(c);
+    const userAgent = String(c.req.header('user-agent') || '').slice(0, 500);
+    const parsedAgent = parseUserAgent(userAgent);
+    const existing = await ActivitySession.findOne({ sessionKey });
+    const isNewVisit = !existing || Boolean(existing.endedAt);
+    const deltaSeconds = existing && !existing.endedAt
+      ? Math.min(90, Math.max(0, Math.floor((now.getTime() - new Date(existing.lastSeenAt).getTime()) / 1000)))
+      : 0;
+    const set = {
+      ownerType: principal.ownerType,
+      ownerId: principal.ownerId,
+      guestAccessId: principal.ownerType === 'guest' ? principal.ownerId : null,
+      lastSeenAt: now,
+      isActive: body.stop === true ? false : body.active === true,
+      endedAt: body.stop === true ? now : null,
+      ipHash: ip ? keyedHash('activity-ip:' + ip) : null,
+      ipEncrypted: ip ? encryptSensitiveIp(ip) : null,
+      userAgent,
+      browser: parsedAgent.browser,
+      operatingSystem: parsedAgent.operatingSystem,
+      deviceType: parsedAgent.deviceType,
+      expiresAt: new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000)
+    };
+    if (body.active === true && body.stop !== true) set.lastActiveAt = now;
+    if (existing?.endedAt) {
+      await ActivitySession.updateOne({ _id: existing._id }, { $set: {
+        ...set, startedAt: now, activeSeconds: 0, lastActiveAt: body.active === true ? now : null
+      } });
+    } else if (existing) {
+      if (body.active === true && body.stop !== true && deltaSeconds > 0) {
+        await ActivitySession.updateOne(
+          { _id: existing._id, endedAt: null },
+          { $set: set, $inc: { activeSeconds: deltaSeconds } }
+        );
+      } else {
+        await ActivitySession.updateOne({ _id: existing._id }, { $set: set });
+      }
+    } else {
+      await ActivitySession.create({
+        sessionKey, ...set, startedAt: now, activeSeconds: 0,
+        lastActiveAt: body.active === true && body.stop !== true ? now : null
+      });
+    }
+    if (body.stop === true) return c.json({ tracked: true, stopped: true });
+    return c.json({ tracked: true, ownerType: principal.ownerType });
+  } catch (error) {
+    if (error?.code === 'ACCOUNT_SUSPENDED') {
+      return c.json({ error: 'This account is suspended.', code: 'ACCOUNT_SUSPENDED', suspendedUntil: error.suspendedUntil || null }, 403);
+    }
+    return apiError(c, error, 'Activity could not be recorded.');
   }
 });
 
@@ -561,53 +645,6 @@ app.delete('/api/auth/devices/:deviceId', async (c) => {
     return c.json({ revoked: true, currentDevice: isCurrent });
   } catch (error) {
     return apiError(c, error, 'Could not revoke the device.');
-  }
-});
-
-app.patch('/api/admin/users/:userId/membership', async (c) => {
-  const originFailure = requireSameOrigin(c);
-  if (originFailure) return originFailure;
-  try {
-    await connectDatabase();
-    const authenticated = await getAuthenticatedSession(c);
-    if (!authenticated || !hasAdminRole(authenticated.user)) {
-      return c.json({ error: 'Administrator access required.' }, 403);
-    }
-    const userId = c.req.param('userId');
-    if (!/^[a-f0-9]{24}$/i.test(userId)) return c.json({ error: 'Invalid user ID.' }, 400);
-    const body = await c.req.json().catch(() => ({}));
-    if (body.planId === 'free') {
-      const user = await User.findByIdAndUpdate(userId, {
-        $set: {
-          planId: 'free',
-          membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null, activatedBy: authenticated.user._id }
-        }
-      }, { new: true });
-      if (!user) return c.json({ error: 'User not found.' }, 404);
-      return c.json({ user: safeUser(user), payment: 'not_connected' });
-    }
-    if (body.planId !== 'premium' || !['monthly', 'six-months', 'yearly'].includes(body.billingCycle)) {
-      return c.json({ error: 'Select a valid plan and Premium billing cycle.' }, 400);
-    }
-    const months = body.billingCycle === 'monthly' ? 1 : body.billingCycle === 'six-months' ? 6 : 12;
-    const startedAt = new Date();
-    const expiresAt = addCalendarMonths(startedAt, months);
-    const user = await User.findByIdAndUpdate(userId, {
-      $set: {
-        planId: 'premium',
-        membership: {
-          status: 'active',
-          billingCycle: body.billingCycle,
-          startedAt,
-          expiresAt,
-          activatedBy: authenticated.user._id
-        }
-      }
-    }, { new: true });
-    if (!user) return c.json({ error: 'User not found.' }, 404);
-    return c.json({ user: safeUser(user), payment: 'not_connected' });
-  } catch (error) {
-    return apiError(c, error, 'Membership could not be updated.');
   }
 });
 

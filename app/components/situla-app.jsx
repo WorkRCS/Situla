@@ -1219,6 +1219,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                       <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/profile"); }}>
                         <UserRound size={16} /> <span>Visit profile</span> <ArrowUpRight size={14} />
                       </button>
+                      {accountUser?.role === "admin" && (
+                        <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/admin"); }}>
+                          <ShieldCheck size={16} /> <span>Admin dashboard</span> <ArrowUpRight size={14} />
+                        </button>
+                      )}
                       <button type="button" className="header-popover-action is-danger" role="menuitem" onClick={async () => {
                         await fetch("/api/auth/logout", {
                           method: "POST",

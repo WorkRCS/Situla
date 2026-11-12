@@ -161,6 +161,32 @@ export function hasAdminRole(user) {
   return user?.role === 'admin';
 }
 
+export async function isAccountSuspended(user, now = new Date()) {
+  if (!user || user.status !== 'suspended') return false;
+  if (user.suspendedUntil && new Date(user.suspendedUntil) <= now) {
+    user.status = 'active';
+    user.suspendedUntil = null;
+    user.suspensionReason = '';
+    await user.save();
+    return false;
+  }
+  return true;
+}
+
+export async function getSuspendedSession(c) {
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return null;
+  const session = await AuthSession.findOne({
+    tokenHash: hashToken(token),
+    expiresAt: { $gt: new Date() },
+    revokedAt: null
+  });
+  if (!session) return null;
+  const user = await User.findById(session.userId);
+  if (!user || !await isAccountSuspended(user)) return null;
+  return { session, user };
+}
+
 export function selectDevicesToRetain(devices, limit) {
   return [...devices].sort((left, right) => {
     const leftSlot = Number.isInteger(left.slot) ? left.slot : Number.POSITIVE_INFINITY;
@@ -314,8 +340,8 @@ export async function getAuthenticatedSession(c) {
     revokedAt: null
   });
   if (!session) return null;
-  const user = await User.findOne({ _id: session.userId, status: 'active' });
-  if (!user) return null;
+  const user = await User.findById(session.userId);
+  if (!user || await isAccountSuspended(user) || user.status !== 'active') return null;
   await enforceUserDeviceLimit(user);
   const device = await Device.findOne({
     _id: session.deviceId,
@@ -363,8 +389,11 @@ export function safeUser(user) {
       billingCycle: user.membership?.billingCycle || null,
       status: user.membership?.status || 'inactive',
       startedAt: user.membership?.startedAt || null,
-      expiresAt: user.membership?.expiresAt || null
+      expiresAt: user.membership?.expiresAt || null,
+      durationMonths: user.membership?.durationMonths || null
     },
+    suspendedUntil: user.suspendedUntil || null,
+    suspensionReason: user.suspensionReason || '',
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt || null
   };

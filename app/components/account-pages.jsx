@@ -395,14 +395,16 @@ export function ProfilePage() {
   const membershipActive = account?.planId === "premium" && membership.status === "active" &&
     (!membership.expiresAt || new Date(membership.expiresAt) > now);
   const activeBilling = PREMIUM_BILLING.find((item) => item.id === membership.billingCycle) || null;
+  const customGrantMonths = membership.billingCycle === 'custom' ? Number(membership.durationMonths) || null : null;
+  const membershipMonths = activeBilling?.months || customGrantMonths;
   const startedAt = membership.startedAt ? String(membership.startedAt).slice(0, 10) :
     account?.createdAt ? String(account.createdAt).slice(0, 10) : today;
   const expiresAt = membership.expiresAt ? String(membership.expiresAt).slice(0, 10) : null;
   const daysActive = Math.max(0, daysBetween(startedAt, today));
   const daysRemaining = expiresAt ? daysBetween(today, expiresAt) : null;
   const renewalAvailable = membershipActive && daysRemaining !== null && daysRemaining <= 21;
-  const elapsedPercent = activeBilling && daysRemaining !== null
-    ? Math.min(100, Math.max(0, (daysActive / (activeBilling.months * 30)) * 100)) : 0;
+  const elapsedPercent = membershipMonths && daysRemaining !== null
+    ? Math.min(100, Math.max(0, (daysActive / (membershipMonths * 30)) * 100)) : 0;
   const activeLabel = daysActive === 1 ? "1 day" : daysActive + " days";
   const expiryLabel = !membershipActive ? "No Premium subscription" :
     daysRemaining < 0 ? "Expired" : daysRemaining === 0 ? "Expires today" : daysRemaining + " days left";
@@ -474,7 +476,7 @@ export function ProfilePage() {
               </div>
               <div className="profile-plan-heading">
                 <div><span className="profile-overline">YOUR CURRENT PLAN</span><h2>{account.planId === "premium" ? "Premium" : "Free"}</h2><p>{account.planId === "premium" ? "More room for every story." : "Your Situla account is active."}</p></div>
-                <div className="profile-plan-price"><strong>{activeBilling ? "₹" + activeBilling.monthlyPrice.toLocaleString("en-IN") : "Free"}</strong><span>/ month</span><small>{activeBilling?.billingLabel || "No subscription"}</small></div>
+                <div className="profile-plan-price"><strong>{activeBilling ? "₹" + activeBilling.monthlyPrice.toLocaleString("en-IN") : membershipActive && customGrantMonths ? "Admin grant" : "Free"}</strong>{activeBilling && <span>/ month</span>}<small>{activeBilling?.billingLabel || (membershipActive && customGrantMonths ? customGrantMonths + "-month administrator grant" : "No subscription")}</small></div>
               </div>
               <div className="profile-purchase-row">
                 <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> {membershipActive ? "Premium · Active" : "Free plan · Active"} <Sparkles size={15} /></button>
@@ -488,7 +490,7 @@ export function ProfilePage() {
               <div className="profile-plan-stats">
                 <div><CalendarDays size={16} /><span><small>ACTIVE FOR</small><strong>{activeLabel}</strong></span></div>
                 <div><Clock3 size={16} /><span><small>EXPIRY STATUS</small><strong>{expiryLabel}</strong></span></div>
-                <div><CreditCard size={16} /><span><small>BILLING CYCLE</small><strong>{activeBilling?.label || 'Free'}</strong></span></div>
+                <div><CreditCard size={16} /><span><small>BILLING CYCLE</small><strong>{activeBilling?.label || (membershipActive && customGrantMonths ? customGrantMonths + " months · Admin grant" : 'Free')}</strong></span></div>
               </div>
               {renewalAvailable ? (
                 <div className="profile-renewal-panel">

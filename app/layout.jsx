@@ -3,6 +3,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import Script from "next/script";
 import SiteFooter from "./components/site-footer.jsx";
+import PresenceTracker from "./components/presence-tracker.jsx";
 
 const extensionAttributeCleanup = `(function () {
   var isInjectedAttribute = function (name) {
@@ -75,6 +76,7 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning>
         {children}
+        <PresenceTracker />
         <SiteFooter />
       </body>
     </html>

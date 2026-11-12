@@ -1,5 +1,5 @@
 import { getCookie, setCookie } from 'hono/cookie';
-import { randomToken, hashToken, keyedHash, getClientIp, GUEST_COOKIE, getAuthenticatedSession } from './auth.js';
+import { randomToken, hashToken, keyedHash, getClientIp, GUEST_COOKIE, getAuthenticatedSession, getSuspendedSession } from './auth.js';
 import { GuestAccess, GuestSession, UsageState, PlaybackSession } from './models.js';
 import { getWatchPolicy, getAccessSnapshot } from './membership-policy.js';
 
@@ -10,7 +10,15 @@ const GUEST_SESSION_AGE_SECONDS = 30 * 24 * 60 * 60;
 export async function resolvePlaybackPrincipal(c) {
   const authenticated = await getAuthenticatedSession(c);
   if (authenticated) {
-    return { ownerType: 'user', ownerId: authenticated.user._id, user: authenticated.user, device: authenticated.device };
+    return { ownerType: 'user', ownerId: authenticated.user._id, user: authenticated.user, device: authenticated.device, session: authenticated.session };
+  }
+  const suspended = await getSuspendedSession(c);
+  if (suspended) {
+    const error = new Error('This account is suspended.');
+    error.status = 403;
+    error.code = 'ACCOUNT_SUSPENDED';
+    error.suspendedUntil = suspended.user.suspendedUntil || null;
+    throw error;
   }
   const ip = getClientIp(c);
   if (!ip) {

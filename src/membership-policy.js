@@ -15,8 +15,10 @@ export function getWatchPolicy(user = null, now = new Date()) {
     membership.status === 'active' &&
     (!membership.expiresAt || new Date(membership.expiresAt) > now);
   if (!premiumActive) return { planId: 'free', billingCycle: null, ...WATCH_POLICIES.free };
-  const billingCycle = WATCH_POLICIES.premium[membership.billingCycle] ? membership.billingCycle : 'monthly';
-  return { planId: 'premium', billingCycle, ...WATCH_POLICIES.premium[billingCycle] };
+  const billingCycle = WATCH_POLICIES.premium[membership.billingCycle] || membership.billingCycle === 'custom'
+    ? membership.billingCycle : 'monthly';
+  const policyCycle = WATCH_POLICIES.premium[billingCycle] || WATCH_POLICIES.premium.monthly;
+  return { planId: 'premium', billingCycle, ...policyCycle };
 }
 
 export function getAccessSnapshot(policy, state = {}, now = new Date()) {

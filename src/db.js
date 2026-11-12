@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit } from './models.js';
+import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
@@ -38,7 +38,11 @@ export async function connectDatabase() {
       GuestSession.createIndexes(),
       UsageState.createIndexes(),
       PlaybackSession.createIndexes(),
-      AuthRateLimit.createIndexes()
+      AuthRateLimit.createIndexes(),
+      ActivitySession.createIndexes(),
+      MembershipEvent.createIndexes(),
+      PaymentTransaction.createIndexes(),
+      AdminAuditLog.createIndexes()
     ]).catch((error) => {
       indexesPromise = undefined;
       throw error;

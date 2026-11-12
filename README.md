@@ -172,3 +172,12 @@ Useful endpoints:
 The website is restricted to Brave Browser only. Brave is recognized through its documented `Sec-CH-UA` brand hint when supplied, with a browser-side `navigator.brave.isBrave()` verification fallback. Successful Brave verification is cached in a first-party cookie for up to 400 days.
 
 The native Android app, source project, and Android build workflow have been permanently removed from this repository. Existing Android app builds are not allowed to access the website.
+
+
+## Admin management and activity telemetry
+
+Accounts with `User.role === "admin"` can open `/admin`. The admin dashboard exposes guest and registered-user counts, paginated guest/user/payment records, email search, member device/browser details, Premium grants/removals, and timed account suspensions. Admin APIs re-check the database role on every request and apply same-origin checks to state changes.
+
+Activity telemetry starts when the site is visited. It records visit timestamps, foreground/active-time estimates, browser/OS/device user-agent details, and an encrypted IP value for administrative abuse/security review. Raw IP values are decrypted only for admin detail views; IP view actions are audited. Activity session records have a rolling 180-day retention period. Historical guest identities created before telemetry was enabled contain only keyed IP hashes, so their original IP addresses cannot be reconstructed. Active/idle time is an approximate foreground-page measurement, not proof of a person's attention.
+
+Manual Premium assignments are membership grants, not sales. The Admin Sales tab reads transaction records only; online checkout and verified payment-provider callbacks are not currently connected, so paid/failed sales remain empty until a payment integration is implemented.
