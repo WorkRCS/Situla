@@ -84,6 +84,7 @@ test('announcement UI schedules, uploads or embeds media, and lets visitors mark
   const center = await read('../app/components/announcement-center.jsx');
   const dashboard = await read('../app/components/admin-dashboard.jsx');
   const layout = await read('../app/layout.jsx');
+  const utils = await read('../src/announcement-utils.js');
 
   assert.match(manager, /type="datetime-local"/);
   assert.match(manager, /type="file"/);
@@ -91,7 +92,9 @@ test('announcement UI schedules, uploads or embeds media, and lets visitors mark
   assert.match(manager, /Publish \/ schedule/);
   assert.match(manager, /FormData/);
   assert.match(center, /Mark as read/);
-  assert.match(center, /timeZoneName: "short"/);
+  assert.match(utils, /timeZoneName: 'short'/);
+  assert.match(utils, /year: 'numeric'/);
+  assert.match(center, /formatAnnouncementDateTime/);
   assert.match(center, /Uploaded /);
   assert.match(center, /situla:announcement-reads:v1:/);
   assert.match(center, /resolveAnnouncementMedia/);
