@@ -128,51 +128,109 @@ function resolveCatalogBadge(badge) {
     : FALLBACK_CATALOG_BADGE;
 }
 
-async function shareMediaCard({ title, href, posterUrl }) {
-  const url = new URL(href, window.location.origin).toString();
-  const text = posterUrl ? title + "\n\nPoster: " + posterUrl : title;
-  if (typeof navigator.share === "function") {
-    const data = { title, text, url };
-    if (posterUrl && typeof navigator.canShare === "function") {
-      try {
-        const response = await fetch(posterUrl, { mode: "cors", cache: "force-cache" });
-        if (response.ok) {
-          const blob = await response.blob();
-          if (blob.type.startsWith("image/")) {
-            const extension = blob.type.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
-            const filename = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "situla-poster";
-            const file = new File([blob], filename + "." + extension, { type: blob.type });
-            const withFile = { ...data, files: [file] };
-            if (navigator.canShare(withFile)) data.files = [file];
-          }
-        }
-      } catch {}
-    }
-    try {
-      if (data.files) {
-        try {
-          await navigator.share(data);
-          return "Shared";
-        } catch (fileShareError) {
-          if (fileShareError?.name === "AbortError") throw fileShareError;
-        }
-      }
-      await navigator.share({ title, text, url });
-      return "Shared";
-    } catch (shareError) {
-      if (shareError?.name === "AbortError") throw shareError;
-    }
+const SHARE_POSTER_CACHE_LIMIT = 8;
+const SHARE_POSTER_MAX_BYTES = 8 * 1024 * 1024;
+const sharePosterBlobs = new Map();
+const sharePosterRequests = new Map();
+
+async function prepareSharePosterBlob(posterUrl) {
+  const key = String(posterUrl || "");
+  if (!key) throw new Error("Poster unavailable.");
+  if (sharePosterBlobs.has(key)) {
+    const cached = sharePosterBlobs.get(key);
+    sharePosterBlobs.delete(key);
+    sharePosterBlobs.set(key, cached);
+    return cached;
   }
+  if (sharePosterRequests.has(key)) return sharePosterRequests.get(key);
+
+  const request = (async () => {
+    const response = await fetch("/api/share-poster?url=" + encodeURIComponent(key), {
+      cache: "force-cache",
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(15_000)
+    });
+    if (!response.ok) throw new Error("Poster could not be prepared for sharing.");
+    const blob = await response.blob();
+    const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
+    if (!supportedTypes.has(blob.type) || !blob.size || blob.size > SHARE_POSTER_MAX_BYTES) {
+      throw new Error("The poster is not a supported share image.");
+    }
+    return blob;
+  })();
+
+  sharePosterRequests.set(key, request);
+  try {
+    const blob = await request;
+    sharePosterBlobs.set(key, blob);
+    while (sharePosterBlobs.size > SHARE_POSTER_CACHE_LIMIT) {
+      const oldestKey = sharePosterBlobs.keys().next().value;
+      if (oldestKey === undefined) break;
+      sharePosterBlobs.delete(oldestKey);
+    }
+    return blob;
+  } finally {
+    sharePosterRequests.delete(key);
+  }
+}
+
+function createSharePosterFile(title, blob) {
+  const extensions = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/avif": "avif",
+    "image/gif": "gif"
+  };
+  const slug = String(title || "situla-poster")
+    .normalize("NFKD")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48)
+    .toLowerCase() || "situla-poster";
+  return new File([blob], slug + "." + extensions[blob.type], {
+    type: blob.type,
+    lastModified: Date.now()
+  });
+}
+
+/**
+ * Called only when the poster Blob is already prepared. navigator.share() is
+ * invoked synchronously before this function returns, preserving user activation.
+ * The share payload contains the image file, title, and canonical content URL;
+ * the source poster URL is never included as share text.
+ */
+function shareMediaCard({ title, href, posterUrl }) {
+  const blob = sharePosterBlobs.get(String(posterUrl || ""));
+  if (!blob || typeof navigator.share !== "function" ||
+      typeof navigator.canShare !== "function" || typeof File !== "function") {
+    return null;
+  }
+
+  const url = new URL(href, window.location.origin).toString();
+  const file = createSharePosterFile(title, blob);
+  const data = { files: [file], title, text: title, url };
+  try {
+    if (!navigator.canShare(data)) return null;
+    return navigator.share(data).then(() => "Shared");
+  } catch {
+    return null;
+  }
+}
+
+async function copyContentUrl(url) {
   try {
     await navigator.clipboard.writeText(url);
-    return "Link copied";
+    return "Image sharing unavailable; content link copied";
   } catch {
-    return "Share unavailable";
+    return "Image sharing is not supported on this device";
   }
 }
 
 const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
+  const [sharePreparing, setSharePreparing] = useState(false);
+  const posterUrl = movie.posterUrl;
   const catalogBadge = resolveCatalogBadge(movie.catalogBadge);
   const href = movieCardHref(movie);
 
@@ -184,15 +242,51 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
     onOpen?.(movie, { navigate: false });
   }
 
+  function prepareSharePoster() {
+    if (posterUrl) void prepareSharePosterBlob(posterUrl).catch(() => {});
+  }
+
   async function handleShare(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (!href) return;
+    if (!href || sharePreparing) return;
+    const title = movie.title || "Movie";
+    const url = new URL(href, window.location.origin).toString();
+
+    if (typeof navigator.share !== "function" || typeof navigator.canShare !== "function" || typeof File !== "function") {
+      setShareFeedback(await copyContentUrl(url));
+      return;
+    }
+
+    if (!sharePosterBlobs.has(String(posterUrl || ""))) {
+      if (!posterUrl) {
+        setShareFeedback("Poster unavailable for sharing");
+        return;
+      }
+      setSharePreparing(true);
+      setShareFeedback("Preparing poster…");
+      try {
+        await prepareSharePosterBlob(posterUrl);
+        setShareFeedback("Poster ready — tap Share again");
+      } catch {
+        setShareFeedback("Poster unavailable for sharing");
+      } finally {
+        setSharePreparing(false);
+      }
+      return;
+    }
+
     try {
-      const result = await shareMediaCard({ title: movie.title || "Movie", href, posterUrl: movie.posterUrl });
-      if (result) setShareFeedback(result);
+      const shareTask = shareMediaCard({ title, href, posterUrl });
+      if (!shareTask) {
+        setShareFeedback(await copyContentUrl(url));
+        return;
+      }
+      await shareTask;
+      setShareFeedback("Shared");
     } catch (shareError) {
-      if (shareError?.name !== "AbortError") setShareFeedback("Share unavailable");
+      if (shareError?.name === "AbortError") return;
+      setShareFeedback("Poster ready — tap Share again");
     }
   }
 
@@ -246,7 +340,17 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
       >
         <Icon name={saved ? "check" : "bookmark"} size={15} />
       </button>
-      {href && <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (movie.title || "movie")} title="Share movie">
+      {href && <button
+        type="button"
+        className="share-button"
+        onClick={handleShare}
+        onPointerEnter={prepareSharePoster}
+        onFocus={prepareSharePoster}
+        disabled={sharePreparing}
+        aria-busy={sharePreparing}
+        aria-label={"Share " + (movie.title || "movie")}
+        title="Share poster and movie link"
+      >
         <Share2 size={15} />
       </button>}
       {href && shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
@@ -289,6 +393,7 @@ function movieNavigationKey(movie) {
 
 const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
+  const [sharePreparing, setSharePreparing] = useState(false);
   const isTv = kind === "tv";
   const isAnime = kind === "anime";
   const catalogBadge = resolveCatalogBadge(item.catalogBadge);
@@ -299,6 +404,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
     ? [year, item.runtime ? item.runtime + " min / ep" : "TV series", item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "", item.numberOfEpisodes ? item.numberOfEpisodes + " eps" : ""].filter(Boolean).join(" · ")
     : [year, item.episodes ? item.episodes + " episodes" : "Anime series"].filter(Boolean).join(" · ");
   const category = (item.genres || []).slice(0, 2).join(" · ");
+  const posterUrl = item.posterUrl || item.posterFallbackUrl;
   const href = seriesCardHref(item, kind);
 
   function handleOpen(event) {
@@ -315,19 +421,51 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
     onSave?.(item, kind);
   }
 
+  function prepareSharePoster() {
+    if (posterUrl) void prepareSharePosterBlob(posterUrl).catch(() => {});
+  }
+
   async function handleShare(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (!href || (!isTv && !isAnime)) return;
+    if (!href || (!isTv && !isAnime) || sharePreparing) return;
+    const shareTitle = title || (isTv ? "TV series" : "Anime");
+    const url = new URL(href, window.location.origin).toString();
+
+    if (typeof navigator.share !== "function" || typeof navigator.canShare !== "function" || typeof File !== "function") {
+      setShareFeedback(await copyContentUrl(url));
+      return;
+    }
+
+    if (!sharePosterBlobs.has(String(posterUrl || ""))) {
+      if (!posterUrl) {
+        setShareFeedback("Poster unavailable for sharing");
+        return;
+      }
+      setSharePreparing(true);
+      setShareFeedback("Preparing poster…");
+      try {
+        await prepareSharePosterBlob(posterUrl);
+        setShareFeedback("Poster ready — tap Share again");
+      } catch {
+        setShareFeedback("Poster unavailable for sharing");
+      } finally {
+        setSharePreparing(false);
+      }
+      return;
+    }
+
     try {
-      const result = await shareMediaCard({
-        title: title || (isTv ? "TV series" : "Anime"),
-        href,
-        posterUrl: item.posterUrl || item.posterFallbackUrl
-      });
-      if (result) setShareFeedback(result);
+      const shareTask = shareMediaCard({ title: shareTitle, href, posterUrl });
+      if (!shareTask) {
+        setShareFeedback(await copyContentUrl(url));
+        return;
+      }
+      await shareTask;
+      setShareFeedback("Shared");
     } catch (shareError) {
-      if (shareError?.name !== "AbortError") setShareFeedback("Share unavailable");
+      if (shareError?.name === "AbortError") return;
+      setShareFeedback("Poster ready — tap Share again");
     }
   }
 
@@ -385,7 +523,19 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
         >
           <Icon name={saved ? "check" : "bookmark"} size={15} />
         </button>
-        <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (title || (isTv ? "TV series" : "anime"))} title={isTv ? "Share TV series" : "Share anime"}><Share2 size={15} /></button>
+        <button
+          type="button"
+          className="share-button"
+          onClick={handleShare}
+          onPointerEnter={prepareSharePoster}
+          onFocus={prepareSharePoster}
+          disabled={sharePreparing}
+          aria-busy={sharePreparing}
+          aria-label={"Share " + (title || (isTv ? "TV series" : "anime"))}
+          title={"Share poster and " + (isTv ? "TV series" : "Anime") + " link"}
+        >
+          <Share2 size={15} />
+        </button>
         {shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
       </>}
     </article>
