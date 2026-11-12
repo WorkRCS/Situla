@@ -1,6 +1,8 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { createInterface } from "node:readline";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import { connectDatabase } from "../src/db.js";
@@ -197,7 +199,7 @@ async function main() {
   console.log("Public catalogue market data refresh complete:", result);
 }
 
-if (process.argv[1] && import.meta.url === new URL(process.argv[1], "file://" + process.cwd() + "/").href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main()
     .catch((error) => {
       console.error("Situla catalogue market data refresh failed:", error.message);
