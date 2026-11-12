@@ -133,7 +133,7 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
 
 test("TV and Anime series cards both share their poster, title, and canonical detail link", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("\\nfunction CatalogSpotlight"));
+  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
   assert.match(seriesCard, /const isAnime = kind === "anime"/);
   assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\)\) return/);
   assert.match(seriesCard, /title: title \|\| \(isTv \? "TV series" : "Anime"\)/);
