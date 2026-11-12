@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
-import { DEMO_ACCOUNT, readDemoAccountSession, setDemoAccountSession } from "../../src/membership-preview.js";
 import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, Sparkles, UserRound } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
@@ -489,7 +488,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsRead, setNotificationsRead] = useState(false);
-  const [demoSignedIn, setDemoSignedIn] = useState(true);
+  const [accountUser, setAccountUser] = useState(null);
+  const demoSignedIn = Boolean(accountUser);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
@@ -528,13 +528,23 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [tab]);
 
   useEffect(() => {
-    const syncDemoAccount = () => setDemoSignedIn(readDemoAccountSession());
-    syncDemoAccount();
-    window.addEventListener("storage", syncDemoAccount);
-    window.addEventListener("situla:demo-account", syncDemoAccount);
+    let active = true;
+    async function syncServerAccount() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (active) setAccountUser(response.ok && payload.user ? payload.user : null);
+      } catch {
+        if (active) setAccountUser(null);
+      }
+    }
+    syncServerAccount();
+    window.addEventListener("focus", syncServerAccount);
+    window.addEventListener("situla:auth-change", syncServerAccount);
     return () => {
-      window.removeEventListener("storage", syncDemoAccount);
-      window.removeEventListener("situla:demo-account", syncDemoAccount);
+      active = false;
+      window.removeEventListener("focus", syncServerAccount);
+      window.removeEventListener("situla:auth-change", syncServerAccount);
     };
   }, []);
 
@@ -1190,18 +1200,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
               >
-                <span className="header-avatar-initials">{DEMO_ACCOUNT.initials}</span>
+                <span className="header-avatar-initials">{accountUser?.initials || 'S'}</span>
                 {demoSignedIn && <span className="header-avatar-online" aria-hidden="true" />}
               </button>
               {accountOpen && (
                 <div className="header-account-popover" role="menu" aria-label="User account">
                   <div className="header-popover-identity">
-                    <span className="header-popover-avatar">{DEMO_ACCOUNT.initials}</span>
+                    <span className="header-popover-avatar">{accountUser?.initials || 'S'}</span>
                     <span>
                       <strong>{demoSignedIn ? DEMO_ACCOUNT.name : "Welcome to Situla"}</strong>
                       <small>{demoSignedIn ? DEMO_ACCOUNT.email : "Sign in to access your account"}</small>
                     </span>
-                    {demoSignedIn && <BadgeCheck size={16} aria-label="Verified Premium member" />}
+                    {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>
                   <div className="header-popover-divider" />
                   {demoSignedIn ? (
@@ -1210,9 +1220,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         <UserRound size={16} /> <span>Visit profile</span> <ArrowUpRight size={14} />
                       </button>
                       <button type="button" className="header-popover-action is-danger" role="menuitem" onClick={() => {
-                        setDemoAccountSession(false);
-                        setDemoSignedIn(false);
+                        await fetch("/api/auth/logout", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          credentials: "same-origin",
+                          body: "{}"
+                        }).catch(() => null);
+                        setAccountUser(null);
                         setAccountOpen(false);
+                        window.dispatchEvent(new Event("situla:auth-change"));
                         router.push("/login");
                       }}>
                         <LogOut size={16} /> <span>Log out</span>
@@ -1223,7 +1239,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                       <LogOut size={16} /> <span>Sign in</span> <ArrowUpRight size={14} />
                     </button>
                   )}
-                  <p className="header-popover-demo-note">Demo account preview · No live authentication</p>
+                  <p className="header-popover-demo-note">{demoSignedIn ? "Server-verified account session" : "Guest access · Sign in for a personal account"}</p>
                 </div>
               )}
             </div>

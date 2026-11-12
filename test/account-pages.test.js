@@ -52,6 +52,8 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes("Purchased · Enjoy Premium"));
   assert.ok(pages.includes("Renew plan"));
   assert.ok(pages.includes("Premium Verified"));
+  assert.ok(pages.includes("PREMIUM MEMBER"));
+  assert.ok(!pages.includes("DEMO_ACCOUNT"));
   assert.ok(pages.includes("Personal details"));
   assert.ok(pages.includes("Profile avatar"));
   assert.ok(pages.includes("Locked"));
@@ -70,7 +72,8 @@ test("Main app header places search before avatar and notifications", async () =
   assert.ok(search >= 0 && avatar > search && notifications > avatar);
   assert.ok(app.includes('router.push("/profile")'));
   assert.ok(app.includes('router.push("/login")'));
-  assert.ok(app.includes("setDemoAccountSession(false)"));
+  assert.ok(app.includes("/api/auth/logout"));
+  assert.ok(app.includes("/api/auth/me"));
   assert.ok(css.includes(".header-actions"));
   assert.ok(css.includes("@media (max-width:1100px)"));
   assert.ok(css.includes(".header-notification-popover"));

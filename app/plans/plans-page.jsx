@@ -128,12 +128,12 @@ export default function PlansPage() {
 
   function choosePreview(mode) {
     setPreviewMode(mode);
-    setNotice("Preview changed to " + MODES.find((item) => item.id === mode).label + ". This is a visual demo only; it does not sign you in, start a subscription, or change access permissions.");
+    setNotice("Comparison view changed to " + MODES.find((item) => item.id === mode).label + ". This does not change your actual server-side access.");
   }
 
   function showActionNotice(kind) {
     if (kind === "free") {
-      setNotice("Login is a preview action only. The account and sign-in system will be connected in a later implementation phase.");
+      window.location.assign("/login");
       return;
     }
     setNotice("Premium checkout is not active in this UI preview. No payment or subscription has been started.");

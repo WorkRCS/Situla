@@ -22,7 +22,7 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(page.includes("Continue as Guest"));
   assert.ok(page.includes('"Login"'));
   assert.ok(page.includes("Buy Premium"));
-  assert.ok(page.includes("does not sign you in, start a subscription"));
+  assert.ok(page.includes("does not change your actual server-side access"));
   assert.ok(page.includes("Cooldown locks Watch Pages, not Situla"));
   assert.ok(page.includes("IP is not a unique person identifier"));
   assert.ok(page.includes("TV browser"));

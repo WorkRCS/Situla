@@ -382,7 +382,7 @@ export function ProfilePage() {
       <div className="profile-content">
         <div className="profile-page-heading">
           <div><span className="account-eyebrow">YOUR SITULA ACCOUNT</span><h1>Profile & membership</h1><p>Account identity, access and Premium plan status.</p></div>
-          <span className="profile-preview-pill"><Eye size={13} /> DEMO PROFILE</span>
+          <span className="profile-preview-pill"><Eye size={13} /> {account.planId === "premium" ? "PREMIUM MEMBER" : "FREE MEMBER"}</span>
         </div>
 
         <section className="profile-overview-panel">
@@ -410,7 +410,7 @@ export function ProfilePage() {
             <section className="profile-membership-card">
               <div className="profile-card-topline">
                 <div className="profile-card-plan-icon"><Crown size={21} /></div>
-                <span className="profile-plan-active"><i /> {membershipActive ? "ACTIVE MEMBERSHIP" : "MEMBERSHIP EXPIRED"}</span>
+                <span className="profile-plan-active"><i /> {membershipActive ? "ACTIVE MEMBERSHIP" : account.planId === "free" ? "ACTIVE FREE PLAN" : "MEMBERSHIP EXPIRED"}</span>
               </div>
               <div className="profile-plan-heading">
                 <div><span className="profile-overline">YOUR CURRENT PLAN</span><h2>{account.planId === "premium" ? "Premium" : "Free"}</h2><p>{account.planId === "premium" ? "More room for every story." : "Your Situla account is active."}</p></div>
@@ -448,7 +448,7 @@ export function ProfilePage() {
                 <div className="profile-benefit-item"><span><Clock3 size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.allowance : "3 hours"} watch allowance</strong><small>Per membership cycle</small></div>
                 <div className="profile-benefit-item"><span><LockKeyhole size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.cooldown : "1 hour"} cooldown</strong><small>Between watch sessions</small></div>
                 <div className="profile-benefit-item"><span><MonitorSmartphone size={17} /></span><strong>Up to {deviceSummary.limit} device{deviceSummary.limit === 1 ? "" : "s"}</strong><small>Manage your registered devices</small></div>
-                <div className="profile-benefit-item"><span><BadgeCheck size={17} /></span><strong>Verified badge</strong><small>Premium member identity</small></div>
+                <div className="profile-benefit-item"><span><BadgeCheck size={17} /></span><strong>{membershipActive ? "Verified badge" : "Free member access"}</strong><small>{membershipActive ? "Premium member identity" : "Registered Free account"}</small></div>
                 <div className="profile-benefit-item"><span><Sparkles size={17} /></span><strong>Early movie updates</strong><small>Upcoming titles and release info</small></div>
                 <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>Premium movie playback</strong><small>Payment not connected</small></div>
               </div>
@@ -461,8 +461,8 @@ export function ProfilePage() {
               <div className="profile-section-heading"><div><span className="account-eyebrow">ACCOUNT IDENTITY</span><h2>Personal details</h2></div><Fingerprint size={19} /></div>
               <p className="profile-locked-intro">Account details are managed securely by Situla.</p>
               <div className="profile-readonly-list">
-                <ReadonlyAccountField icon={UserRound} label="Display name" value={DEMO_ACCOUNT.name} />
-                <ReadonlyAccountField icon={Mail} label="Email address" value={DEMO_ACCOUNT.email} />
+                <ReadonlyAccountField icon={UserRound} label="Display name" value={account.name} />
+                <ReadonlyAccountField icon={Mail} label="Email address" value={account.email} />
                 <ReadonlyAccountField icon={Fingerprint} label="Sign-in method" value={account.loginMethod} />
                 <ReadonlyAccountField icon={Globe2} label="Profile avatar" value={account.initials + " account avatar"} />
               </div>
