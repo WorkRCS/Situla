@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
@@ -164,7 +164,7 @@ async function shareMediaCard({ title, href, posterUrl }) {
   }
 }
 
-function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
+const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
   const href = movieCardHref(movie);
 
@@ -241,7 +241,7 @@ function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload
       {href && shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
     </article>
   );
-}
+});
 
 function SeriesPosterImage({ item, title }) {
   const sources = [...new Set([item.posterUrl, item.posterFallbackUrl]
@@ -276,7 +276,7 @@ function movieNavigationKey(movie) {
   return "movie:" + String(movie?.imdbId || "").toLowerCase();
 }
 
-function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload }) {
+const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
   const isTv = kind === "tv";
   const isAnime = kind === "anime";
@@ -375,7 +375,7 @@ function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = fa
       </>}
     </article>
   );
-}
+});
 
 function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   if (!item) return null;
@@ -433,7 +433,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
         </Link>
       </div>
       <div className="media-row flex gap-4 overflow-x-auto pb-3">
-        {items.slice(0, 16).map((item) => (
+        {items.slice(0, 10).map((item) => (
           <SeriesCard
             key={kind === "tv" ? item.tmdbId : item.malId}
             item={item}
@@ -465,7 +465,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
         </div>
       </div>
       <div className="media-row flex gap-4 overflow-x-auto pb-3">
-        {items.slice(0, 20).map((item) => {
+        {items.slice(0, 10).map((item) => {
           const kind = item.homeMediaKind;
           return (
             <SeriesCard
@@ -993,50 +993,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const savedIds = useMemo(() => new Set(savedMovies.map((item) => savedMediaKey(item))), [savedMovies]);
   const filteredMovies = movies;
 
-  function prefetchHomeMovie(movie) {
+  const prefetchHomeMovie = useCallback((movie) => {
     const imdbId = String(movie?.imdbId || "").toLowerCase();
     if (/^tt\d{5,12}$/.test(imdbId)) router.prefetch("/watch/" + encodeURIComponent(imdbId));
-  }
+  }, [router]);
 
-  function prefetchHomeSeries(series, kind) {
+  const prefetchHomeSeries = useCallback((series, kind) => {
     if (kind === "tv") {
       const tmdbId = Number(series?.tmdbId);
       if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.prefetch("/tv/" + tmdbId);
       return;
     }
     if (/^\d+$/.test(String(series?.malId || ""))) router.prefetch("/anime/" + encodeURIComponent(series.malId));
-  }
+  }, [router]);
 
-  function prefetchHomeSpotlight(item) {
+  const prefetchHomeSpotlight = useCallback((item) => {
     if (item?.mediaType === "tv") return prefetchHomeSeries(item, "tv");
     if (item?.mediaType === "anime") return prefetchHomeSeries(item, "anime");
     return prefetchHomeMovie(item);
-  }
+  }, [prefetchHomeMovie, prefetchHomeSeries]);
 
-  function openHomeSpotlight(item) {
-    if (item?.mediaType === "tv") {
-      setPendingHomeNavigation("tv:" + String(item.tmdbId));
-      return openTvSeries(item);
-    }
-    if (item?.mediaType === "anime") {
-      setPendingHomeNavigation("anime:" + String(item.malId));
-      return openAnimeSeries(item);
-    }
-    setPendingHomeNavigation(movieNavigationKey(item));
-    return openMovie(item);
-  }
-
-  function openHomeMovie(movie, options) {
-    setPendingHomeNavigation(movieNavigationKey(movie));
-    return openMovie(movie, options);
-  }
-
-  function openHomeSeries(series, kind, options) {
-    setPendingHomeNavigation(seriesNavigationKey(series, kind));
-    return kind === "tv" ? openTvSeries(series, options) : openAnimeSeries(series, options);
-  }
-
-  function openMovie(movie, { navigate = true } = {}) {
+  const openMovie = useCallback((movie, { navigate = true } = {}) => {
     const imdbId = String(movie?.imdbId || "").toLowerCase();
     if (!/^tt\d{5,12}$/.test(imdbId)) {
       setError("This saved movie has no valid IMDb ID. Refresh the catalog and open it again.");
@@ -1047,7 +1024,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setRecentMovies((current) => [normalized, ...current.filter((item) => item.imdbId !== imdbId)].slice(0, 12));
     setSearchOpen(false);
     if (navigate) router.push("/watch/" + encodeURIComponent(imdbId));
-  }
+  }, [router]);
 
   function openSearchResult(item) {
     setSearchOpen(false);
@@ -1056,27 +1033,53 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return openMovie(item);
   }
 
-  function openTvSeries(series, { navigate = true } = {}) {
+  const openTvSeries = useCallback((series, { navigate = true } = {}) => {
     const tmdbId = Number(series?.tmdbId);
     if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) {
       setError("This TV series has no valid TMDB ID. Refresh the catalog and open it again.");
       return;
     }
     if (navigate) router.push("/tv/" + tmdbId);
-  }
+  }, [router]);
 
-  function openAnimeSeries(series, { navigate = true } = {}) {
+  const openAnimeSeries = useCallback((series, { navigate = true } = {}) => {
     const malId = String(series?.malId || "").trim();
     if (!/^\d+$/.test(malId)) {
       setError("This anime has no valid MyAnimeList ID. Refresh the catalog and open it again.");
       return;
     }
     if (navigate) router.push("/anime/" + encodeURIComponent(malId));
-  }
+  }, [router]);
 
-  function toggleSaved(item, kind) {
+  const toggleSaved = useCallback((item, kind) => {
     setSavedMovies((current) => toggleSavedMedia(current, item, kind));
-  }
+  }, []);
+  const openHomeSpotlight = useCallback((item) => {
+    if (item?.mediaType === "tv") {
+      setPendingHomeNavigation("tv:" + String(item.tmdbId));
+      return openTvSeries(item);
+    }
+    if (item?.mediaType === "anime") {
+      setPendingHomeNavigation("anime:" + String(item.malId));
+      return openAnimeSeries(item);
+    }
+    setPendingHomeNavigation(movieNavigationKey(item));
+    return openMovie(item);
+  }, [openTvSeries, openAnimeSeries, openMovie]);
+
+  const openHomeMovie = useCallback((movie, options) => {
+    setPendingHomeNavigation(movieNavigationKey(movie));
+    return openMovie(movie, options);
+  }, [openMovie]);
+
+  const openHomeSeries = useCallback((series, kind, options) => {
+    setPendingHomeNavigation(seriesNavigationKey(series, kind));
+    return kind === "tv" ? openTvSeries(series, options) : openAnimeSeries(series, options);
+  }, [openTvSeries, openAnimeSeries]);
+
+  const openHomeTvSeries = useCallback((item, _kind, options) => openHomeSeries(item, "tv", options), [openHomeSeries]);
+  const openHomeAnimeSeries = useCallback((item, _kind, options) => openHomeSeries(item, "anime", options), [openHomeSeries]);
+
 
   async function loadMore() {
     if (loadMoreLock.current) return;
@@ -1609,8 +1612,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <>
                 <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
                 <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={(item, _kind, options) => openHomeSeries(item, "tv", options)} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={(item, _kind, options) => openHomeSeries(item, "anime", options)} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top TV series" eyebrow="POPULAR TELEVISION" items={topTvShows} kind="tv" onOpen={openHomeTvSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <SeriesShelf title="Top anime series" eyebrow="TOP-RANKED ANIME" items={topAnimeShows} kind="anime" onOpen={openHomeAnimeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
               </>
             )}
 

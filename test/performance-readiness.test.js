@@ -38,3 +38,13 @@ test("database pool and API work are bounded for serverless bursts", async () =>
   assert.ok(resolveStart >= 0 && connect > resolveStart && firstQuery > connect);
   assert.match(api, /CATALOG_TIER_MEMO_TTL_MS = 5_000/);
 });
+
+test("home series shelves are chunked and memoized cards receive stable callbacks", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /const MovieCard = memo\(function MovieCard/);
+  assert.match(app, /const SeriesCard = memo\(function SeriesCard/);
+  assert.match(app, /const toggleSaved = useCallback/);
+  assert.match(app, /const openHomeSeries = useCallback/);
+  assert.match(app, /items\.slice\(0, 10\)\.map\(\(item\)/);
+  assert.doesNotMatch(app, /items\.slice\(0, (?:16|20)\)\.map\(\(item\)/);
+});
