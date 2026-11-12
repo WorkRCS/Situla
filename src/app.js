@@ -485,7 +485,9 @@ app.get('/api/auth/google/callback', async (c) => {
         }
       }
     }
-    if (user.status !== 'active') throw new Error('This account is unavailable.');
+    if (await isAccountSuspended(user) || user.status !== 'active') {
+      throw new Error('This account is suspended or unavailable.');
+    }
     await createLoginSession(c, user, true);
     clearOAuthCookies(c);
     return c.redirect('/profile', 302);

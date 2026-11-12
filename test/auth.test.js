@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp
+  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp, isAccountSuspended
 } from "../src/auth.js";
 
 test("Email and password validation normalizes account identifiers", () => {
@@ -73,6 +73,31 @@ test("Local development resolves loopback IP when proxy headers are absent", () 
     if (previous === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = previous;
   }
+});
+
+test("Expired timed suspensions reactivate an account for both email and Google sign-in checks", async () => {
+  let saves = 0;
+  const user = {
+    status: "suspended",
+    suspendedUntil: new Date(Date.now() - 1000),
+    suspensionReason: "Temporary test suspension",
+    async save() { saves += 1; }
+  };
+  assert.equal(await isAccountSuspended(user), false);
+  assert.equal(user.status, "active");
+  assert.equal(user.suspendedUntil, null);
+  assert.equal(user.suspensionReason, "");
+  assert.equal(saves, 1);
+});
+
+test("Permanent suspensions remain enforced until an administrator restores the account", async () => {
+  const user = {
+    status: "suspended",
+    suspendedUntil: null,
+    async save() { throw new Error("A permanent suspension must not auto-reactivate."); }
+  };
+  assert.equal(await isAccountSuspended(user), true);
+  assert.equal(user.status, "suspended");
 });
 
 test("Device entitlements retain the primary slot and discard secondary Premium devices after expiry", () => {
