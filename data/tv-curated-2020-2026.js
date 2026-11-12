@@ -1,7 +1,7 @@
 // Static, manually researched TV-series additions for 2020–2026.
-// Series IDs, premiere dates and episode data are cross-checked against TVmaze and official title pages.
-// Adapted TVmaze show/episode metadata is CC BY-SA 4.0; preserve attribution/share-alike.
-// Posters, backdrops and per-episode images are hotlinked from TVmaze/Netflix; not downloaded or rehosted.
+// Series IDs, dates, metadata and episode guides are cross-checked against TVmaze.
+// TVmaze show/episode metadata is CC BY-SA 4.0; preserve attribution and ShareAlike.
+// Posters/stills are hotlinked from TVmaze; wide artwork is hotlinked from official Netflix Tudum assets.
 export const MANUAL_TV_SERIES_2020_2026 = [
   {
     "tmdbId": 115004,
@@ -687,6 +687,203 @@ export const MANUAL_TV_SERIES_2020_2026 = [
             "runtime": 76,
             "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABe0jNuJUGsGGmZiLzeboftVHz6c1TP5hzgkl6MY8bBicwbQ0kBDRyaIOjT-noitDCHxPh0OFDid1mkQhn05KlBcXUIbhlYPWbD-UXuIPl2NtI8KgI3f9HmCP.jpg?r=f1d",
             "voteAverage": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tmdbId": 217667,
+    "externalImdbId": "tt16283824",
+    "title": "Eric",
+    "originalTitle": "Eric",
+    "overview": "In 1980s New York, puppeteer Vincent struggles to cope when his nine-year-old son Edgar disappears on the way to school. Clinging to his son's drawings of a blue monster puppet named Eric, Vincent becomes convinced that bringing the character to television will help bring Edgar home, while a determined detective pursues the case.",
+    "posterUrl": "https://static.tvmaze.com/uploads/images/medium_portrait/531/1327939.jpg",
+    "backdropUrl": "https://dnm.nflximg.net/api/v6/s0XAg4q_jvYbSSbLvySyUsliNSg/AAAAQap6atzK4ClZxDbXfVWLsF9Djv2gVttk1YJc32ZzXwXjjX6OlCMN102POw29Az80SHQAXy8wKcIf1ebVaIPU2lqyxbfwirMZz1HhW5lHtqjHYHpDR-h__8oRl5OEwPr46eMUYx-BUkKQgMANYxouScdLzew.jpg?r=aa6",
+    "firstAirDate": "2024-05-30",
+    "releaseYear": 2024,
+    "runtime": 53,
+    "adult": false,
+    "isPopular": true,
+    "metadataSource": "Manual static curation; TVmaze show/episode data (CC BY-SA 4.0)",
+    "sourceId": 59244,
+    "sourceUrl": "https://www.themoviedb.org/tv/217667",
+    "referenceUrl": "https://www.tvmaze.com/shows/59244/eric",
+    "network": "Netflix",
+    "country": "United Kingdom",
+    "creators": [
+      "Abi Morgan"
+    ],
+    "voteAverage": 6.9,
+    "voteCount": 313,
+    "popularity": 0,
+    "genres": [
+      "Drama",
+      "Crime",
+      "Thriller"
+    ],
+    "keywords": [
+      "Limited Series",
+      "Psychological Drama",
+      "Puppetry",
+      "Missing Person"
+    ],
+    "certification": "TV-MA",
+    "status": "Ended",
+    "numberOfSeasons": 1,
+    "numberOfEpisodes": 6,
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "name": "Season 1",
+        "overview": "Vincent's search for Edgar turns increasingly desperate as detective Ledroit follows the investigation and Vincent becomes obsessed with the puppet Eric.",
+        "airDate": "2024-05-30",
+        "episodeCount": 6,
+        "voteAverage": 0,
+        "episodes": [
+          {
+            "episodeNumber": 1,
+            "name": "Episode 1",
+            "overview": "Vincent's son Edgar has an idea for Good Day Sunshine's new puppet. But before he can convince his father, the boy disappears on the way to school.",
+            "airDate": "2024-05-30",
+            "runtime": 53,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303795.jpg",
+            "voteAverage": 6.2
+          },
+          {
+            "episodeNumber": 2,
+            "name": "Episode 2",
+            "overview": "Vincent's convinced that bringing Eric to life will help his son come home. Detective Ledroit makes an arrest, while Cassie has her own suspicions.",
+            "airDate": "2024-05-30",
+            "runtime": 56,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303796.jpg",
+            "voteAverage": 6.9
+          },
+          {
+            "episodeNumber": 3,
+            "name": "Episode 3",
+            "overview": "While Vincent frantically gets ready for the pitch, Ledroit arrives with some more questions for him. Cassie meets the mother of another missing child.",
+            "airDate": "2024-05-30",
+            "runtime": 54,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303797.jpg",
+            "voteAverage": 7
+          },
+          {
+            "episodeNumber": 4,
+            "name": "Episode 4",
+            "overview": "Following shocking news from both Lennie and Cassie, Vincent continues to spiral — until he sees a sign from Edgar and hatches a new plan.",
+            "airDate": "2024-05-30",
+            "runtime": 52,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303798.jpg",
+            "voteAverage": 6.9
+          },
+          {
+            "episodeNumber": 5,
+            "name": "Episode 5",
+            "overview": "Ledroit makes headway in both investigations. Cassie gets a phone call that changes everything, and Vincent continues to follow the map.",
+            "airDate": "2024-05-30",
+            "runtime": 52,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303799.jpg",
+            "voteAverage": 7
+          },
+          {
+            "episodeNumber": 6,
+            "name": "Episode 6",
+            "overview": "As the city's unhoused people are forced onto the street, Vincent meets the one with answers. An old friend helps Ledroit bring buried evidence to light.",
+            "airDate": "2024-05-30",
+            "runtime": 53,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/521/1303800.jpg",
+            "voteAverage": 7.1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tmdbId": 249042,
+    "externalImdbId": "tt31806037",
+    "title": "Adolescence",
+    "originalTitle": "Adolescence",
+    "overview": "When 13-year-old Jamie Miller is arrested and charged with the murder of a teenage girl from his school, his family is thrown into crisis. The limited series follows the investigation, the search for answers at school, Jamie's conversations with a psychologist, and the emotional toll on the Millers.",
+    "posterUrl": "https://static.tvmaze.com/uploads/images/medium_portrait/558/1395109.jpg",
+    "backdropUrl": "https://dnm.nflximg.net/api/v6/s0XAg4q_jvYbSSbLvySyUsliNSg/AAAAQfFMPPEQCcCfEMqg4OME3yLGyvsZKK716UlWgKo74VgwUnXMkwnrgZtBpegCQiMgepdqpnr6R9X_cr3EB5It97MJup4Y5FV-Lj0LrnvUnaEl0orxdRbZB5pSAaY3Rlbm6oMiIJ699IPnlUChIIKe.jpg",
+    "firstAirDate": "2025-03-13",
+    "releaseYear": 2025,
+    "runtime": 57,
+    "adult": false,
+    "isPopular": true,
+    "metadataSource": "Manual static curation; TVmaze show/episode data (CC BY-SA 4.0)",
+    "sourceId": 78570,
+    "sourceUrl": "https://www.themoviedb.org/tv/249042",
+    "referenceUrl": "https://www.tvmaze.com/shows/78570/adolescence",
+    "network": "Netflix",
+    "country": "United Kingdom",
+    "creators": [
+      "Stephen Graham",
+      "Jack Thorne"
+    ],
+    "voteAverage": 7.8,
+    "voteCount": 1844,
+    "popularity": 0,
+    "genres": [
+      "Drama",
+      "Crime",
+      "Thriller"
+    ],
+    "keywords": [
+      "Limited Series",
+      "British Drama",
+      "Psychological Drama",
+      "Police Procedural"
+    ],
+    "certification": "TV-MA",
+    "status": "Ended",
+    "numberOfSeasons": 1,
+    "numberOfEpisodes": 4,
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "name": "Season 1",
+        "overview": "The investigation moves through Jamie's arrest, his school, a psychological assessment and the strain on his family.",
+        "airDate": "2025-03-13",
+        "episodeCount": 4,
+        "voteAverage": 0,
+        "episodes": [
+          {
+            "episodeNumber": 1,
+            "name": "Episode 1",
+            "overview": "Police break down the door of the Millers' family home. Teenage Jamie is arrested and taken in for questioning but insists he's done nothing wrong.",
+            "airDate": "2025-03-13",
+            "runtime": 65,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/559/1398672.jpg",
+            "voteAverage": 8.4
+          },
+          {
+            "episodeNumber": 2,
+            "name": "Episode 2",
+            "overview": "The police look for answers — and the weapon — at Jamie's school. They can't get any leads from his friends, until DI Bascombe's son offers to help.",
+            "airDate": "2025-03-13",
+            "runtime": 51,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/559/1398673.jpg",
+            "voteAverage": 8.4
+          },
+          {
+            "episodeNumber": 3,
+            "name": "Episode 3",
+            "overview": "Jamie meets with a psychologist. He's reluctant to speak at first, but eventually he opens up about his complex feelings towards Katie.",
+            "airDate": "2025-03-13",
+            "runtime": 52,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/559/1398674.jpg",
+            "voteAverage": 8.7
+          },
+          {
+            "episodeNumber": 4,
+            "name": "Episode 4",
+            "overview": "On Eddie's birthday, the Millers try to celebrate like everything is normal. But a series of upsetting events threatens to send the family over the edge.",
+            "airDate": "2025-03-13",
+            "runtime": 60,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/559/1398675.jpg",
+            "voteAverage": 8.6
           }
         ]
       }
