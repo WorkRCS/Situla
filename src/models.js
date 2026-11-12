@@ -33,7 +33,10 @@ const movieSchema = new mongoose.Schema({
   runtime: { type: Number, min: 0, default: null },
   originalLanguage: { type: String, default: '' },
   adult: { type: Boolean, default: false },
-  isPopular: { type: Boolean, default: null },
+  isPopular: { type: Boolean, default: null }, // Legacy field; badge logic ignores it.
+  isFeatured: { type: Boolean, default: false },
+  trendScore: { type: Number, min: 0, default: 0 },
+  trendUpdatedAt: { type: Date, default: null },
   status: { type: String, default: '' },
   homepage: { type: String, default: '' },
   sourceUrl: { type: String, default: '' },
@@ -58,6 +61,7 @@ const movieSchema = new mongoose.Schema({
 
 movieSchema.index({ imdbId: 1 }, { unique: true });
 movieSchema.index({ popularity: -1, releaseDate: -1 });
+movieSchema.index({ trendScore: -1, trendUpdatedAt: -1 });
 movieSchema.index({ releaseDate: -1, releaseYear: -1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ releaseYear: -1 });
@@ -95,7 +99,10 @@ const tvSeriesSchema = new mongoose.Schema({
   releaseYear: { type: Number, default: null },
   runtime: { type: Number, min: 0, default: null },
   adult: { type: Boolean, default: false },
-  isPopular: { type: Boolean, default: null },
+  isPopular: { type: Boolean, default: null }, // Legacy field; badge logic ignores it.
+  isFeatured: { type: Boolean, default: false },
+  trendScore: { type: Number, min: 0, default: 0 },
+  trendUpdatedAt: { type: Date, default: null },
   metadataSource: { type: String, default: "manual" },
   sourceId: { type: Number, min: 1, default: null },
   sourceUrl: { type: String, default: "" },
@@ -118,6 +125,7 @@ const tvSeriesSchema = new mongoose.Schema({
 tvSeriesSchema.index({ tmdbId: 1 }, { unique: true, partialFilterExpression: { tmdbId: { $type: "number" } } });
 tvSeriesSchema.index({ externalImdbId: 1 }, { sparse: true });
 tvSeriesSchema.index({ popularity: -1, firstAirDate: -1 });
+tvSeriesSchema.index({ trendScore: -1, trendUpdatedAt: -1 });
 tvSeriesSchema.index({ firstAirDate: -1, releaseYear: -1, popularity: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
@@ -159,7 +167,10 @@ const animeSeriesSchema = new mongoose.Schema({
   backdropUrl: { type: String, default: null },
   bannerUrl: { type: String, default: null },
   malUrl: { type: String, default: "" },
-  isPopular: { type: Boolean, default: null },
+  isPopular: { type: Boolean, default: null }, // Legacy field; badge logic ignores it.
+  isFeatured: { type: Boolean, default: false },
+  trendScore: { type: Number, min: 0, default: 0 },
+  trendUpdatedAt: { type: Date, default: null },
   sourceUrl: { type: String, default: "" },
   metadataSource: { type: String, default: "" },
   trailerUrl: { type: String, default: null },
@@ -187,6 +198,7 @@ const animeSeriesSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 
 animeSeriesSchema.index({ type: 1, rank: 1, score: -1 });
+animeSeriesSchema.index({ trendScore: -1, trendUpdatedAt: -1 });
 animeSeriesSchema.index({ airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
