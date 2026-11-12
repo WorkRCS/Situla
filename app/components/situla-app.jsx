@@ -1208,8 +1208,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   <div className="header-popover-identity">
                     <span className="header-popover-avatar">{accountUser?.initials || 'S'}</span>
                     <span>
-                      <strong>{demoSignedIn ? DEMO_ACCOUNT.name : "Welcome to Situla"}</strong>
-                      <small>{demoSignedIn ? DEMO_ACCOUNT.email : "Sign in to access your account"}</small>
+                      <strong>{demoSignedIn ? accountUser?.name || 'Welcome to Situla' : "Welcome to Situla"}</strong>
+                      <small>{demoSignedIn ? accountUser?.email || 'Sign in to access your account' : "Sign in to access your account"}</small>
                     </span>
                     {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>

@@ -13,16 +13,54 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   const [title, setTitle] = useState(kind === "tv" ? "TV series" : "Anime");
   const [posterUrl, setPosterUrl] = useState(null);
   const [seriesInfo, setSeriesInfo] = useState(null);
-  const [catalogVerified, setCatalogVerified] = useState(false);
+  const [verifiedMediaKey, setVerifiedMediaKey] = useState("");
   const [metadataError, setMetadataError] = useState("");
   const [startAt, setStartAt] = useState(0);
+  const [playbackSessionId, setPlaybackSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const iframeRef = useRef(null);
   const lastWrite = useRef(0);
   const lastPlayerDuration = useRef(0);
+  const playbackSessionRef = useRef(null);
+  const heartbeatQueueRef = useRef(Promise.resolve());
+  const playingRef = useRef(false);
+  const mediaKey = kind === "tv" && tvRoute
+    ? "tv:" + tvRoute.tmdbId + ":" + tvRoute.season + ":" + tvRoute.episode
+    : kind === "anime" && animeRoute
+      ? "anime:" + animeRoute.malId + ":" + animeRoute.episode + ":" + animeRoute.audio
+      : "";
+
+  function sendPlaybackHeartbeat(playing, stop = false) {
+    const sessionId = playbackSessionRef.current;
+    if (!sessionId) return Promise.resolve();
+    playingRef.current = Boolean(playing);
+    const task = async () => {
+      if (playbackSessionRef.current !== sessionId) return;
+      const response = await fetch(stop ? "/api/playback/stop" : "/api/playback/heartbeat", {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: Boolean(stop),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(stop ? { sessionId } : { sessionId, playing: Boolean(playing) })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (stop) {
+        playbackSessionRef.current = null;
+        return;
+      }
+      if (!response.ok || payload.access?.allowed === false) {
+        playbackSessionRef.current = null;
+        setPlaybackSessionId(null);
+        setMetadataError(payload.error || "Your watch allowance has ended. Playback is locked until cooldown finishes.");
+      }
+    };
+    heartbeatQueueRef.current = heartbeatQueueRef.current.catch(() => {}).then(task);
+    return heartbeatQueueRef.current;
+  }
 
   useEffect(() => {
     const controller = new AbortController();
+    setVerifiedMediaKey("");
     if ((kind === "tv" && !tvRoute) || (kind === "anime" && !animeRoute)) {
       setMetadataError("This episode link is invalid. Return to the series and choose an episode.");
       setLoading(false);
@@ -67,7 +105,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           });
         }
         setMetadataError("");
-        setCatalogVerified(true);
+        setVerifiedMediaKey(mediaKey);
       })
       .catch((requestError) => {
         if (!controller.signal.aborted) {
@@ -79,7 +117,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       });
 
     return () => controller.abort();
-  }, [kind, tmdbId, malId, season, episode, tvRoute?.tmdbId, animeRoute?.malId, animeRoute?.episode, animeRoute?.audio]);
+  }, [kind, tmdbId, malId, season, episode, tvRoute?.tmdbId, animeRoute?.malId, animeRoute?.episode, animeRoute?.audio, mediaKey]);
 
   useEffect(() => {
     try {
@@ -94,6 +132,47 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
       setStartAt(0);
     }
   }, [kind, tmdbId, malId, season, episode, audio]);
+
+  useEffect(() => {
+    if (!mediaKey || verifiedMediaKey !== mediaKey) return undefined;
+    const controller = new AbortController();
+    let createdSessionId = null;
+    async function authorizePlayback() {
+      setMetadataError("");
+      try {
+        const media = kind === "tv"
+          ? { mediaType: "tv", mediaId: String(tvRoute.tmdbId), season: tvRoute.season, episode: tvRoute.episode }
+          : { mediaType: "anime", mediaId: String(animeRoute.malId), episode: animeRoute.episode, audio: animeRoute.audio };
+        const response = await fetch("/api/playback/start", {
+          method: "POST",
+          credentials: "same-origin",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(media)
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.sessionId) throw new Error(payload.error || "Watch access could not be verified.");
+        createdSessionId = payload.sessionId;
+        playbackSessionRef.current = payload.sessionId;
+        setPlaybackSessionId(payload.sessionId);
+      } catch (error) {
+        if (!controller.signal.aborted) setMetadataError(error.message || "Watch access could not be verified.");
+      }
+    }
+    authorizePlayback();
+    return () => {
+      controller.abort();
+      if (createdSessionId && playbackSessionRef.current === createdSessionId) {
+        sendPlaybackHeartbeat(false, true);
+      }
+    };
+  }, [mediaKey, verifiedMediaKey, kind, tvRoute?.tmdbId, tvRoute?.season, tvRoute?.episode, animeRoute?.malId, animeRoute?.episode, animeRoute?.audio]);
+
+  useEffect(() => {
+    if (!playbackSessionId) return undefined;
+    const timer = window.setInterval(() => sendPlaybackHeartbeat(playingRef.current), 15000);
+    return () => window.clearInterval(timer);
+  }, [playbackSessionId]);
 
   useEffect(() => {
     const onPlayerMessage = (event) => {
@@ -113,6 +192,9 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
       if (eventName === "ready" || eventName === "durationchange" || eventName === "error") return;
       if (!["play", "pause", "ended", "timeupdate"].includes(eventName)) return;
+      if (eventName === "play") sendPlaybackHeartbeat(true);
+      if (eventName === "pause") sendPlaybackHeartbeat(false);
+      if (eventName === "ended") sendPlaybackHeartbeat(false, true);
       if (eventName === "timeupdate" && Date.now() - lastWrite.current < 5000) return;
 
       try {
@@ -193,10 +275,10 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   const playerUrl = (() => {
     if (kind === "tv") {
-      if (!catalogVerified || !tvRoute) return null;
+      if (verifiedMediaKey !== mediaKey || !playbackSessionId || !tvRoute) return null;
       return tvSeriesPlaybackUrl(tvRoute.tmdbId, tvRoute.season, tvRoute.episode, startAt);
     }
-    if (!animeRoute) return null;
+    if (verifiedMediaKey !== mediaKey || !playbackSessionId || !animeRoute) return null;
     return animeSeriesPlaybackUrl(animeRoute.malId, animeRoute.episode, animeRoute.audio, startAt);
   })();
 

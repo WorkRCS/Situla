@@ -13,9 +13,42 @@ export default function PlayerExperience({ imdbId }) {
   const [playerLanguage, setPlayerLanguage] = useState("en");
   const [languageReady, setLanguageReady] = useState(false);
   const [startAt, setStartAt] = useState(0);
+  const [playbackSessionId, setPlaybackSessionId] = useState(null);
+  const [playbackError, setPlaybackError] = useState("");
   const router = useRouter();
   const iframeRef = useRef(null);
   const lastProgressWrite = useRef(0);
+  const playbackSessionRef = useRef(null);
+  const heartbeatQueueRef = useRef(Promise.resolve());
+  const playingRef = useRef(false);
+
+  function sendPlaybackHeartbeat(playing, stop = false) {
+    const sessionId = playbackSessionRef.current;
+    if (!sessionId) return Promise.resolve();
+    playingRef.current = Boolean(playing);
+    const task = async () => {
+      if (playbackSessionRef.current !== sessionId) return;
+      const response = await fetch(stop ? "/api/playback/stop" : "/api/playback/heartbeat", {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: Boolean(stop),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(stop ? { sessionId } : { sessionId, playing: Boolean(playing) })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (stop) {
+        playbackSessionRef.current = null;
+        return;
+      }
+      if (!response.ok || payload.access?.allowed === false) {
+        playbackSessionRef.current = null;
+        setPlaybackSessionId(null);
+        setPlaybackError(payload.error || "Your watch allowance has ended. Playback is locked until cooldown finishes.");
+      }
+    };
+    heartbeatQueueRef.current = heartbeatQueueRef.current.catch(() => {}).then(task);
+    return heartbeatQueueRef.current;
+  }
 
   useEffect(() => {
     // Keep the browser address canonical: IMDb route only, no legacy provider query.
@@ -74,6 +107,44 @@ export default function PlayerExperience({ imdbId }) {
   }, [imdbId]);
 
   useEffect(() => {
+    if (!catalogVerified) return undefined;
+    const controller = new AbortController();
+    let createdSessionId = null;
+    async function authorizePlayback() {
+      setPlaybackError("");
+      try {
+        const response = await fetch("/api/playback/start", {
+          method: "POST",
+          credentials: "same-origin",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mediaType: "movie", mediaId: imdbId })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.sessionId) throw new Error(payload.error || "Watch access could not be verified.");
+        createdSessionId = payload.sessionId;
+        playbackSessionRef.current = payload.sessionId;
+        setPlaybackSessionId(payload.sessionId);
+      } catch (error) {
+        if (!controller.signal.aborted) setPlaybackError(error.message || "Watch access could not be verified.");
+      }
+    }
+    authorizePlayback();
+    return () => {
+      controller.abort();
+      if (createdSessionId && playbackSessionRef.current === createdSessionId) {
+        sendPlaybackHeartbeat(false, true);
+      }
+    };
+  }, [catalogVerified, imdbId]);
+
+  useEffect(() => {
+    if (!playbackSessionId) return undefined;
+    const timer = window.setInterval(() => sendPlaybackHeartbeat(playingRef.current), 15000);
+    return () => window.clearInterval(timer);
+  }, [playbackSessionId]);
+
+  useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("situla:progress:v1") || "[]");
       const entry = Array.isArray(saved) ? saved.find((item) => item.imdbId === imdbId) : null;
@@ -92,6 +163,9 @@ export default function PlayerExperience({ imdbId }) {
       if (String(data.mediaType || "").toLowerCase() !== "movie") return;
       const eventName = String(data.event || "");
       if (!["play", "pause", "seeked", "ended", "timeupdate"].includes(eventName)) return;
+      if (eventName === "play") sendPlaybackHeartbeat(true);
+      if (eventName === "pause") sendPlaybackHeartbeat(false);
+      if (eventName === "ended") sendPlaybackHeartbeat(false, true);
       if (eventName === "timeupdate" && Date.now() - lastProgressWrite.current < 5000) return;
       lastProgressWrite.current = Date.now();
 
@@ -146,7 +220,7 @@ export default function PlayerExperience({ imdbId }) {
     return () => window.removeEventListener("message", onPlayerMessage);
   }, [movie, imdbId]);
 
-  const playerUrl = catalogVerified && languageReady
+  const playerUrl = catalogVerified && languageReady && playbackSessionId
     ? playerLanguage === "hi" ? hindiMoviePlaybackUrl(imdbId, startAt) : moviePlaybackUrl(imdbId, startAt)
     : null;
 
@@ -175,7 +249,7 @@ export default function PlayerExperience({ imdbId }) {
           <div className="player-message-card">
             <div className="player-message-mark">S</div>
             <h1>{loading ? "Preparing your movie" : "Playback unavailable"}</h1>
-            <p>{movie?.playerError || (loading
+            <p>{playbackError || movie?.playerError || (loading
               ? "Loading saved movie details…"
               : "This title is not available in the Situla catalog yet.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
