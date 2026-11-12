@@ -8,6 +8,7 @@ import { STATIC_MOVIES } from "../data/movie-catalog.js";
 import { MANUAL_MOVIES_2020_2026 } from "../data/movie-curated-2020-2026.js";
 import { STATIC_TV_SERIES } from "../data/tv-catalog.js";
 import { TV_SERIES_CANDIDATES } from "../data/tv-additions.js";
+import { MANUAL_TV_SERIES_2020_2026 } from "../data/tv-curated-2020-2026.js";
 import { MANUAL_ANIME_CATALOG } from "../data/anime-catalog.js";
 import { NEW_ANIME_CATALOG } from "../data/anime-additions.js";
 import { isPopularCatalogItem } from "../src/catalog-popularity.js";
@@ -148,7 +149,7 @@ export function validateOfflineAnime(record) {
 export function prepareOfflineCatalog() {
   const sources = {
     movie: [...MANUAL_MOVIES_2020_2026, ...STATIC_MOVIES],
-    tv: [...STATIC_TV_SERIES, ...TV_SERIES_CANDIDATES],
+    tv: [...MANUAL_TV_SERIES_2020_2026, ...STATIC_TV_SERIES, ...TV_SERIES_CANDIDATES],
     anime: [...MANUAL_ANIME_CATALOG, ...NEW_ANIME_CATALOG]
   };
   const validators = {
