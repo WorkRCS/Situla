@@ -186,7 +186,7 @@ test("TV and Anime series cards both share their poster, title, and canonical de
   assert.match(seriesCard, /const isAnime = kind === "anime"/);
   assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\) \|\| sharePreparing\) return/);
   assert.match(seriesCard, /const shareTitle = title \|\| \(isTv \? "TV series" : "Anime"\)/);
-  assert.match(seriesCard, /posterUrl: item\.posterUrl \|\| item\.posterFallbackUrl/);
+  assert.match(seriesCard, /const posterUrl = item\.posterUrl \|\| item\.posterFallbackUrl/);
   assert.match(seriesCard, /\{\(isTv \|\| isAnime\) && href &&/);
   assert.match(seriesCard, /title=\{"Share poster and " \+ \(isTv \? "TV series" : "Anime"\) \+ " link"\}/);
   assert.match(app, /navigator\.canShare\(data\)/);
