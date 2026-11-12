@@ -318,7 +318,8 @@ test("Settings About credits media identifier sources and links the Premium entr
   assert.match(about, /href="\/plans" className="premium-coming-soon premium-plan-link"/);
   assert.match(about, /MousePointerClick/);
   assert.match(about, /VIEW PLANS/);
-  assert.doesNotMatch(about, /TMDB API|COMING SOON|premium-status/);
+  assert.match(about, /premium-status premium-status-available">AVAILABLE/);
+  assert.doesNotMatch(about, /TMDB API|COMING SOON/);
   assert.match(css, /@keyframes premium-pointer-tap/);
   assert.match(css, /\.premium-plan-link:active/);
   assert.match(css, /\.premium-plan-pointer \{ animation:none; \}/);
