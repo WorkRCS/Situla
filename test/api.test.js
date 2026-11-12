@@ -37,10 +37,12 @@ test('Playback heartbeats validate session identifiers and playing state before 
   assert.equal(invalidStop.status, 400);
 });
 
-test('admin and crawler API routes are removed', async () => {
+test('admin dashboard requires an authenticated role and legacy admin/crawler routes remain removed', async () => {
+  const adminDashboard = await app.request('/api/admin/dashboard');
+  assert.equal(adminDashboard.status, 403);
+  assert.equal((await adminDashboard.json()).code, 'ADMIN_REQUIRED');
   const paths = [
     '/api/admin/login',
-    '/api/admin/dashboard',
     '/api/admin/import-ids',
     '/api/admin/crawl',
     '/api/admin/tmdb-status'

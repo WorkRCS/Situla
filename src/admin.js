@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
+import { getCookie } from 'hono/cookie';
 import {
   User, GuestAccess, ActivitySession, Device, AuthSession, UsageState,
   PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog
 } from './models.js';
 import { connectDatabase } from './db.js';
-import { getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
+import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
 import { addCalendarMonths } from './membership-policy.js';
 import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
 
@@ -87,7 +88,10 @@ router.use('*', async (c, next) => {
     (method === 'DELETE' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension');
   if (!knownRoute) return c.notFound();
   if (method !== 'GET' && !isSameOriginRequest(c)) {
-    return c.json({ error: 'A same-origin request is required.' }, 403);
+    return c.json({ error: 'A same-origin request is required.', code: 'ORIGIN_CHECK_FAILED' }, 403);
+  }
+  if (!getCookie(c, SESSION_COOKIE)) {
+    return c.json({ error: 'Administrator access required.', code: 'ADMIN_REQUIRED' }, 403);
   }
   try {
     await connectDatabase();
