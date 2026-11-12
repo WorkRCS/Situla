@@ -47,7 +47,7 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Refresh IMDb and MyAnimeList public market data
+      - name: Refresh IMDb, TVmaze and MyAnimeList public market data
         if: steps.database.outputs.ready == 'true'
         run: npm run refresh:catalog-signals
         env:
