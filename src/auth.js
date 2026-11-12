@@ -157,9 +157,8 @@ export async function enforceRateLimit(key, limit, windowSeconds = 900) {
   return Number(state?.count || 0) <= limit;
 }
 
-export function isConfiguredAdmin(email) {
-  const configured = String(process.env.ADMIN_EMAILS || '').split(',').map(normalizeEmail);
-  return configured.includes(normalizeEmail(email));
+export function hasAdminRole(user) {
+  return user?.role === 'admin';
 }
 
 export function selectDevicesToRetain(devices, limit) {

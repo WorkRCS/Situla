@@ -10,11 +10,15 @@ import {
 import {
   SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
   authSecret, normalizeEmail, validEmail, validPassword, hashPassword, verifyPassword,
-  getClientIp, isSameOriginRequest, enforceRateLimit, isConfiguredAdmin,
+  getClientIp, isSameOriginRequest, enforceRateLimit, hasAdminRole,
   createLoginSession, getAuthenticatedSession, revokeCurrentSession, safeUser,
   getGoogleOAuthClient, randomToken, safeEqual, clearOAuthCookies
 } from './auth.js';
 import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
+import {
+  getRollingTenYearWindow, buildRecentDateWindowFilter, buildOlderDateWindowFilter,
+  mergeRecentAndOlderFeedItems, PREMIUM_FEED_LIMIT
+} from './premium-feed.js';
 import {
   resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
   heartbeatPlaybackSession, stopPlaybackSession
@@ -37,13 +41,51 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
-function pageOptions(c, defaultLimit = 20, maxLimit = 40) {
+export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
   const requestedPage = Number(c.req.query('page') || 1);
   const requestedLimit = Number(c.req.query('limit') || defaultLimit);
   return {
     page: Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1,
     limit: Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, maxLimit) : defaultLimit
   };
+}
+
+async function getPremiumFeedWindow(c) {
+  const authenticated = await getAuthenticatedSession(c);
+  if (!authenticated || getWatchPolicy(authenticated.user).planId !== 'premium') return null;
+  return getRollingTenYearWindow();
+}
+
+async function findDatePrioritizedFeedPage({ Model, filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
+  const window = getRollingTenYearWindow();
+  const recentClause = buildRecentDateWindowFilter(dateField, yearField, window);
+  const olderClause = buildOlderDateWindowFilter(dateField, yearField, window);
+  const recentFilter = { $and: [filter, recentClause] };
+  const olderFilter = { $and: [filter, olderClause] };
+  const [recentTotal, olderTotal] = await Promise.all([
+    Model.countDocuments(recentFilter),
+    Model.countDocuments(olderFilter)
+  ]);
+  const total = recentTotal + olderTotal;
+  const offset = ignorePageOffset ? 0 : (page - 1) * limit;
+
+  async function read(filterForQuery, skip, take) {
+    if (take <= 0) return [];
+    let query = Model.find(filterForQuery);
+    if (select) query = query.select(select);
+    return query.sort(sort).skip(skip).limit(take).lean();
+  }
+
+  let recentItems = [];
+  let olderItems = [];
+  if (offset < recentTotal) {
+    recentItems = await read(recentFilter, offset, limit);
+    const remaining = limit - recentItems.length;
+    if (remaining > 0) olderItems = await read(olderFilter, 0, remaining);
+  } else {
+    olderItems = await read(olderFilter, Math.max(0, offset - recentTotal), limit);
+  }
+  return { items: mergeRecentAndOlderFeedItems(recentItems, olderItems, limit), total, recentTotal, window };
 }
 
 function safeText(value) {
@@ -297,10 +339,6 @@ app.post('/api/auth/email', async (c) => {
     let created = false;
     if (user) {
       if (user.status !== 'active') return c.json({ error: 'This account is unavailable.', code: 'ACCOUNT_UNAVAILABLE' }, 403);
-      if (isConfiguredAdmin(email) && user.role !== 'admin') {
-        user.role = 'admin';
-        await user.save();
-      }
       if (!user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
         return c.json({ error: 'Email or password is incorrect.', code: 'INVALID_CREDENTIALS' }, 401);
       }
@@ -317,7 +355,7 @@ app.post('/api/auth/email', async (c) => {
           passwordHash,
           hasPassword: true,
           emailVerified: false,
-          role: isConfiguredAdmin(email) ? 'admin' : 'user',
+          role: 'user',
           planId: 'free',
           membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null },
           status: 'active'
@@ -409,7 +447,6 @@ app.get('/api/auth/google/callback', async (c) => {
         if (user.googleSub && user.googleSub !== String(identity.sub)) throw new Error('This email is already linked to another Google identity.');
         user.googleSub = String(identity.sub);
         user.emailVerified = true;
-        if (isConfiguredAdmin(email)) user.role = 'admin';
         await user.save();
       } else {
         try {
@@ -418,7 +455,7 @@ app.get('/api/auth/google/callback', async (c) => {
             displayName: String(identity.name || displayNameFromEmail(email)).slice(0, 80),
             googleSub: String(identity.sub),
             emailVerified: true,
-            role: isConfiguredAdmin(email) ? 'admin' : 'user',
+            role: 'user',
             status: 'active',
             planId: 'free',
             membership: { status: 'inactive', billingCycle: null, startedAt: null, expiresAt: null }
@@ -437,10 +474,6 @@ app.get('/api/auth/google/callback', async (c) => {
       }
     }
     if (user.status !== 'active') throw new Error('This account is unavailable.');
-    if (isConfiguredAdmin(email) && user.role !== 'admin') {
-      user.role = 'admin';
-      await user.save();
-    }
     await createLoginSession(c, user, true);
     clearOAuthCookies(c);
     return c.redirect('/profile', 302);
@@ -535,7 +568,7 @@ app.patch('/api/admin/users/:userId/membership', async (c) => {
   try {
     await connectDatabase();
     const authenticated = await getAuthenticatedSession(c);
-    if (!authenticated || authenticated.user.role !== 'admin' || !isConfiguredAdmin(authenticated.user.email)) {
+    if (!authenticated || !hasAdminRole(authenticated.user)) {
       return c.json({ error: 'Administrator access required.' }, 403);
     }
     const userId = c.req.param('userId');
@@ -691,15 +724,60 @@ app.get('/api/movies/discover', async (c) => {
     const excludedIds = [...new Set(String(c.req.query('exclude') || '')
       .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 120);
     if (excludedIds.length) baseFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
+
+    const premiumWindow = await getPremiumFeedWindow(c);
+    if (premiumWindow) {
+      const recentClause = buildRecentDateWindowFilter('releaseDate', 'releaseYear', premiumWindow);
+      const olderClause = buildOlderDateWindowFilter('releaseDate', 'releaseYear', premiumWindow);
+      const dateSort = { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 };
+      const facets = {
+        featuredRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: 1 }],
+        featuredOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: 1 }],
+        itemsRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
+        itemsOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
+        recentTotal: [{ $match: recentClause }, { $count: 'value' }],
+        olderTotal: [{ $match: olderClause }, { $count: 'value' }]
+      };
+      for (const category of MOVIE_CATEGORIES) {
+        facets[category.key + 'Recent'] = [
+          { $match: { $and: [recentClause, { genres: category.name }] } },
+          { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }
+        ];
+        facets[category.key + 'Older'] = [
+          { $match: { $and: [olderClause, { genres: category.name }] } },
+          { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }
+        ];
+      }
+      const [result] = await Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]);
+      const items = mergeRecentAndOlderFeedItems(result?.itemsRecent, result?.itemsOlder, PREMIUM_FEED_LIMIT);
+      const categories = MOVIE_CATEGORIES.map((category) => ({
+        key: category.key,
+        name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
+        genre: category.name,
+        items: mergeRecentAndOlderFeedItems(result?.[category.key + 'Recent'], result?.[category.key + 'Older'], PREMIUM_FEED_LIMIT).map(movieDto)
+      })).filter((category) => category.items.length > 0);
+      const recentTotal = Number(result?.recentTotal?.[0]?.value || 0);
+      const olderTotal = Number(result?.olderTotal?.[0]?.value || 0);
+      const featured = result?.featuredRecent?.[0] || result?.featuredOlder?.[0] || null;
+      const total = recentTotal + olderTotal;
+      return c.json({
+        featured: featured ? movieDto(featured) : null,
+        items: items.map(movieDto),
+        categories,
+        personalizedFeed: { plan: 'premium', startYear: premiumWindow.startYear, endYear: premiumWindow.endYear },
+        pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
+      });
+    }
+
     const facets = {
       featured: [{ $sample: { size: 1 } }],
-      items: [{ $sample: { size: 40 } }],
+      items: [{ $sample: { size: PREMIUM_FEED_LIMIT } }],
       total: [{ $count: 'value' }]
     };
     for (const category of MOVIE_CATEGORIES) {
       facets[category.key] = [
         { $match: { genres: category.name } },
-        { $sample: { size: 18 } }
+        { $sample: { size: PREMIUM_FEED_LIMIT } }
       ];
     }
     const [result] = await Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]);
@@ -714,7 +792,7 @@ app.get('/api/movies/discover', async (c) => {
       featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
       items: (result?.items || []).map(movieDto),
       categories,
-      pagination: { page: 1, limit: 40, total, totalPages: Math.ceil(total / 40) }
+      pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
     });
   } catch (error) {
     console.error('Movie discovery feed failed:', error.message);
@@ -826,15 +904,28 @@ app.get('/api/movies', async (c) => {
     const excludedIds = [...new Set(String(c.req.query('exclude') || '')
       .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 900);
     const randomFilter = { ...filter };
-    if (randomOrder && excludedIds.length) {
-      randomFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
+    if (randomOrder && excludedIds.length) randomFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
+
+    const premiumWindow = !query && !year ? await getPremiumFeedWindow(c) : null;
+    if (premiumWindow) {
+      const feed = await findDatePrioritizedFeedPage({
+        Model: Movie,
+        filter: randomOrder ? randomFilter : filter,
+        dateField: 'releaseDate',
+        yearField: 'releaseYear',
+        sort: { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
+        page, limit, ignorePageOffset: randomOrder
+      });
+      return c.json({
+        items: feed.items.map(movieDto),
+        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
+      });
     }
+
     const [items, total] = await Promise.all([
       randomOrder
-        ? Movie.aggregate([
-            { $match: randomFilter },
-            { $sample: { size: limit } }
-          ])
+        ? Movie.aggregate([{ $match: randomFilter }, { $sample: { size: limit } }])
         : Movie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       Movie.countDocuments(filter)
     ]);
@@ -875,13 +966,27 @@ app.get('/api/tv', async (c) => {
       .split(',').map((value) => value.trim()).filter((value) => /^[0-9]{1,12}$/.test(value)).map(Number))].slice(0, 900);
     const randomFilter = { ...filter };
     if (randomOrder && excludedIds.length) randomFilter.tmdbId = { $nin: excludedIds, $type: 'number', $gt: 0 };
+
+    const premiumWindow = !query ? await getPremiumFeedWindow(c) : null;
+    if (premiumWindow) {
+      const feed = await findDatePrioritizedFeedPage({
+        Model: TvSeries,
+        filter: randomOrder ? randomFilter : filter,
+        dateField: 'firstAirDate',
+        yearField: 'releaseYear',
+        sort: { firstAirDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
+        page, limit, select: '-seasons.episodes', ignorePageOffset: randomOrder
+      });
+      return c.json({
+        items: feed.items.map(tvSeriesDto),
+        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
+      });
+    }
+
     const [items, total] = await Promise.all([
       randomOrder
-        ? TvSeries.aggregate([
-            { $match: randomFilter },
-            { $sample: { size: limit } },
-            { $project: { 'seasons.episodes': 0 } }
-          ])
+        ? TvSeries.aggregate([{ $match: randomFilter }, { $sample: { size: limit } }, { $project: { 'seasons.episodes': 0 } }])
         : TvSeries.find(filter).select('-seasons.episodes').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       TvSeries.countDocuments(filter)
     ]);
@@ -946,13 +1051,27 @@ app.get('/api/anime', async (c) => {
       .split(',').map((value) => value.trim()).filter((value) => /^[0-9]{1,12}$/.test(value)).map(Number))].slice(0, 900);
     const randomFilter = { ...filter };
     if (randomOrder && excludedIds.length) randomFilter.malId = { $nin: excludedIds, $type: 'number', $gt: 0 };
+
+    const premiumWindow = !query ? await getPremiumFeedWindow(c) : null;
+    if (premiumWindow) {
+      const feed = await findDatePrioritizedFeedPage({
+        Model: AnimeSeries,
+        filter: randomOrder ? randomFilter : filter,
+        dateField: 'airedFrom',
+        yearField: 'releaseYear',
+        sort: { airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1, _id: 1 },
+        page, limit, select: '-episodeGuide -relatedAnime', ignorePageOffset: randomOrder
+      });
+      return c.json({
+        items: feed.items.map(animeSeriesDto),
+        personalizedFeed: { plan: 'premium', startYear: feed.window.startYear, endYear: feed.window.endYear },
+        pagination: { page, limit, total: feed.total, totalPages: Math.ceil(feed.total / limit) }
+      });
+    }
+
     const [items, total] = await Promise.all([
       randomOrder
-        ? AnimeSeries.aggregate([
-            { $match: randomFilter },
-            { $sample: { size: limit } },
-            { $project: { episodeGuide: 0, relatedAnime: 0 } }
-          ])
+        ? AnimeSeries.aggregate([{ $match: randomFilter }, { $sample: { size: limit } }, { $project: { episodeGuide: 0, relatedAnime: 0 } }])
         : AnimeSeries.find(filter).select('-episodeGuide -relatedAnime').sort(sort).skip((page - 1) * limit).limit(limit).lean(),
       AnimeSeries.countDocuments(filter)
     ]);

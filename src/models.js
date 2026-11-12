@@ -57,6 +57,7 @@ const movieSchema = new mongoose.Schema({
 
 movieSchema.index({ imdbId: 1 }, { unique: true });
 movieSchema.index({ popularity: -1, releaseDate: -1 });
+movieSchema.index({ releaseDate: -1, releaseYear: -1, popularity: -1 });
 movieSchema.index({ title: 'text', originalTitle: 'text' });
 movieSchema.index({ releaseYear: -1 });
 
@@ -115,6 +116,7 @@ const tvSeriesSchema = new mongoose.Schema({
 tvSeriesSchema.index({ tmdbId: 1 }, { unique: true, partialFilterExpression: { tmdbId: { $type: "number" } } });
 tvSeriesSchema.index({ externalImdbId: 1 }, { sparse: true });
 tvSeriesSchema.index({ popularity: -1, firstAirDate: -1 });
+tvSeriesSchema.index({ firstAirDate: -1, releaseYear: -1, popularity: -1 });
 tvSeriesSchema.index({ title: 'text', originalTitle: 'text' });
 
 const animeEpisodeSchema = new mongoose.Schema({
@@ -182,6 +184,7 @@ const animeSeriesSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 
 animeSeriesSchema.index({ type: 1, rank: 1, score: -1 });
+animeSeriesSchema.index({ airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
 export const Movie = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
