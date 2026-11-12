@@ -129,6 +129,11 @@ test("Hot, Popular and Featured badges use separate market, trend and editorial 
   }, "movie", now), null);
 
   // Hot is driven by recent playback momentum, not by the rating.
+  const accessControl = await read("../src/access-control.js");
+  const appRoutes = await read("../src/app.js");
+  assert.match(accessControl, /startedPlaying: Boolean\(playing\) && !Boolean\(session\.isPlaying\)/);
+  assert.match(appRoutes, /if \(result\.startedPlaying\)/);
+  assert.doesNotMatch(appRoutes.slice(appRoutes.indexOf("app.post('/api/playback/start'"), appRoutes.indexOf("app.post('/api/playback/heartbeat'")), /recordCatalogPlaybackStart/);
   assert.equal(getCatalogBadge({
     trendScore: 9, trendUpdatedAt: new Date(now).toISOString(),
     voteAverage: 4.2, voteCount: 500000
