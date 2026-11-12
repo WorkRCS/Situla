@@ -87,6 +87,7 @@ app.use('/api/*', catalogResponseCache);
 async function readSharePosterBytes(response) {
   const advertisedLength = Number(response.headers.get('content-length') || 0);
   if (advertisedLength > SHARE_POSTER_MAX_BYTES) {
+    await response.body?.cancel().catch(() => {});
     const error = new Error('Poster image is too large to share.');
     error.status = 413;
     throw error;
