@@ -65,7 +65,7 @@ function marketSignals(item, mediaType) {
     voteDepth,
     providerReach,
     marketScore,
-    minPopularVotes: isAnime ? 500 : isTv ? 200 : 300,
+    minPopularVotes: isAnime ? 500 : isTv ? 200 : 500,
     minFeaturedVotes: isAnime ? 100 : isTv ? 25 : 50,
     minHotVotes: isAnime ? 300 : isTv ? 75 : 100
   };
