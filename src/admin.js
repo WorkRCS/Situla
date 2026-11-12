@@ -73,6 +73,22 @@ async function sessionSummaries(ownerType, ownerIds) {
 }
 
 router.use('*', async (c, next) => {
+  let path = new URL(c.req.url).pathname;
+  if (path === '/api/admin') path = '/';
+  else if (path.startsWith('/api/admin/')) path = path.slice('/api/admin'.length);
+  const segments = path.split('/').filter(Boolean);
+  const method = c.req.method.toUpperCase();
+  const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || ''));
+  const knownRoute =
+    (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales'].includes(path)) ||
+    (method === 'GET' && segments.length === 2 && ['guests', 'users'].includes(segments[0]) && isObjectId(segments[1])) ||
+    (method === 'PATCH' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'membership') ||
+    (method === 'POST' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension') ||
+    (method === 'DELETE' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension');
+  if (!knownRoute) return c.notFound();
+  if (method !== 'GET' && !isSameOriginRequest(c)) {
+    return c.json({ error: 'A same-origin request is required.' }, 403);
+  }
   try {
     await connectDatabase();
     const authenticated = await getAuthenticatedSession(c);

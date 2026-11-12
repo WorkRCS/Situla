@@ -39,6 +39,8 @@ export default function PresenceTracker() {
             suspendedRedirected = true;
             window.location.replace("/suspended");
           }
+        } else if (response.ok && window.location.pathname === "/suspended") {
+          window.location.replace("/");
         }
       } catch {}
     }
