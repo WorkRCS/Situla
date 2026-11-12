@@ -89,10 +89,16 @@ export function createCatalogResponseCache({
     }
 
     let redis;
+    let redisUnavailable = false;
     try {
       redis = await getRedis();
     } catch {
-      redis = null;
+      redisUnavailable = true;
+    }
+    if (redisUnavailable) {
+      await next();
+      c.header('X-Situla-Cache', 'BYPASS');
+      return;
     }
     if (!redis) {
       await next();
