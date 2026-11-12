@@ -113,15 +113,15 @@ The public API remains read-only for catalogue data; there are no public admin o
 ## API
 
 - `GET /api/health`
-- `GET /api/movies?page=1&limit=40`
+- `GET /api/movies?page=1&limit=10`
 - `GET /api/movies/discover`
 - `GET /api/movies/suggestions?q=inception`
 - `GET /api/search?q=the+office` (searches Movies, TV series and Anime together)
 - `GET /api/movies/:imdbId`
-- `GET /api/tv?page=1&limit=40`
+- `GET /api/tv?page=1&limit=10`
 - `GET /api/tv/:tmdbId`
 - `GET /api/tv/:tmdbId/seasons/:seasonNumber`
-- `GET /api/anime?page=1&limit=40`
+- `GET /api/anime?page=1&limit=10`
 - `GET /api/anime/:malId`
 
 
@@ -143,7 +143,7 @@ For Google Sign-in, create a Google Cloud OAuth client of type **Web application
 https://YOUR_PRODUCTION_HOST/api/auth/google/callback
 ```
 
-Set the resulting `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the same full URL in `GOOGLE_REDIRECT_URI`. Add a comma-separated `ADMIN_EMAILS` allowlist only for accounts that should receive the server-side administrator role. Never commit a real `.env` file or paste its secrets into source control.
+Set the resulting `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the same full URL in `GOOGLE_REDIRECT_URI`. Administrator authority is stored only in the MongoDB `User.role` field; it is not granted by an environment email allowlist. Never commit a real `.env` file or paste its secrets into source control.
 
 ### Server-owned access limits
 
@@ -153,10 +153,12 @@ Set the resulting `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the same full 
 - Premium 6 Months: 10 hours, then a 20-minute cooldown.
 - Premium Yearly: unlimited watch time with no periodic cooldown.
 - Premium accounts can register up to 3 devices; their allowance is shared across devices.
+- Active Premium accounts receive a private date-prioritized Movies, TV and Anime feed using the current calendar year and the previous nine years. Newer releases appear first; older records are used only when the recent window cannot fill a requested page.
+- Catalogue feed responses are capped at 10 records per request for every access tier.
 
 The server validates the media route before issuing a playback session. The iframe is mounted only after that authorization succeeds. Player messages and 15-second heartbeats are used to account for playback time on the server. Because playback uses a third-party iframe, the events it reports are not cryptographic proof of actual playback; this is server-enforced session accounting, not tamper-proof DRM.
 
-Premium membership can be manually activated or downgraded through the administrator-only `PATCH /api/admin/users/:userId/membership` endpoint after an administrator email is added to `ADMIN_EMAILS`. Payment checkout is intentionally not connected; no payment gateway, payment secret or checkout route is configured.
+Premium membership can be manually activated or downgraded through the administrator-only `PATCH /api/admin/users/:userId/membership` endpoint. Administrator access is determined only by the signed-in user's MongoDB `role: "admin"`. Assign the first administrator from the project folder with `npm run admin:set-role -- member@example.com admin`; this script requires the existing MongoDB environment variables and updates the user record directly. Payment checkout is intentionally not connected; no payment gateway, payment secret or checkout route is configured.
 
 Useful endpoints:
 - `POST /api/auth/email`, `GET /api/auth/google`, `GET /api/auth/google/callback`

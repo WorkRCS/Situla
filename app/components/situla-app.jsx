@@ -651,7 +651,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       setLoading(true);
       try {
         const isDiscover = (tab === "home" && genre === "All") || tab === "movies";
-        const params = new URLSearchParams({ page: "1", limit: "40" });
+        const params = new URLSearchParams({ page: "1", limit: "10" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
           const selected = categoryShelves.find((item) => item.name === genre);
@@ -737,8 +737,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     }
 
     Promise.allSettled([
-      loadSeries("/api/tv?page=1&limit=32"),
-      loadSeries("/api/anime?page=1&limit=32")
+      loadSeries("/api/tv?page=1&limit=10"),
+      loadSeries("/api/anime?page=1&limit=10")
     ]).then(([tvResult, animeResult]) => {
       if (controller.signal.aborted) return;
       const tvItems = tvResult.status === "fulfilled" ? tvResult.value : [];
@@ -823,8 +823,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const recentIds = readRecentCatalogIds(recentKey);
     const excludeQuery = recentIds.length ? "&exclude=" + encodeURIComponent(recentIds.join(",")) : "";
     const endpoint = tab === "tv"
-      ? "/api/tv?page=1&limit=40&random=true" + excludeQuery
-      : "/api/anime?page=1&limit=40&random=true" + excludeQuery;
+      ? "/api/tv?page=1&limit=10&random=true" + excludeQuery
+      : "/api/anime?page=1&limit=10&random=true" + excludeQuery;
     async function loadSeries() {
       setLoading(true);
       try {
@@ -984,7 +984,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     try {
       if (tab === "home" || tab === "movies" || tab === "search") {
         const nextPage = moviesPage + 1;
-        const params = new URLSearchParams({ page: String(nextPage), limit: "40" });
+        const params = new URLSearchParams({ page: String(nextPage), limit: "10" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
           const selected = categoryShelves.find((item) => item.name === genre);
@@ -1021,7 +1021,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const nextPage = tvPage + 1;
         const params = new URLSearchParams({
           page: String(nextPage),
-          limit: "40",
+          limit: "10",
           random: "true",
           exclude: tvShows.map((item) => item.tmdbId).filter((id) => Number.isSafeInteger(Number(id)) && Number(id) > 0).join(",")
         });
@@ -1049,7 +1049,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const nextPage = animePage + 1;
         const params = new URLSearchParams({
           page: String(nextPage),
-          limit: "40",
+          limit: "10",
           random: "true",
           exclude: animeShows.map((item) => item.malId).filter((id) => Number.isSafeInteger(Number(id)) && Number(id) > 0).join(",")
         });

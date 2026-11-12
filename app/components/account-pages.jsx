@@ -132,9 +132,9 @@ export function LoginPage() {
     restorePosterCache();
 
     const sources = [
-      { key: "movies", mediaType: "movie", path: "/api/movies?limit=16" },
-      { key: "tv", mediaType: "tv", path: "/api/tv?limit=16" },
-      { key: "anime", mediaType: "anime", path: "/api/anime?limit=16" }
+      { key: "movies", mediaType: "movie", path: "/api/movies?limit=10" },
+      { key: "tv", mediaType: "tv", path: "/api/tv?limit=10" },
+      { key: "anime", mediaType: "anime", path: "/api/anime?limit=10" }
     ];
 
     Promise.all(sources.map(async (source) => {
