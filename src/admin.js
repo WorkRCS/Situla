@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import {
   User, GuestAccess, ActivitySession, Device, AuthSession, UsageState,
-  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead
+  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
+  Movie, TvSeries, AnimeSeries
 } from './models.js';
 import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
@@ -58,8 +59,13 @@ router.use('*', async (c, next) => {
   const segments = path.split('/').filter(Boolean);
   const method = c.req.method.toUpperCase();
   const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || ''));
+  const validCatalogTarget = method === 'PATCH' && segments.length === 4 &&
+    segments[0] === 'catalog' && segments[3] === 'featured' &&
+    (segments[1] === 'movie' ? /^tt\\d{5,12}$/i.test(segments[2]) :
+      ['tv', 'anime'].includes(segments[1]) && /^\\d{1,12}$/.test(segments[2]));
   const knownRoute =
-    (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales', '/announcements'].includes(path)) ||
+    (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales', '/announcements', '/catalog'].includes(path)) ||
+    validCatalogTarget ||
     (method === 'GET' && segments.length === 2 && ['guests', 'users'].includes(segments[0]) && isObjectId(segments[1])) ||
     (method === 'GET' && segments.length === 3 && segments[0] === 'announcements' && isObjectId(segments[1]) && segments[2] === 'image') ||
     (method === 'PATCH' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'membership') ||
@@ -575,6 +581,94 @@ router.delete('/announcements/:announcementId', async (c) => {
   await AnnouncementRead.deleteMany({ announcementId: item._id });
   await audit(c.get('adminAuth').user._id, 'announcement_deleted', 'announcement', id, { title: item.title });
   return c.json({ deleted: true, id });
+});
+
+router.get('/catalog', async (c) => {
+  const mediaType = String(c.req.query('type') || 'movie').toLowerCase();
+  const query = String(c.req.query('q') || '').trim().slice(0, 80);
+  const configurations = {
+    movie: {
+      Model: Movie,
+      filter: { imdbId: /^tt\\d{5,12}$/i, adult: { $ne: true } },
+      select: 'imdbId title releaseYear releaseDate posterUrl isFeatured voteAverage voteCount popularity trendScore trendUpdatedAt',
+      idField: 'imdbId'
+    },
+    tv: {
+      Model: TvSeries,
+      filter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } },
+      select: 'tmdbId title releaseYear firstAirDate posterUrl isFeatured voteAverage voteCount popularity trendScore trendUpdatedAt',
+      idField: 'tmdbId'
+    },
+    anime: {
+      Model: AnimeSeries,
+      filter: { type: { $in: ['TV', 'ONA'] } },
+      select: 'malId title titleEnglish releaseYear airedFrom posterUrl posterFallbackUrl isFeatured score scoredBy rank popularity trendScore trendUpdatedAt',
+      idField: 'malId'
+    }
+  };
+  const config = configurations[mediaType];
+  if (!config) return c.json({ error: 'Choose Movie, TV or Anime.' }, 400);
+  const filter = { ...config.filter };
+  if (query) {
+    const pattern = new RegExp(escapeSearchPattern(query), 'i');
+    filter.$or = mediaType === 'anime'
+      ? [{ title: pattern }, { titleEnglish: pattern }, { titleJapanese: pattern }]
+      : [{ title: pattern }, { originalTitle: pattern }];
+  }
+  const rows = await config.Model.find(filter)
+    .select(config.select)
+    .sort({ isFeatured: -1, trendScore: -1, popularity: -1, voteCount: -1, scoredBy: -1, updatedAt: -1 })
+    .limit(60)
+    .lean();
+  return c.json({
+    items: rows.map((item) => ({
+      id: String(item[config.idField]),
+      mediaType,
+      title: mediaType === 'anime' ? (item.titleEnglish || item.title) : item.title,
+      year: Number(item.releaseYear) || Number(String(item.releaseDate || item.firstAirDate || item.airedFrom || '').slice(0, 4)) || null,
+      posterUrl: item.posterUrl || item.posterFallbackUrl || null,
+      isFeatured: item.isFeatured === true,
+      rating: Number(mediaType === 'anime' ? item.score : item.voteAverage) || 0,
+      votes: Number(mediaType === 'anime' ? item.scoredBy : item.voteCount) || 0
+    }))
+  });
+});
+
+router.patch('/catalog/:mediaType/:mediaId/featured', async (c) => {
+  const mediaType = String(c.req.param('mediaType') || '').toLowerCase();
+  const mediaId = String(c.req.param('mediaId') || '').trim();
+  const body = await c.req.json().catch(() => ({}));
+  if (typeof body.isFeatured !== 'boolean') {
+    return c.json({ error: 'isFeatured must be a boolean.' }, 400);
+  }
+
+  let Model;
+  let filter;
+  if (mediaType === 'movie' && /^tt\\d{5,12}$/i.test(mediaId)) {
+    Model = Movie;
+    filter = { imdbId: mediaId.toLowerCase() };
+  } else if (mediaType === 'tv' && /^\\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
+    Model = TvSeries;
+    filter = { tmdbId: Number(mediaId) };
+  } else if (mediaType === 'anime' && /^\\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
+    Model = AnimeSeries;
+    filter = { malId: Number(mediaId), type: { $in: ['TV', 'ONA'] } };
+  } else {
+    return c.json({ error: 'Invalid catalogue media type or ID.' }, 400);
+  }
+
+  const item = await Model.findOneAndUpdate(
+    filter,
+    { $set: { isFeatured: body.isFeatured } },
+    { new: true, runValidators: true }
+  ).select('title titleEnglish isFeatured').lean();
+  if (!item) return c.json({ error: 'Catalogue item not found.' }, 404);
+
+  const title = mediaType === 'anime' ? (item.titleEnglish || item.title) : item.title;
+  await audit(c.get('adminAuth').user._id, 'catalog_featured_updated', mediaType, mediaId, {
+    title, isFeatured: body.isFeatured
+  });
+  return c.json({ id: mediaId, mediaType, title, isFeatured: item.isFeatured === true });
 });
 
 router.get('/sales', async (c) => {
