@@ -91,6 +91,7 @@ test('announcement UI schedules, uploads or embeds media, and lets visitors mark
   const center = await read('../app/components/announcement-center.jsx');
   const dashboard = await read('../app/components/admin-dashboard.jsx');
   const layout = await read('../app/layout.jsx');
+  const app = await read('../app/components/situla-app.jsx');
   const utils = await read('../src/announcement-utils.js');
 
   assert.match(manager, /type="datetime-local"/);
@@ -99,16 +100,20 @@ test('announcement UI schedules, uploads or embeds media, and lets visitors mark
   assert.match(manager, /Publish \/ schedule/);
   assert.match(manager, /FormData/);
   assert.match(center, /Mark as read/);
-  assert.ok(center.includes('if (pathname?.startsWith("/suspended") || loading || !items.length) return null;'));
+  assert.match(center, /header-notification-trigger/);
+  assert.match(center, /No announcements yet/);
+  assert.doesNotMatch(center, /site-announcement-bar|site-announcement-backdrop/);
+  assert.match(app, /<AnnouncementCenter onOpen=/);
+  assert.doesNotMatch(app, /Sample notifications|notificationsRead/);
+  assert.doesNotMatch(layout, /AnnouncementCenter/);
   assert.match(utils, /timeZoneName: 'short'/);
   assert.match(utils, /year: 'numeric'/);
   assert.match(center, /formatAnnouncementDateTime/);
-  assert.match(center, /Uploaded /);
   assert.match(center, /situla:announcement-reads:v1:/);
   assert.match(center, /resolveAnnouncementMedia/);
   assert.match(dashboard, /AnnouncementManager/);
   assert.match(dashboard, /activeTab === "announcements"/);
-  assert.match(layout, /<AnnouncementCenter \/>/);
+  assert.match(app, /<AnnouncementCenter onOpen=/);
 });
 
 test('movie and TV poster cards invoke native share with canonical links and poster attachments', async () => {

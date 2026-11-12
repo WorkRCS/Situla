@@ -10,8 +10,9 @@ import { Button } from "./ui/button.jsx";
 import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
+import AnnouncementCenter from "./announcement-center.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
-import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, ShieldCheck, Sparkles, UserRound, Share2 } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2 } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -567,8 +568,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationsRead, setNotificationsRead] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
   const demoSignedIn = Boolean(accountUser);
   const [genre, setGenre] = useState("All");
@@ -1276,7 +1275,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <button
                 type="button"
                 className="header-avatar-trigger"
-                onClick={() => { setAccountOpen((open) => !open); setNotificationsOpen(false); }}
+                onClick={() => setAccountOpen((open) => !open)}
                 aria-label="Open user account menu"
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
@@ -1329,37 +1328,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </div>
               )}
             </div>
-            <div className="header-notifications-wrap">
-              <button
-                type="button"
-                className="header-notification-trigger"
-                onClick={() => { setNotificationsOpen((open) => !open); setAccountOpen(false); }}
-                aria-label="Notifications"
-                aria-haspopup="dialog"
-                aria-expanded={notificationsOpen}
-              >
-                <Bell size={19} strokeWidth={1.9} />
-                {!notificationsRead && <span className="header-notification-dot" aria-label="Unread notifications" />}
-              </button>
-              {notificationsOpen && (
-                <section className="header-notification-popover" role="dialog" aria-label="Notifications">
-                  <div className="header-notification-heading">
-                    <span><strong>Notifications</strong><small>YOUR SITULA UPDATES</small></span>
-                    <button type="button" onClick={() => setNotificationsRead(true)}>Mark read</button>
-                  </div>
-                  <article className="header-notification-item">
-                    <span className="header-notification-icon"><Crown size={16} /></span>
-                    <span><strong>Premium is active</strong><small>Your Premium membership is in good standing.</small></span>
-                    {!notificationsRead && <i aria-hidden="true" />}
-                  </article>
-                  <article className="header-notification-item">
-                    <span className="header-notification-icon"><Sparkles size={16} /></span>
-                    <span><strong>Early updates unlocked</strong><small>Premium movie updates are ready in your account.</small></span>
-                  </article>
-                  <p className="header-popover-demo-note">Sample notifications · UI preview only</p>
-                </section>
-              )}
-            </div>
+            <AnnouncementCenter onOpen={() => setAccountOpen(false)} />
 
           </div>
         </div>

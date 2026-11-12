@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Bell, Check, ChevronDown, ExternalLink, Megaphone, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Check, ExternalLink, Megaphone, X } from "lucide-react";
 import { formatAnnouncementDateTime, resolveAnnouncementMedia } from "../../src/announcement-utils.js";
 
 function readLocalIds(storageKey) {
@@ -22,18 +21,22 @@ function saveLocalId(id, storageKey) {
   } catch {}
 }
 
+function dateTimeValue(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
 function announcementDate(value) {
   return formatAnnouncementDateTime(value);
 }
 
-
-
-export default function AnnouncementCenter() {
-  const pathname = usePathname();
+export default function AnnouncementCenter({ onOpen }) {
+  const rootRef = useRef(null);
   const [items, setItems] = useState([]);
   const [readIds, setReadIds] = useState(() => new Set());
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [storageKey, setStorageKey] = useState("situla:announcement-reads:v1:guest");
 
   const loadAnnouncements = useCallback(async (signal) => {
@@ -54,29 +57,53 @@ export default function AnnouncementCenter() {
         ...item,
         isRead: Boolean(item.isRead || localIds.has(String(item.id)))
       })));
+      setLoadError("");
     } catch (error) {
-      if (error.name !== "AbortError") setItems([]);
+      if (error.name !== "AbortError") {
+        setItems([]);
+        setLoadError("Announcements are temporarily unavailable.");
+      }
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (pathname?.startsWith("/suspended")) return undefined;
     const controller = new AbortController();
     loadAnnouncements(controller.signal);
     const interval = window.setInterval(() => loadAnnouncements(), 60_000);
     const onFocus = () => loadAnnouncements();
+    const onAuthChange = () => loadAnnouncements();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("situla:auth-change", onAuthChange);
     return () => {
       controller.abort();
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("situla:auth-change", onAuthChange);
     };
-  }, [pathname, loadAnnouncements]);
+  }, [loadAnnouncements]);
 
-  const unreadCount = useMemo(() => items.filter((item) => !item.isRead && !readIds.has(String(item.id))).length, [items, readIds]);
-  const featured = useMemo(() => items.find((item) => !item.isRead && !readIds.has(String(item.id))) || items[0] || null, [items, readIds]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutside = (event) => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  const unreadCount = useMemo(
+    () => items.filter((item) => !item.isRead && !readIds.has(String(item.id))).length,
+    [items, readIds]
+  );
 
   async function markAsRead(item) {
     const id = String(item.id);
@@ -93,52 +120,95 @@ export default function AnnouncementCenter() {
     } catch {}
   }
 
-  if (pathname?.startsWith("/suspended") || loading || !items.length) return null;
+  function toggleOpen() {
+    if (!open) onOpen?.();
+    setOpen((value) => !value);
+  }
 
   return (
-    <>
-      <aside className="site-announcement-bar" aria-label="Situla announcements">
-        <span className="site-announcement-mark"><Megaphone size={16} /></span>
-        <span className="site-announcement-label">ANNOUNCEMENT</span>
-        <span className="site-announcement-title">{featured?.title || "Latest updates from Situla"}</span>
-        {featured?.scheduledAt && <time className="site-announcement-time" dateTime={new Date(featured.scheduledAt).toISOString()}>{announcementDate(featured.scheduledAt)}</time>}
-        {unreadCount > 0 && <span className="site-announcement-count">{unreadCount} new</span>}
-        <button type="button" className="site-announcement-open" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
-          <Bell size={15} /> View <ChevronDown size={14} />
-        </button>
-      </aside>
+    <div className="header-notifications-wrap" ref={rootRef}>
+      <button
+        type="button"
+        className="header-notification-trigger"
+        onClick={toggleOpen}
+        aria-label={unreadCount ? "Announcements, " + unreadCount + " unread" : "Announcements"}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+      >
+        <Bell size={19} strokeWidth={1.9} />
+        {unreadCount > 0 && (
+          <span className="header-notification-count" aria-label={unreadCount + " unread announcements"}>
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
 
-      {open && <div className="site-announcement-backdrop" onMouseDown={(event) => {
-        if (event.target === event.currentTarget) setOpen(false);
-      }}>
-        <section className="site-announcement-panel" role="dialog" aria-modal="true" aria-label="Announcements">
-          <header className="site-announcement-panel-header">
-            <div><span>STAY IN THE LOOP</span><h2>Announcements</h2><p>{unreadCount ? unreadCount + " unread updates" : "You are all caught up."}</p></div>
-            <button type="button" aria-label="Close announcements" onClick={() => setOpen(false)}><X size={19} /></button>
-          </header>
-          <div className="site-announcement-list">
+      {open && (
+        <section className="header-notification-popover" role="dialog" aria-label="Announcements" aria-modal="false">
+          <div className="header-notification-heading">
+            <span>
+              <strong>Announcements</strong>
+              <small>{unreadCount ? unreadCount + " UNREAD UPDATES" : "SITULA UPDATES"}</small>
+            </span>
+            <button type="button" aria-label="Close announcements" onClick={() => setOpen(false)}>
+              <X size={17} />
+            </button>
+          </div>
+          <div className="header-notification-list">
+            {loading && <p className="header-announcement-message">Loading announcements…</p>}
+            {!loading && loadError && <p className="header-announcement-message">{loadError}</p>}
+            {!loading && !loadError && !items.length && (
+              <div className="header-announcement-empty">
+                <span><Megaphone size={19} /></span>
+                <strong>No announcements yet</strong>
+                <p>New Situla updates will appear here.</p>
+              </div>
+            )}
             {items.map((item) => {
               const isRead = Boolean(item.isRead || readIds.has(String(item.id)));
               const media = resolveAnnouncementMedia(item.mediaUrl, item.imageUrl);
-              return <article className={"site-announcement-item" + (isRead ? " is-read" : "")} key={item.id}>
-                <div className="site-announcement-item-meta">
-                  <span className="site-announcement-status">{isRead ? "READ" : "NEW"}</span>
-                  <time dateTime={new Date(item.scheduledAt).toISOString()}>Publish time · {announcementDate(item.scheduledAt)}</time>
-                </div>
-                <h3>{item.title}</h3>
-                <p className="site-announcement-description">{item.description}</p>
-                {media?.type === "image" && <img className="site-announcement-media" src={media.src} alt="" loading="lazy" />}
-                {media?.type === "iframe" && <div className="site-announcement-embed"><iframe src={media.src} title={item.title + " media"} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /></div>}
-                {media?.type === "link" && <a className="site-announcement-media-link" href={media.src} target="_blank" rel="noopener noreferrer">Open attached media <ExternalLink size={13} /></a>}
-                <div className="site-announcement-item-footer">
-                  <span>{item.createdAt ? "Uploaded " + announcementDate(item.createdAt) : ""}</span>
-                  {!isRead && <button type="button" onClick={() => markAsRead(item)}><Check size={14} /> Mark as read</button>}
-                </div>
-              </article>;
+              const publishedAt = item.scheduledAt || item.createdAt;
+              return (
+                <article className={"header-announcement-item" + (isRead ? " is-read" : "")} key={item.id}>
+                  <div className="header-announcement-meta">
+                    <span className="header-announcement-status">{isRead ? "READ" : "NEW"}</span>
+                    <time dateTime={dateTimeValue(publishedAt)}>{announcementDate(publishedAt)}</time>
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p className="header-announcement-description">{item.description}</p>
+                  {media?.type === "image" && (
+                    <img className="header-announcement-media" src={media.src} alt="" loading="lazy" />
+                  )}
+                  {media?.type === "iframe" && (
+                    <div className="header-announcement-embed">
+                      <iframe
+                        src={media.src}
+                        title={item.title + " media"}
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        referrerPolicy="strict-origin-when-cross-origin"
+                      />
+                    </div>
+                  )}
+                  {media?.type === "link" && (
+                    <a className="header-announcement-media-link" href={media.src} target="_blank" rel="noopener noreferrer">
+                      Open attached media <ExternalLink size={13} />
+                    </a>
+                  )}
+                  {!isRead && (
+                    <div className="header-announcement-footer">
+                      <button type="button" onClick={() => markAsRead(item)}>
+                        <Check size={14} /> Mark as read
+                      </button>
+                    </div>
+                  )}
+                </article>
+              );
             })}
           </div>
         </section>
-      </div>}
-    </>
+      )}
+    </div>
   );
 }
