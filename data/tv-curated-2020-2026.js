@@ -1,8 +1,7 @@
 // Static, manually researched TV-series additions for 2020–2026.
-// Series IDs, release dates and episode guides are cross-checked against TVmaze.
-// TVmaze facts and adapted episode descriptions are CC BY-SA 4.0; preserve attribution/share-alike.
-// Poster/stills are linked from TVmaze and Netflix official assets; not downloaded/rehosted.
-// Landscape backdrops are separately selected, official Netflix artwork.
+// Series IDs, premiere dates and episode data are cross-checked against TVmaze and official title pages.
+// Adapted TVmaze show/episode metadata is CC BY-SA 4.0; preserve attribution/share-alike.
+// Posters, backdrops and per-episode images are hotlinked from TVmaze/Netflix; not downloaded or rehosted.
 export const MANUAL_TV_SERIES_2020_2026 = [
   {
     "tmdbId": 115004,
@@ -436,6 +435,257 @@ export const MANUAL_TV_SERIES_2020_2026 = [
             "airDate": "2020-03-26",
             "runtime": 54,
             "stillUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/9pS1daC2n6UGc3dUogvWIPMR_OU/AAAABQf4TTbkwWm_NfW9Tdfpm0goGBsEXt8aERVHpYksntZIDR-yKHk-uuujBsEbLzgSaGoklLfg4_PI7Ph242MngyE9LBEjee-D2jH7JX4uEtMLsdrnQQgXEaNj.jpg?r=771",
+            "voteAverage": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tmdbId": 93454,
+    "externalImdbId": "tt7985576",
+    "title": "The Serpent",
+    "originalTitle": "The Serpent",
+    "overview": "In the 1970s, Charles Sobhraj moves along the South Asian hippie trail, targeting young travellers and evading authorities across several countries. When Dutch diplomat Herman Knippenberg begins investigating the disappearance of two backpackers in Bangkok, he becomes entangled in an international pursuit that exposes a trail of deception and murder.",
+    "posterUrl": "https://static.tvmaze.com/uploads/images/medium_portrait/290/725324.jpg",
+    "backdropUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/MgXQGyNr1xbI8tJSYiMWv5kXg5g/AAAABZRb19yGpHIJPTB6bdj_A77t9SnjSKW931vmeeBUjNGlnxsuEKnvXXlbk5FBoVLJ4HfZ1U3wl-gfflWQSoCpWFEsDQWfr8Xpju5MkHQiTxgebOcy9P93Mh3Nhw.jpg?r=d94",
+    "firstAirDate": "2021-01-01",
+    "releaseYear": 2021,
+    "runtime": 57,
+    "adult": false,
+    "isPopular": true,
+    "metadataSource": "Manual static curation; TVmaze facts and Netflix episode metadata (TVmaze CC BY-SA 4.0)",
+    "sourceId": 35732,
+    "sourceUrl": "https://www.themoviedb.org/tv/93454",
+    "referenceUrl": "https://www.tvmaze.com/shows/35732/the-serpent",
+    "network": "BBC One",
+    "country": "United Kingdom",
+    "creators": [
+      "Richard Warlow",
+      "Toby Finlay"
+    ],
+    "voteAverage": 7,
+    "voteCount": 0,
+    "popularity": 0,
+    "genres": [
+      "Drama",
+      "Crime",
+      "Thriller"
+    ],
+    "keywords": [
+      "Limited Series",
+      "True Crime",
+      "Historical Drama",
+      "Serial Killer"
+    ],
+    "certification": "TV-MA",
+    "status": "Ended",
+    "numberOfSeasons": 1,
+    "numberOfEpisodes": 8,
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "name": "Season 1",
+        "overview": "The international pursuit of Charles Sobhraj unfolds across Bangkok, India, Nepal and Europe as diplomat Herman Knippenberg tries to connect a series of disappearances.",
+        "airDate": "2021-01-01",
+        "episodeCount": 8,
+        "voteAverage": 0,
+        "episodes": [
+          {
+            "episodeNumber": 1,
+            "name": "Episode 1",
+            "overview": "In 1970s Bangkok, Charles Sobhraj presides over a deceptively cool scene at Kanit House before two missing backpackers get the attention of a diplomat.",
+            "airDate": "2021-01-01",
+            "runtime": 59,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABUgoKOxjIOBLNdXci09DbjtK8GqVeD2XxBlrshSv-qBLOjnWN5z_Rp8uVK8ihuybKXnHrJst-U40lLZVzLfbZ0j5kV4WjtjWzYI4vr_D-XFsClz8CKgZOQeoF.jpg?r=bab",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 2,
+            "name": "Episode 2",
+            "overview": "Marie-Andrée Leclerc falls in love — and finds herself in over her head. Obstructed, Herman Knippenberg pushes forward at great risk to his career.",
+            "airDate": "2021-01-01",
+            "runtime": 58,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABSkbmwE0uJszBWGSWavYy9nm6h-vTMquwwxPMS7IW-RmfUv9gfIOh1aDN7qmQjS5FvlYHOZdbWuHSCkF88y19MxGog_bhFBFNIb3LdxnfyT-QvqIhCW7-8wx.jpg?r=35d",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 3,
+            "name": "Episode 3",
+            "overview": "Suspicions build as Knippenberg finds his insider. Adventure brings a Frenchman to Kanit House, where caught in a trap, he makes a shocking discovery.",
+            "airDate": "2021-01-01",
+            "runtime": 58,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABQIG50Ub6ZXHIHRAYw3UAcvSx6e4qPTbF-_DKQBwJwq8wIL9QKMJQtB5AN7h1A1frjGgywvrpl7B7UzWdy0EuSxCCLWs4uUCGl9gE3zBPxLDwvxvuOqxD49d.jpg?r=fc2",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 4,
+            "name": "Episode 4",
+            "overview": "Charles tightens his grip as Marie-Andrée plays along and Ajay Chowdhury takes a trip. Nadine Gires goes undercover, yet Knippenberg is exposed.",
+            "airDate": "2021-01-01",
+            "runtime": 58,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABQ83dzVRTwCw-ZFw4xEQ-IzC92WblJlcVKfBpxpzCCNavQuLHhKCOIgVYQigzq0OSubsAysi3pSqFu9Xontp5K-bs_vuaSlZk2js1-hWakSSY9WiSpiKfISt.jpg?r=c6b",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 5,
+            "name": "Episode 5",
+            "overview": "Who's the predator and who's the prey? Nadine must keep this poisonous crew in their nest on the brink of a big raid. But Charles has a backup scheme.",
+            "airDate": "2021-01-01",
+            "runtime": 56,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABZ5xH2r6q86E94KhgrByCJQ7DPpx7zDxVKb336LLGs6FMr6uEMUNoPhwSZ2S2T2goEu7Jp9Oi1rFFCkULgucGJego2Gr4MmiE3-ejbebLOUImqfy-U1zxCekX.jpg?r=a76",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 6,
+            "name": "Episode 6",
+            "overview": "Charles makes bold moves while a still-obsessed Knippenberg tries to forget. Marie-Andrée and Ajay fight over their future — by the mastermind's side.",
+            "airDate": "2021-01-01",
+            "runtime": 56,
+            "stillUrl": "https://static.tvmaze.com/uploads/images/large_landscape/290/725668.jpg",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 7,
+            "name": "Episode 7",
+            "overview": "Charles and Marie-Andrée roll into Paris with glittering plans, but one welcome proves less than warm. To stop the duo, Knippenberg goes to the media.",
+            "airDate": "2021-01-01",
+            "runtime": 55,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABWb2SJ9zYZR_n2ueoNd5U8Dyg7At6T0uRGe-5cBVxsqlVTOpJUahUWlgH4oMqTTurL3ZUF8XiKM-hFwKbMWBR-jkwWGe_cvlhfx8VzshgNW_qkXGjb3IELmT.jpg?r=d52",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 8,
+            "name": "Episode 8",
+            "overview": "In India, the ugly game hits a new low. A global hunt heats up, but Knippenberg struggles to move on. Who will pay the price for all the lives lost?",
+            "airDate": "2021-01-01",
+            "runtime": 58,
+            "stillUrl": "https://occ-0-3012-2433.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABYyMZ3GDh7aRWVlgafE0d8mfN0xB3Pav3crWdm5cRqFPjHmNWFXbl5kY4N8wDl1p3IcQH_y5HJlaDnuYinFNRZMTcVxk1g4K8mf0zgIxJ26SJeiazgXDhBz5.jpg?r=400",
+            "voteAverage": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tmdbId": 94028,
+    "externalImdbId": "tt11016042",
+    "title": "Ripley",
+    "originalTitle": "Ripley",
+    "overview": "Tom Ripley is a small-time grifter in 1960s New York who is hired by a wealthy industrialist to persuade his son Dickie Greenleaf to return from Italy. The assignment takes Tom into a world of privilege and deception, where impersonation, fraud and murder become part of his effort to seize the life he wants.",
+    "posterUrl": "https://static.tvmaze.com/uploads/images/medium_portrait/500/1252264.jpg",
+    "backdropUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/MgXQGyNr1xbI8tJSYiMWv5kXg5g/AAAABS8Bw4sENG34V6W1ehllyFaNPFxqfSm2DF1lDsgax9-fRH68o37h41yz8iBFC8I3qVccQ4JfMPOnSZNIdkcl0M6GtTggL-AMDpoX9d75TttwS0nzVeyd7nih1A.jpg?r=294",
+    "firstAirDate": "2024-04-04",
+    "releaseYear": 2024,
+    "runtime": 56,
+    "adult": false,
+    "isPopular": true,
+    "metadataSource": "Manual static curation; TVmaze facts and Netflix official episode metadata (TVmaze CC BY-SA 4.0)",
+    "sourceId": 44042,
+    "sourceUrl": "https://www.themoviedb.org/tv/94028",
+    "referenceUrl": "https://www.tvmaze.com/shows/44042/ripley",
+    "network": "Netflix",
+    "country": "United States",
+    "creators": [
+      "Steven Zaillian"
+    ],
+    "voteAverage": 7.5,
+    "voteCount": 0,
+    "popularity": 0,
+    "genres": [
+      "Drama",
+      "Crime",
+      "Thriller"
+    ],
+    "keywords": [
+      "Limited Series",
+      "Psychological Thriller",
+      "Crime Drama",
+      "Based on a Book"
+    ],
+    "certification": "TV-MA",
+    "status": "Ended",
+    "numberOfSeasons": 1,
+    "numberOfEpisodes": 8,
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "name": "Season 1",
+        "overview": "Tom's attempt to enter Dickie Greenleaf's privileged life in Italy turns into an increasingly elaborate chain of fraud, murder and reinvention.",
+        "airDate": "2024-04-04",
+        "episodeCount": 8,
+        "voteAverage": 0,
+        "episodes": [
+          {
+            "episodeNumber": 1,
+            "name": "I A HARD MAN TO FIND",
+            "overview": "Tom Ripley's life of petty crime in New York City detours with an offer to bring a wealthy man's wayward son home from Europe.",
+            "airDate": "2024-04-04",
+            "runtime": 49,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABekuq7cwbl6MqChmj1OC6MGRvORAL6JeVjjK-MGBx6aKqNXzGXWDvvRL7-M3HReuMl9WjFUGZdD_ErH_ZvSBzb5WeRQKHsthm6OwUpm15jQDn_MJvt0WcH3V.jpg?r=376",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 2,
+            "name": "II SEVEN MERCIES",
+            "overview": "On Italy's Amalfi Coast, Tom settles into Dickie's grand villa, but not without arousing suspicion from his girlfriend Marge.",
+            "airDate": "2024-04-04",
+            "runtime": 49,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABQTgHgO2PS7QnImXz-wzIPzijQnTdc8gI2asSnVoZB2PfE446B0ikSHfHfEnSzq6c2z1gPXHwXYKWUhVNFKZ_yS7cfHgvyZS0zcGEWwtLYzCwx2rVuj-DHqo.jpg?r=d18",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 3,
+            "name": "III SOMMERSO",
+            "overview": "With funds low and his future in Italy in jeopardy, Tom puts a dark scheme into motion.",
+            "airDate": "2024-04-04",
+            "runtime": 49,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABTMlvNQ854lIfu7jkdrs4qhd1b6p0wAIXQtVHU3o3Wq3Zg5rDlIe2e_vL3oFYBDMOkDKB4SYvlDJHSzDDZcf6YcjW_QsSYvbno2y-QIIalY-FT4VWuZrofv_.jpg?r=72d",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 4,
+            "name": "IV LA DOLCE VITA",
+            "overview": "Tom must deal with Marge's deep skepticism before embarking on a new, fictitious life in Rome.",
+            "airDate": "2024-04-04",
+            "runtime": 44,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABQZzxRaypLJSoHyO5gX46j9n0Lj6uOlKUwbNeSxthgfeZh_1BmAiXhbED1Pinnr06mZZ-hUT3sMhrA3ih2JqIxGdJKIC34VVy2iQm7wmKK7ubKBE9xifCqRK.jpg?r=e15",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 5,
+            "name": "V LUCIO",
+            "overview": "Ensconced in a lovely Rome apartment, Tom's perfect life is threatened by the arrival of an unexpected visitor.",
+            "airDate": "2024-04-04",
+            "runtime": 60,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABcdH-AMBT8iMtXP0OTyvq5EEWCYhNCJ7x9ETs9HKulyIuiu5ZJyMck3khGUtOiMoLcO2Lysgj9iRUIwe5mE8Mu5GnhM-5pca5epgNGuSjhSwKy_BHReJH_iP.jpg?r=c5f",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 6,
+            "name": "VI SOME HEAVY INSTRUMENT",
+            "overview": "A ghastly discovery leads Rome police to Tom's doorstep, beginning a game of cat and mouse with its lead investigator.",
+            "airDate": "2024-04-04",
+            "runtime": 59,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABb69mBDjILSntM2_vQtXAylKqTKdWbb35efFwtlnxbNfTxh_ZEjVmdK7IlwJ0kezwVe34atHQnQzMRInjbqZJWTMLNEbeAbfXVXHm7IOwuu4HMuJ7ShHCCp1.jpg?r=e12",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 7,
+            "name": "VII MACABRE ENTERTAINMENT",
+            "overview": "As Inspector Ravini expands his murder investigation, an elusive Tom plots his next moves from Sicily.",
+            "airDate": "2024-04-04",
+            "runtime": 58,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABZbm_aLF4M_8qc2CsDDqRluSzcLlEk4mq7LZnzMMB5m1AqmMRQOls7YUhPExqC13m758HIl2tfHE_bFLb4nqXrDHESi5oCbEpwscppZ4I0rzIyRi8_owE_L4.jpg?r=832",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 8,
+            "name": "VIII NARCISSUS",
+            "overview": "Tom reinvents himself again, creating an enviable life in Venice — as long as his lies hold.",
+            "airDate": "2024-04-04",
+            "runtime": 76,
+            "stillUrl": "https://occ-0-3012-3996.1.nflxso.net/dnm/api/v6/a3hnUaZnndQ4IeGOdnyRTW4nDRA/AAAABe0jNuJUGsGGmZiLzeboftVHz6c1TP5hzgkl6MY8bBicwbQ0kBDRyaIOjT-noitDCHxPh0OFDid1mkQhn05KlBcXUIbhlYPWbD-UXuIPl2NtI8KgI3f9HmCP.jpg?r=f1d",
             "voteAverage": 0
           }
         ]
