@@ -1,6 +1,7 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TREND_HALF_LIFE_MS = 7 * DAY_MS;
 const HOT_TREND_SCORE = 6;
+const FALLBACK_CATALOG_BADGE = Object.freeze({ key: "featured", label: "Featured" });
 
 const number = (value) => {
   const parsed = Number(value);
@@ -94,11 +95,11 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
 
   const current = now instanceof Date ? now.getTime() : Number(now);
   const signals = marketSignals(item, mediaType);
-  if (!Number.isFinite(current)) return null;
+  if (!Number.isFinite(current)) return FALLBACK_CATALOG_BADGE;
 
   const trendScore = calculateDecayedTrendScore(item.trendScore, item.trendUpdatedAt, current);
   if (trendScore >= HOT_TREND_SCORE) return { key: "hot", label: "Hot" };
-  if (signals.rating <= 0) return null;
+  if (signals.rating <= 0) return FALLBACK_CATALOG_BADGE;
 
   const voteVelocity7d = Math.max(0, number(item.voteVelocity7d));
   const releasedAt = releaseTimestamp(item);
@@ -155,7 +156,9 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
     return { key: "featured", label: "Featured" };
   }
 
-  return null;
+  // Every eligible catalogue item gets a visible label. Featured is the
+  // honest default when public data is not strong enough to call it Hot/Popular.
+  return FALLBACK_CATALOG_BADGE;
 }
 /**
  * Atomically record one confirmed transition into playing state. Heartbeats
