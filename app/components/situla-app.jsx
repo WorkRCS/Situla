@@ -121,6 +121,13 @@ function seriesCardHref(item, kind) {
   return /^\d+$/.test(malId) ? "/anime/" + encodeURIComponent(malId) : null;
 }
 
+const FALLBACK_CATALOG_BADGE = Object.freeze({ key: "featured", label: "Featured" });
+function resolveCatalogBadge(badge) {
+  return badge && ["hot", "popular", "featured"].includes(badge.key)
+    ? badge
+    : FALLBACK_CATALOG_BADGE;
+}
+
 async function shareMediaCard({ title, href, posterUrl }) {
   const url = new URL(href, window.location.origin).toString();
   const text = posterUrl ? title + "\n\nPoster: " + posterUrl : title;
@@ -166,6 +173,7 @@ async function shareMediaCard({ title, href, posterUrl }) {
 
 const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
+  const catalogBadge = resolveCatalogBadge(movie.catalogBadge);
   const href = movieCardHref(movie);
 
   function handleOpen(event) {
@@ -192,11 +200,9 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
     <>
       <div className="movie-poster">
         <MoviePosterImage movie={movie} />
-        {movie.catalogBadge && (
-          <span className={"catalog-badge catalog-badge-" + movie.catalogBadge.key} role="status" aria-label={movie.catalogBadge.label + " title"}>
-            {movie.catalogBadge.label}
-          </span>
-        )}
+        <span className={"catalog-badge catalog-badge-" + catalogBadge.key} role="status" aria-label={catalogBadge.label + " title"}>
+          {catalogBadge.label}
+        </span>
         {movie.voteAverage > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
         )}
@@ -285,6 +291,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
   const [shareFeedback, setShareFeedback] = useState("");
   const isTv = kind === "tv";
   const isAnime = kind === "anime";
+  const catalogBadge = resolveCatalogBadge(item.catalogBadge);
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
@@ -328,11 +335,9 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
     <>
       <div className="movie-poster">
         <SeriesPosterImage item={item} title={title} />
-        {item.catalogBadge && (
-          <span className={"catalog-badge catalog-badge-" + item.catalogBadge.key} role="status" aria-label={item.catalogBadge.label + " title"}>
-            {item.catalogBadge.label}
-          </span>
-        )}
+        <span className={"catalog-badge catalog-badge-" + catalogBadge.key} role="status" aria-label={catalogBadge.label + " title"}>
+          {catalogBadge.label}
+        </span>
         {rating > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
         )}
