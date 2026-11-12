@@ -224,6 +224,16 @@ test("Movie, TV and Anime shares attach poster files and keep exact detail links
   assert.match(proxy, /Content-Type/);
 });
  
+test("mobile and tablet Movie, TV and Anime cards have room for titles, tags and controls", async () => {
+  const css = await read("../app/globals.css");
+  const responsiveCards = css.slice(css.lastIndexOf("/* Roomier touch catalog cards:"));
+  assert.match(responsiveCards, /@media \(max-width:599px\)[\s\S]*?\.catalog-grid,[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(responsiveCards, /\.media-row > \.movie-card[\s\S]*?width:clamp\(140px,40vw,172px\)/);
+  assert.match(responsiveCards, /@media \(min-width:600px\) and \(max-width:899px\)[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(responsiveCards, /width:clamp\(156px,20vw,190px\)/);
+  assert.match(responsiveCards, /@media \(min-width:900px\) and \(max-width:1100px\)[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+});
+
 test("Movie, TV and Anime catalogue cards use the same polished card and badge system", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
