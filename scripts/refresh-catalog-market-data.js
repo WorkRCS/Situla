@@ -10,6 +10,8 @@ import { Movie, TvSeries, AnimeSeries } from "../src/models.js";
 
 const IMDB_RATINGS_URL = "https://datasets.imdbws.com/title.ratings.tsv.gz";
 const JIKAN_API = "https://api.jikan.moe/v4/anime/";
+const TVMAZE_API = "https://api.tvmaze.com";
+const TVMAZE_REQUEST_INTERVAL_MS = 550;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const JIKAN_REQUEST_INTERVAL_MS = 450;
 const BULK_BATCH_SIZE = 500;
@@ -114,6 +116,101 @@ async function refreshImdbVotes(now) {
   };
 }
 
+export function normalizeMarketTitle(value) {
+  return String(value || "").normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+export function chooseTvmazeMatch(candidates, record) {
+  const expectedTitles = new Set(
+    [record?.title, record?.originalTitle].map(normalizeMarketTitle).filter(Boolean)
+  );
+  if (!expectedTitles.size) return null;
+  const year = Number(record?.releaseYear) || Number(String(record?.firstAirDate || "").slice(0, 4));
+  const shows = (Array.isArray(candidates) ? candidates : [])
+    .map((entry) => entry?.show || entry)
+    .filter((show) => show && expectedTitles.has(normalizeMarketTitle(show.name)));
+  const matches = shows.filter((show) => {
+    const premieredYear = Number(String(show.premiered || "").slice(0, 4));
+    return !year || !premieredYear || Math.abs(premieredYear - year) <= 1;
+  });
+  return matches.sort((a, b) => {
+    const aYear = Number(String(a.premiered || "").slice(0, 4));
+    const bYear = Number(String(b.premiered || "").slice(0, 4));
+    return year ? Math.abs(aYear - year) - Math.abs(bYear - year) : 0;
+  })[0] || null;
+}
+
+async function fetchTvmazeResource(url, attempt = 0) {
+  const response = await fetch(url, {
+    headers: { "User-Agent": USER_AGENT, "Accept": "application/json" },
+    signal: AbortSignal.timeout(20_000)
+  });
+  if (response.status === 429 || response.status >= 500) {
+    if (attempt >= 4) throw new Error("TVmaze request failed (HTTP " + response.status + ").");
+    const retryAfter = Number(response.headers.get("retry-after")) * 1000;
+    await sleep(Math.max(retryAfter || 0, 1_000 * (attempt + 1)));
+    return fetchTvmazeResource(url, attempt + 1);
+  }
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("TVmaze request failed (HTTP " + response.status + ").");
+  return response.json();
+}
+
+async function fetchTvmazeShow(record) {
+  const referenceId = Number(record.sourceId) ||
+    Number(String(record.referenceUrl || "").match(/tvmaze\\.com\\/shows\\/(\\d+)/i)?.[1]) || 0;
+  if (referenceId > 0) {
+    const direct = await fetchTvmazeResource(TVMAZE_API + "/shows/" + referenceId);
+    return chooseTvmazeMatch(direct ? [direct] : [], record);
+  }
+  const query = encodeURIComponent(record.title || record.originalTitle || "");
+  if (!query) return null;
+  const results = await fetchTvmazeResource(TVMAZE_API + "/search/shows?q=" + query);
+  return chooseTvmazeMatch(results, record);
+}
+
+async function refreshTvmazeMarketData(now) {
+  const records = await TvSeries.find({ tmdbId: { $gt: 0 } })
+    .select("tmdbId title originalTitle firstAirDate releaseYear sourceId referenceUrl")
+    .lean();
+  const operations = [];
+  let unavailable = 0;
+
+  for (let index = 0; index < records.length; index += 1) {
+    if (index > 0) await sleep(TVMAZE_REQUEST_INTERVAL_MS);
+    const item = records[index];
+    let live;
+    try {
+      live = await fetchTvmazeShow(item);
+    } catch (error) {
+      unavailable += 1;
+      console.warn("TV market data skipped for TMDB " + item.tmdbId + ": " + error.message);
+      continue;
+    }
+    if (!live) {
+      unavailable += 1;
+      continue;
+    }
+
+    const rating = Number(live.rating?.average);
+    const weight = Number(live.weight);
+    const fields = {
+      providerRating: Number.isFinite(rating) && rating > 0 ? Math.min(10, Math.max(0, rating)) : 0,
+      providerPopularity: Number.isFinite(weight) && weight > 0 ? weight : 0,
+      marketDataUpdatedAt: now
+    };
+    operations.push({
+      updateOne: { filter: { tmdbId: item.tmdbId }, update: { $set: fields } }
+    });
+  }
+
+  return {
+    tvmaze: await writeInBatches(TvSeries, operations),
+    tvmazeUnavailable: unavailable
+  };
+}
+
 async function fetchJikanAnime(malId, attempt = 0) {
   const response = await fetch(JIKAN_API + encodeURIComponent(malId), {
     headers: {
@@ -190,8 +287,9 @@ export async function refreshCatalogMarketData({ now = new Date() } = {}) {
   }
   await connectDatabase();
   const imdb = await refreshImdbVotes(now);
+  const tvmaze = await refreshTvmazeMarketData(now);
   const anime = await refreshAnimeVotes(now);
-  return { ...imdb, ...anime, updatedAt: now.toISOString() };
+  return { ...imdb, ...tvmaze, ...anime, updatedAt: now.toISOString() };
 }
 
 async function main() {
