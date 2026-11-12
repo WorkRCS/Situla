@@ -44,8 +44,8 @@ test("catalog search uses existing text indexes rather than collection-wide rege
   const api = await read("../src/app.js");
   const search = api.slice(api.indexOf("app.get('/api/search'"), api.indexOf("app.get('/api/movies/suggestions'"));
   const suggestions = api.slice(api.indexOf("app.get('/api/movies/suggestions'"), api.indexOf("app.get('/api/movies'"));
-  assert.equal((search.match(/\\$text: \\{ \\$search: query \\}/g) || []).length, 3);
-  assert.match(suggestions, /\\$text: \\{ \\$search: tokens\.join\(' '\) \\}/);
+  assert.equal(search.split("$text: { $search: query }").length - 1, 3);
+  assert.ok(suggestions.includes("$text: { $search: tokens.join(' ') }"));
   assert.doesNotMatch(search, /new RegExp\(escapeRegex/);
 });
 
