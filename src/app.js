@@ -233,6 +233,11 @@ app.get('/api/health', async (c) => {
   const missing = required.filter((name) => !process.env[name]);
   if (missing.length) return c.json({ status: 'needs_configuration', missing, database: 'not_checked' }, 503);
   try {
+    authSecret();
+  } catch {
+    return c.json({ status: 'needs_configuration', invalid: ['AUTH_SECRET must contain at least 32 bytes'], database: 'not_checked' }, 503);
+  }
+  try {
     await connectDatabase();
     await Movie.db.db.admin().ping();
     return c.json({
@@ -490,6 +495,7 @@ app.get('/api/auth/devices', async (c) => {
         id: String(device._id),
         label: device.label,
         lastSeenAt: device.lastSeenAt,
+        slot: Number.isInteger(device.slot) ? device.slot + 1 : null,
         current: String(device._id) === String(authenticated.device._id)
       })),
       limit: getWatchPolicy(authenticated.user).deviceLimit
@@ -513,7 +519,7 @@ app.delete('/api/auth/devices/:deviceId', async (c) => {
     const now = new Date();
     device.revokedAt = now;
     await device.save();
-    await AuthSession.updateMany({ deviceId: device._id, revokedAt: null }, { $set: { revokedAt: now } });
+    await AuthSession.updateMany({ deviceId: device._id, revokedAt: null }, { $set: { revokedAt: now, expiresAt: now } });
     const isCurrent = String(device._id) === String(authenticated.device._id);
     if (isCurrent) await revokeCurrentSession(c);
     return c.json({ revoked: true, currentDevice: isCurrent });
@@ -626,6 +632,10 @@ app.post('/api/playback/start', async (c) => {
     }
 
     const principal = await resolvePlaybackPrincipal(c);
+    const principalKey = String(principal.ownerId);
+    if (!await enforceRateLimit('playback-start:' + principal.ownerType + ':' + principalKey, 20, 60)) {
+      return c.json({ error: 'Too many playback starts. Please wait before opening another title.', code: 'PLAYBACK_RATE_LIMITED' }, 429);
+    }
     const result = await startPlaybackSession(principal, media);
     return c.json(result, 201);
   } catch (error) {

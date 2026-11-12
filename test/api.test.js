@@ -4,6 +4,31 @@ import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDt
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
 import { hindiMoviePlaybackUrl, normalizeTvPlayerRoute, tvSeriesPlaybackUrl, moviePlaybackUrl } from '../src/player-urls.js';
 
+
+test('Auth and playback mutation endpoints reject requests without a same-origin Origin header', async () => {
+  const requests = [
+    ['/api/auth/email', 'POST'],
+    ['/api/auth/logout', 'POST'],
+    ['/api/playback/start', 'POST'],
+    ['/api/playback/heartbeat', 'POST'],
+    ['/api/playback/stop', 'POST']
+  ];
+  for (const [path, method] of requests) {
+    const response = await app.request(path, { method, headers: { 'content-type': 'application/json' }, body: '{}' });
+    assert.equal(response.status, 403, path);
+    assert.equal((await response.json()).code, 'ORIGIN_CHECK_FAILED');
+  }
+});
+
+test('Playback heartbeats validate session identifiers and playing state before database access', async () => {
+  const response = await app.request('/api/playback/heartbeat', {
+    method: 'POST',
+    headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'invalid', playing: true })
+  });
+  assert.equal(response.status, 400);
+});
+
 test('admin and crawler API routes are removed', async () => {
   const paths = [
     '/api/admin/login',

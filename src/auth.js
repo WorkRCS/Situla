@@ -180,22 +180,41 @@ export async function registerDevice(c, user) {
     user.membership?.status === 'active' &&
     (!user.membership?.expiresAt || new Date(user.membership.expiresAt) > new Date());
   const deviceLimit = premiumActive ? 3 : 1;
-  const activeCount = await Device.countDocuments({ userId: user._id, revokedAt: null });
-  if (activeCount >= deviceLimit) {
+  const activeDevices = await Device.find({ userId: user._id, revokedAt: null }).select('slot').lean();
+  if (activeDevices.length >= deviceLimit) {
     const error = new Error('Your registered-device limit has been reached. Remove another device before signing in here.');
     error.status = 403;
     error.code = 'DEVICE_LIMIT';
     throw error;
   }
-
+  const occupiedSlots = new Set(activeDevices.map((device) => device.slot).filter(Number.isInteger));
+  const legacyActiveCount = activeDevices.filter((device) => !Number.isInteger(device.slot)).length;
+  const firstAvailableSlot = Math.max(0, activeDevices.length - legacyActiveCount);
+  const candidateSlots = Array.from({ length: deviceLimit }, (_, slot) => slot)
+    .filter((slot) => !occupiedSlots.has(slot) && slot >= firstAvailableSlot);
   const token = randomToken();
-  const device = await Device.create({
-    userId: user._id,
-    tokenHash: hashToken(token),
-    label: String(c.req.header('user-agent') || 'Browser').slice(0, 180),
-    lastSeenAt: new Date(),
-    revokedAt: null
-  });
+  let device = null;
+  for (const slot of candidateSlots) {
+    try {
+      device = await Device.create({
+        userId: user._id,
+        slot,
+        tokenHash: hashToken(token),
+        label: String(c.req.header('user-agent') || 'Browser').slice(0, 180),
+        lastSeenAt: new Date(),
+        revokedAt: null
+      });
+      break;
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+    }
+  }
+  if (!device) {
+    const error = new Error('Your registered-device limit has been reached. Remove another device before signing in here.');
+    error.status = 403;
+    error.code = 'DEVICE_LIMIT';
+    throw error;
+  }
   setCookie(c, DEVICE_COOKIE, token, cookieSettings(365 * 24 * 60 * 60));
   return device;
 }
@@ -219,7 +238,7 @@ export async function createLoginSession(c, user, rememberMe = true) {
   });
   const previousToken = getCookie(c, SESSION_COOKIE);
   if (previousToken) {
-    await AuthSession.updateOne({ tokenHash: hashToken(previousToken), revokedAt: null }, { $set: { revokedAt: now } });
+    await AuthSession.updateOne({ tokenHash: hashToken(previousToken), revokedAt: null }, { $set: { revokedAt: now, expiresAt: now } });
   }
   setCookie(c, SESSION_COOKIE, token, cookieSettings(rememberMe ? lifetimeSeconds : undefined));
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: now } });
@@ -258,7 +277,7 @@ export async function revokeCurrentSession(c) {
   if (token) {
     await AuthSession.updateOne(
       { tokenHash: hashToken(token), revokedAt: null },
-      { $set: { revokedAt: new Date() } }
+      { $set: { revokedAt: new Date(), expiresAt: new Date() } }
     );
   }
   clearAuthCookies(c);

@@ -107,13 +107,16 @@ async function addWatchedSeconds(principal, seconds, now) {
   const policy = getWatchPolicy(principal.user || null, now);
   if (policy.allowanceSeconds === null) return readAccessStatus(principal, now);
   const state = await ensureUsageState(principal);
+  const remaining = Math.max(0, policy.allowanceSeconds - Number(state.usedSeconds || 0));
+  const creditedSeconds = Math.min(seconds, remaining);
+  if (creditedSeconds <= 0) return readAccessStatus(principal, now);
   const updated = await UsageState.findOneAndUpdate(
     {
       _id: state._id,
       usedSeconds: { $lt: policy.allowanceSeconds },
       $or: [{ cooldownUntil: null }, { cooldownUntil: { $exists: false } }]
     },
-    { $inc: { usedSeconds: seconds }, $set: { lastUsedAt: now } },
+    { $inc: { usedSeconds: creditedSeconds }, $set: { lastUsedAt: now } },
     { new: true }
   );
   if (updated && updated.usedSeconds >= policy.allowanceSeconds) {
@@ -217,7 +220,11 @@ export async function startPlaybackSession(principal, media, now = new Date()) {
 
 export async function heartbeatPlaybackSession(principal, sessionId, playing, now = new Date()) {
   const session = await PlaybackSession.findOne({
-    _id: sessionId, ownerType: principal.ownerType, ownerId: principal.ownerId, status: 'active'
+    _id: sessionId,
+    ownerType: principal.ownerType,
+    ownerId: principal.ownerId,
+    status: 'active',
+    expiresAt: { $gt: now }
   });
   if (!session) {
     const error = new Error('The playback session is no longer active.');

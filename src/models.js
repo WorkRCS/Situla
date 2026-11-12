@@ -227,12 +227,17 @@ authSessionSchema.index({ userId: 1, revokedAt: 1, expiresAt: 1 });
 
 const deviceSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  slot: { type: Number, min: 0, max: 2, default: null },
   tokenHash: { type: String, required: true, unique: true },
   label: { type: String, default: 'Browser', maxlength: 180 },
   lastSeenAt: { type: Date, default: Date.now },
   revokedAt: { type: Date, default: null }
 }, { timestamps: true, versionKey: false, strict: true });
 deviceSchema.index({ userId: 1, revokedAt: 1 });
+deviceSchema.index({ userId: 1, slot: 1 }, {
+  unique: true,
+  partialFilterExpression: { slot: { $type: 'number' } }
+});
 
 const guestAccessSchema = new mongoose.Schema({
   ipHash: { type: String, required: true, unique: true },
