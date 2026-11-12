@@ -1011,7 +1011,8 @@ app.get('/api/search', async (c) => {
 
   const requestedPage = Number(c.req.query('page') || 1);
   const requestedLimit = Number(c.req.query('limit') || 20);
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 20) : 1;
+  const pageLimit = tag === 'all' ? 20 : 90;
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, pageLimit) : 1;
   const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 30) : 20;
   const offset = (page - 1) * limit;
   // Badge labels are calculated from public market signals and recent engagement.
@@ -1131,7 +1132,7 @@ app.get('/api/search', async (c) => {
 
     const rankedItems = rankSearchResults(uniqueItems, query);
     const items = rankedItems.slice(offset, offset + limit);
-    const hasMore = page < 20 && (
+    const hasMore = page < pageLimit && (
       rankedItems.length > offset + limit ||
       groups.some((group) => group.hasMoreCandidate)
     );
