@@ -938,7 +938,7 @@ export const ANIME_ADDITIONS_12 = [
         "titleJapanese": "",
         "airDate": "2026-06-28",
         "runtime": 24,
-        "imageUrl": null,
+        "imageUrl": "https://static.tvmaze.com/uploads/images/large_landscape/644/1611367.jpg",
         "tvdbEpisodeId": 11703561
       }
     ]
