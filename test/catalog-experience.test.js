@@ -229,7 +229,7 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   const css = await read("../app/globals.css");
   const movieCard = app.slice(app.indexOf("const MovieCard"), app.indexOf("function SeriesPosterImage"));
   const seriesCard = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
-  const cardStyles = css.slice(css.indexOf("/* Premium catalogue polish:"), css.indexOf("@media(prefers-reduced-motion:reduce)"));
+  const cardStyles = css.slice(css.indexOf("/* Premium catalogue polish:"));
   assert.match(movieCard, /className="movie-card"/);
   assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind\}/);
   assert.match(movieCard, /catalog-badge catalog-badge-/);
