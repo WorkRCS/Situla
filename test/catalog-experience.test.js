@@ -358,3 +358,43 @@ test("load-more failures keep current catalog cards and do not surface raw serve
   assert.match(loadMore, /Your current catalog remains available/);
   assert.doesNotMatch(loadMore, /requestError\.message|setMovies\(\[\]\)|setTvShows\(\[\]\)|setAnimeShows\(\[\]\)/);
 });
+
+
+test("Movies, TV and Anime catalog pages put the spotlight first and remove the intro headings", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const movies = app.slice(app.indexOf('{tab === "movies" &&'), app.indexOf('{tab === "tv" &&'));
+  const tv = app.slice(app.indexOf('{tab === "tv" &&'), app.indexOf('{tab === "anime" &&'));
+  const anime = app.slice(app.indexOf('{tab === "anime" &&'), app.indexOf('{tab === "search" &&'));
+
+  for (const section of [movies, tv, anime]) {
+    assert.match(section, /aria-label="(?:Movies|TV series|Anime) catalog"/);
+    assert.doesNotMatch(section, /className="section-heading"|EXPLORE THE CATALOG|WATCH BY SEASON & EPISODE|MYANIMELIST · SUB & DUB/);
+    assert.match(section, /CatalogSpotlight/);
+  }
+  assert.match(app, /tab === "movies" \? "movies-catalog-page"/);
+});
+
+test("all horizontal media shelves support mouse drag without blocking touch page scroll", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  const dragHook = app.slice(app.indexOf("function useMediaRowPointerDrag"), app.indexOf("const SeriesCard"));
+  const shelves = app.slice(app.indexOf("function SeriesShelf"), app.indexOf("function SkeletonCard"));
+
+  assert.match(dragHook, /event\.pointerType !== "mouse"/);
+  assert.match(dragHook, /setPointerCapture/);
+  assert.match(dragHook, /suppressClick/);
+  assert.equal((shelves.match(/onPointerDown=\{shelfDrag\.onPointerDown\}/g) || []).length, 3);
+  assert.match(css, /\.media-row \{[\s\S]*?touch-action:pan-x pan-y pinch-zoom;/);
+  assert.match(css, /-webkit-overflow-scrolling:touch/);
+  assert.match(css, /\.media-row\.is-pointer-dragging/);
+});
+
+test("catalog card titles and TV/Anime metadata wrap cleanly at mobile and tablet widths", async () => {
+  const css = await read("../app/globals.css");
+  const responsivePolish = css.slice(css.lastIndexOf("/* Professional finish:"));
+  assert.match(responsivePolish, /\.catalog-grid \.movie-card h3[\s\S]*?white-space:normal !important/);
+  assert.match(responsivePolish, /-webkit-line-clamp:2/);
+  assert.match(responsivePolish, /\.catalog-grid \.movie-card \.series-card-meta/);
+  assert.match(responsivePolish, /\.movies-catalog-page,[\s\S]*?\.tv-catalog-page,[\s\S]*?\.anime-catalog-page/);
+  assert.match(responsivePolish, /:is\(button,a,\[role="button"\]\):focus-visible/);
+});
