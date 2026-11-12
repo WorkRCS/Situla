@@ -19,7 +19,7 @@ test('admin and crawler API routes are removed', async () => {
 });
 
 test('health route requires only MongoDB settings and does not connect if absent', async (t) => {
-  const names = ['MONGODB_URI', 'MONGODB_DB_NAME'];
+  const names = ['MONGODB_URI', 'MONGODB_DB_NAME', 'AUTH_SECRET'];
   const previous = new Map(names.map((name) => [name, process.env[name]]));
   t.after(() => {
     for (const [name, value] of previous) {

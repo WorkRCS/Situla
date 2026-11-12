@@ -193,6 +193,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, trim: true, lowercase: true, maxlength: 254 },
   displayName: { type: String, required: true, trim: true, maxlength: 80 },
   passwordHash: { type: String, default: null, select: false },
+  hasPassword: { type: Boolean, default: false },
   googleSub: { type: String, default: null },
   emailVerified: { type: Boolean, default: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },

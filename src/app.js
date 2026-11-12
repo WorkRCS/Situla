@@ -229,13 +229,19 @@ export function animeSeriesDto(anime) {
 }
 
 app.get('/api/health', async (c) => {
-  const required = ['MONGODB_URI', 'MONGODB_DB_NAME'];
+  const required = ['MONGODB_URI', 'MONGODB_DB_NAME', 'AUTH_SECRET'];
   const missing = required.filter((name) => !process.env[name]);
   if (missing.length) return c.json({ status: 'needs_configuration', missing, database: 'not_checked' }, 503);
   try {
     await connectDatabase();
     await Movie.db.db.admin().ping();
-    return c.json({ status: 'ok', service: 'situla-backend', database: 'connected' });
+    return c.json({
+      status: 'ok',
+      service: 'situla-backend',
+      database: 'connected',
+      authentication: 'enabled',
+      googleOAuth: process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI ? 'configured' : 'needs_configuration'
+    });
   } catch (error) {
     console.error('Health check failed:', error.message);
     return c.json({ status: 'error', database: 'unavailable' }, 503);
@@ -293,6 +299,10 @@ app.post('/api/auth/email', async (c) => {
       if (!user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
         return c.json({ error: 'Email or password is incorrect. Use Google Sign-in if this account was created with Google.', code: 'INVALID_CREDENTIALS' }, 401);
       }
+      if (!user.hasPassword) {
+        user.hasPassword = true;
+        await user.save();
+      }
     } else {
       const passwordHash = await hashPassword(password);
       try {
@@ -300,6 +310,7 @@ app.post('/api/auth/email', async (c) => {
           email,
           displayName: displayNameFromEmail(email),
           passwordHash,
+          hasPassword: true,
           emailVerified: false,
           role: isConfiguredAdmin(email) ? 'admin' : 'user',
           planId: 'free',
@@ -413,6 +424,7 @@ app.get('/api/auth/google/callback', async (c) => {
           if (!user.googleSub) {
             user.googleSub = String(identity.sub);
             user.emailVerified = true;
+            user.hasPassword = Boolean(user.passwordHash);
             await user.save();
           }
         }

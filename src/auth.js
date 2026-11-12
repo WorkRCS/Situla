@@ -202,10 +202,6 @@ export async function registerDevice(c, user) {
 }
 
 export async function createLoginSession(c, user, rememberMe = true) {
-  const previousToken = getCookie(c, SESSION_COOKIE);
-  if (previousToken) {
-    await AuthSession.updateOne({ tokenHash: hashToken(previousToken), revokedAt: null }, { $set: { revokedAt: new Date() } });
-  }
   const device = await registerDevice(c, user);
   const token = randomToken();
   const now = new Date();
@@ -222,6 +218,10 @@ export async function createLoginSession(c, user, rememberMe = true) {
     expiresAt,
     revokedAt: null
   });
+  const previousToken = getCookie(c, SESSION_COOKIE);
+  if (previousToken) {
+    await AuthSession.updateOne({ tokenHash: hashToken(previousToken), revokedAt: null }, { $set: { revokedAt: now } });
+  }
   setCookie(c, SESSION_COOKIE, token, cookieSettings(rememberMe ? lifetimeSeconds : undefined));
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: now } });
   return { device, expiresAt };
@@ -276,7 +276,7 @@ export function safeUser(user) {
     name,
     initials: name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || 'S',
     email: user.email,
-    loginMethod: user.googleSub ? (user.passwordHash ? 'Google & Email' : 'Google') : 'Email & Password',
+    loginMethod: user.googleSub ? (user.hasPassword ? 'Google & Email' : 'Google') : 'Email & Password',
     emailVerified: Boolean(user.emailVerified),
     role: user.role,
     status: user.status,
