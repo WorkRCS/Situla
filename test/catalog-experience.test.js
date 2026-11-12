@@ -202,3 +202,30 @@ test("Settings About section credits the ID providers and previews Premium", asy
   assert.match(app, /premium-status/);
   assert.match(app, /COMING SOON/);
 });
+
+test("TV and Anime cards expose the same Save control as Movie cards and feed one My List", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  assert.match(seriesCard, /onSave\?\.\(item, kind\)/);
+  assert.match(seriesCard, /className=\{"save-button" \+ \(saved \? " saved" : ""\)\}/);
+  assert.match(seriesCard, /aria-pressed=\{saved\}/);
+  assert.match(app, /onSave=\{toggleSaved\} saved=\{savedIds\.has\(savedMediaKey\(item, "tv"\)\)\}/);
+  assert.match(app, /onSave=\{toggleSaved\} saved=\{savedIds\.has\(savedMediaKey\(item, "anime"\)\)\}/);
+  assert.match(app, /normalizeSavedMediaList\(saved\)/);
+  assert.match(app, /savedMovies\.map\(\(item\) => \{/);
+  assert.match(app, /kind === "tv" \? openTvSeries : openAnimeSeries/);
+  assert.match(app, /Tap the bookmark on any movie, TV series, or anime to save it here\./);
+});
+
+test("saved-media helpers preserve legacy movie saves and toggle TV and Anime independently", async () => {
+  const { normalizeSavedMediaList, savedMediaKey, toggleSavedMedia } = await import("../src/saved-media.js");
+  const legacyMovie = { imdbId: "tt1234567", title: "Movie" };
+  const tv = { tmdbId: 123, title: "Series" };
+  const anime = { malId: 123, title: "Anime" };
+  let saved = normalizeSavedMediaList([legacyMovie]);
+  saved = toggleSavedMedia(saved, tv, "tv");
+  saved = toggleSavedMedia(saved, anime, "anime");
+  assert.deepEqual(saved.map(savedMediaKey), ["anime:123", "tv:123", "movie:tt1234567"]);
+  saved = toggleSavedMedia(saved, tv, "tv");
+  assert.deepEqual(saved.map(savedMediaKey), ["anime:123", "movie:tt1234567"]);
+});
