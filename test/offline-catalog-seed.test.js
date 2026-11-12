@@ -28,7 +28,7 @@ test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/n
   assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
   assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
   assert.doesNotMatch(script, /fetch\\s*\\(|axios|api\.themoviedb|api\.tvmaze|cinemeta/i);
-  assert.match(script, /Movie\\.insertMany/);
+  assert.match(script, /Movie\.insertMany/);
   assert.match(script, /TvSeries/);
   assert.match(script, /AnimeSeries/);
   assert.match(script, /isPopular/);
@@ -106,8 +106,8 @@ test("Popular badge uses explicit flags or catalogue-native popularity semantics
 test("catalog cards show the green Popular tag and search asks for a title only", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /className="popular-pill">Popular<\\/span>/);
+  assert.match(app, /className="popular-pill">Popular<\/span>/);
   assert.match(app, /placeholder="Search & Title"/);
-  assert.doesNotMatch(app, /Search a title or IMDb \\/ TMDB \\/ MAL ID/);
-  assert.match(css, /\\.popular-pill[\\s\\S]*?background: #15803d/);
+  assert.doesNotMatch(app, /Search a title or IMDb \/ TMDB \/ MAL ID/);
+  assert.match(css, /\.popular-pill[\s\S]*?background: #15803d/);
 });
