@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { connectDatabase } from './db.js';
@@ -34,12 +35,33 @@ const IMDB_ID = /^tt\d{5,12}$/i;
 
 if (process.env.NODE_ENV === 'development') app.use('*', logger());
 app.use('*', async (c, next) => {
+  const suppliedId = String(c.req.header('x-request-id') || '');
+  const requestId = /^[a-zA-Z0-9._:-]{1,96}$/.test(suppliedId) ? suppliedId : randomUUID();
+  const startedAt = performance.now();
+  c.set('requestId', requestId);
   await next();
+  const durationMs = Math.round((performance.now() - startedAt) * 100) / 100;
+  c.header('X-Situla-Request-Id', requestId);
+  c.header('Server-Timing', 'app;dur=' + durationMs);
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
   c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  const status = c.res.status;
+  if (status >= 500 || durationMs >= 1_000) {
+    const event = {
+      event: status >= 500 ? 'api_request_failed' : 'api_request_slow',
+      requestId,
+      method: c.req.method,
+      route: new URL(c.req.url).pathname,
+      status,
+      durationMs,
+      cache: c.res.headers.get('x-situla-cache') || null,
+      vercelId: c.req.header('x-vercel-id') || null
+    };
+    (status >= 500 ? console.error : console.warn)(JSON.stringify(event));
+  }
 });
 const catalogResponseCache = createCatalogResponseCache({
   getVariant: async (c, policy) => {
@@ -50,11 +72,16 @@ const catalogResponseCache = createCatalogResponseCache({
 
 app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
-  await catalogResponseCache(c, next);
+  await next();
 });
 
-// Cached Redis hits return before this guard; dynamic/cache-miss work is bounded per runtime.
-app.use('/api/*', createRequestConcurrencyGuard({ maxConcurrent: 12 }));
+// Bound the entire API path, including Redis and entitlement checks. Short bursts queue briefly.
+app.use('/api/*', createRequestConcurrencyGuard({
+  maxConcurrent: 8,
+  maxQueued: 48,
+  queueTimeoutMs: 800
+}));
+app.use('/api/*', catalogResponseCache);
 
 app.route('/api/admin', adminRouter);
 
@@ -950,36 +977,28 @@ app.get('/api/search', async (c) => {
   if (query.length < 2) return c.json({ items: [] });
   try {
     await connectDatabase();
-    const escapeRegex = (value) => {
-      let escaped = value;
-      for (const character of ['\\', '.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '|', '[', ']', '-']) {
-        escaped = escaped.split(character).join('\\' + character);
-      }
-      return escaped;
-    };
-    const pattern = new RegExp(escapeRegex(query), 'i');
     const id = query.toLowerCase();
+    const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
+    const movieFilter = IMDB_ID.test(id)
+      ? { adult: { $ne: true }, imdbId: id }
+      : { adult: { $ne: true }, $text: { $search: query } };
+    const tvFilter = numericId
+      ? { adult: { $ne: true }, tmdbId: numericId }
+      : { adult: { $ne: true }, $text: { $search: query } };
+    const animeFilter = numericId
+      ? { type: { $in: ['TV', 'ONA'] }, malId: numericId }
+      : { type: { $in: ['TV', 'ONA'] }, $text: { $search: query } };
     const [movies, shows, anime] = await Promise.all([
-      Movie.find({
-        adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(IMDB_ID.test(id) ? [{ imdbId: id }] : [])]
-      }).sort({ popularity: -1, releaseDate: -1 }).limit(8).lean(),
-      TvSeries.find({
-        adult: { $ne: true },
-        $or: [{ title: pattern }, { originalTitle: pattern }, ...(/^[0-9]+$/.test(query) && Number(query) > 0 ? [{ tmdbId: Number(query) }] : [])]
-      }).select('-seasons.episodes').sort({ popularity: -1, firstAirDate: -1 }).limit(8).lean(),
-      AnimeSeries.find({
-        type: { $in: ['TV', 'ONA'] },
-        $or: [
-          { title: pattern },
-          { titleEnglish: pattern },
-          { titleJapanese: pattern },
-          ...(/^\d+$/.test(query) ? [{ malId: Number(query) }] : [])
-        ]
-      }).select('-episodeGuide -relatedAnime').sort({ score: -1, rank: 1, popularity: 1 }).limit(8).lean()
+      Movie.find(movieFilter)
+        .sort(IMDB_ID.test(id) ? { popularity: -1, releaseDate: -1 } : { score: { $meta: 'textScore' }, popularity: -1 })
+        .limit(8).lean(),
+      TvSeries.find(tvFilter).select('-seasons.episodes')
+        .sort(numericId ? { popularity: -1, firstAirDate: -1 } : { score: { $meta: 'textScore' }, popularity: -1 })
+        .limit(8).lean(),
+      AnimeSeries.find(animeFilter).select('-episodeGuide -relatedAnime')
+        .sort(numericId ? { score: -1, rank: 1, popularity: 1 } : { score: { $meta: 'textScore' }, rank: 1, popularity: 1 })
+        .limit(8).lean()
     ]);
-    // Keep all media types visible near the top of the search window.
-    // Shuffle the group order on each round instead of returning three category blocks.
     const groups = [
       movies.map((item) => ({ ...movieDto(item), mediaType: 'movie' })),
       shows.map((item) => ({ ...tvSeriesDto(item), mediaType: 'tv' })),
@@ -1010,13 +1029,14 @@ app.get('/api/movies/suggestions', async (c) => {
       const direct = await Movie.findOne({ imdbId: query.toLowerCase() }).lean();
       return c.json({ items: direct ? [movieDto(direct)] : [] });
     }
-    const escaped = (value) => value.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\$&');
     const tokens = [...new Set(query.toLowerCase().split(/\s+/).filter((token) => token.length >= 2))].slice(0, 6);
-    const patterns = tokens.map((token) => new RegExp(escaped(token), 'i'));
-    const candidates = await Movie.find({
-      imdbId: IMDB_ID,
-      title: { $in: patterns }
-    }).sort({ popularity: -1, releaseDate: -1 }).limit(40).lean();
+    const candidates = tokens.length
+      ? await Movie.find({
+        imdbId: IMDB_ID,
+        adult: { $ne: true },
+        $text: { $search: tokens.join(' ') }
+      }).sort({ score: { $meta: 'textScore' }, popularity: -1, releaseDate: -1 }).limit(40).lean()
+      : [];
     const normalized = query.toLowerCase();
     const ranked = candidates.map((item) => {
       const title = String(item.title || '').toLowerCase();
@@ -1338,8 +1358,22 @@ app.post('/api/announcements/:announcementId/read', async (c) => {
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404));
 app.onError((error, c) => {
-  console.error('Unhandled application error:', error.message);
-  return c.json({ error: 'Internal server error.' }, 500);
+  const requestId = c.get('requestId') || randomUUID();
+  console.error(JSON.stringify({
+    event: 'api_unhandled_error',
+    requestId,
+    method: c.req.method,
+    route: new URL(c.req.url).pathname,
+    errorName: error?.name || 'Error',
+    errorCode: error?.code || null,
+    message: String(error?.message || 'Unknown error').slice(0, 240)
+  }));
+  c.header('X-Situla-Request-Id', requestId);
+  return c.json({
+    error: 'Internal server error.',
+    code: 'INTERNAL_SERVER_ERROR',
+    requestId
+  }, 500);
 });
 
 export default app;

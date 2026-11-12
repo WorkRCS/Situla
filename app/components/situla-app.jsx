@@ -726,7 +726,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const timer = window.setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]);
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
         const response = await fetch("/api/search?q=" + encodeURIComponent(value), {
           cache: "no-store",
           signal
@@ -764,7 +764,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const recentIds = isDiscover ? readRecentCatalogIds(recentKey) : [];
         const discoverQuery = recentIds.length ? "?exclude=" + encodeURIComponent(recentIds.join(",")) : "";
         const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" + discoverQuery : "/api/movies?" + params.toString());
-        const requestSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
+        const requestSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
         const response = await fetch(endpoint, { cache: "no-store", signal: requestSignal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
@@ -807,11 +807,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         setMoviesPage(Number(payload.pagination?.page) || 1);
         setMoviesTotal(Number(payload.pagination?.total) || 0);
         setError("");
-      } catch (requestError) {
+      } catch {
         if (!controller.signal.aborted) {
-          setError(requestError.message || "Could not load movies. Please try again.");
-          setMovies([]);
-          if (tab === "home" && !featuredMovie) setFeaturedMovie(null);
+          // Keep previously rendered posters available during a weak connection or API recovery.
+          if (!movies.length && !featuredMovie) setError("Connection is slow. Your catalog will refresh when the connection recovers.");
+          else setError("");
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -832,7 +832,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setHomeSeriesReady(false);
 
     async function loadSeries(endpoint) {
-      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]);
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
       const response = await fetch(endpoint, { cache: "no-store", signal });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
@@ -844,12 +844,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       loadSeries("/api/anime?page=1&limit=10")
     ]).then(([tvResult, animeResult]) => {
       if (controller.signal.aborted) return;
-      const tvItems = tvResult.status === "fulfilled" ? tvResult.value : [];
-      const animeItems = animeResult.status === "fulfilled" ? animeResult.value : [];
-      setHomeTvShows(tvItems);
-      setHomeAnimeShows(animeItems);
-      if (tvResult.status === "rejected" && animeResult.status === "rejected") {
-        setError("TV and anime picks are temporarily unavailable.");
+      if (tvResult.status === "fulfilled") setHomeTvShows(tvResult.value);
+      if (animeResult.status === "fulfilled") setHomeAnimeShows(animeResult.value);
+      const bothFailed = tvResult.status === "rejected" && animeResult.status === "rejected";
+      if (bothFailed && !homeTvShows.length && !homeAnimeShows.length) {
+        setError("Connection is slow. Continue exploring while series picks retry.");
+      } else if (!bothFailed) {
+        setError("");
       }
     }).finally(() => {
       if (!controller.signal.aborted) setHomeSeriesReady(true);
@@ -931,7 +932,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     async function loadSeries() {
       setLoading(true);
       try {
-        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
         const response = await fetch(endpoint, { cache: "no-store", signal });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Series catalog is not available.");
@@ -951,11 +952,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           setAnimeTotal(Number(payload.pagination?.total) || items.length);
         }
         setError("");
-      } catch (requestError) {
+      } catch {
         if (!controller.signal.aborted) {
-          setError(requestError.message || "Could not load the series catalog.");
-          if (tab === "tv") setTvShows([]);
-          else setAnimeShows([]);
+          const hasExistingItems = tab === "tv" ? tvShows.length > 0 : animeShows.length > 0;
+          setError(hasExistingItems
+            ? ""
+            : "Connection is slow. The catalog will retry when your connection improves.");
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -1100,7 +1102,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         }
         const response = await fetch("/api/movies?" + params.toString(), {
           cache: "no-store",
-          signal: AbortSignal.timeout(20000)
+          signal: AbortSignal.timeout(30_000)
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
@@ -1131,7 +1133,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         });
         const response = await fetch("/api/tv?" + params.toString(), {
           cache: "no-store",
-          signal: AbortSignal.timeout(20000)
+          signal: AbortSignal.timeout(30_000)
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
@@ -1159,7 +1161,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         });
         const response = await fetch("/api/anime?" + params.toString(), {
           cache: "no-store",
-          signal: AbortSignal.timeout(20000)
+          signal: AbortSignal.timeout(30_000)
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more anime.");

@@ -47,8 +47,8 @@ test("global search interleaves Movies, TV series, and Anime", async () => {
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /AbortSignal\.timeout\(20000\)/);
-  assert.match(app, /AbortSignal\.timeout\(10000\)/);
+  assert.match(app, /AbortSignal\.timeout\(30_000\)/);
+  assert.match(app, /AbortSignal\.timeout\(20_000\)/);
   assert.match(app, /loadMoreLock\.current/);
   assert.match(app, /loading="lazy"/);
   assert.match(app, /decoding="async"/);
@@ -229,4 +229,14 @@ test("saved-media helpers preserve legacy movie saves and toggle TV and Anime in
   assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["anime:123", "tv:123", "movie:tt1234567"]);
   saved = toggleSavedMedia(saved, tv, "tv");
   assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["anime:123", "movie:tt1234567"]);
+});
+
+test("catalog refresh failures retain previously rendered Movie, TV and Anime items", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /Keep previously rendered posters available during a weak connection/);
+  assert.match(app, /if \(tvResult.status === "fulfilled"\) setHomeTvShows\(tvResult.value\)/);
+  assert.match(app, /if \(animeResult.status === "fulfilled"\) setHomeAnimeShows\(animeResult.value\)/);
+  assert.doesNotMatch(app, /TV and anime picks are temporarily unavailable/);
+  assert.doesNotMatch(app, /if \(tab === "tv"\) setTvShows\(\[\]\)/);
+  assert.doesNotMatch(app, /else setAnimeShows\(\[\]\)/);
 });

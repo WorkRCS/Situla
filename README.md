@@ -20,6 +20,18 @@ Playback configuration is managed internally and is not identified in the public
 6. Run `npm run dev` to start only the local Next.js website at `http://localhost:3000`. It does not run a seed, crawler or migration.
 7. Open `http://localhost:3000`. The health endpoint is `/api/health`.
 
+## Production database operations
+
+Production API requests only establish/reuse the MongoDB connection; they do not build indexes during cold starts. Schema indexes are declared in `src/models.js` and should be provisioned once per database before deployment:
+
+```sh
+npm run db:indexes
+```
+
+For Vercel, run this command from a trusted deployment workstation with the production MongoDB environment configured. Do not run index creation from every serverless instance. For a small VPS or a larger dedicated VPS, the MongoDB client pool defaults to 8 connections per Node.js process and can be tuned with `MONGODB_MAX_POOL_SIZE` (2–100); account for the sum of pools across all processes/instances.
+
+Catalog cache requests use a short Redis timeout and zero SDK retries so a slow Redis service cannot hold an API response for multiple backoff cycles. Redis remains optional; catalog responses can use the process-local cache and stale-if-error fallback when Redis or MongoDB is temporarily unhealthy.
+
 ## Native media sharing and announcements
 
 Movie and TV poster cards offer the device-native share sheet. The shared payload contains the title, canonical Situla detail/watch URL, and the poster image file when the browser permits file sharing; otherwise the poster URL is included with the title and link. Movie Watch and TV detail pages provide title, description and poster Open Graph metadata for link previews.

@@ -24,7 +24,8 @@
     "check:tv": "node --test test/tv-catalog.test.js",
     "seed:movie-additions": "node scripts/seed-movie-additions.js",
     "check:movies": "node --test test/movie-catalog.test.js",
-    "admin:set-role": "node scripts/set-user-role.js"
+    "admin:set-role": "node scripts/set-user-role.js",
+    "db:indexes": "node scripts/ensure-database-indexes.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",

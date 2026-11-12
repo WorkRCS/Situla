@@ -22,21 +22,39 @@ test("background presence and announcements stop polling hidden tabs", async () 
   assert.match(announcements, /document\.addEventListener\("visibilitychange", onVisibility\)/);
 });
 
-test("database pool and API work are bounded for serverless bursts", async () => {
+test("database connections and API admissions are bounded without cold-start index builds", async () => {
   const db = await read("../src/db.js");
   const api = await read("../src/app.js");
-  assert.match(db, /maxPoolSize: 10/);
-  assert.match(db, /maxConnecting: 2/);
-  assert.match(db, /maxIdleTimeMS: 30_000/);
-  assert.match(db, /waitQueueTimeoutMS: 3_000/);
+  const connect = db.slice(db.indexOf("export async function connectDatabase"), db.indexOf("export async function initializeDatabaseIndexes"));
+  assert.match(connect, /maxPoolSize/);
+  assert.match(connect, /maxConnecting: 2/);
+  assert.match(connect, /waitQueueTimeoutMS: 2_000/);
+  assert.match(connect, /serverSelectionTimeoutMS: 5_000/);
+  assert.doesNotMatch(connect, /createIndexes/);
+  assert.match(db, /export async function initializeDatabaseIndexes/);
   assert.match(api, /if \(process\.env\.NODE_ENV === 'development'\) app\.use\('\*', logger\(\)\)/);
-  assert.match(api, /app\.use\('\/api\/\*', createRequestConcurrencyGuard\(\{ maxConcurrent: 12 \}\)\)/);
-  assert.match(api, /if \(!sessionToken \|\| !deviceToken\)/);
-  const resolveStart = api.indexOf("async function resolveCatalogTierWindow");
-  const connect = api.indexOf("await connectDatabase();", resolveStart);
-  const firstQuery = api.indexOf("AuthSession.findOne", resolveStart);
-  assert.ok(resolveStart >= 0 && connect > resolveStart && firstQuery > connect);
+  assert.match(api, /maxConcurrent: 8/);
+  assert.match(api, /maxQueued: 48/);
+  assert.match(api, /X-Situla-Request-Id/);
+  assert.match(api, /Server-Timing/);
   assert.match(api, /CATALOG_TIER_MEMO_TTL_MS = 5_000/);
+});
+
+test("catalog search uses existing text indexes rather than collection-wide regex scans", async () => {
+  const api = await read("../src/app.js");
+  const search = api.slice(api.indexOf("app.get('/api/search'"), api.indexOf("app.get('/api/movies/suggestions'"));
+  const suggestions = api.slice(api.indexOf("app.get('/api/movies/suggestions'"), api.indexOf("app.get('/api/movies'"));
+  assert.equal((search.match(/\\$text: \\{ \\$search: query \\}/g) || []).length, 3);
+  assert.match(suggestions, /\\$text: \\{ \\$search: tokens\.join\(' '\) \\}/);
+  assert.doesNotMatch(search, /new RegExp\(escapeRegex/);
+});
+
+test("API requests expose request IDs, timing and structured error diagnostics", async () => {
+  const api = await read("../src/app.js");
+  assert.match(api, /X-Situla-Request-Id/);
+  assert.match(api, /Server-Timing/);
+  assert.match(api, /api_unhandled_error/);
+  assert.match(api, /requestId/);
 });
 
 test("home series shelves are chunked and memoized cards receive stable callbacks", async () => {

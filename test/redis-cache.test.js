@@ -104,3 +104,48 @@ test('Redis failures do not break public catalog APIs', async () => {
   assert.equal(response.headers.get('x-situla-cache'), 'BYPASS');
   assert.deepEqual(await response.json(), { items: [] });
 });
+
+test('process memory cache serves repeated catalog reads without another Redis request', async () => {
+  const store = new Map();
+  const redis = {
+    get: async (key) => store.get(key) ?? null,
+    set: async (key, value) => { store.set(key, value); }
+  };
+  const app = new Hono();
+  let calls = 0;
+  app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis }));
+  app.get('/api/anime', (c) => {
+    calls += 1;
+    return c.json({ items: [{ malId: 5114 }] });
+  });
+  const first = await app.request('/api/anime?page=1');
+  assert.equal(first.status, 200);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const second = await app.request('/api/anime?page=1');
+  assert.equal(second.headers.get('x-situla-cache'), 'HIT');
+  assert.equal(second.headers.get('x-situla-cache-layer'), 'memory');
+  assert.equal(calls, 1);
+});
+
+test('stale successful catalog responses are served when the database route fails', async () => {
+  const key = buildCatalogCacheKey('https://situla.example/api/tv?page=1', 'standard');
+  const body = JSON.stringify({ items: [{ tmdbId: 1399 }] });
+  const store = new Map([[key, {
+    status: 200,
+    body,
+    freshUntil: Date.now() - 1_000,
+    staleUntil: Date.now() + 60_000
+  }]]);
+  const redis = {
+    get: async (requestedKey) => store.get(requestedKey) ?? null,
+    set: async () => 'OK'
+  };
+  const app = new Hono();
+  app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis }));
+  app.get('/api/tv', (c) => c.json({ error: 'database unavailable' }, 503));
+
+  const response = await app.request('/api/tv?page=1');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-situla-cache'), 'STALE');
+  assert.deepEqual(await response.json(), { items: [{ tmdbId: 1399 }] });
+});
