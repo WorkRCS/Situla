@@ -78,8 +78,8 @@ test("year helper reads canonical date fields without changing canonical IDs", (
   assert.ok(MANUAL_MOVIES_2020_2026.every((item) => /^tt\d{5,12}$/.test(item.imdbId)));
   assert.ok(STATIC_TV_SERIES.every((item) => Number(item.tmdbId) > 0));
   assert.ok(TV_SERIES_CANDIDATES.every((item) => Number(item.tmdbId) > 0));
-  assert.equal(MANUAL_TV_SERIES_2020_2026.length, 6);
-  assert.deepEqual(MANUAL_TV_SERIES_2020_2026.map((item) => item.tmdbId), [115004, 87739, 241259, 99581, 93454, 94028]);
+  assert.equal(MANUAL_TV_SERIES_2020_2026.length, 8);
+  assert.deepEqual(MANUAL_TV_SERIES_2020_2026.map((item) => item.tmdbId), [115004, 87739, 241259, 99581, 93454, 94028, 217667, 249042]);
   assert.ok(NEW_ANIME_CATALOG.every((item) => Number(item.malId) > 0));
 });
 
@@ -93,7 +93,7 @@ test("prepared offline packs report real gaps instead of lowering the completene
   }
   assert.equal(prepared.movie.records.length, 38);
   assert.ok(prepared.movie.records.every((item) => validateOfflineMovie(item)));
-  assert.equal(prepared.tv.records.length, 6);
+  assert.equal(prepared.tv.records.length, 8);
   assert.ok(prepared.tv.records.every((item) => validateOfflineTv(item)));
   assert.ok(prepared.anime.records.length >= 190);
   assert.ok(prepared.movie.rejected["synopsis shorter than 80 characters"] > 0);
