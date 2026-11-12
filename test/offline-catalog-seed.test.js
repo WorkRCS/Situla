@@ -109,8 +109,11 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
   // Removed legacy/manual flags cannot influence the outcome.
-  assert.equal(getCatalogBadge({ isPopular: true, isFeatured: true }, "movie", now), null);
-  assert.equal(getCatalogBadge({ isPopular: false, isFeatured: false }, "tv", now), null);
+  assert.equal(getCatalogBadge({ isPopular: true, isFeatured: true }, "movie", now)?.key, "featured");
+  assert.equal(getCatalogBadge({ isPopular: false, isFeatured: false }, "tv", now)?.key, "featured");
+  for (const mediaType of ["movie", "tv", "anime"]) {
+    assert.equal(getCatalogBadge({}, mediaType, now)?.key, "featured");
+  }
 
   // Real vote volume, Bayesian-smoothed rating and provider reach qualify Popular.
   assert.equal(getCatalogBadge({
@@ -123,16 +126,16 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
     voteAverage: 8.0, voteCount: 5000, popularity: 90
   }, "tv", now)?.key, "popular");
 
-  // Vote count alone cannot rescue poor quality; a tiny sample is not Popular.
+  // Weak or insufficient public signals fall back to the visible Featured label.
   assert.equal(getCatalogBadge({
     voteAverage: 5.4, voteCount: 250000, popularity: 150
-  }, "movie", now), null);
+  }, "movie", now)?.key, "featured");
   assert.equal(getCatalogBadge({
     voteAverage: 8.6, voteCount: 20, popularity: 200
-  }, "tv", now), null);
+  }, "tv", now)?.key, "featured");
   assert.equal(getCatalogBadge({
     voteAverage: 6.8, voteCount: 0, popularity: 0
-  }, "movie", now), null);
+  }, "movie", now)?.key, "featured");
 
   // Featured is an automatic quality spotlight, never an Admin flag or low-rating bucket.
   assert.equal(getCatalogBadge({
@@ -143,7 +146,7 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
   }, "anime", now)?.key, "featured");
   assert.equal(getCatalogBadge({
     voteAverage: 4.1, voteCount: 0
-  }, "movie", now), null);
+  }, "movie", now)?.key, "featured");
 
   // Hot responds to actual Situla playback activity or public vote growth.
   assert.equal(getCatalogBadge({
@@ -166,7 +169,7 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
     trendScore: 12,
     trendUpdatedAt: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
   };
-  assert.notEqual(getCatalogBadge(staleTrend, "tv", now)?.key, "hot");
+  assert.equal(getCatalogBadge(staleTrend, "tv", now)?.key, "featured");
   assert.ok(Math.abs(calculateDecayedTrendScore(8, new Date(now - sevenDays), now) - 4) < 0.01);
 
   assert.equal(
@@ -227,8 +230,10 @@ test("all three badges use cached public data and require no Admin curation", as
 test("catalog cards render differentiated automatic badges and search asks for a title only", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /movie\.catalogBadge\.label/);
-  assert.match(app, /item\.catalogBadge\.label/);
+  assert.match(app, /resolveCatalogBadge\(movie\.catalogBadge\)/);
+  assert.match(app, /resolveCatalogBadge\(item\.catalogBadge\)/);
+  assert.doesNotMatch(app, /movie\.catalogBadge &&/);
+  assert.doesNotMatch(app, /item\.catalogBadge &&/);
   assert.doesNotMatch(app, /catalogBadge\.icon/);
   assert.doesNotMatch(app, /popular-pill|isPopularCatalogItem/);
   assert.match(app, /placeholder="Search & Title"/);
