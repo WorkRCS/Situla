@@ -149,6 +149,9 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
     voteAverage: 4.2, voteCount: 500000
   }, "tv", now)?.key, "hot");
   assert.equal(getCatalogBadge({
+    trendScore: 9, trendUpdatedAt: new Date(now).toISOString()
+  }, "movie", now)?.key, "hot");
+  assert.equal(getCatalogBadge({
     voteAverage: 7.1, voteCount: 1000, voteVelocity7d: 250,
     releaseDate: new Date(now - (30 * 24 * 60 * 60 * 1000)).toISOString()
   }, "movie", now)?.key, "hot");
