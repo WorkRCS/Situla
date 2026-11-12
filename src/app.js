@@ -996,6 +996,10 @@ app.get('/api/search', async (c) => {
   const allowedTypes = new Set(['all', 'movie', 'tv', 'anime']);
   if (!allowedTypes.has(selectedType)) return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
 
+  const tag = String(c.req.query('tag') || 'all').toLowerCase();
+  const allowedTags = new Set(['all', 'hot', 'popular', 'featured']);
+  if (!allowedTags.has(tag)) return c.json({ error: 'Choose a valid badge filter.', items: [] }, 400);
+
   const yearText = String(c.req.query('year') || '').trim();
   const year = yearText ? Number(yearText) : null;
   if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
@@ -1003,14 +1007,19 @@ app.get('/api/search', async (c) => {
     return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
   }
   if (query && query.length < 3) return c.json({ items: [] });
-  if (!query && selectedType === 'all' && year === null) return c.json({ items: [] });
+  if (!query && selectedType === 'all' && year === null && tag === 'all') return c.json({ items: [] });
 
   const requestedPage = Number(c.req.query('page') || 1);
   const requestedLimit = Number(c.req.query('limit') || 20);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 20) : 1;
   const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 30) : 20;
   const offset = (page - 1) * limit;
-  const candidateLimit = Math.min(600, Math.max(80, offset + limit + 1));
+  // Badge labels are calculated from public market signals and recent engagement.
+  // Fetch a broad candidate window before filtering so a badge search can reach
+  // past the first newest titles instead of only filtering the visible page.
+  const candidateLimit = tag === 'all'
+    ? Math.min(600, Math.max(80, offset + limit + 1))
+    : 1800;
   const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
   const normalizedId = query.toLowerCase();
   const escapedQuery = escapeSearchRegex(query);
@@ -1070,7 +1079,9 @@ app.get('/api/search', async (c) => {
             .sort(dateSort).limit(candidateLimit)
         );
         return {
-          items: records.map((record) => ({ ...catalog.toDto(record), mediaType: catalog.type })),
+          items: records
+            .map((record) => ({ ...catalog.toDto(record), mediaType: catalog.type }))
+            .filter((item) => tag === 'all' || item.catalogBadge?.key === tag),
           hasMoreCandidate: records.length === candidateLimit
         };
       }
@@ -1100,10 +1111,9 @@ app.get('/api/search', async (c) => {
         for (const record of records) recordsById.set(String(record._id), record);
       }
       return {
-        items: [...recordsById.values()].map((record) => ({
-          ...catalog.toDto(record),
-          mediaType: catalog.type
-        })),
+        items: [...recordsById.values()]
+          .map((record) => ({ ...catalog.toDto(record), mediaType: catalog.type }))
+          .filter((item) => tag === 'all' || item.catalogBadge?.key === tag),
         hasMoreCandidate: successful.some((batch) => batch.length === candidateLimit)
       };
     }));
@@ -1132,7 +1142,8 @@ app.get('/api/search', async (c) => {
       limit,
       returned: items.length,
       minQueryLength: 3,
-      sort: query ? 'relevance_then_newest' : 'newest_first'
+      sort: query ? 'relevance_then_newest' : 'newest_first',
+      tag
     });
   } catch (error) {
     console.error('Global catalog search failed:', error?.message || 'Unknown error');
