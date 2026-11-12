@@ -24,6 +24,7 @@ import adminRouter from './admin.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
+import { normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from './media-image.js';
 import {
   resolvePlaybackPrincipal, readAccessStatus, startPlaybackSession,
   heartbeatPlaybackSession, stopPlaybackSession
@@ -81,6 +82,112 @@ app.use('/api/*', createRequestConcurrencyGuard({
   queueTimeoutMs: 800
 }));
 app.use('/api/*', catalogResponseCache);
+
+
+async function readSharePosterBytes(response) {
+  const advertisedLength = Number(response.headers.get('content-length') || 0);
+  if (advertisedLength > SHARE_POSTER_MAX_BYTES) {
+    const error = new Error('Poster image is too large to share.');
+    error.status = 413;
+    throw error;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > SHARE_POSTER_MAX_BYTES) {
+      const error = new Error('Poster image is too large to share.');
+      error.status = 413;
+      throw error;
+    }
+    return bytes;
+  }
+
+  const chunks = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > SHARE_POSTER_MAX_BYTES) {
+        await reader.cancel().catch(() => {});
+        const error = new Error('Poster image is too large to share.');
+        error.status = 413;
+        throw error;
+      }
+      chunks.push(Buffer.from(value));
+    }
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  }
+  return Buffer.concat(chunks, totalBytes);
+}
+
+async function fetchSharePosterSource(initialUrl) {
+  let currentUrl = initialUrl;
+  for (let redirectCount = 0; redirectCount <= 2; redirectCount += 1) {
+    const response = await fetch(currentUrl, {
+      method: 'GET',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(8_000),
+      headers: {
+        Accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif;q=0.9,*/*;q=0.1',
+        'User-Agent': 'Mozilla/5.0 (compatible; SitulaShare/1.0)'
+      }
+    });
+
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      await response.body?.cancel().catch(() => {});
+      if (!location || redirectCount === 2) throw new Error('Poster source redirected too many times.');
+      const redirectedUrl = normalizeSharePosterUrl(new URL(location, currentUrl).toString());
+      if (!redirectedUrl) throw new Error('Poster source redirected to an unsupported host.');
+      currentUrl = redirectedUrl;
+      continue;
+    }
+
+    return response;
+  }
+  throw new Error('Poster source could not be reached.');
+}
+
+app.get('/api/share-poster', async (c) => {
+  const posterUrl = normalizeSharePosterUrl(c.req.query('url'));
+  if (!posterUrl) return c.json({ error: 'This poster source is not supported for sharing.' }, 400);
+
+  try {
+    const upstream = await fetchSharePosterSource(posterUrl);
+    if (!upstream.ok) {
+      await upstream.body?.cancel().catch(() => {});
+      return c.json({ error: 'The poster image is temporarily unavailable.' }, 502);
+    }
+
+    const bytes = await readSharePosterBytes(upstream);
+    const contentType = detectSharePosterMimeType(bytes);
+    if (!contentType || !bytes.length) {
+      return c.json({ error: 'The poster source did not return a supported image.' }, 415);
+    }
+
+    const extension = contentType === 'image/jpeg' ? 'jpg'
+      : contentType === 'image/png' ? 'png'
+      : contentType === 'image/webp' ? 'webp'
+      : contentType === 'image/avif' ? 'avif' : 'gif';
+    return c.body(new Uint8Array(bytes), 200, {
+      'Content-Type': contentType,
+      'Content-Length': String(bytes.length),
+      'Content-Disposition': 'inline; filename="situla-poster.' + extension + '"',
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      'X-Content-Type-Options': 'nosniff'
+    });
+  } catch (error) {
+    const status = error?.status === 413 ? 413 : 502;
+    console.error('Share poster proxy failed:', error?.message || 'Unknown error');
+    return c.json({ error: status === 413 ? 'Poster image is too large to share.' : 'The poster image is temporarily unavailable.' }, status);
+  }
+});
 
 app.route('/api/admin', adminRouter);
 
