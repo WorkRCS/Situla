@@ -13,8 +13,8 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(page.includes('name: "Free"'));
   assert.ok(page.includes('name: "Premium"'));
   assert.ok(page.includes('allowance: "1 hour"'));
-  assert.ok(page.includes('cooldown: "5 hours"'));
   assert.ok(page.includes('cooldown: "2 hours"'));
+  assert.ok(page.includes('cooldown: "1 hour"'));
   assert.ok(page.includes('allowance: "3 hours"'));
   assert.ok(page.includes("Up to 3 registered devices"));
   assert.ok(page.includes("Premium Verified badge"));
@@ -40,7 +40,7 @@ test("Premium plans expose Monthly, 6-month and Yearly pricing with term-specifi
   assert.ok(membership.includes('id: "six-months"'));
   assert.ok(membership.includes('monthlyPrice: 149'));
   assert.ok(membership.includes('totalPrice: 894'));
-  assert.ok(membership.includes('cooldown: "30 minutes"'));
+  assert.ok(membership.includes('cooldown: "20 minutes"'));
   assert.ok(membership.includes('id: "yearly"'));
   assert.ok(membership.includes('monthlyPrice: 119'));
   assert.ok(membership.includes('totalPrice: 1428'));

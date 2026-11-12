@@ -46,7 +46,7 @@ const PLANS = [
     price: "Free access",
     description: "Browse Situla without creating an account and try the viewing experience.",
     allowance: "1 hour",
-    cooldown: "5 hours",
+    cooldown: "2 hours",
     devices: "IP + guest session",
     badge: "No badge",
     updates: "Standard public catalog updates",
@@ -54,7 +54,7 @@ const PLANS = [
       "No account or sign-in required",
       "Browse Home, Search, Movies, TV and Anime",
       "Up to 1 hour of watch access per cycle",
-      "5-hour watch cooldown after the allowance",
+      "1-hour watch cooldown after the allowance",
       "Guest restriction uses public IP and an anonymous session",
       "Catalog browsing stays available during cooldown"
     ],
@@ -71,14 +71,14 @@ const PLANS = [
     name: "Free",
     price: "No subscription",
     description: "Create an account for a personal, single-device viewing allowance.",
-    allowance: "1 hour",
-    cooldown: "2 hours",
+    allowance: "3 hours",
+    cooldown: "1 hour",
     devices: "1 registered device",
     badge: "No badge",
     updates: "Standard public catalog updates",
     features: [
       "Account and sign-in required",
-      "Up to 1 hour of account watch time per cycle",
+      "Up to 3 hours of account watch time per cycle",
       "2-hour watch cooldown after the allowance",
       "1 registered device at a time",
       "Account and device-based access checks",
@@ -97,8 +97,8 @@ const PLANS = [
     name: "Premium",
     price: "Price to be announced",
     description: "More viewing time, multi-device access and early movie information.",
-    allowance: "3 hours",
-    cooldown: "2 hours",
+    allowance: "5 hours",
+    cooldown: "40 minutes",
     devices: "Up to 3 registered devices",
     badge: "Verified badge",
     updates: "Early updates and detailed upcoming-movie information",
@@ -141,8 +141,8 @@ export default function PlansPage() {
 
   const currentMode = MODES.find((item) => item.id === previewMode);
   const selectedBilling = PREMIUM_BILLING.find((item) => item.id === billingCycle) || PREMIUM_BILLING[0];
-  const lockTime = previewMode === "guest" ? "04:42:18" : "01:42:18";
-  const lockDuration = previewMode === "guest" ? "5-hour guest cooldown" : previewMode === "free" ? "2-hour Free cooldown" : selectedBilling.cooldown + " Premium cooldown";
+  const lockTime = previewMode === "guest" ? "01:42:18" : "00:42:18";
+  const lockDuration = previewMode === "guest" ? "2-hour guest cooldown" : previewMode === "free" ? "1-hour Free cooldown" : selectedBilling.cooldown + " Premium cooldown";
   const featureRows = [
     { label: "Browse catalog during cooldown", cells: [
       { available: true, detail: "Available" }, { available: true, detail: "Available" }, { available: true, detail: "Available" }
@@ -157,12 +157,12 @@ export default function PlansPage() {
       { available: true, detail: "Included" }, { available: false }, { available: false }
     ]},
     { label: "Watch allowance per cycle", cells: [
-      { available: true, detail: "1 hour" }, { available: true, detail: "1 hour" }, { available: true, detail: selectedBilling.allowance }
+      { available: true, detail: "1 hour" }, { available: true, detail: "3 hours" }, { available: true, detail: selectedBilling.allowance }
     ]},
     { label: "Cooldown after watch allowance", cells: [
-      { available: true, detail: "5 hours" }, { available: true, detail: "2 hours" }, { available: true, detail: selectedBilling.cooldown }
+      { available: true, detail: "2 hours" }, { available: true, detail: "1 hour" }, { available: true, detail: selectedBilling.cooldown }
     ]},
-    { label: "30-minute cooldown (6-month billing)", cells: [
+    { label: "20-minute cooldown (6-month billing)", cells: [
       { available: false }, { available: false }, { available: billingCycle === "six-months", detail: billingCycle === "six-months" ? "Included" : "6-month plan only" }
     ]},
     { label: "Unlimited streaming (Yearly billing)", cells: [
@@ -291,7 +291,7 @@ export default function PlansPage() {
                     <ul>
                       {plan.features.map((feature) => <li key={feature}><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{feature}</span></li>)}
                       {plan.id === "premium" && <>
-                        <li><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{selectedBilling.allowance === "Unlimited" ? "Unlimited streaming on the Yearly package" : "Up to 3 hours of shared account watch time per cycle"}</span></li>
+                        <li><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{selectedBilling.allowance === "Unlimited" ? "Unlimited streaming on the Yearly package" : "Up to 5 hours per Monthly cycle or 10 hours per 6-month cycle"}</span></li>
                         <li><Check size={13} strokeWidth={2.7} aria-hidden="true" /> <span>{selectedBilling.cooldown === "No periodic cooldown" ? "No scheduled watch cooldown while the Yearly package is active" : selectedBilling.cooldown + " cooldown after the watch allowance"}</span></li>
                       </>}
                     </ul>

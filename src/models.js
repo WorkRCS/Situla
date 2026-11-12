@@ -187,3 +187,116 @@ animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 't
 export const Movie = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
 export const TvSeries = mongoose.models.TvSeries || mongoose.model('TvSeries', tvSeriesSchema);
 export const AnimeSeries = mongoose.models.AnimeSeries || mongoose.model('AnimeSeries', animeSeriesSchema);
+
+
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, trim: true, lowercase: true, maxlength: 254 },
+  displayName: { type: String, required: true, trim: true, maxlength: 80 },
+  passwordHash: { type: String, default: null, select: false },
+  googleSub: { type: String, default: null },
+  emailVerified: { type: Boolean, default: false },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  planId: { type: String, enum: ['free', 'premium'], default: 'free' },
+  membership: {
+    billingCycle: { type: String, enum: ['monthly', 'six-months', 'yearly', null], default: null },
+    status: { type: String, enum: ['inactive', 'active', 'expired'], default: 'inactive' },
+    startedAt: { type: Date, default: null },
+    expiresAt: { type: Date, default: null },
+    activatedBy: { type: mongoose.Schema.Types.ObjectId, default: null }
+  },
+  lastLoginAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ googleSub: 1 }, { unique: true, partialFilterExpression: { googleSub: { $type: 'string' } } });
+userSchema.index({ role: 1, status: 1 });
+
+const authSessionSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  tokenHash: { type: String, required: true, unique: true },
+  ipHash: { type: String, default: null },
+  rememberMe: { type: Boolean, default: true },
+  lastSeenAt: { type: Date, required: true },
+  expiresAt: { type: Date, required: true },
+  revokedAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+authSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+authSessionSchema.index({ userId: 1, revokedAt: 1, expiresAt: 1 });
+
+const deviceSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  tokenHash: { type: String, required: true, unique: true },
+  label: { type: String, default: 'Browser', maxlength: 180 },
+  lastSeenAt: { type: Date, default: Date.now },
+  revokedAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+deviceSchema.index({ userId: 1, revokedAt: 1 });
+
+const guestAccessSchema = new mongoose.Schema({
+  ipHash: { type: String, required: true, unique: true },
+  firstSeenAt: { type: Date, required: true },
+  lastSeenAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+
+const guestSessionSchema = new mongoose.Schema({
+  tokenHash: { type: String, required: true, unique: true },
+  ipHash: { type: String, required: true },
+  guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', required: true },
+  expiresAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+guestSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+guestSessionSchema.index({ ipHash: 1, expiresAt: 1 });
+
+const usageStateSchema = new mongoose.Schema({
+  ownerType: { type: String, enum: ['user', 'guest'], required: true },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  usedSeconds: { type: Number, min: 0, default: 0 },
+  cooldownUntil: { type: Date, default: null },
+  cycleStartedAt: { type: Date, default: Date.now },
+  lastUsedAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+usageStateSchema.index({ ownerType: 1, ownerId: 1 }, { unique: true });
+usageStateSchema.index({ cooldownUntil: 1 });
+
+const playbackSessionSchema = new mongoose.Schema({
+  ownerType: { type: String, enum: ['user', 'guest'], required: true },
+  ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', default: null },
+  mediaType: { type: String, enum: ['movie', 'tv', 'anime'], required: true },
+  mediaId: { type: String, required: true },
+  season: { type: Number, default: null },
+  episode: { type: Number, default: null },
+  audio: { type: String, enum: ['sub', 'dub', null], default: null },
+  startedAt: { type: Date, required: true },
+  lastHeartbeatAt: { type: Date, required: true },
+  isPlaying: { type: Boolean, default: false },
+  status: { type: String, enum: ['active', 'ended', 'expired', 'locked'], default: 'active' },
+  endedAt: { type: Date, default: null },
+  lastClientTime: { type: Number, min: 0, default: 0 },
+  expiresAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+playbackSessionSchema.index(
+  { ownerType: 1, ownerId: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'active' } }
+);
+playbackSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+playbackSessionSchema.index({ userId: 1, status: 1 });
+
+const authRateLimitSchema = new mongoose.Schema({
+  keyHash: { type: String, required: true, unique: true },
+  count: { type: Number, min: 0, default: 0 },
+  windowEndsAt: { type: Date, required: true },
+  expiresAt: { type: Date, required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+authRateLimitSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
+export const AuthSession = mongoose.models.AuthSession || mongoose.model('AuthSession', authSessionSchema);
+export const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
+export const GuestAccess = mongoose.models.GuestAccess || mongoose.model('GuestAccess', guestAccessSchema);
+export const GuestSession = mongoose.models.GuestSession || mongoose.model('GuestSession', guestSessionSchema);
+export const UsageState = mongoose.models.UsageState || mongoose.model('UsageState', usageStateSchema);
+export const PlaybackSession = mongoose.models.PlaybackSession || mongoose.model('PlaybackSession', playbackSessionSchema);
+export const AuthRateLimit = mongoose.models.AuthRateLimit || mongoose.model('AuthRateLimit', authRateLimitSchema);
