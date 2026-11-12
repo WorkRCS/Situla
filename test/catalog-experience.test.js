@@ -414,3 +414,15 @@ test("Movie, TV and Anime card badges, ratings and save/share controls scale wit
   assert.match(sizes, /width:clamp\(19px,9cqi,22px\) !important/);
   assert.match(sizes, /\.movie-card\.series-card-tv > \.share-button/);
 });
+
+
+test("card title-to-metadata spacing stays compact across Movie, TV and Anime cards", async () => {
+  const css = await read("../app/globals.css");
+  const spacing = css.slice(css.lastIndexOf("/* Compact card title-to-metadata spacing:"));
+
+  assert.match(spacing, /\.movie-card h3[\s\S]*?min-height:0 !important/);
+  assert.match(spacing, /\.movie-card \.media-open-button > p:not\(\.series-card-meta\):not\(\.series-card-category\)[\s\S]*?margin-top:4px !important/);
+  assert.match(spacing, /\.movie-card \.series-card-meta[\s\S]*?margin-top:4px/);
+  assert.match(spacing, /\.catalog-grid \.series-card h3[\s\S]*?margin-top:4px/);
+  assert.match(spacing, /\.movie-card \.series-card-category[\s\S]*?margin-top:3px/);
+});
