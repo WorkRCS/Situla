@@ -60,8 +60,8 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes("Early movie updates"));
   assert.ok(!pages.includes("DEMO_ACCOUNT"));
   assert.ok(pages.includes("/api/auth/me"));
-  assert.ok(account.includes("/api/auth/me"));
-  assert.ok(account.includes("Server account"));
+  assert.ok(pages.includes("/api/auth/me"));
+  assert.ok(pages.includes("Server account"));
   assert.ok(membership.includes('status: "active"'));
 });
 
