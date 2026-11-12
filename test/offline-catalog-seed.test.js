@@ -102,3 +102,12 @@ test("Popular badge uses explicit flags or catalogue-native popularity semantics
   assert.equal(isPopularCatalogItem({ popularity: 12 }, "anime"), true);
   assert.equal(isPopularCatalogItem({ rank: 900, scoredBy: 1000 }, "anime"), false);
 });
+
+test("catalog cards show the green Popular tag and search asks for a title only", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /className="popular-pill">Popular<\\/span>/);
+  assert.match(app, /placeholder="Search & Title"/);
+  assert.doesNotMatch(app, /Search a title or IMDb \\/ TMDB \\/ MAL ID/);
+  assert.match(css, /\\.popular-pill[\\s\\S]*?background: #15803d/);
+});
