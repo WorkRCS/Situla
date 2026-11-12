@@ -241,7 +241,10 @@ test("catalog cards render differentiated automatic badges and search asks for a
   assert.match(css, /\.catalog-badge-hot/);
   assert.match(css, /\.catalog-badge-popular/);
   assert.match(css, /\.catalog-badge-featured/);
-  assert.ok(css.includes("rgba(8, 75, 43"));
-  assert.ok(css.includes("rgba(126, 25, 55"));
-  assert.ok(css.includes("rgba(108, 67, 14"));
+  assert.ok(css.includes("rgba(20, 83, 45"));
+  assert.ok(css.includes("rgba(22, 163, 74"));
+  assert.ok(css.includes("rgba(127, 29, 29"));
+  assert.ok(css.includes("rgba(220, 38, 38"));
+  assert.ok(css.includes("rgba(133, 77, 14"));
+  assert.ok(css.includes("rgba(234, 179, 8"));
 });
