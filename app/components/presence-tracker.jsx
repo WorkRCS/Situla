@@ -18,12 +18,24 @@ export default function PresenceTracker() {
     }
 
     let lastInteractionAt = Date.now();
+    let lastHeartbeatAt = 0;
+    let heartbeatInFlight = false;
     let suspendedRedirected = false;
-    const markInteraction = () => { lastInteractionAt = Date.now(); };
 
-    async function sendHeartbeat(stop = false) {
+    const markInteraction = () => {
+      lastInteractionAt = Date.now();
+      if (document.visibilityState === "visible") sendHeartbeat(false);
+    };
+
+    async function sendHeartbeat(stop = false, force = false) {
+      const now = Date.now();
+      if (!stop && !force && (heartbeatInFlight || now - lastHeartbeatAt < 15 * 1000)) return;
+      if (!stop) {
+        lastHeartbeatAt = now;
+        heartbeatInFlight = true;
+      }
       const active = !stop && document.visibilityState === "visible" &&
-        Date.now() - lastInteractionAt <= 2 * 60 * 1000;
+        now - lastInteractionAt <= 2 * 60 * 1000;
       try {
         const response = await fetch("/api/presence", {
           method: "POST",
@@ -42,12 +54,16 @@ export default function PresenceTracker() {
         } else if (response.ok && window.location.pathname === "/suspended") {
           window.location.replace("/");
         }
-      } catch {}
+      } catch {
+        // Presence is best-effort; the next interaction or periodic heartbeat retries.
+      } finally {
+        if (!stop) heartbeatInFlight = false;
+      }
     }
 
     const interactionEvents = ["pointerdown", "keydown", "scroll", "touchstart", "wheel"];
     interactionEvents.forEach((eventName) => window.addEventListener(eventName, markInteraction, { passive: true }));
-    const onVisibility = () => sendHeartbeat(false);
+    const onVisibility = () => sendHeartbeat(false, true);
     const onPageHide = () => {
       sendHeartbeat(true);
       try { sessionStorage.removeItem("situla:activity-id:v1"); } catch {}

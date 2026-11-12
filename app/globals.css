@@ -4155,3 +4155,8 @@ body:has(.login-page) .site-footer { display:none !important; }
   .admin-user-card-facts{grid-template-columns:minmax(0,1fr)}
   .admin-user-detail-summary{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Admin live-presence summary cards. */
+.admin-metric-grid-five{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1150px){.admin-metric-grid-five{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.admin-metric-grid-five{grid-template-columns:repeat(2,minmax(0,1fr))}}

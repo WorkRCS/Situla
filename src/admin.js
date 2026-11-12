@@ -8,6 +8,7 @@ import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
 import { addCalendarMonths } from './membership-policy.js';
 import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
+import { memberFilter, onlineActivityFilter } from './admin-queries.js';
 
 const router = new Hono();
 const PAGE_SIZE = 10;
@@ -21,29 +22,6 @@ function pageNumber(value) {
 
 function objectId(value) {
   return /^[a-f0-9]{24}$/i.test(String(value || ''));
-}
-
-function premiumFilter(now = new Date()) {
-  return {
-    role: 'user',
-    planId: 'premium',
-    'membership.status': 'active',
-    $or: [
-      { 'membership.expiresAt': null },
-      { 'membership.expiresAt': { $gt: now } }
-    ]
-  };
-}
-
-function freeFilter(now = new Date()) {
-  return {
-    role: 'user',
-    $or: [
-      { planId: { $ne: 'premium' } },
-      { 'membership.status': { $ne: 'active' } },
-      { 'membership.expiresAt': { $lte: now } }
-    ]
-  };
 }
 
 async function audit(actorUserId, action, targetType, targetId = '', metadata = {}) {
@@ -64,7 +42,6 @@ async function sessionSummaries(ownerType, ownerIds) {
       sessions: { $sum: 1 },
       activeSeconds: { $sum: '$activeSeconds' },
       lastSeenAt: { $max: '$lastSeenAt' },
-      isActive: { $max: '$isActive' },
       browser: { $last: '$browser' },
       operatingSystem: { $last: '$operatingSystem' },
       deviceType: { $last: '$deviceType' }
@@ -114,11 +91,11 @@ router.get('/dashboard', async (c) => {
   const now = new Date();
   const [
     guestTotal, userTotal, premiumTotal, paymentTotal, successfulSales,
-    failedSales, pendingSales, revenue
+    failedSales, pendingSales, revenue, onlineGuestOwners, onlineUserOwners
   ] = await Promise.all([
     GuestAccess.countDocuments({}),
-    User.countDocuments({ role: 'user' }),
-    User.countDocuments(premiumFilter(now)),
+    User.countDocuments(memberFilter('all', now)),
+    User.countDocuments(memberFilter('premium', now)),
     PaymentTransaction.countDocuments({}),
     PaymentTransaction.countDocuments({ status: 'succeeded' }),
     PaymentTransaction.countDocuments({ status: 'failed' }),
@@ -126,24 +103,23 @@ router.get('/dashboard', async (c) => {
     PaymentTransaction.aggregate([
       { $match: { status: 'succeeded' } },
       { $group: { _id: '$currency', total: { $sum: '$amountMinor' }, count: { $sum: 1 } } }
-    ])
-  ]);
-  const onlineCutoff = new Date(now.getTime() - 2 * 60 * 1000);
-  const [onlineGuests, onlineUsers] = await Promise.all([
-    ActivitySession.aggregate([
-      { $match: { ownerType: 'guest', isActive: true, lastSeenAt: { $gte: onlineCutoff }, expiresAt: { $gt: now } } },
-      { $group: { _id: '$ownerId' } },
-      { $count: 'total' }
     ]),
-    ActivitySession.aggregate([
-      { $match: { ownerType: 'user', isActive: true, lastSeenAt: { $gte: onlineCutoff }, expiresAt: { $gt: now } } },
-      { $group: { _id: '$ownerId' } },
-      { $count: 'total' }
-    ])
+    ActivitySession.distinct('ownerId', onlineActivityFilter('guest', now)),
+    ActivitySession.distinct('ownerId', onlineActivityFilter('user', now))
+  ]);
+  const [onlineGuests, onlineUsers] = await Promise.all([
+    onlineGuestOwners.length ? GuestAccess.countDocuments({ _id: { $in: onlineGuestOwners } }) : 0,
+    onlineUserOwners.length ? User.countDocuments({ _id: { $in: onlineUserOwners }, role: { $ne: 'admin' } }) : 0
   ]);
   return c.json({
-    guests: { total: guestTotal, online: onlineGuests[0]?.total || 0 },
-    users: { total: userTotal, premium: premiumTotal, free: Math.max(0, userTotal - premiumTotal), online: onlineUsers[0]?.total || 0 },
+    guests: { total: guestTotal, online: onlineGuests, offline: Math.max(0, guestTotal - onlineGuests) },
+    users: {
+      total: userTotal,
+      premium: premiumTotal,
+      free: Math.max(0, userTotal - premiumTotal),
+      online: onlineUsers,
+      offline: Math.max(0, userTotal - onlineUsers)
+    },
     sales: {
       total: paymentTotal, succeeded: successfulSales, failed: failedSales, pending: pendingSales,
       revenue: revenue.map((item) => ({ currency: item._id, amountMinor: item.total, transactions: item.count })),
@@ -161,7 +137,13 @@ router.get('/guests', async (c) => {
     GuestAccess.countDocuments({}),
     GuestAccess.find({}).sort({ lastSeenAt: -1, _id: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean()
   ]);
-  const summaries = await sessionSummaries('guest', guests.map((item) => item._id));
+  const now = new Date();
+  const guestIds = guests.map((item) => item._id);
+  const [summaries, onlineOwners] = await Promise.all([
+    sessionSummaries('guest', guestIds),
+    ActivitySession.distinct('ownerId', onlineActivityFilter('guest', now, guestIds))
+  ]);
+  const onlineIds = new Set(onlineOwners.map(String));
   return c.json({
     items: guests.map((guest) => {
       const activity = summaries.get(String(guest._id));
@@ -174,7 +156,7 @@ router.get('/guests', async (c) => {
         browser: activity?.browser || 'Unknown',
         operatingSystem: activity?.operatingSystem || 'Unknown',
         deviceType: activity?.deviceType || 'Unknown',
-        online: Boolean(activity?.isActive && activity?.lastSeenAt && Date.now() - new Date(activity.lastSeenAt).getTime() <= 120000)
+        online: onlineIds.has(String(guest._id))
       };
     }),
     page, limit: PAGE_SIZE, total, hasMore: page * PAGE_SIZE < total
@@ -226,24 +208,28 @@ router.get('/guests/:guestId', async (c) => {
 
 router.get('/users', async (c) => {
   const page = pageNumber(c.req.query('page'));
-  const segment = ['free', 'premium', 'all'].includes(c.req.query('segment')) ? c.req.query('segment') : 'free';
+  const segment = ['free', 'premium', 'all'].includes(c.req.query('segment')) ? c.req.query('segment') : 'all';
   const search = String(c.req.query('search') || '').trim().slice(0, 254);
   const now = new Date();
-  const filter = segment === 'premium' ? premiumFilter(now) :
-    segment === 'free' ? freeFilter(now) : { role: 'user' };
+  const filter = memberFilter(segment, now);
   if (search) filter.email = { $regex: escapeSearchPattern(search), $options: 'i' };
   const [total, users] = await Promise.all([
     User.countDocuments(filter),
     User.find(filter).select('email displayName role status suspendedUntil suspensionReason planId membership createdAt lastLoginAt')
       .sort({ createdAt: -1, _id: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean()
   ]);
-  const summaries = await sessionSummaries('user', users.map((user) => user._id));
+  const userIds = users.map((user) => user._id);
+  const [summaries, onlineOwners] = await Promise.all([
+    sessionSummaries('user', userIds),
+    ActivitySession.distinct('ownerId', onlineActivityFilter('user', now, userIds))
+  ]);
+  const onlineIds = new Set(onlineOwners.map(String));
   return c.json({
     items: users.map((user) => {
       const activity = summaries.get(String(user._id));
       return {
-        id: String(user._id), email: user.email, name: user.displayName, role: user.role,
-        status: user.status, suspendedUntil: user.suspendedUntil || null, suspensionReason: user.suspensionReason || '',
+        id: String(user._id), email: user.email, name: user.displayName, role: user.role || 'user',
+        status: user.status || 'active', suspendedUntil: user.suspendedUntil || null, suspensionReason: user.suspensionReason || '',
         planId: isPremiumActive(user, now) ? 'premium' : 'free',
         membership: {
           billingCycle: user.membership?.billingCycle || null,
@@ -254,7 +240,7 @@ router.get('/users', async (c) => {
         createdAt: user.createdAt, lastLoginAt: user.lastLoginAt || null,
         sessions: activity?.sessions || 0, activeSeconds: activity?.activeSeconds || 0,
         lastSeenAt: activity?.lastSeenAt || user.lastLoginAt || null,
-        online: Boolean(activity?.isActive && activity?.lastSeenAt && Date.now() - new Date(activity.lastSeenAt).getTime() <= 120000),
+        online: onlineIds.has(String(user._id)),
         browser: activity?.browser || 'Unknown', operatingSystem: activity?.operatingSystem || 'Unknown',
         deviceType: activity?.deviceType || 'Unknown'
       };

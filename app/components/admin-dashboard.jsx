@@ -133,6 +133,23 @@ export default function AdminDashboard() {
     return () => { alive = false; };
   }, [refreshStats]);
 
+  useEffect(() => {
+    if (!authorized) return undefined;
+    const refreshVisibleStats = () => {
+      if (document.visibilityState === "visible") {
+        refreshStats().catch((refreshError) => {
+          setError(refreshError.message || "Could not refresh dashboard activity.");
+        });
+      }
+    };
+    const interval = window.setInterval(refreshVisibleStats, 15 * 1000);
+    document.addEventListener("visibilitychange", refreshVisibleStats);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshVisibleStats);
+    };
+  }, [authorized, refreshStats]);
+
   const endpoint = modal === "guests" ? "/api/admin/guests" :
     modal === "users" ? "/api/admin/users?segment=" + encodeURIComponent(segment) + "&search=" + encodeURIComponent(search.trim()) :
     modal === "sales" ? "/api/admin/sales?status=" + encodeURIComponent(salesStatus) : "";
@@ -183,7 +200,7 @@ export default function AdminDashboard() {
     return () => observer.disconnect();
   }, [modal, hasMore, listLoading, page, loadPage, selectedGuest, selectedUser]);
 
-  const openModal = (name) => {
+  const openModal = (name, userSegment = "all") => {
     setModal(name);
     setRows([]);
     setSelectedGuest(null);
@@ -191,7 +208,7 @@ export default function AdminDashboard() {
     setSelectedUser(null);
     setUserDetail(null);
     setSearch("");
-    setSegment("free");
+    setSegment(name === "users" ? userSegment : "free");
     setSalesStatus("all");
     setNotice("");
   };
@@ -346,19 +363,22 @@ export default function AdminDashboard() {
 
         {activeTab === "guests" && <section className="admin-section-panel">
           <div className="admin-panel-heading"><div><span className="admin-kicker">ANONYMOUS VISITORS</span><h2>Guest analytics</h2><p>Unique guest identities are grouped by the server-side IP hash.</p></div><button onClick={() => openModal("guests")} className="admin-primary-button"><Eye size={16} /> View guest records</button></div>
-          <div className="admin-metric-grid">
+          <div className="admin-metric-grid admin-metric-grid-three">
             <MetricCard icon={Globe2} label="Total guests" value={stats?.guests?.total?.toLocaleString("en-IN")} hint="Unique guest IP identities" onClick={() => openModal("guests")} />
-            <MetricCard icon={Activity} label="Online now" value={stats?.guests?.online?.toLocaleString("en-IN")} hint="Activity seen in the last 2 minutes" tone="admin-metric-highlight" onClick={() => openModal("guests")} />
+            <MetricCard icon={Activity} label="Online now" value={stats?.guests?.online?.toLocaleString("en-IN")} hint="Visible and recently active · refreshes every 15 seconds" tone="admin-metric-highlight" onClick={() => openModal("guests")} />
+            <MetricCard icon={Clock3} label="Offline" value={stats?.guests?.offline?.toLocaleString("en-IN")} hint="Not active in the last 2 minutes" onClick={() => openModal("guests")} />
           </div>
           <div className="admin-info-note"><ShieldCheck size={18} /><p>Guest IPs collected from now on are encrypted at rest and shown only in admin detail views. Older guest records contain hashed IPs only and cannot be reversed.</p></div>
         </section>}
 
         {activeTab === "users" && <section className="admin-section-panel">
           <div className="admin-panel-heading"><div><span className="admin-kicker">ACCOUNT DIRECTORY</span><h2>Member management</h2><p>Search by email, inspect sessions and devices, assign or remove Premium, and suspend accounts.</p></div><button onClick={() => openModal("users")} className="admin-primary-button"><Users size={16} /> Manage users</button></div>
-          <div className="admin-metric-grid admin-metric-grid-three">
-            <MetricCard icon={Users} label="Total users" value={stats?.users?.total?.toLocaleString("en-IN")} hint="Registered member accounts" onClick={() => openModal("users")} />
-            <MetricCard icon={UserRound} label="Free users" value={stats?.users?.free?.toLocaleString("en-IN")} hint="No active Premium membership" onClick={() => { openModal("users"); setSegment("free"); }} />
-            <MetricCard icon={Crown} label="Premium users" value={stats?.users?.premium?.toLocaleString("en-IN")} hint="Active Premium memberships" tone="admin-metric-highlight" onClick={() => { openModal("users"); setSegment("premium"); }} />
+          <div className="admin-metric-grid admin-metric-grid-five">
+            <MetricCard icon={Users} label="Total users" value={stats?.users?.total?.toLocaleString("en-IN")} hint="All registered non-admin accounts" onClick={() => openModal("users", "all")} />
+            <MetricCard icon={UserRound} label="Free users" value={stats?.users?.free?.toLocaleString("en-IN")} hint="No active Premium membership" onClick={() => openModal("users", "free")} />
+            <MetricCard icon={Crown} label="Premium users" value={stats?.users?.premium?.toLocaleString("en-IN")} hint="Active Premium memberships" tone="admin-metric-highlight" onClick={() => openModal("users", "premium")} />
+            <MetricCard icon={Activity} label="Online now" value={stats?.users?.online?.toLocaleString("en-IN")} hint="Visible and recently active" tone="admin-metric-highlight" onClick={() => openModal("users", "all")} />
+            <MetricCard icon={Clock3} label="Offline" value={stats?.users?.offline?.toLocaleString("en-IN")} hint="Not active in the last 2 minutes" onClick={() => openModal("users", "all")} />
           </div>
           <div className="admin-info-note"><BadgeCheck size={18} /><p>Admin Premium grants use calendar-month expiry and attach to the member record. They are recorded separately from paid sales.</p></div>
         </section>}
@@ -448,7 +468,7 @@ export default function AdminDashboard() {
           </>}
         </div> : <>
           {modal === "users" && <div className="admin-modal-toolbar admin-user-toolbar">
-            <div className="admin-inner-tabs"><button className={segment === "free" ? "active" : ""} onClick={() => { setSegment("free"); setSearch(""); }}>Free users</button><button className={segment === "premium" ? "active" : ""} onClick={() => { setSegment("premium"); setSearch(""); }}>Premium users</button></div>
+            <div className="admin-inner-tabs"><button className={segment === "all" ? "active" : ""} onClick={() => { setSegment("all"); setSearch(""); }}>All users</button><button className={segment === "free" ? "active" : ""} onClick={() => { setSegment("free"); setSearch(""); }}>Free users</button><button className={segment === "premium" ? "active" : ""} onClick={() => { setSegment("premium"); setSearch(""); }}>Premium users</button></div>
             <span className="admin-result-count">{total.toLocaleString("en-IN")} users · 10 per page</span>
             <label className="admin-search"><Search size={16} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by email address" type="search" /></label>
           </div>}
