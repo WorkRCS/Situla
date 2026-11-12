@@ -27,7 +27,7 @@ test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/n
   assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
   assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
   assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
-  assert.doesNotMatch(script, /fetch\\s*\\(|axios|api\\.themoviedb|api\\.tvmaze|cinemeta/i);
+  assert.doesNotMatch(script, /fetch\\s*\\(|axios|api\.themoviedb|api\.tvmaze|cinemeta/i);
   assert.match(script, /Movie\\.insertMany/);
   assert.match(script, /TvSeries/);
   assert.match(script, /AnimeSeries/);
@@ -71,7 +71,7 @@ test("year helper reads canonical date fields without changing canonical IDs", (
   assert.equal(catalogReleaseYear({ releaseDate: "2020-03-01" }, "movie"), 2020);
   assert.equal(catalogReleaseYear({ firstAirDate: "2021-04-01" }, "tv"), 2021);
   assert.equal(catalogReleaseYear({ airedFrom: "2022-05-01" }, "anime"), 2022);
-  assert.ok(STATIC_MOVIES.every((item) => /^tt\\d{5,12}$/.test(item.imdbId)));
+  assert.ok(STATIC_MOVIES.every((item) => /^tt\d{5,12}$/.test(item.imdbId)));
   assert.ok(STATIC_TV_SERIES.every((item) => Number(item.tmdbId) > 0));
   assert.ok(TV_SERIES_CANDIDATES.every((item) => Number(item.tmdbId) > 0));
   assert.ok(NEW_ANIME_CATALOG.every((item) => Number(item.malId) > 0));
