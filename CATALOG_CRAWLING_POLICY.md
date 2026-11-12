@@ -286,14 +286,16 @@ The seed writes only locally committed records that pass these checks. It report
 The old provider-backed Movie and TV seeders are available only through explicit `legacy-online` package scripts. They are not called by any default seed command. The legacy Anime seed remains available as `seed:anime:legacy-curated` for its historical 80%-still pack, but it is also not the default path.
 
 
-## Catalogue badge and discovery signals
+## Automatic catalogue badge and discovery signals
 
-Situla uses one strongest badge per poster card, in this order: **Hot**, **Popular**, then **Featured**. The badge is not applied merely because a record exists in the database.
+Situla computes exactly one strongest badge per poster card, in this order: **Hot**, **Popular**, then **Featured**. All three labels are automatic for Movie, TV and Anime. Admins cannot set, unset or override a badge; no per-title manual flags are read.
 
-- **Popular** is derived from provider market data. Movie/TV records use vote average, vote count and TMDB popularity. Anime uses MAL score, scored-by count, rank and popularity. The rating is Bayesian-smoothed against a prior so that a tiny sample of extreme scores cannot outrank a well-supported title. Vote depth and provider reach are separate inputs; vote count alone is not enough.
-- **Hot** is derived from Situla playback starts. Each authorised player transition from paused/not-playing to actively playing contributes one unit to an exponentially decaying momentum score with a seven-day half-life; periodic heartbeats during the same active playback do not add more points. The score is decayed on read as well, so a title naturally loses the Hot badge when new viewing activity stops. This is a platform trend signal, not an external-provider rating.
-- **Featured** is an editorial selection represented by `isFeatured`. It is not a low-rating category and is not inferred from a weak score. Only a record explicitly curated as Featured receives it.
-- The old `isPopular` boolean is legacy-only and is ignored by badge calculation. The offline seed does not write that flag to every new record.
-- Badge calculation is performed from the already-loaded record; there is no per-card network call or metadata API lookup. Playback momentum is updated with one atomic MongoDB update-pipeline write after the first confirmed playing heartbeat of a playback session.
+- **Popular** is based on real public rating averages, vote/scored-by counts and provider reach. Movies and TV use IMDb's public `title.ratings.tsv.gz` dataset keyed by canonical IMDb ID; Anime uses MyAnimeList public data through Jikan keyed by MAL ID. A Bayesian prior reduces the effect of thin vote samples.
+- **Hot** is based on recent public vote growth (seven-day velocity), fresh provider-trend signals and confirmed Situla transitions into active playback. Playback momentum has a seven-day exponential half-life; periodic heartbeats in one session do not inflate the score.
+- **Featured** is an automatic quality spotlight: a well-rated title with a meaningful public vote sample which does not already qualify as Hot or Popular. It is not a manual editorial switch and is not assigned to low-rated/unknown titles.
+- A daily GitHub Actions job runs `npm run refresh:catalog-signals`. It streams the public IMDb ratings snapshot, refreshes MAL data at a rate-limited cadence, calculates vote growth against the previous database snapshot, and stores current ratings, counts, freshness and vote velocity in MongoDB.
+- Set the GitHub Actions repository secret `MONGODB_URI` once to authorize this scheduled database refresh. The repository variable `MONGODB_DB_NAME` is optional and defaults to `situla`. If the secret is absent the scheduled job logs a warning and skips the refresh rather than silently fabricating metrics.
+- Badge computation reads already-cached database fields and performs no per-card metadata network call. The UI renders only the badge returned by the shared catalogue scoring function.
+- Legacy `isPopular` and `isFeatured` values are ignored and removed from the active Mongoose schemas. Existing database documents may retain old fields until MongoDB is cleaned up, but those values do not affect rendering.
 
-The exact Netflix/Disney ranking models are proprietary and are not reproducible from public catalogue fields. Situla therefore uses an explainable multi-signal model based on the provider metrics and first-party playback activity that the application actually has. Do not describe it as their exact algorithm or fabricate critic, rating, viewing or trend data that Situla does not collect.
+The exact Netflix/Disney ranking models are proprietary. Situla uses its own explainable, multi-signal scoring based only on public provider data and first-party playback activity that it actually collects; it does not claim to duplicate those proprietary algorithms.
