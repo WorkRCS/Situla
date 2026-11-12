@@ -84,7 +84,8 @@ test("Anime additions are seeded only for new MAL IDs/titles and never update ol
   const script = await read("../scripts/seed-anime-additions.js");
   const staticSeed = await read("../scripts/seed-static-catalog.js");
   const pkg = JSON.parse(await read("../package.json"));
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-anime-additions.js");
+  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
+  assert.equal(pkg.scripts["seed:anime:legacy-curated"], "node scripts/seed-anime-additions.js");
   assert.equal(pkg.scripts["check:anime"], "node scripts/check-anime-additions.js");
   assert.equal(pkg.scripts["audit:anime"], "node scripts/audit-anime-artwork.js");
   assert.equal(pkg.scripts["audit:anime:apply"], "node scripts/audit-anime-artwork.js --apply");
