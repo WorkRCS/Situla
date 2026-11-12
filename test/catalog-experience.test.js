@@ -103,10 +103,13 @@ test("catalog loading is bounded and off-screen image/grid work is deferred", as
   assert.match(app, /\}, 10000\)/);
 });
 
-test("seed:catalog runs all three catalog seed commands", async () => {
+test("seed:catalog runs one offline 2020–2026 catalogue seed command", async () => {
   const pkg = JSON.parse(await read("../package.json"));
-  assert.equal(pkg.scripts["seed:catalog"],
-    "npm run seed:movies && npm run seed:tv && npm run seed:anime");
+  assert.equal(pkg.scripts["seed:catalog"], "node scripts/seed-catalog.js");
+  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
+  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
+  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
+  assert.equal(pkg.scripts["seed:catalog:legacy-online"].includes("legacy-online"), true);
 });
 
 test("search is rendered above the app through a body portal and uses responsive header controls", async () => {
