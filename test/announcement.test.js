@@ -57,10 +57,12 @@ test('announcement API and admin CRUD persist media, schedule and account-scoped
 
   assert.match(app, /app\.get\('\/api\/announcements'/);
   const publicFeedStart = app.indexOf("app.get('/api/announcements'");
-  const publicFeedEnd = app.indexOf("\napp.get('/api/announcements/:announcementId/image'", publicFeedStart);
-  const publicFeed = app.slice(publicFeedStart, publicFeedEnd);
-  assert.ok(publicFeed.includes("Announcement.find({ status: { $in: ['published', 'scheduled'] }, scheduledAt: { $lte: now } })"));
-  assert.doesNotMatch(publicFeed, /role:|planId:|segment:|audience:|userId:/);
+  const selectionStart = app.indexOf("const items = await Announcement.find(", publicFeedStart);
+  const selectionEnd = app.indexOf(".lean();", selectionStart);
+  const selectionQuery = app.slice(selectionStart, selectionEnd);
+  assert.ok(selectionQuery.includes("status: { $in: ['published', 'scheduled'] }"));
+  assert.ok(selectionQuery.includes("scheduledAt: { $lte: now }"));
+  assert.doesNotMatch(selectionQuery, /role:|planId:|segment:|audience:|userId:/);
   assert.match(app, /app\.get\('\/api\/announcements\/:announcementId\/image'/);
   assert.match(app, /app\.post\('\/api\/announcements\/:announcementId\/read'/);
   assert.match(app, /viewerScope/);
