@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { optimizeTmdbImageUrl } from "../src/media-image.js";
+import { optimizeTmdbImageUrl, normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from "../src/media-image.js";
 
 test("TMDB posters are requested at the rendered card size instead of original resolution", () => {
   assert.equal(
@@ -22,12 +22,6 @@ test("image URLs from other hosts and already-small images are never rewritten o
   assert.equal(optimizeTmdbImageUrl("https://image.tmdb.org/t/p/w500/x.jpg", "original"), "https://image.tmdb.org/t/p/w500/x.jpg");
 });
 
-
-import {
-  normalizeSharePosterUrl,
-  detectSharePosterMimeType,
-  SHARE_POSTER_MAX_BYTES
-} from "../src/media-image.js";
 
 test("share poster proxy only accepts the catalogue's approved HTTPS image hosts", () => {
   assert.equal(normalizeSharePosterUrl("https://image.tmdb.org/t/p/w500/poster.jpg"), "https://image.tmdb.org/t/p/w500/poster.jpg");
