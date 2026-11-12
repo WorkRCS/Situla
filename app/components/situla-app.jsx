@@ -668,7 +668,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     if (!searchOpen) return;
     setAccountOpen(false);
-    setNotificationsOpen(false);
   }, [searchOpen]);
 
   useEffect(() => {

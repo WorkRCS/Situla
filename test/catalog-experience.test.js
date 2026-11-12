@@ -4,6 +4,12 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
+test("opening the search modal closes the account menu without calling an undeclared notifications setter", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  assert.match(app, /if \(!searchOpen\) return;\s*setAccountOpen\(false\);/);
+  assert.doesNotMatch(app, /setNotificationsOpen/);
+});
+
 test("TV and Anime initial catalog requests rotate to a random first batch", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const api = await read("../src/app.js");
