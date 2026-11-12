@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain
+  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole
 } from "../src/auth.js";
 
 test("Email and password validation normalizes account identifiers", () => {
@@ -62,4 +62,12 @@ test("Device retention deterministically keeps the oldest un-slotted legacy devi
     { _id: "older", slot: null, createdAt: new Date("2026-11-01T00:00:00.000Z") }
   ];
   assert.deepEqual(selectDevicesToRetain(devices, 1).map((device) => device._id), ["older"]);
+});
+
+
+test("Administrator authority is determined only by the persisted User role", () => {
+  assert.equal(hasAdminRole({ role: "admin", email: "admin@example.com" }), true);
+  assert.equal(hasAdminRole({ role: "user", email: "admin@example.com" }), false);
+  assert.equal(hasAdminRole({ role: "user", email: "owner@example.com" }), false);
+  assert.equal(hasAdminRole(null), false);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDto } from '../src/app.js';
+import app, { movieDto, movieDetailsDto, tvSeriesDto, tvSeasonDto, animeSeriesDto, pageOptions } from '../src/app.js';
 import { Movie, TvSeries, AnimeSeries } from '../src/models.js';
 import { hindiMoviePlaybackUrl, normalizeTvPlayerRoute, tvSeriesPlaybackUrl, moviePlaybackUrl } from '../src/player-urls.js';
 
@@ -351,4 +351,15 @@ test('Health check rejects an AUTH_SECRET that is present but too short', async 
   const body = await response.json();
   assert.equal(body.status, 'needs_configuration');
   assert.match(body.invalid[0], /AUTH_SECRET/);
+});
+
+
+test('All catalogue feed requests are capped at ten records, even when a client asks for forty', () => {
+  const makeContext = (query) => {
+    const params = new URLSearchParams(query);
+    return { req: { query: (key) => params.get(key) } };
+  };
+  assert.deepEqual(pageOptions(makeContext('page=2&limit=40')), { page: 2, limit: 10 });
+  assert.deepEqual(pageOptions(makeContext('page=1')), { page: 1, limit: 10 });
+  assert.deepEqual(pageOptions(makeContext('page=3&limit=5')), { page: 3, limit: 5 });
 });
