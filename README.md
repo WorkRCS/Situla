@@ -15,9 +15,10 @@ Playback configuration is managed internally and is not identified in the public
 1. Install Node.js 22 or newer.
 2. Copy `.env.example` to `.env`.
 3. Set `MONGODB_URI`, `MONGODB_DB_NAME`, and a strong `AUTH_SECRET` of at least 32 bytes. Generate one with the Node.js `crypto.randomBytes(48).toString('base64url')` command shown in `.env.example`; keep the same secret across restarts/deployments. Changing it invalidates keyed tokens and prevents old encrypted IP records from being read.
-4. Run `npm install`.
-5. Run `npm run dev` to start only the local Next.js website at `http://localhost:3000`. It does not run a seed, crawler or migration.
-6. Open `http://localhost:3000`. The health endpoint is `/api/health`.
+4. Optional: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from your Upstash Redis REST credentials to enable the shared server-side catalog cache. Redis is optional; without it, Situla reads directly from MongoDB.
+5. Run `npm install`.
+6. Run `npm run dev` to start only the local Next.js website at `http://localhost:3000`. It does not run a seed, crawler or migration.
+7. Open `http://localhost:3000`. The health endpoint is `/api/health`.
 
 ## Static catalogue seed
 

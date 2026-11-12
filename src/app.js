@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { connectDatabase } from './db.js';
+import { createCatalogResponseCache } from './redis-cache.js';
 import mongoose from 'mongoose';
 import { getCookie, setCookie } from 'hono/cookie';
 import {
@@ -39,9 +40,16 @@ app.use('*', async (c, next) => {
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
   c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
 });
+const catalogResponseCache = createCatalogResponseCache({
+  getVariant: async (c, policy) => {
+    if (!policy.premiumAware) return 'public';
+    return await getPremiumFeedWindow(c) ? 'premium' : 'standard';
+  }
+});
+
 app.use('/api/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
-  await next();
+  await catalogResponseCache(c, next);
 });
 
 app.route('/api/admin', adminRouter);
@@ -56,9 +64,14 @@ export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
 }
 
 async function getPremiumFeedWindow(c) {
+  if (c.get('premiumFeedWindowResolved')) return c.get('premiumFeedWindow');
   const authenticated = await getAuthenticatedSession(c);
-  if (!authenticated || getWatchPolicy(authenticated.user).planId !== 'premium') return null;
-  return getRollingTenYearWindow();
+  const window = authenticated && getWatchPolicy(authenticated.user).planId === 'premium'
+    ? getRollingTenYearWindow()
+    : null;
+  c.set('premiumFeedWindowResolved', true);
+  c.set('premiumFeedWindow', window);
+  return window;
 }
 
 async function findDatePrioritizedFeedPage({ Model, filter, countFilter = filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
