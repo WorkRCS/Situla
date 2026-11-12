@@ -117,8 +117,8 @@ async function refreshImdbVotes(now) {
 }
 
 export function normalizeMarketTitle(value) {
-  return String(value || "").normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
-    .toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+  return String(value || "").normalize("NFKD")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 export function chooseTvmazeMatch(candidates, record) {
@@ -158,8 +158,10 @@ async function fetchTvmazeResource(url, attempt = 0) {
 }
 
 async function fetchTvmazeShow(record) {
+  const referenceUrl = String(record.referenceUrl || "");
+  const referenceTail = referenceUrl.split("/shows/")[1] || "";
   const referenceId = Number(record.sourceId) ||
-    Number(String(record.referenceUrl || "").match(/tvmaze\\.com\\/shows\\/(\\d+)/i)?.[1]) || 0;
+    Number(referenceTail.split("/")[0].split("?")[0].split("#")[0]) || 0;
   if (referenceId > 0) {
     const direct = await fetchTvmazeResource(TVMAZE_API + "/shows/" + referenceId);
     return chooseTvmazeMatch(direct ? [direct] : [], record);
