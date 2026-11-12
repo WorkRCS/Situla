@@ -33,7 +33,7 @@ test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/n
   assert.match(script, /\.insertMany\(pending/);
   assert.match(script, /TvSeries/);
   assert.match(script, /AnimeSeries/);
-  assert.match(script, /isPopular/);
+  assert.doesNotMatch(script, /isPopular/);
 });
 
 test("canonical catalogue keys and complete-content validators remain separate", () => {
