@@ -76,6 +76,14 @@ export function LoginPage() {
   const preloadedPosterUrls = useRef(new Set());
 
   useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("authError") === "google") {
+      setAuthError("Google Sign-in could not be completed. Check the OAuth client ID, client secret and exact callback URL, then try again.");
+      window.history.replaceState(window.history.state, "", "/login");
+    }
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
     const cacheKey = "situla:login-posters:v1";
     const catalog = { movies: [], tv: [], anime: [] };
@@ -443,7 +451,7 @@ export function ProfilePage() {
             <div className="profile-avatar-large">{account.initials}<span><Check size={13} /></span></div>
             <div className="profile-identity-copy">
               <span className="profile-overline">SITULA MEMBER</span>
-              <h2>{account.name} {membershipActive && account.emailVerified && <BadgeCheck size={21} aria-label="Verified Premium member" />}</h2>
+              <h2>{account.name} {membershipActive && <BadgeCheck size={21} aria-label="Verified Premium member" />}</h2>
               <p>{account.email}</p>
               <div className="profile-identity-badges">
                 <span className="profile-verified-badge">{membershipActive ? <><BadgeCheck size={13} /> Premium Verified</> : "Free member"}</span>
@@ -528,7 +536,7 @@ export function ProfilePage() {
               <div className="profile-access-row"><span>Account status</span><strong className="is-active">Active</strong></div>
               <div className="profile-access-row"><span>Current plan</span><strong>{account.planId === "premium" ? "Premium" : "Free"}</strong></div>
               <div className="profile-access-row"><span>Registered devices</span><strong>{deviceSummary.active} / {deviceSummary.limit} used</strong></div>
-              <div className="profile-access-row"><span>Watch access</span><strong>{access?.cooldownRemainingSeconds > 0 ? "Cooldown · " + formatAccessDuration(access.cooldownRemainingSeconds) : access?.remainingSeconds === null ? "Unlimited" : formatAccessDuration(access?.remainingSeconds) + " left"}</strong></div>
+              <div className="profile-access-row"><span>Watch access</span><strong>{!access ? "Checking" : access.cooldownRemainingSeconds > 0 ? "Cooldown · " + formatAccessDuration(access.cooldownRemainingSeconds) : access.remainingSeconds === null ? "Unlimited" : formatAccessDuration(access.remainingSeconds) + " left"}</strong></div>
               <div className="profile-access-row"><span>Smart TV browser</span><strong>Web access</strong></div>
               <div className="profile-device-list" aria-label="Registered devices">
                 {devices.map((device) => (

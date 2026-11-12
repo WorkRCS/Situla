@@ -368,6 +368,7 @@ app.get('/api/auth/google', async (c) => {
     });
     return c.redirect(client.generateAuthUrl(options), 302);
   } catch (error) {
+    if (error?.code === 'GOOGLE_NOT_CONFIGURED') return c.redirect('/login?authError=google', 302);
     return apiError(c, error, 'Google Sign-in is not available yet. Check the server configuration.');
   }
 });

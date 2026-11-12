@@ -324,3 +324,23 @@ test('TVmaze importer matches exact candidate titles and maps verified season/ep
   assert.equal(mapTvmazeShow({ ...show, summary: '' }, candidate), null);
   assert.equal(mapTvmazeShow({ ...show, _embedded: { episodes: [] } }, candidate), null);
 });
+
+
+test('Health check rejects an AUTH_SECRET that is present but too short', async (t) => {
+  const names = ['MONGODB_URI', 'MONGODB_DB_NAME', 'AUTH_SECRET'];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  t.after(() => {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+  process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/situla-test';
+  process.env.MONGODB_DB_NAME = 'situla-test';
+  process.env.AUTH_SECRET = 'too-short';
+  const response = await app.request('/api/health');
+  assert.equal(response.status, 503);
+  const body = await response.json();
+  assert.equal(body.status, 'needs_configuration');
+  assert.match(body.invalid[0], /AUTH_SECRET/);
+});

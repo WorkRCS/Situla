@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail
+  hashToken, safeEqual, normalizeEmail, authSecret
 } from "../src/auth.js";
 
 test("Email and password validation normalizes account identifiers", () => {
@@ -29,4 +29,18 @@ test("Opaque session token hashes are stable and comparisons reject mismatches",
   assert.equal(safeEqual("same", "same"), true);
   assert.equal(safeEqual("same", "other"), false);
   assert.equal(safeEqual("", ""), false);
+});
+
+
+test("AUTH_SECRET must contain at least 32 bytes before account operations are available", () => {
+  const previous = process.env.AUTH_SECRET;
+  try {
+    process.env.AUTH_SECRET = "short";
+    assert.throws(() => authSecret(), /at least 32 bytes/);
+    process.env.AUTH_SECRET = "x".repeat(32);
+    assert.equal(authSecret().length, 32);
+  } finally {
+    if (previous === undefined) delete process.env.AUTH_SECRET;
+    else process.env.AUTH_SECRET = previous;
+  }
 });

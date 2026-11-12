@@ -188,10 +188,33 @@ export async function registerDevice(c, user) {
     throw error;
   }
   const occupiedSlots = new Set(activeDevices.map((device) => device.slot).filter(Number.isInteger));
-  const legacyActiveCount = activeDevices.filter((device) => !Number.isInteger(device.slot)).length;
-  const firstAvailableSlot = Math.max(0, activeDevices.length - legacyActiveCount);
+  for (const legacyDevice of activeDevices.filter((device) => !Number.isInteger(device.slot))) {
+    for (let slot = 0; slot < deviceLimit; slot += 1) {
+      if (occupiedSlots.has(slot)) continue;
+      try {
+        const migrated = await Device.findOneAndUpdate(
+          { _id: legacyDevice._id, slot: null, revokedAt: null },
+          { $set: { slot } },
+          { new: true }
+        );
+        if (migrated) {
+          occupiedSlots.add(slot);
+          break;
+        }
+        const current = await Device.findById(legacyDevice._id).select('slot').lean();
+        if (Number.isInteger(current?.slot)) {
+          occupiedSlots.add(current.slot);
+          break;
+        }
+      } catch (error) {
+        if (error?.code !== 11000) throw error;
+      }
+    }
+  }
+  const refreshedDevices = await Device.find({ userId: user._id, revokedAt: null }).select('slot').lean();
+  const currentSlots = new Set(refreshedDevices.map((device) => device.slot).filter(Number.isInteger));
   const candidateSlots = Array.from({ length: deviceLimit }, (_, slot) => slot)
-    .filter((slot) => !occupiedSlots.has(slot) && slot >= firstAvailableSlot);
+    .filter((slot) => !currentSlots.has(slot));
   const token = randomToken();
   let device = null;
   for (const slot of candidateSlots) {
