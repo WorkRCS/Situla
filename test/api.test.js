@@ -54,6 +54,22 @@ test('Presence endpoint validates its payload before database access', async () 
   assert.equal((await response.json()).error, 'Invalid activity heartbeat.');
 });
 
+test('Playback start and device revocation reject malformed identifiers before database access', async () => {
+  const headers = { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' };
+  const invalidMovie = await app.request('/api/playback/start', {
+    method: 'POST', headers, body: JSON.stringify({ mediaType: 'movie', mediaId: 'not-an-imdb-id' })
+  });
+  assert.equal(invalidMovie.status, 400);
+  const invalidTv = await app.request('/api/playback/start', {
+    method: 'POST', headers, body: JSON.stringify({ mediaType: 'tv', mediaId: 'tt123', season: 1, episode: 1 })
+  });
+  assert.equal(invalidTv.status, 400);
+  const invalidDevice = await app.request('/api/auth/devices/not-an-object-id', {
+    method: 'DELETE', headers, body: '{}'
+  });
+  assert.equal(invalidDevice.status, 400);
+});
+
 test('Playback heartbeats validate session identifiers and playing state before database access', async () => {
   const response = await app.request('/api/playback/heartbeat', {
     method: 'POST',

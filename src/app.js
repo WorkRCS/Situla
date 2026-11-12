@@ -642,12 +642,12 @@ app.get('/api/auth/devices', async (c) => {
 app.delete('/api/auth/devices/:deviceId', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
+  const deviceId = c.req.param('deviceId');
+  if (!/^[a-f0-9]{24}$/i.test(deviceId)) return c.json({ error: 'Invalid device ID.' }, 400);
   try {
     await connectDatabase();
     const authenticated = await getAuthenticatedSession(c);
     if (!authenticated) return c.json({ error: 'Sign-in required.' }, 401);
-    const deviceId = c.req.param('deviceId');
-    if (!/^[a-f0-9]{24}$/i.test(deviceId)) return c.json({ error: 'Invalid device ID.' }, 400);
     const device = await Device.findOne({ _id: deviceId, userId: authenticated.user._id, revokedAt: null });
     if (!device) return c.json({ error: 'Device not found.' }, 404);
     const now = new Date();
@@ -676,16 +676,15 @@ app.post('/api/playback/start', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
   try {
-    await connectDatabase();
     const body = await c.req.json().catch(() => ({}));
     const mediaType = String(body.mediaType || '').toLowerCase();
     const mediaId = String(body.mediaId || '').trim();
     const media = { mediaType, mediaId };
+    let validateCatalogRecord;
 
     if (mediaType === 'movie') {
       if (!/^tt\d{5,12}$/i.test(mediaId)) return c.json({ error: 'Invalid movie ID.' }, 400);
-      const exists = await Movie.exists({ imdbId: mediaId.toLowerCase(), adult: { $ne: true } });
-      if (!exists) return c.json({ error: 'Movie is not available in the Situla catalog.' }, 404);
+      validateCatalogRecord = async () => Boolean(await Movie.exists({ imdbId: mediaId.toLowerCase(), adult: { $ne: true } }));
     } else if (mediaType === 'tv') {
       const tmdbId = Number(mediaId);
       const season = Number(body.season);
@@ -694,12 +693,13 @@ app.post('/api/playback/start', async (c) => {
           !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
         return c.json({ error: 'Invalid TV episode route.' }, 400);
       }
-      const series = await TvSeries.findOne({ tmdbId, adult: { $ne: true } }).select('seasons').lean();
-      const targetSeason = series?.seasons?.find((item) => Number(item.seasonNumber) === season);
-      const targetEpisode = targetSeason?.episodes?.find((item) => Number(item.episodeNumber) === episode);
-      if (!targetEpisode) return c.json({ error: 'TV episode is not available in the Situla catalog.' }, 404);
       media.season = season;
       media.episode = episode;
+      validateCatalogRecord = async () => {
+        const series = await TvSeries.findOne({ tmdbId, adult: { $ne: true } }).select('seasons').lean();
+        const targetSeason = series?.seasons?.find((item) => Number(item.seasonNumber) === season);
+        return Boolean(targetSeason?.episodes?.some((item) => Number(item.episodeNumber) === episode));
+      };
     } else if (mediaType === 'anime') {
       const malId = Number(mediaId);
       const episode = Number(body.episode);
@@ -708,14 +708,20 @@ app.post('/api/playback/start', async (c) => {
           !Number.isSafeInteger(episode) || episode < 1 || !['sub', 'dub'].includes(audio)) {
         return c.json({ error: 'Invalid Anime episode route.' }, 400);
       }
-      const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
-      if (!anime || (Number(anime.episodes) > 0 && episode > Number(anime.episodes))) {
-        return c.json({ error: 'Anime episode is not available in the Situla catalog.' }, 404);
-      }
       media.episode = episode;
       media.audio = audio;
+      validateCatalogRecord = async () => {
+        const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
+        return Boolean(anime && !(Number(anime.episodes) > 0 && episode > Number(anime.episodes)));
+      };
     } else {
       return c.json({ error: 'Unsupported playback type.' }, 400);
+    }
+
+    await connectDatabase();
+    if (!await validateCatalogRecord()) {
+      const label = mediaType === 'movie' ? 'Movie' : mediaType === 'tv' ? 'TV episode' : 'Anime episode';
+      return c.json({ error: label + ' is not available in the Situla catalog.' }, 404);
     }
 
     const principal = await resolvePlaybackPrincipal(c);
