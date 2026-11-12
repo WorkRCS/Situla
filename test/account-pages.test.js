@@ -49,7 +49,7 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.indexOf(">OR</div>") < login.indexOf("Continue with Google"));
   assert.doesNotMatch(login, /MEMBER ACCESS|Welcome back|Sign in to continue|Forgot password|Explore membership|account-demo-disclaimer|UserRound/);
   assert.ok(!login.includes("no password is verified"));
-  assert.ok(pages.includes("Purchased · Enjoy Premium"));
+  assert.ok(pages.includes("Premium · Active"));
   assert.ok(pages.includes("Renew plan"));
   assert.ok(pages.includes("Premium Verified"));
   assert.ok(pages.includes("PREMIUM MEMBER"));
