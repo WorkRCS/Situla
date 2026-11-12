@@ -608,7 +608,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchType, setSearchType] = useState("all");
   const [searchYear, setSearchYear] = useState("all");
-  const [searchTag, setSearchTag] = useState("all");
   const [searchError, setSearchError] = useState("");
   const [searchHasMore, setSearchHasMore] = useState(false);
   const [searchPage, setSearchPage] = useState(1);
@@ -748,7 +747,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       setSearchPage(1);
       return;
     }
-    const hasFilters = searchType !== "all" || searchYear !== "all" || searchTag !== "all";
+    const hasFilters = searchType !== "all" || searchYear !== "all";
     if (!value && !hasFilters) {
       setSuggestions([]);
       setSuggestionsLoading(false);
@@ -765,7 +764,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const params = new URLSearchParams({ page: "1", limit: "20", type: searchType });
       if (value.length >= 3) params.set("q", value);
       if (searchYear !== "all") params.set("year", searchYear);
-      if (searchTag !== "all") params.set("tag", searchTag);
       try {
         const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
         const response = await fetch("/api/search?" + params.toString(), { cache: "no-store", signal });
@@ -789,7 +787,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [searchInput, searchOpen, searchType, searchYear, searchTag]);
+  }, [searchInput, searchOpen, searchType, searchYear]);
 
   useEffect(() => {
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
@@ -1096,7 +1094,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const params = new URLSearchParams({ page: String(nextPage), limit: "20", type: searchType });
     if (value.length >= 3) params.set("q", value);
     if (searchYear !== "all") params.set("year", searchYear);
-    if (searchTag !== "all") params.set("tag", searchTag);
     setSearchLoadingMore(true);
     setSearchError("");
     try {
@@ -1533,32 +1530,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </label>
             </div>
 
-            <div className="search-tag-filter-row">
-              <span className="search-tag-filter-label">Filter by tag</span>
-              <div className="search-tag-filters" role="group" aria-label="Filter by catalogue tag">
-                {[
-                  { value: "all", label: "All tags" },
-                  { value: "hot", label: "Hot" },
-                  { value: "popular", label: "Popular" },
-                  { value: "featured", label: "Featured" }
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    className={"search-tag-button search-tag-" + filter.value + (searchTag === filter.value ? " active" : "")}
-                    aria-pressed={searchTag === filter.value}
-                    onClick={() => setSearchTag(filter.value)}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {searchInput.trim().length > 0 && searchInput.trim().length < 3 ? (
               <div className="suggestion-empty">Enter at least 3 characters to start smart search.</div>
-            ) : !searchInput.trim() && searchType === "all" && searchYear === "all" && searchTag === "all" ? (
-              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog, release year or tag to browse matching titles.</div>
+            ) : !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
+              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog or release year to browse the newest titles.</div>
             ) : suggestionsLoading ? (
               <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
             ) : searchError && !suggestions.length ? (
@@ -1568,7 +1543,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <div className="search-results-caption">
                   {suggestions.length} results shown · {searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
                   {searchYear !== "all" ? " · " + searchYear : ""}
-                  {searchTag !== "all" ? " · " + searchTag.charAt(0).toUpperCase() + searchTag.slice(1) + " titles" : ""}
                   {searchInput.trim().length >= 3 ? " · Smart relevance + newest first" : " · Newest first"}
                 </div>
                 <div className="search-results-list" role="listbox" aria-label="Search results">
