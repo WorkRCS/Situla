@@ -6,7 +6,7 @@ import { createCatalogResponseCache } from './redis-cache.js';
 import mongoose from 'mongoose';
 import { getCookie, setCookie } from 'hono/cookie';
 import {
-  User, AuthSession, Device, ActivitySession, Movie, TvSeries, AnimeSeries
+  User, AuthSession, Device, ActivitySession, Movie, TvSeries, AnimeSeries, Announcement, AnnouncementRead
 } from './models.js';
 import {
   SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
@@ -38,7 +38,7 @@ app.use('*', async (c, next) => {
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
 });
 const catalogResponseCache = createCatalogResponseCache({
   getVariant: async (c, policy) => {
@@ -1170,6 +1170,98 @@ app.get('/api/anime/:malId', async (c) => {
   } catch (error) {
     console.error('Anime detail read failed:', error.message);
     return c.json({ error: 'Anime details are temporarily unavailable.' }, 503);
+  }
+});
+
+
+app.get('/api/announcements', async (c) => {
+  try {
+    await connectDatabase();
+    const now = new Date();
+    const items = await Announcement.find({ status: { $in: ['published', 'scheduled'] }, scheduledAt: { $lte: now } })
+      .select('title description mediaUrl imageContentType scheduledAt createdAt')
+      .sort({ scheduledAt: -1, _id: -1 })
+      .limit(20)
+      .lean();
+    let readIds = new Set();
+    let viewerScope = 'guest';
+    try {
+      const authenticated = await getAuthenticatedSession(c);
+      if (authenticated) {
+        viewerScope = 'user:' + keyedHash('announcement-read-scope:' + String(authenticated.user._id));
+        if (items.length) {
+          const reads = await AnnouncementRead.find({
+            userId: authenticated.user._id,
+            announcementId: { $in: items.map((item) => item._id) }
+          }).select('announcementId').lean();
+          readIds = new Set(reads.map((item) => String(item.announcementId)));
+        }
+      }
+    } catch {}
+    return c.json({
+      viewerScope,
+      items: items.map((item) => ({
+        id: String(item._id),
+        title: item.title,
+        description: item.description,
+        mediaUrl: item.mediaUrl || '',
+        imageUrl: item.imageContentType ? '/api/announcements/' + String(item._id) + '/image' : '',
+        scheduledAt: item.scheduledAt,
+        createdAt: item.createdAt,
+        isRead: readIds.has(String(item._id))
+      }))
+    });
+  } catch (error) {
+    console.error('Announcement feed failed:', error?.message || 'Unknown error');
+    return c.json({ error: 'Announcements are temporarily unavailable.', items: [] }, 503);
+  }
+});
+
+app.get('/api/announcements/:announcementId/image', async (c) => {
+  const id = String(c.req.param('announcementId') || '');
+  if (!/^[a-f0-9]{24}$/i.test(id)) return c.json({ error: 'Invalid announcement ID.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await Announcement.findOne({
+      _id: id, status: { $in: ['published', 'scheduled'] }, scheduledAt: { $lte: new Date() }
+    }).select('+imageData imageContentType').lean();
+    if (!item?.imageData || !['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(item.imageContentType)) {
+      return c.json({ error: 'Announcement image not found.' }, 404);
+    }
+    return c.body(item.imageData, 200, {
+      'Content-Type': item.imageContentType,
+      'Content-Length': String(item.imageData.length),
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
+      'X-Content-Type-Options': 'nosniff'
+    });
+  } catch (error) {
+    console.error('Announcement image read failed:', error?.message || 'Unknown error');
+    return c.json({ error: 'Announcement image is temporarily unavailable.' }, 503);
+  }
+});
+
+app.post('/api/announcements/:announcementId/read', async (c) => {
+  const originFailure = requireSameOrigin(c);
+  if (originFailure) return originFailure;
+  const id = String(c.req.param('announcementId') || '');
+  if (!/^[a-f0-9]{24}$/i.test(id)) return c.json({ error: 'Invalid announcement ID.' }, 400);
+  try {
+    await connectDatabase();
+    const authenticated = await getAuthenticatedSession(c);
+    if (!authenticated) return c.json({ error: 'Sign-in required to sync read status.', code: 'UNAUTHENTICATED' }, 401);
+    const announcement = await Announcement.findOne({
+      _id: id, status: { $in: ['published', 'scheduled'] }, scheduledAt: { $lte: new Date() }
+    }).select('_id').lean();
+    if (!announcement) return c.json({ error: 'Announcement not found.' }, 404);
+    await AnnouncementRead.updateOne(
+      { userId: authenticated.user._id, announcementId: announcement._id },
+      { $setOnInsert: { readAt: new Date() } },
+      { upsert: true }
+    );
+    return c.json({ read: true, announcementId: id });
+  } catch (error) {
+    console.error('Announcement read receipt failed:', error?.message || 'Unknown error');
+    return c.json({ error: 'Could not mark this announcement as read.' }, 503);
   }
 });
 

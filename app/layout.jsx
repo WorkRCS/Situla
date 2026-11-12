@@ -4,6 +4,7 @@ import "./globals.css";
 import Script from "next/script";
 import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
+import AnnouncementCenter from "./components/announcement-center.jsx";
 
 const extensionAttributeCleanup = `(function () {
   var isInjectedAttribute = function (name) {
@@ -50,6 +51,7 @@ const extensionAttributeCleanup = `(function () {
 })();`;
 
 export const metadata = {
+  metadataBase: new URL("https://situla.vercel.app"),
   title: {
     default: "Situla — Discover & Watch",
     template: "%s | Situla"
@@ -80,6 +82,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning>
+        <AnnouncementCenter />
         {children}
         <PresenceTracker />
         <SiteFooter />

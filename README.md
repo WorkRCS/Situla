@@ -20,6 +20,12 @@ Playback configuration is managed internally and is not identified in the public
 6. Run `npm run dev` to start only the local Next.js website at `http://localhost:3000`. It does not run a seed, crawler or migration.
 7. Open `http://localhost:3000`. The health endpoint is `/api/health`.
 
+## Native media sharing and announcements
+
+Movie and TV poster cards offer the device-native share sheet. The shared payload contains the title, canonical Situla detail/watch URL, and the poster image file when the browser permits file sharing; otherwise the poster URL is included with the title and link. Movie Watch and TV detail pages provide title, description and poster Open Graph metadata for link previews.
+
+Administrators can create, edit, schedule, draft and delete site-wide announcements from the Admin dashboard. Visitors see published announcements only after their scheduled timestamp. Read receipts are stored per signed-in account, while guests use browser-local read state. An announcement can include either a secure HTTPS media URL (direct images render as images; supported YouTube/Vimeo URLs render in an iframe) or an uploaded JPG, PNG, WebP, GIF or AVIF image up to 4 MB. Uploaded images are stored with the announcement in MongoDB, so no additional storage token is required. Schedule times are saved as ISO timestamps and displayed in each visitor's local time zone.
+
 ## Static catalogue seed
 
 Movies and TV retain separate identifiers. Anime has its own **new-only MAL seed**, and TV has a verified **200-new-series seed**:

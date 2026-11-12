@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog } from './models.js';
+import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
@@ -54,7 +54,9 @@ export async function connectDatabase() {
       ActivitySession.createIndexes(),
       MembershipEvent.createIndexes(),
       PaymentTransaction.createIndexes(),
-      AdminAuditLog.createIndexes()
+      AdminAuditLog.createIndexes(),
+      Announcement.createIndexes(),
+      AnnouncementRead.createIndexes()
     ]).catch((error) => {
       indexesPromise = undefined;
       throw databaseError('MongoDB indexes could not be initialized.', 'DATABASE_INDEX_ERROR', error);

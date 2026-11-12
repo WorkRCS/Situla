@@ -2,13 +2,14 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import {
   User, GuestAccess, ActivitySession, Device, AuthSession, UsageState,
-  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog
+  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead
 } from './models.js';
 import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
 import { addCalendarMonths } from './membership-policy.js';
 import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
 import { memberFilter, onlineActivityFilter, clampPage } from './admin-queries.js';
+import { parseAnnouncementDate, getAnnouncementStatus } from './announcement-utils.js';
 
 const router = new Hono();
 const PAGE_SIZE = 10;
@@ -58,11 +59,15 @@ router.use('*', async (c, next) => {
   const method = c.req.method.toUpperCase();
   const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || ''));
   const knownRoute =
-    (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales'].includes(path)) ||
+    (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales', '/announcements'].includes(path)) ||
     (method === 'GET' && segments.length === 2 && ['guests', 'users'].includes(segments[0]) && isObjectId(segments[1])) ||
+    (method === 'GET' && segments.length === 3 && segments[0] === 'announcements' && isObjectId(segments[1]) && segments[2] === 'image') ||
     (method === 'PATCH' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'membership') ||
     (method === 'POST' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension') ||
-    (method === 'DELETE' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension');
+    (method === 'DELETE' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension') ||
+    (method === 'POST' && path === '/announcements') ||
+    (method === 'PATCH' && segments.length === 2 && segments[0] === 'announcements' && isObjectId(segments[1])) ||
+    (method === 'DELETE' && segments.length === 2 && segments[0] === 'announcements' && isObjectId(segments[1]));
   if (!knownRoute) return c.notFound();
   if (method !== 'GET' && !isSameOriginRequest(c)) {
     return c.json({ error: 'A same-origin request is required.', code: 'ORIGIN_CHECK_FAILED' }, 403);
@@ -413,6 +418,163 @@ router.delete('/users/:userId/suspension', async (c) => {
   await user.save();
   await audit(admin._id, 'user_unsuspended', 'user', userId, { email: user.email });
   return c.json({ userId, status: 'active' });
+});
+
+
+function announcementPayload(form) {
+  const title = String(form.get('title') || '').trim();
+  const description = String(form.get('description') || '').trim();
+  const mediaUrl = String(form.get('mediaUrl') || '').trim();
+  const scheduledAt = parseAnnouncementDate(form.get('scheduledAt'));
+  const status = String(form.get('status') || 'draft');
+  if (!title || title.length > 160) return { error: 'Title is required and must be 160 characters or fewer.' };
+  if (!description || description.length > 5000) return { error: 'Description is required and must be 5000 characters or fewer.' };
+  if (!['draft', 'publish'].includes(status)) return { error: 'Choose draft or publish.' };
+  if (mediaUrl) {
+    try {
+      const parsed = new URL(mediaUrl);
+      if (parsed.protocol !== 'https:') return { error: 'Media URL must use HTTPS.' };
+    } catch {
+      return { error: 'Enter a valid HTTPS media URL.' };
+    }
+  }
+  if (status === 'publish' && !scheduledAt) return { error: 'Choose a valid publication date and time.' };
+  const normalizedStatus = getAnnouncementStatus(status, scheduledAt || new Date());
+  if (!normalizedStatus) return { error: 'Choose draft or publish with a valid date and time.' };
+  return { value: { title, description, mediaUrl, scheduledAt: scheduledAt || new Date(), status: normalizedStatus } };
+}
+
+async function readAnnouncementImage(form) {
+  const file = form.get('image');
+  if (!file || typeof file !== 'object' || typeof file.arrayBuffer !== 'function' || !file.size) return null;
+  const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+  if (!allowed.has(file.type)) throw new Error('Upload a JPG, PNG, WebP, GIF or AVIF image.');
+  if (file.size > 4 * 1024 * 1024) throw new Error('Announcement images must be 4 MB or smaller.');
+  const data = Buffer.from(await file.arrayBuffer());
+  const isPng = data.length >= 8 && data.subarray(0, 8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]));
+  const isJpeg = data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff;
+  const isGif = data.length >= 6 && ['GIF87a', 'GIF89a'].includes(data.subarray(0, 6).toString('ascii'));
+  const isWebp = data.length >= 12 && data.subarray(0, 4).toString('ascii') === 'RIFF' && data.subarray(8, 12).toString('ascii') === 'WEBP';
+  const isAvif = data.length >= 12 && data.subarray(4, 12).toString('ascii').includes('ftypavif');
+  const validImage = file.type === 'image/png' ? isPng :
+    file.type === 'image/jpeg' ? isJpeg :
+    file.type === 'image/gif' ? isGif :
+    file.type === 'image/webp' ? isWebp :
+    file.type === 'image/avif' ? isAvif : false;
+  if (!validImage) throw new Error('The uploaded file does not match its declared image format.');
+  return { data, contentType: file.type };
+}
+
+function serializeAnnouncement(item) {
+  const hasImage = Boolean(item.imageContentType);
+  return {
+    id: String(item._id),
+    title: item.title,
+    description: item.description,
+    mediaUrl: item.mediaUrl || '',
+    uploadedImageUrl: hasImage ? '/api/admin/announcements/' + String(item._id) + '/image' : '',
+    hasImage,
+    scheduledAt: item.scheduledAt,
+    status: item.status === 'scheduled' && new Date(item.scheduledAt) <= new Date() ? 'published' : item.status,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt
+  };
+}
+
+router.get('/announcements/:announcementId/image', async (c) => {
+  const id = c.req.param('announcementId');
+  if (!objectId(id)) return c.json({ error: 'Invalid announcement ID.' }, 400);
+  const item = await Announcement.findById(id).select('+imageData imageContentType').lean();
+  if (!item?.imageData || !['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(item.imageContentType)) {
+    return c.json({ error: 'Announcement image not found.' }, 404);
+  }
+  return c.body(item.imageData, 200, {
+    'Content-Type': item.imageContentType,
+    'Content-Length': String(item.imageData.length),
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff'
+  });
+});
+
+router.get('/announcements', async (c) => {
+  const requestedPage = pageNumber(c.req.query('page'));
+  const total = await Announcement.countDocuments({});
+  const page = clampPage(requestedPage, total, PAGE_SIZE);
+  const items = await Announcement.find({})
+    .select('-imageData')
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE)
+    .lean();
+  return c.json({
+    items: items.map(serializeAnnouncement),
+    page, limit: PAGE_SIZE, total, hasMore: page * PAGE_SIZE < total
+  });
+});
+
+router.post('/announcements', async (c) => {
+  let form;
+  try {
+    form = await c.req.formData();
+    const parsed = announcementPayload(form);
+    if (parsed.error) return c.json({ error: parsed.error }, 400);
+    const upload = await readAnnouncementImage(form);
+    if (upload && parsed.value.mediaUrl) return c.json({ error: 'Choose a media URL or upload an image, not both.' }, 400);
+    const actor = c.get('adminAuth').user;
+    const fields = {
+      ...parsed.value,
+      createdBy: actor._id,
+      updatedBy: actor._id,
+      ...(upload ? { imageData: upload.data, imageContentType: upload.contentType } : {})
+    };
+    const item = await Announcement.create(fields);
+    await audit(actor._id, 'announcement_created', 'announcement', item._id, { title: item.title, status: item.status, scheduledAt: item.scheduledAt });
+    return c.json({ item: serializeAnnouncement(item) }, 201);
+  } catch (error) {
+    return c.json({ error: error.message || 'Announcement could not be created.' }, 400);
+  }
+});
+
+router.patch('/announcements/:announcementId', async (c) => {
+  const id = c.req.param('announcementId');
+  if (!objectId(id)) return c.json({ error: 'Invalid announcement ID.' }, 400);
+  const current = await Announcement.findById(id);
+  if (!current) return c.json({ error: 'Announcement not found.' }, 404);
+  try {
+    const form = await c.req.formData();
+    const parsed = announcementPayload(form);
+    if (parsed.error) return c.json({ error: parsed.error }, 400);
+    const upload = await readAnnouncementImage(form);
+    if (upload && parsed.value.mediaUrl) return c.json({ error: 'Choose a media URL or upload an image, not both.' }, 400);
+    Object.assign(current, parsed.value, { updatedBy: c.get('adminAuth').user._id });
+    if (upload) {
+      current.imageData = upload.data;
+      current.imageContentType = upload.contentType;
+      current.mediaUrl = '';
+    } else if (parsed.value.mediaUrl) {
+      current.imageData = null;
+      current.imageContentType = '';
+    } else if (form.get('removeImage') === 'true') {
+      current.imageData = null;
+      current.imageContentType = '';
+      current.mediaUrl = '';
+    }
+    await current.save();
+    await audit(c.get('adminAuth').user._id, 'announcement_updated', 'announcement', current._id, { title: current.title, status: current.status, scheduledAt: current.scheduledAt });
+    return c.json({ item: serializeAnnouncement(current) });
+  } catch (error) {
+    return c.json({ error: error.message || 'Announcement could not be updated.' }, 400);
+  }
+});
+
+router.delete('/announcements/:announcementId', async (c) => {
+  const id = c.req.param('announcementId');
+  if (!objectId(id)) return c.json({ error: 'Invalid announcement ID.' }, 400);
+  const item = await Announcement.findByIdAndDelete(id);
+  if (!item) return c.json({ error: 'Announcement not found.' }, 404);
+  await AnnouncementRead.deleteMany({ announcementId: item._id });
+  await audit(c.get('adminAuth').user._id, 'announcement_deleted', 'announcement', id, { title: item.title });
+  return c.json({ deleted: true, id });
 });
 
 router.get('/sales', async (c) => {

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
-import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { ArrowUpRight, Bell, BadgeCheck, Crown, LogOut, Search, ShieldCheck, Sparkles, UserRound, Share2 } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -118,7 +118,51 @@ function seriesCardHref(item, kind) {
   return /^\d+$/.test(malId) ? "/anime/" + encodeURIComponent(malId) : null;
 }
 
+async function shareMediaCard({ title, href, posterUrl }) {
+  const url = new URL(href, window.location.origin).toString();
+  const text = posterUrl ? title + "\n\nPoster: " + posterUrl : title;
+  if (typeof navigator.share === "function") {
+    const data = { title, text, url };
+    if (posterUrl && typeof navigator.canShare === "function") {
+      try {
+        const response = await fetch(posterUrl, { mode: "cors", cache: "force-cache" });
+        if (response.ok) {
+          const blob = await response.blob();
+          if (blob.type.startsWith("image/")) {
+            const extension = blob.type.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
+            const filename = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "situla-poster";
+            const file = new File([blob], filename + "." + extension, { type: blob.type });
+            const withFile = { ...data, files: [file] };
+            if (navigator.canShare(withFile)) data.files = [file];
+          }
+        }
+      } catch {}
+    }
+    try {
+      if (data.files) {
+        try {
+          await navigator.share(data);
+          return "Shared";
+        } catch (fileShareError) {
+          if (fileShareError?.name === "AbortError") throw fileShareError;
+        }
+      }
+      await navigator.share({ title, text, url });
+      return "Shared";
+    } catch (shareError) {
+      if (shareError?.name === "AbortError") throw shareError;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    return "Link copied";
+  } catch {
+    return "Share unavailable";
+  }
+}
+
 function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload }) {
+  const [shareFeedback, setShareFeedback] = useState("");
   const href = movieCardHref(movie);
 
   function handleOpen(event) {
@@ -127,6 +171,18 @@ function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload
       return;
     }
     onOpen?.(movie, { navigate: false });
+  }
+
+  async function handleShare(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!href) return;
+    try {
+      const result = await shareMediaCard({ title: movie.title || "Movie", href, posterUrl: movie.posterUrl });
+      if (result) setShareFeedback(result);
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") setShareFeedback("Share unavailable");
+    }
   }
 
   const cardContent = (
@@ -176,6 +232,10 @@ function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload
       >
         <Icon name={saved ? "check" : "bookmark"} size={15} />
       </button>
+      {href && <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (movie.title || "movie")} title="Share movie">
+        <Share2 size={15} />
+      </button>}
+      {href && shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
     </article>
   );
 }
@@ -214,6 +274,7 @@ function movieNavigationKey(movie) {
 }
 
 function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
+  const [shareFeedback, setShareFeedback] = useState("");
   const isTv = kind === "tv";
   const title = isTv ? item.title : (item.titleEnglish || item.title);
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
@@ -230,6 +291,22 @@ function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
       return;
     }
     onOpen?.(item, kind, { navigate: false });
+  }
+
+  async function handleShare(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!href || !isTv) return;
+    try {
+      const result = await shareMediaCard({
+        title: item.title || "TV series",
+        href,
+        posterUrl: item.posterUrl || item.posterFallbackUrl
+      });
+      if (result) setShareFeedback(result);
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") setShareFeedback("Share unavailable");
+    }
   }
 
   const cardContent = (
@@ -272,6 +349,10 @@ function SeriesCard({ item, kind, onOpen, navigating = false, onPreload }) {
           {cardContent}
         </button>
       )}
+      {isTv && href && <>
+        <button type="button" className="share-button" onClick={handleShare} aria-label={"Share " + (title || "TV series")} title="Share TV series"><Share2 size={15} /></button>
+        {shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
+      </>}
     </article>
   );
 }

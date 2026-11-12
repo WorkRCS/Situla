@@ -368,6 +368,29 @@ const authRateLimitSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 authRateLimitSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
+const announcementSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true, maxlength: 160 },
+  description: { type: String, required: true, trim: true, maxlength: 5000 },
+  mediaUrl: { type: String, default: '', maxlength: 2048 },
+  imageData: { type: Buffer, default: null, select: false },
+  imageContentType: { type: String, default: '', maxlength: 80 },
+  scheduledAt: { type: Date, required: true },
+  status: { type: String, enum: ['draft', 'scheduled', 'published'], default: 'draft', index: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+announcementSchema.index({ status: 1, scheduledAt: -1, _id: -1 });
+
+const announcementReadSchema = new mongoose.Schema({
+  announcementId: { type: mongoose.Schema.Types.ObjectId, ref: 'Announcement', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  readAt: { type: Date, required: true, default: Date.now }
+}, { timestamps: false, versionKey: false, strict: true });
+announcementReadSchema.index({ userId: 1, announcementId: 1 }, { unique: true });
+announcementReadSchema.index({ announcementId: 1 });
+
+export const Announcement = mongoose.models.Announcement || mongoose.model('Announcement', announcementSchema);
+export const AnnouncementRead = mongoose.models.AnnouncementRead || mongoose.model('AnnouncementRead', announcementReadSchema);
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export const AuthSession = mongoose.models.AuthSession || mongoose.model('AuthSession', authSessionSchema);
 export const Device = mongoose.models.Device || mongoose.model('Device', deviceSchema);
