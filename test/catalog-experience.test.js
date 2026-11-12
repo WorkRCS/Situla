@@ -125,9 +125,9 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
   assert.match(app, /<Link[\s\S]*?href=\{href\}[\s\S]*?prefetch=\{false\}/);
   assert.match(app, /onOpen\?\.\(movie, \{ navigate: false \}\)/);
   assert.match(app, /onOpen\?\.\(item, kind, \{ navigate: false \}\)/);
-  assert.match(app, /function openMovie\(movie, \{ navigate = true \} = \{\}\)/);
-  assert.match(app, /function openTvSeries\(series, \{ navigate = true \} = \{\}\)/);
-  assert.match(app, /function openAnimeSeries\(series, \{ navigate = true \} = \{\}\)/);
+  assert.match(app, /const openMovie = useCallback\(\(movie, \{ navigate = true \} = \{\}\) =>/);
+  assert.match(app, /const openTvSeries = useCallback\(\(series, \{ navigate = true \} = \{\}\) =>/);
+  assert.match(app, /const openAnimeSeries = useCallback\(\(series, \{ navigate = true \} = \{\}\) =>/);
 });
 
 
