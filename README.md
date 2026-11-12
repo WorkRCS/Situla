@@ -124,6 +124,47 @@ The public API remains read-only for catalogue data; there are no public admin o
 - `GET /api/anime?page=1&limit=40`
 - `GET /api/anime/:malId`
 
+
+## Authentication, membership and watch access
+
+The account backend uses MongoDB-backed users, opaque server sessions, registered devices, guest-IP usage records and server-owned playback leases. Email sign-up and login use the same email/password form: a new email creates a Free account, while an existing account requires its password. Google OAuth is enabled only after the Google Web OAuth credentials below are configured.
+
+### Required environment
+
+Keep the existing `MONGODB_URI` and `MONGODB_DB_NAME` values. Generate a unique server secret and set it as `AUTH_SECRET`:
+
+```sh
+node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
+```
+
+For Google Sign-in, create a Google Cloud OAuth client of type **Web application** and configure the authorized redirect URI to exactly:
+
+```
+https://YOUR_PRODUCTION_HOST/api/auth/google/callback
+```
+
+Set the resulting `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and the same full URL in `GOOGLE_REDIRECT_URI`. Add a comma-separated `ADMIN_EMAILS` allowlist only for accounts that should receive the server-side administrator role. Never commit a real `.env` file or paste its secrets into source control.
+
+### Server-owned access limits
+
+- Guest: 1 hour of watch allowance, then a 2-hour cooldown. Guest usage is keyed by an HMAC of the trusted client IP; the raw IP is not stored.
+- Free: 3 hours of watch allowance, then a 1-hour cooldown; one registered device.
+- Premium Monthly: 5 hours, then a 40-minute cooldown.
+- Premium 6 Months: 10 hours, then a 20-minute cooldown.
+- Premium Yearly: unlimited watch time with no periodic cooldown.
+- Premium accounts can register up to 3 devices; their allowance is shared across devices.
+
+The server validates the media route before issuing a playback session. The iframe is mounted only after that authorization succeeds. Player messages and 15-second heartbeats are used to account for playback time on the server. Because playback uses a third-party iframe, the events it reports are not cryptographic proof of actual playback; this is server-enforced session accounting, not tamper-proof DRM.
+
+Premium membership can be manually activated or downgraded through the administrator-only `PATCH /api/admin/users/:userId/membership` endpoint after an administrator email is added to `ADMIN_EMAILS`. Payment checkout is intentionally not connected; no payment gateway, payment secret or checkout route is configured.
+
+Useful endpoints:
+- `POST /api/auth/email`, `GET /api/auth/google`, `GET /api/auth/google/callback`
+- `GET /api/auth/me`, `POST /api/auth/logout`
+- `GET /api/auth/devices`, `DELETE /api/auth/devices/:deviceId`
+- `GET /api/access/status`
+- `POST /api/playback/start`, `POST /api/playback/heartbeat`, `POST /api/playback/stop`
+
 ## Browser access
 
 The website is restricted to Brave Browser only. Brave is recognized through its documented `Sec-CH-UA` brand hint when supplied, with a browser-side `navigator.brave.isBrave()` verification fallback. Successful Brave verification is cached in a first-party cookie for up to 400 days.

@@ -124,7 +124,6 @@ function cookieSettings(maxAge, path = '/') {
 
 export function clearAuthCookies(c) {
   deleteCookie(c, SESSION_COOKIE, cookieSettings(0));
-  deleteCookie(c, DEVICE_COOKIE, cookieSettings(0));
   deleteCookie(c, GUEST_COOKIE, cookieSettings(0));
   deleteCookie(c, OAUTH_STATE_COOKIE, cookieSettings(0, '/api/auth/google'));
   deleteCookie(c, OAUTH_NONCE_COOKIE, cookieSettings(0, '/api/auth/google'));
