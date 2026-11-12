@@ -103,6 +103,8 @@ const tvSeriesSchema = new mongoose.Schema({
   trendUpdatedAt: { type: Date, default: null },
   voteVelocity7d: { type: Number, min: 0, default: 0 },
   marketDataUpdatedAt: { type: Date, default: null },
+  providerRating: { type: Number, min: 0, max: 10, default: 0 },
+  providerPopularity: { type: Number, min: 0, default: 0 },
   metadataSource: { type: String, default: "manual" },
   sourceId: { type: Number, min: 1, default: null },
   sourceUrl: { type: String, default: "" },
