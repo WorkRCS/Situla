@@ -12,6 +12,7 @@ import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
+import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
 import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2 } from "lucide-react";
 const BOOTSTRAP_ICONS = {
@@ -95,7 +96,7 @@ function MoviePosterImage({ movie }) {
   useEffect(() => setFailed(false), [movie.imdbId, movie.posterUrl]);
   return movie.posterUrl && !failed ? (
     <img
-      src={movie.posterUrl}
+      src={optimizeTmdbImageUrl(movie.posterUrl, "w185")}
       alt={movie.title}
       loading="lazy"
       decoding="async"
@@ -243,9 +244,9 @@ function MovieCard({ movie, onOpen, onSave, saved, navigating = false, onPreload
 }
 
 function SeriesPosterImage({ item, title }) {
-  const sources = [...new Set([item.posterUrl, item.posterFallbackUrl].filter((value) =>
-    typeof value === "string" && /^https:\/\//.test(value)
-  ))];
+  const sources = [...new Set([item.posterUrl, item.posterFallbackUrl]
+    .filter((value) => typeof value === "string" && /^https:\/\//.test(value))
+    .map((value) => optimizeTmdbImageUrl(value, "w185")))];
   const [sourceIndex, setSourceIndex] = useState(0);
 
   useEffect(() => {
@@ -387,7 +388,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   const kicker = isTv ? "A SERIES TO GET LOST IN" : isAnime ? "ANOTHER WORLD AWAITS" : "FEATURED MOVIE";
   return (
     <section className="hero-card catalog-spotlight" key={item.tmdbId || item.imdbId || item.malId}>
-      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={item.backdropUrl || item.posterUrl} alt="" fetchPriority="high" onError={(event) => {
+      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={optimizeTmdbImageUrl(item.backdropUrl || item.posterUrl, item.backdropUrl ? "w780" : "w342")} alt="" fetchPriority="high" onError={(event) => {
         if (item.posterUrl && event.currentTarget.src !== item.posterUrl) {
           event.currentTarget.src = item.posterUrl;
         } else if (isAnime && item.posterFallbackUrl && event.currentTarget.src !== item.posterFallbackUrl) {
@@ -1414,7 +1415,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         onClick={() => openSearchResult(item)}
                       >
                         {item.posterUrl
-                          ? <img src={item.posterUrl} alt="" loading="lazy" decoding="async" />
+                          ? <img src={optimizeTmdbImageUrl(item.posterUrl, "w92")} alt="" loading="lazy" decoding="async" />
                           : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
                         <span className="suggestion-title">
                           <strong>{item.titleEnglish || item.title}</strong>
@@ -1587,7 +1588,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     >
                       <span className="spotlight-chip-art">
                         {item.heroPoster
-                          ? <img src={item.heroPoster} alt="" loading="lazy" decoding="async" />
+                          ? <img src={optimizeTmdbImageUrl(item.heroPoster, "w92")} alt="" loading="lazy" decoding="async" />
                           : <Icon name={item.mediaType === "tv" ? "tv" : item.mediaType === "anime" ? "play" : "film"} size={17} />}
                       </span>
                       <span className="spotlight-chip-title">{item.heroTitle}</span>
@@ -1799,7 +1800,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                                     aria-label={"Continue watching " + (item.title || "this title") + " from " + formatClock(watched)}
                                   >
                                     <span className="history-thumb">
-                                      {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" /> : <span className="history-poster"><BootstrapIcon icon="film" size={20} /></span>}
+                                      {item.posterUrl ? <img src={optimizeTmdbImageUrl(item.posterUrl, "w92")} alt="" loading="lazy" /> : <span className="history-poster"><BootstrapIcon icon="film" size={20} /></span>}
                                       <span className="history-type-chip">{typeLabel}</span>
                                     </span>
                                     <span className="history-item-copy">
