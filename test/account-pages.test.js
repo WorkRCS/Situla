@@ -19,9 +19,9 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes('loading={prioritize ? "eager" : "lazy"}'));
   assert.ok(pages.includes("publishPosterColumns();"));
   assert.ok(pages.includes("toHomeSpotlight"));
-  assert.ok(pages.includes("/api/movies?limit=16"));
-  assert.ok(pages.includes("/api/tv?limit=16"));
-  assert.ok(pages.includes("/api/anime?limit=16"));
+  assert.ok(pages.includes("/api/movies?limit=10"));
+  assert.ok(pages.includes("/api/tv?limit=10"));
+  assert.ok(pages.includes("/api/anime?limit=10"));
   assert.ok(!pages.includes("random=true"));
   assert.ok(pages.includes("sessionStorage.getItem(cacheKey)"));
   assert.ok(pages.includes("sessionStorage.setItem(cacheKey"));

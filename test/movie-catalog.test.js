@@ -119,7 +119,7 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   assert.doesNotMatch(app, /current\.map\(\(item\) => item\.tmdbId\)/);
   assert.match(app, /function MoviePosterImage/);
   assert.match(app, /AbortSignal\.timeout\(20000\)/);
-  assert.match(api, /items: \[\{ \$sample: \{ size: 40 \} \}\]/);
+  assert.match(api, /items: \[\{ \$sample: \{ size: 10 \} \}\]/);
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
 });
 
@@ -141,6 +141,6 @@ test("Movie additions seeder uses Cinemeta, validates before insert, and never c
   assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
   assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
   assert.match(api, /randomOrder/);
-  assert.match(api, /\$sample: \{ size: 40 \}/);
+  assert.match(api, /\$sample: \{ size: 10 \}/);
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds/);
 });

@@ -7,8 +7,8 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("TV and Anime initial catalog requests rotate to a random first batch", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const api = await read("../src/app.js");
-  assert.match(app, /\/api\/tv\?page=1&limit=40&random=true/);
-  assert.match(app, /\/api\/anime\?page=1&limit=40&random=true/);
+  assert.match(app, /\/api\/tv\?page=1&limit=10&random=true/);
+  assert.match(app, /\/api\/anime\?page=1&limit=10&random=true/);
   assert.match(app, /readRecentCatalogIds\(recentKey\)/);
   assert.match(app, /rememberRecentCatalogIds\(recentKey/);
   assert.match(api, /baseFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
