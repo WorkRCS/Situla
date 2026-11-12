@@ -3,14 +3,15 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { connectDatabase } from './db.js';
 import { createCatalogResponseCache } from './redis-cache.js';
+import { createRequestConcurrencyGuard } from './request-guard.js';
 import mongoose from 'mongoose';
 import { getCookie, setCookie } from 'hono/cookie';
 import {
   User, AuthSession, Device, ActivitySession, Movie, TvSeries, AnimeSeries, Announcement, AnnouncementRead
 } from './models.js';
 import {
-  SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
-  authSecret, normalizeEmail, validEmail, validPassword, hashPassword, verifyPassword,
+  SESSION_COOKIE, DEVICE_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
+  authSecret, normalizeEmail, validEmail, validPassword, hashPassword, hashToken, verifyPassword,
   getClientIp, isSameOriginRequest, enforceRateLimit, hasAdminRole, keyedHash,
   getSuspendedSession, isAccountSuspended,
   createLoginSession, getAuthenticatedSession, revokeCurrentSession, safeUser,
@@ -31,7 +32,7 @@ import {
 const app = new Hono();
 const IMDB_ID = /^tt\d{5,12}$/i;
 
-app.use('*', logger());
+if (process.env.NODE_ENV === 'development') app.use('*', logger());
 app.use('*', async (c, next) => {
   await next();
   c.header('X-Content-Type-Options', 'nosniff');
@@ -52,6 +53,9 @@ app.use('/api/*', async (c, next) => {
   await catalogResponseCache(c, next);
 });
 
+// Cached Redis hits return before this guard; dynamic/cache-miss work is bounded per runtime.
+app.use('/api/*', createRequestConcurrencyGuard({ maxConcurrent: 12 }));
+
 app.route('/api/admin', adminRouter);
 
 export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
@@ -63,12 +67,79 @@ export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
   };
 }
 
+const catalogTierMemo = new Map();
+const CATALOG_TIER_MEMO_TTL_MS = 5_000;
+const CATALOG_TIER_MEMO_MAX_ENTRIES = 1_000;
+
+async function resolveCatalogTierWindow(sessionToken, deviceToken) {
+  // This middleware runs before route handlers, so establish Mongo before any Mongoose query.
+  await connectDatabase();
+  const now = new Date();
+  const session = await AuthSession.findOne({
+    tokenHash: hashToken(sessionToken),
+    expiresAt: { $gt: now },
+    revokedAt: null
+  }).select('userId deviceId').lean();
+  if (!session) return null;
+
+  const [user, device] = await Promise.all([
+    User.findById(session.userId).select('status suspendedUntil planId membership').lean(),
+    Device.exists({
+      _id: session.deviceId,
+      userId: session.userId,
+      tokenHash: hashToken(deviceToken),
+      revokedAt: null
+    })
+  ]);
+  if (!user || !device) return null;
+
+  const suspensionExpired = user.status === 'suspended' && user.suspendedUntil &&
+    new Date(user.suspendedUntil) <= now;
+  if (user.status !== 'active' && !suspensionExpired) return null;
+  return getWatchPolicy(user, now).planId === 'premium' ? getRollingTenYearWindow() : null;
+}
+
+async function getMemoizedCatalogTierWindow(sessionToken, deviceToken) {
+  const key = hashToken('catalog-tier:' + sessionToken + ':' + deviceToken);
+  const now = Date.now();
+  const existing = catalogTierMemo.get(key);
+  if (existing && existing.expiresAt > now) {
+    catalogTierMemo.delete(key);
+    catalogTierMemo.set(key, existing);
+    return existing.promise;
+  }
+  if (existing) catalogTierMemo.delete(key);
+
+  const entry = { expiresAt: Number.POSITIVE_INFINITY, promise: null };
+  entry.promise = resolveCatalogTierWindow(sessionToken, deviceToken).then((window) => {
+    entry.expiresAt = Date.now() + CATALOG_TIER_MEMO_TTL_MS;
+    return window;
+  }).catch((error) => {
+    catalogTierMemo.delete(key);
+    throw error;
+  });
+  catalogTierMemo.set(key, entry);
+  while (catalogTierMemo.size > CATALOG_TIER_MEMO_MAX_ENTRIES) {
+    const oldestKey = catalogTierMemo.keys().next().value;
+    if (oldestKey === key) break;
+    catalogTierMemo.delete(oldestKey);
+  }
+  return entry.promise;
+}
+
 async function getPremiumFeedWindow(c) {
   if (c.get('premiumFeedWindowResolved')) return c.get('premiumFeedWindow');
-  const authenticated = await getAuthenticatedSession(c);
-  const window = authenticated && getWatchPolicy(authenticated.user).planId === 'premium'
-    ? getRollingTenYearWindow()
-    : null;
+
+  const sessionToken = getCookie(c, SESSION_COOKIE);
+  const deviceToken = getCookie(c, DEVICE_COOKIE);
+  // Anonymous traffic stays on the public feed and never opens a database connection for cache lookup.
+  if (!sessionToken || !deviceToken) {
+    c.set('premiumFeedWindowResolved', true);
+    c.set('premiumFeedWindow', null);
+    return null;
+  }
+
+  const window = await getMemoizedCatalogTierWindow(sessionToken, deviceToken);
   c.set('premiumFeedWindowResolved', true);
   c.set('premiumFeedWindow', window);
   return window;

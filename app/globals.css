@@ -4310,3 +4310,16 @@ body:has(.login-page) .site-footer { display:none !important; }
 
 .series-card-tv .share-button{top:8px}
 .series-card-tv .share-feedback{top:45px}
+
+
+/* Low-end mobile: keep sticky navigation and poster controls on a cheap paint path. */
+@media (max-width:640px) {
+  .app-header,
+  .bottom-nav,
+  .rating-pill,
+  .save-button,
+  .share-button {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+}

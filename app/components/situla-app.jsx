@@ -1254,7 +1254,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   return (
     <main className="app-shell">
       <header className="app-header safe-top">
-        <div className="header-inner container-fluid mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
+        <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
           <Link href="/" className="brand-lockup" aria-label="Situla home">
             <img src="/icon.svg" alt="" className="brand-logo" width="40" height="40" />
             <span className="brand-copy min-w-0">

@@ -25,10 +25,15 @@ export async function connectDatabase() {
     if (!connectionPromise) {
       connectionPromise = mongoose.connect(uri, {
         dbName,
+        // Keep one modest per-instance pool; do not multiply idle sockets during serverless scale-out.
         maxPoolSize: 10,
         minPoolSize: 0,
-        serverSelectionTimeoutMS: 8000,
-        socketTimeoutMS: 20000,
+        maxConnecting: 2,
+        maxIdleTimeMS: 30_000,
+        waitQueueTimeoutMS: 3_000,
+        connectTimeoutMS: 10_000,
+        serverSelectionTimeoutMS: 8_000,
+        socketTimeoutMS: 20_000,
         autoIndex: false
       }).then(() => mongoose.connection).catch((error) => {
         connectionPromise = undefined;

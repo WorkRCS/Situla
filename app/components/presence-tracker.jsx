@@ -21,10 +21,16 @@ export default function PresenceTracker() {
     let lastHeartbeatAt = 0;
     let heartbeatInFlight = false;
     let heartbeatRetryTimer = null;
+    let initialHeartbeatTimer = null;
+    let hasSentHeartbeat = false;
     let suspendedRedirected = false;
 
     const markInteraction = () => {
       lastInteractionAt = Date.now();
+      if (initialHeartbeatTimer) {
+        window.clearTimeout(initialHeartbeatTimer);
+        initialHeartbeatTimer = null;
+      }
       if (document.visibilityState === "visible") sendHeartbeat(false);
     };
 
@@ -60,6 +66,7 @@ export default function PresenceTracker() {
       if (!stop) {
         lastHeartbeatAt = now;
         heartbeatInFlight = true;
+        hasSentHeartbeat = true;
       }
       const active = !stop && document.visibilityState === "visible" &&
         now - lastInteractionAt <= 2 * 60 * 1000;
@@ -90,22 +97,35 @@ export default function PresenceTracker() {
 
     const interactionEvents = ["pointerdown", "keydown", "scroll", "touchstart", "wheel"];
     interactionEvents.forEach((eventName) => window.addEventListener(eventName, markInteraction, { passive: true }));
-    const onVisibility = () => sendHeartbeat(false, true);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") sendHeartbeat(false);
+      else if (hasSentHeartbeat) sendHeartbeat(false, true);
+    };
     const onPageHide = () => {
+      if (initialHeartbeatTimer) {
+        window.clearTimeout(initialHeartbeatTimer);
+        initialHeartbeatTimer = null;
+      }
       if (heartbeatRetryTimer) {
         window.clearTimeout(heartbeatRetryTimer);
         heartbeatRetryTimer = null;
       }
-      sendHeartbeat(true);
+      if (hasSentHeartbeat) sendHeartbeat(true);
       try { sessionStorage.removeItem("situla:activity-id:v1"); } catch {}
     };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", onPageHide);
-    sendHeartbeat(false);
-    const interval = window.setInterval(() => sendHeartbeat(false), 60 * 1000);
+    initialHeartbeatTimer = window.setTimeout(() => {
+      initialHeartbeatTimer = null;
+      if (document.visibilityState === "visible") sendHeartbeat(false);
+    }, 1500);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") sendHeartbeat(false);
+    }, 60 * 1000);
 
     return () => {
       window.clearInterval(interval);
+      if (initialHeartbeatTimer) window.clearTimeout(initialHeartbeatTimer);
       if (heartbeatRetryTimer) window.clearTimeout(heartbeatRetryTimer);
       interactionEvents.forEach((eventName) => window.removeEventListener(eventName, markInteraction));
       document.removeEventListener("visibilitychange", onVisibility);

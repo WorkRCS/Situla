@@ -71,16 +71,23 @@ export default function AnnouncementCenter({ onOpen }) {
   useEffect(() => {
     const controller = new AbortController();
     loadAnnouncements(controller.signal);
-    const interval = window.setInterval(() => loadAnnouncements(), 60_000);
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") loadAnnouncements();
+    }, 60_000);
     const onFocus = () => loadAnnouncements();
     const onAuthChange = () => loadAnnouncements();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadAnnouncements();
+    };
     window.addEventListener("focus", onFocus);
     window.addEventListener("situla:auth-change", onAuthChange);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       controller.abort();
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("situla:auth-change", onAuthChange);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [loadAnnouncements]);
 
