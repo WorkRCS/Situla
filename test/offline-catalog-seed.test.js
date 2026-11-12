@@ -16,7 +16,7 @@ import {
   validateOfflineMovie,
   validateOfflineTv
 } from "../scripts/seed-catalog.js";
-import { isPopularCatalogItem } from "../src/catalog-popularity.js";
+import { calculateDecayedTrendScore, getCatalogBadge } from "../src/catalog-popularity.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -101,21 +101,59 @@ test("prepared offline packs report real gaps instead of lowering the completene
   assert.ok(prepared.anime.records.every((item) => validateOfflineAnime(item)));
 });
 
-test("Popular badge uses explicit flags or catalogue-native popularity semantics", () => {
-  assert.equal(isPopularCatalogItem({ isPopular: true }, "movie"), true);
-  assert.equal(isPopularCatalogItem({ isPopular: false, voteCount: 900000 }, "movie"), false);
-  assert.equal(isPopularCatalogItem({ voteCount: 12000 }, "movie"), true);
-  assert.equal(isPopularCatalogItem({ popularity: 70 }, "tv"), true);
-  assert.equal(isPopularCatalogItem({ rank: 30 }, "anime"), true);
-  assert.equal(isPopularCatalogItem({ popularity: 12 }, "anime"), true);
-  assert.equal(isPopularCatalogItem({ rank: 900, scoredBy: 1000 }, "anime"), false);
+test("Hot, Popular and Featured badges use separate market, trend and editorial signals", () => {
+  const now = Date.now();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+  // Legacy booleans must not force a badge on any catalogue item.
+  assert.equal(getCatalogBadge({ isPopular: true }, "movie", now), null);
+  assert.equal(getCatalogBadge({ isPopular: false }, "movie", now), null);
+
+  // A strong, well-supported external rating plus provider reach can qualify.
+  assert.equal(getCatalogBadge({
+    voteAverage: 8.1, voteCount: 120000, popularity: 150
+  }, "movie", now)?.key, "popular");
+  assert.equal(getCatalogBadge({
+    score: 8.3, scoredBy: 50000, rank: 150, popularity: 180
+  }, "anime", now)?.key, "popular");
+
+  // A large vote count cannot rescue a weak rating; tiny samples are not popular.
+  assert.equal(getCatalogBadge({
+    voteAverage: 5.4, voteCount: 250000, popularity: 150
+  }, "movie", now), null);
+  assert.equal(getCatalogBadge({
+    voteAverage: 8.6, voteCount: 20, popularity: 200
+  }, "tv", now), null);
+  assert.equal(getCatalogBadge({
+    voteAverage: 6.8, voteCount: 0, popularity: 0
+  }, "movie", now), null);
+
+  // Hot is driven by recent playback momentum, not by the rating.
+  assert.equal(getCatalogBadge({
+    trendScore: 9, trendUpdatedAt: new Date(now).toISOString(),
+    voteAverage: 4.2, voteCount: 500000
+  }, "tv", now)?.key, "hot");
+  const staleTrend = {
+    trendScore: 12,
+    trendUpdatedAt: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
+  };
+  assert.notEqual(getCatalogBadge(staleTrend, "tv", now)?.key, "hot");
+  assert.ok(Math.abs(calculateDecayedTrendScore(8, new Date(now - sevenDays), now) - 4) < 0.01);
+
+  // Featured is an editorial choice, not a fallback for low-rated content.
+  assert.equal(getCatalogBadge({ isFeatured: true }, "anime", now)?.key, "featured");
+  assert.equal(getCatalogBadge({ voteAverage: 4.1, voteCount: 0 }, "movie", now), null);
 });
 
-test("catalog cards show the green Popular tag and search asks for a title only", async () => {
+test("catalog cards render differentiated badges and search asks for a title only", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /className="popular-pill">Popular<\/span>/);
+  assert.match(app, /movie\.catalogBadge\.label/);
+  assert.match(app, /item\.catalogBadge\.label/);
+  assert.doesNotMatch(app, /popular-pill|isPopularCatalogItem/);
   assert.match(app, /placeholder="Search & Title"/);
   assert.doesNotMatch(app, /Search a title or IMDb \/ TMDB \/ MAL ID/);
-  assert.match(css, /\.popular-pill[\s\S]*?background: #15803d/);
+  assert.match(css, /\.catalog-badge-hot/);
+  assert.match(css, /\.catalog-badge-popular/);
+  assert.match(css, /\.catalog-badge-featured/);
 });
