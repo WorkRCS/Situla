@@ -132,11 +132,15 @@ router.get('/dashboard', async (c) => {
 });
 
 router.get('/guests', async (c) => {
-  const page = pageNumber(c.req.query('page'));
-  const [total, guests] = await Promise.all([
-    GuestAccess.countDocuments({}),
-    GuestAccess.find({}).sort({ lastSeenAt: -1, _id: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean()
-  ]);
+  const requestedPage = pageNumber(c.req.query('page'));
+  const total = await GuestAccess.countDocuments({});
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, lastPage);
+  const guests = await GuestAccess.find({})
+    .sort({ lastSeenAt: -1, _id: -1 })
+    .skip((page - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE)
+    .lean();
   const now = new Date();
   const guestIds = guests.map((item) => item._id);
   const [summaries, onlineOwners] = await Promise.all([
@@ -207,17 +211,21 @@ router.get('/guests/:guestId', async (c) => {
 });
 
 router.get('/users', async (c) => {
-  const page = pageNumber(c.req.query('page'));
+  const requestedPage = pageNumber(c.req.query('page'));
   const segment = ['free', 'premium', 'all'].includes(c.req.query('segment')) ? c.req.query('segment') : 'all';
   const search = String(c.req.query('search') || '').trim().slice(0, 254);
   const now = new Date();
   const filter = memberFilter(segment, now);
   if (search) filter.email = { $regex: escapeSearchPattern(search), $options: 'i' };
-  const [total, users] = await Promise.all([
-    User.countDocuments(filter),
-    User.find(filter).select('email displayName role status suspendedUntil suspensionReason planId membership createdAt lastLoginAt')
-      .sort({ createdAt: -1, _id: -1 }).skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean()
-  ]);
+  const total = await User.countDocuments(filter);
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(requestedPage, lastPage);
+  const users = await User.find(filter)
+    .select('email displayName role status suspendedUntil suspensionReason planId membership createdAt lastLoginAt')
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * PAGE_SIZE)
+    .limit(PAGE_SIZE)
+    .lean();
   const userIds = users.map((user) => user._id);
   const [summaries, onlineOwners] = await Promise.all([
     sessionSummaries('user', userIds),

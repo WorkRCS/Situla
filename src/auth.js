@@ -165,7 +165,7 @@ export async function enforceRateLimit(key, limit, windowSeconds = 900) {
       } },
       { $set: { expiresAt: { $add: ['$windowEndsAt', 60000] } } }
     ],
-    { new: true, upsert: true, setDefaultsOnInsert: false, updatePipeline: true }
+    { returnDocument: 'after', upsert: true, setDefaultsOnInsert: false, updatePipeline: true }
   );
   return Number(state?.count || 0) <= limit;
 }
@@ -270,7 +270,7 @@ export async function registerDevice(c, user) {
         const migrated = await Device.findOneAndUpdate(
           { _id: legacyDevice._id, slot: null, revokedAt: null },
           { $set: { slot } },
-          { new: true }
+          { returnDocument: 'after' }
         );
         if (migrated) {
           occupiedSlots.add(slot);

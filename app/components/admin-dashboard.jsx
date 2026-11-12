@@ -80,6 +80,7 @@ export default function AdminDashboard() {
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [listLoading, setListLoading] = useState(false);
+  const [listReady, setListReady] = useState(false);
   const [error, setError] = useState("");
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [guestDetail, setGuestDetail] = useState(null);
@@ -99,6 +100,8 @@ export default function AdminDashboard() {
   const listBodyRef = useRef(null);
   const sentinelRef = useRef(null);
   const requestLock = useRef(false);
+  const listRequestVersion = useRef(0);
+  const listAbortController = useRef(null);
 
   const refreshStats = useCallback(async () => {
     const response = await fetch("/api/admin/dashboard", { cache: "no-store", credentials: "same-origin" });
@@ -154,55 +157,108 @@ export default function AdminDashboard() {
     modal === "users" ? "/api/admin/users?segment=" + encodeURIComponent(segment) + "&search=" + encodeURIComponent(search.trim()) :
     modal === "sales" ? "/api/admin/sales?status=" + encodeURIComponent(salesStatus) : "";
 
-  const loadPage = useCallback(async (nextPage, replace = false) => {
-    if (!endpoint || requestLock.current) return;
+  const loadPage = useCallback(async (nextPage, replace = false, requestVersion = listRequestVersion.current) => {
+    if (!endpoint || requestVersion !== listRequestVersion.current) return;
+    if (requestLock.current && !replace) return;
+
+    if (replace) listAbortController.current?.abort();
+    const controller = new AbortController();
+    listAbortController.current = controller;
     requestLock.current = true;
     setListLoading(true);
     setError("");
+
     try {
       const joiner = endpoint.includes("?") ? "&" : "?";
       const response = await fetch(endpoint + joiner + "page=" + nextPage + "&limit=" + PAGE_SIZE, {
-        cache: "no-store", credentials: "same-origin"
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: controller.signal
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Could not load records.");
-      setRows((current) => replace ? (payload.items || []) : [...current, ...(payload.items || [])]);
-      setPage(nextPage);
-      setTotal(payload.total || 0);
-      setHasMore(Boolean(payload.hasMore));
+      if (requestVersion !== listRequestVersion.current) return;
+
+      if (!Array.isArray(payload.items)) {
+        throw new Error("The server returned an invalid record list.");
+      }
+      const actualPage = Number.isSafeInteger(payload.page) && payload.page > 0 ? payload.page : nextPage;
+      const actualTotal = Math.max(0, Number(payload.total) || 0);
+      setRows((current) => {
+        if (replace || actualPage <= 1) return payload.items;
+        const existingIds = new Set(current.map((item) => item.id));
+        return [...current, ...payload.items.filter((item) => !existingIds.has(item.id))];
+      });
+      setPage(actualPage);
+      setTotal(actualTotal);
+      setHasMore(Boolean(payload.hasMore) && payload.items.length > 0 && actualPage * PAGE_SIZE < actualTotal);
+      setListReady(true);
     } catch (loadError) {
-      setError(loadError.message || "Could not load records.");
+      if (loadError.name !== "AbortError" && requestVersion === listRequestVersion.current) {
+        setError(loadError.message || "Could not load records.");
+      }
     } finally {
-      requestLock.current = false;
-      setListLoading(false);
+      if (requestVersion === listRequestVersion.current && listAbortController.current === controller) {
+        listAbortController.current = null;
+        requestLock.current = false;
+        setListLoading(false);
+      }
     }
   }, [endpoint]);
 
   useEffect(() => {
     if (!modal || selectedGuest || selectedUser || !authorized) return;
+
+    const requestVersion = ++listRequestVersion.current;
+    listAbortController.current?.abort();
+    listAbortController.current = null;
+    requestLock.current = false;
+
     setRows([]);
-    setPage(1);
-    setHasMore(true);
+    setPage(0);
+    setTotal(0);
+    setHasMore(false);
+    setListReady(false);
+    setListLoading(false);
     setError("");
-    const timer = window.setTimeout(() => loadPage(1, true), modal === "users" ? 250 : 0);
-    return () => window.clearTimeout(timer);
+
+    const timer = window.setTimeout(
+      () => loadPage(1, true, requestVersion),
+      modal === "users" ? 180 : 0
+    );
+    return () => {
+      window.clearTimeout(timer);
+      if (listRequestVersion.current === requestVersion) {
+        listRequestVersion.current += 1;
+        listAbortController.current?.abort();
+        listAbortController.current = null;
+        requestLock.current = false;
+      }
+    };
   }, [modal, segment, search, salesStatus, authorized, selectedGuest, selectedUser, loadPage]);
 
   useEffect(() => {
-    if (!modal || !hasMore || listLoading || selectedGuest || selectedUser) return;
+    // Do not allow page two to load until page one has returned actual records.
+    if (!modal || !listReady || rows.length === 0 || !hasMore || listLoading || selectedGuest || selectedUser) return;
     const root = listBodyRef.current;
     const target = sentinelRef.current;
     if (!root || !target || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting) && page > 0) loadPage(page + 1);
+      if (entries.some((entry) => entry.isIntersecting) && !requestLock.current) {
+        loadPage(page + 1, false, listRequestVersion.current);
+      }
     }, { root, rootMargin: "100px", threshold: 0.1 });
     observer.observe(target);
     return () => observer.disconnect();
-  }, [modal, hasMore, listLoading, page, loadPage, selectedGuest, selectedUser]);
+  }, [modal, listReady, rows.length, hasMore, listLoading, page, loadPage, selectedGuest, selectedUser]);
 
   const openModal = (name, userSegment = "all") => {
     setModal(name);
     setRows([]);
+    setPage(0);
+    setTotal(0);
+    setHasMore(false);
+    setListReady(false);
     setSelectedGuest(null);
     setGuestDetail(null);
     setSelectedUser(null);
@@ -511,7 +567,7 @@ export default function AdminDashboard() {
             {!listLoading && rows.length === 0 && <EmptyState title={modal === "sales" ? "No payment records yet" : modal === "guests" ? "No guest records yet" : "No users match this search"} detail={modal === "sales" ? "Sales will appear after a payment provider sends verified transaction results." : modal === "guests" ? "Guest visits will appear after the telemetry heartbeat is collected." : search ? "Try another email address or switch the user segment." : "New registered accounts will appear here."} />}
             {listLoading && <div className="admin-list-loading"><LoaderCircle className="admin-spin" size={18} /> Loading records…</div>}
             <div className="admin-load-sentinel" ref={sentinelRef} />
-            {rows.length > 0 && hasMore && <button className="admin-load-more" disabled={listLoading} onClick={()=>loadPage(page+1)}>{listLoading ? "Loading…" : "Load 10 more"}</button>}
+            {rows.length > 0 && hasMore && <button className="admin-load-more" disabled={listLoading} onClick={()=>loadPage(page + 1, false, listRequestVersion.current)}>{listLoading ? "Loading…" : "Load 10 more"}</button>}
             {rows.length > 0 && !hasMore && <p className="admin-end-list">Showing all {total.toLocaleString("en-IN")} records</p>}
           </div>
         </>}
