@@ -765,7 +765,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const params = new URLSearchParams({ page: "1", limit: "20", type: searchType });
       if (value.length >= 3) params.set("q", value);
       if (searchYear !== "all") params.set("year", searchYear);
-    if (searchTag !== "all") params.set("tag", searchTag);
+      if (searchTag !== "all") params.set("tag", searchTag);
       try {
         const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
         const response = await fetch("/api/search?" + params.toString(), { cache: "no-store", signal });
@@ -1096,6 +1096,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const params = new URLSearchParams({ page: String(nextPage), limit: "20", type: searchType });
     if (value.length >= 3) params.set("q", value);
     if (searchYear !== "all") params.set("year", searchYear);
+    if (searchTag !== "all") params.set("tag", searchTag);
     setSearchLoadingMore(true);
     setSearchError("");
     try {
@@ -1557,7 +1558,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {searchInput.trim().length > 0 && searchInput.trim().length < 3 ? (
               <div className="suggestion-empty">Enter at least 3 characters to start smart search.</div>
             ) : !searchInput.trim() && searchType === "all" && searchYear === "all" && searchTag === "all" ? (
-              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog or release year to browse the newest titles.</div>
+              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog, release year or tag to browse matching titles.</div>
             ) : suggestionsLoading ? (
               <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
             ) : searchError && !suggestions.length ? (
