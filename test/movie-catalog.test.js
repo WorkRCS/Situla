@@ -141,6 +141,6 @@ test("Movie additions seeder uses Cinemeta, validates before insert, and never c
   assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
   assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
   assert.match(api, /randomOrder/);
-  assert.match(api, /\$sample: \{ size: 10 \}/);
+  assert.match(api, /\$sample: \{ size: limit \}/);
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds/);
 });

@@ -56,15 +56,17 @@ async function getPremiumFeedWindow(c) {
   return getRollingTenYearWindow();
 }
 
-async function findDatePrioritizedFeedPage({ Model, filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
+async function findDatePrioritizedFeedPage({ Model, filter, countFilter = filter, dateField, yearField, sort, page, limit, select, ignorePageOffset = false }) {
   const window = getRollingTenYearWindow();
   const recentClause = buildRecentDateWindowFilter(dateField, yearField, window);
   const olderClause = buildOlderDateWindowFilter(dateField, yearField, window);
   const recentFilter = { $and: [filter, recentClause] };
   const olderFilter = { $and: [filter, olderClause] };
+  const recentCountFilter = { $and: [countFilter, recentClause] };
+  const olderCountFilter = { $and: [countFilter, olderClause] };
   const [recentTotal, olderTotal] = await Promise.all([
-    Model.countDocuments(recentFilter),
-    Model.countDocuments(olderFilter)
+    Model.countDocuments(recentCountFilter),
+    Model.countDocuments(olderCountFilter)
   ]);
   const total = recentTotal + olderTotal;
   const offset = ignorePageOffset ? 0 : (page - 1) * limit;
@@ -721,6 +723,7 @@ app.get('/api/movies/discover', async (c) => {
   try {
     await connectDatabase();
     const baseFilter = { imdbId: IMDB_ID, adult: { $ne: true } };
+    const countFilter = { ...baseFilter };
     const excludedIds = [...new Set(String(c.req.query('exclude') || '')
       .split(',').map((value) => value.trim().toLowerCase()).filter((value) => IMDB_ID.test(value)))].slice(0, 120);
     if (excludedIds.length) baseFilter.imdbId = { $nin: excludedIds, $regex: IMDB_ID };
@@ -735,8 +738,6 @@ app.get('/api/movies/discover', async (c) => {
         featuredOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: 1 }],
         itemsRecent: [{ $match: recentClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
         itemsOlder: [{ $match: olderClause }, { $sort: dateSort }, { $limit: PREMIUM_FEED_LIMIT }],
-        recentTotal: [{ $match: recentClause }, { $count: 'value' }],
-        olderTotal: [{ $match: olderClause }, { $count: 'value' }]
       };
       for (const category of MOVIE_CATEGORIES) {
         facets[category.key + 'Recent'] = [
@@ -756,8 +757,10 @@ app.get('/api/movies/discover', async (c) => {
         genre: category.name,
         items: mergeRecentAndOlderFeedItems(result?.[category.key + 'Recent'], result?.[category.key + 'Older'], PREMIUM_FEED_LIMIT).map(movieDto)
       })).filter((category) => category.items.length > 0);
-      const recentTotal = Number(result?.recentTotal?.[0]?.value || 0);
-      const olderTotal = Number(result?.olderTotal?.[0]?.value || 0);
+      const [recentTotal, olderTotal] = await Promise.all([
+        Movie.countDocuments({ $and: [countFilter, recentClause] }),
+        Movie.countDocuments({ $and: [countFilter, olderClause] })
+      ]);
       const featured = result?.featuredRecent?.[0] || result?.featuredOlder?.[0] || null;
       const total = recentTotal + olderTotal;
       return c.json({
@@ -772,7 +775,6 @@ app.get('/api/movies/discover', async (c) => {
     const facets = {
       featured: [{ $sample: { size: 1 } }],
       items: [{ $sample: { size: PREMIUM_FEED_LIMIT } }],
-      total: [{ $count: 'value' }]
     };
     for (const category of MOVIE_CATEGORIES) {
       facets[category.key] = [
@@ -787,7 +789,7 @@ app.get('/api/movies/discover', async (c) => {
       genre: category.name,
       items: (result?.[category.key] || []).map(movieDto)
     })).filter((category) => category.items.length > 0);
-    const total = Number(result?.total?.[0]?.value || 0);
+    const total = await Movie.countDocuments(countFilter);
     return c.json({
       featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
       items: (result?.items || []).map(movieDto),
@@ -911,6 +913,7 @@ app.get('/api/movies', async (c) => {
       const feed = await findDatePrioritizedFeedPage({
         Model: Movie,
         filter: randomOrder ? randomFilter : filter,
+        countFilter: filter,
         dateField: 'releaseDate',
         yearField: 'releaseYear',
         sort: { releaseDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
@@ -972,6 +975,7 @@ app.get('/api/tv', async (c) => {
       const feed = await findDatePrioritizedFeedPage({
         Model: TvSeries,
         filter: randomOrder ? randomFilter : filter,
+        countFilter: filter,
         dateField: 'firstAirDate',
         yearField: 'releaseYear',
         sort: { firstAirDate: -1, releaseYear: -1, popularity: -1, _id: 1 },
@@ -1057,6 +1061,7 @@ app.get('/api/anime', async (c) => {
       const feed = await findDatePrioritizedFeedPage({
         Model: AnimeSeries,
         filter: randomOrder ? randomFilter : filter,
+        countFilter: filter,
         dateField: 'airedFrom',
         yearField: 'releaseYear',
         sort: { airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1, _id: 1 },
