@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. The canonical AI-assisted discovery, source, metadata validation, artwork, and insert-only seed procedure is documented in [CATALOG_CRAWLING_POLICY.md](CATALOG_CRAWLING_POLICY.md); future catalog additions must follow that policy. The existing 70 IMDb-keyed Movie records remain curated locally; a separate five-part Cinemeta discovery seed adds 500 new, fully validated Movie records using IMDb IDs as the only Movie catalog keys. Anime additions are committed in part files. TV candidates are committed locally; the explicit TV seed verifies descriptions, seasons, episodes and artwork against TVmaze before writing to MongoDB.
+Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. The canonical curation, source, metadata validation, artwork and insert-only seed procedure is documented in [CATALOG_CRAWLING_POLICY.md](CATALOG_CRAWLING_POLICY.md). The default `npm run seed:catalog` command is offline: it reads committed data files only, filters to 2020–2026, preserves IMDb/TMDB/MAL identifiers and inserts only records that pass the complete-content and content-safety checks. It does not call Movie, TV or Anime metadata APIs. Provider-backed historical seeders are isolated behind explicitly named `legacy-online` commands and are not used by the default seed.
 
 ## Identifiers and playback
 
@@ -39,6 +39,21 @@ Movie and TV poster cards offer the device-native share sheet. The shared payloa
 Administrators can create, edit, schedule, draft and delete site-wide announcements from the Admin dashboard. Visitors see published announcements only after their scheduled timestamp. Read receipts are stored per signed-in account, while guests use browser-local read state. An announcement can include either a secure HTTPS media URL (direct images render as images; supported YouTube/Vimeo URLs render in an iframe) or an uploaded JPG, PNG, WebP, GIF or AVIF image up to 4 MB. Uploaded images are stored with the announcement in MongoDB, so no additional storage token is required. Schedule times are saved as ISO timestamps and displayed in each visitor's local time zone.
 
 ## Static catalogue seed
+
+### Default offline 2020–2026 seed
+
+Run one command after setting `MONGODB_URI` and `MONGODB_DB_NAME`:
+
+```sh
+npm run seed:catalog
+```
+
+The command reads version-controlled JavaScript data only; it makes no metadata-provider API calls. It imports only records dated 2020 through 2026 that pass the full policy checks, and uses insert-only writes. Movie IDs remain IMDb `tt…`, TV IDs remain numeric TMDB TV IDs, and Anime IDs remain MAL IDs. A green **Popular** tag is derived from each catalogue's own popularity/rank fields, with an explicit `isPopular` override available.
+
+**Current data-pack limitation:** the committed 2020–2026 Movie and TV entries do not currently pass the full synopsis/artwork/credits/episode-guide requirements, so the offline command reports those gaps instead of importing incomplete records. The Anime pack contains a policy-valid subset (the current pack has 198 titles with complete episode still references). This is not yet a complete worldwide 2020–2026 catalogue; more fully curated static Movie and TV records must be added under `data/` before those collections can be completely seeded. The command reports the prepared and rejected counts on every run.
+
+The prior provider-backed seeders remain available only as `npm run seed:movies:legacy-online`, `npm run seed:tv:legacy-online`, and `npm run seed:catalog:legacy-online`. Those commands are intentionally separate and are not called by `seed:catalog`.
+
 
 Movies and TV retain separate identifiers. Anime has its own **new-only MAL seed**, and TV has a verified **200-new-series seed**:
 
