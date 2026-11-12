@@ -258,7 +258,7 @@ export async function seedOfflineCatalog(selectedKinds = ["movie", "tv", "anime"
   }
 
   const hasUsableRecordsForEveryKind = selectedKinds.every((kind) => prepared[kind].records.length > 0);
-  if (!complete) {
+  if (!hasUsableRecordsForEveryKind) {
     console.warn("PARTIAL OFFLINE SEED: the local data pack does not yet contain complete, policy-compliant Movie, TV and Anime records for the entire 2020–2026 catalogue.");
   }
   return { hasUsableRecordsForEveryKind, summary };
