@@ -255,3 +255,19 @@ When the user later says “add 100 movies”, “add 50 TV series”, or “add
 ---
 
 **Non-negotiable rule:** Never weaken a validation rule just to hit a requested count. Find more correctly matched records, or explain why the requested fully complete batch is not yet available.
+
+## 10. Default seed is offline and release-window bounded
+
+The default commands are `npm run seed:catalog`, `npm run seed:movies`, `npm run seed:tv`, and `npm run seed:anime`. They run `scripts/seed-catalog.js`, read only committed `data/*.js` files, and never call Cinemeta, TVmaze, TMDB, Jikan, MAL, AniList, IMDb or another metadata API. They restrict eligible records to release/airing years **2020–2026 inclusive**.
+
+The offline seed preserves the canonical keys from section 2:
+- Movie: valid IMDb `imdbId` matching `tt…`.
+- TV: positive numeric TMDB TV `tmdbId`.
+- Anime: positive numeric MAL `malId`.
+
+Before connecting to MongoDB, it validates the complete local candidates. Movie requires a real synopsis, separate HTTPS poster/backdrop, year/date, runtime, genres, cast and director. TV requires synopsis, separate HTTPS poster/backdrop and a reconciled full season/episode guide with a matching still for every episode. Anime requires synopsis, poster/fallback, banner/backdrop, year, exact episode-guide count and a matching still for every episode. Adult genres and explicit adult records are rejected. A normalized title/year check is also applied in addition to canonical-ID deduplication. Database writes are insert-only; existing records are never updated.
+
+The seed writes only locally committed records that pass these checks. It reports missing/rejected Movie, TV and Anime candidates rather than lowering the quality threshold or fabricating metadata. **The current committed 2020–2026 data is not complete:** the existing Movie and TV entries do not pass the complete-content checks; the Anime additions pack has 198 records that meet the strict 100%-episode-still rule. Therefore, a successful invocation is an offline partial import until complete static Movie and TV packs are curated. Do not describe this repository as containing every worldwide 2020–2026 release.
+
+The old provider-backed Movie and TV seeders are available only through explicit `legacy-online` package scripts. They are not called by any default seed command. The legacy Anime seed remains available as `seed:anime:legacy-curated` for its historical 80%-still pack, but it is also not the default path.
+
