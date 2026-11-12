@@ -199,6 +199,26 @@ test("TV and Anime series cards both share their poster, title, and canonical de
   assert.match(css, /\.series-card-tv \.share-feedback\{top:85px\}/);
 });
 
+test("Movie, TV and Anime catalogue cards use the same polished card and badge system", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  const movieCard = app.slice(app.indexOf("const MovieCard"), app.indexOf("function SeriesPosterImage"));
+  const seriesCard = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  assert.match(movieCard, /className="movie-card"/);
+  assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind\}/);
+  assert.match(movieCard, /catalog-badge catalog-badge-/);
+  assert.match(seriesCard, /catalog-badge catalog-badge-/);
+  assert.match(css, /\.movie-card \{[\s\S]*?background:linear-gradient\(155deg/);
+  assert.match(css, /\.movie-card \.catalog-badge::before/);
+  assert.match(css, /\.movie-card \.catalog-badge-hot/);
+  assert.match(css, /\.movie-card \.catalog-badge-popular/);
+  assert.match(css, /\.movie-card \.catalog-badge-featured/);
+  assert.match(css, /\.movie-card \.series-card-meta/);
+  assert.match(css, /\.movie-card \.series-card-category/);
+  assert.match(css, /\.movie-card:focus-within/);
+  assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
+});
+
 test("mobile/tablet bottom navigation has no in-app Back or Search button", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
