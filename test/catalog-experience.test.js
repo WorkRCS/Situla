@@ -184,12 +184,12 @@ test("TV and Anime series cards both share their poster, title, and canonical de
   const css = await read("../app/globals.css");
   const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
   assert.match(seriesCard, /const isAnime = kind === "anime"/);
-  assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\)\) return/);
-  assert.match(seriesCard, /title: title \|\| \(isTv \? "TV series" : "Anime"\)/);
+  assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\) \|\| sharePreparing\) return/);
+  assert.match(seriesCard, /const shareTitle = title \|\| \(isTv \? "TV series" : "Anime"\)/);
   assert.match(seriesCard, /posterUrl: item\.posterUrl \|\| item\.posterFallbackUrl/);
   assert.match(seriesCard, /\{\(isTv \|\| isAnime\) && href &&/);
-  assert.match(seriesCard, /title=\{isTv \? "Share TV series" : "Share anime"\}/);
-  assert.match(app, /navigator\.canShare\(withFile\)/);
+  assert.match(seriesCard, /title=\{"Share poster and " \+ \(isTv \? "TV series" : "Anime"\) \+ " link"\}/);
+  assert.match(app, /navigator\.canShare\(data\)/);
   assert.match(app, /new File\(\[blob\]/);
   assert.match(app, /navigator\.share\(data\)/);
   assert.match(app, /navigator\.clipboard\.writeText\(url\)/);
