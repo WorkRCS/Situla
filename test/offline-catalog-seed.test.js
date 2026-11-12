@@ -145,6 +145,20 @@ test("Hot, Popular and Featured badges use separate market, trend and editorial 
   assert.equal(getCatalogBadge({ voteAverage: 4.1, voteCount: 0 }, "movie", now), null);
 });
 
+test("Featured can be curated securely from the admin dashboard for all three catalogues", async () => {
+  const adminApi = await read("../src/admin.js");
+  const adminUi = await read("../app/components/admin-dashboard.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(adminApi, /router\.get\('\/catalog'/);
+  assert.match(adminApi, /router\.patch\('\/catalog\/:mediaType\/:mediaId\/featured'/);
+  assert.match(adminApi, /validCatalogTarget/);
+  assert.match(adminApi, /catalog_featured_updated/);
+  assert.match(adminUi, /Featured picks/);
+  assert.match(adminUi, /Set featured/);
+  assert.match(adminUi, /Remove featured/);
+  assert.match(css, /\.admin-catalog-row/);
+});
+
 test("catalog cards render differentiated badges and search asks for a title only", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
