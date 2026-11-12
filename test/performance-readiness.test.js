@@ -37,7 +37,7 @@ test("database connections and API admissions are bounded without cold-start ind
   assert.match(api, /maxQueued: 48/);
   assert.match(api, /X-Situla-Request-Id/);
   assert.match(api, /Server-Timing/);
-  assert.match(api, /CATALOG_TIER_MEMO_TTL_MS = 5_000/);
+  assert.match(api, /CATALOG_ACCESS_MEMO_TTL_MS = 5_000/);
 });
 
 test("catalog search uses existing text indexes rather than collection-wide regex scans", async () => {

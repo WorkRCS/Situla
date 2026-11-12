@@ -11,7 +11,7 @@ test("TV and Anime initial catalog requests rotate to a random first batch", asy
   assert.match(app, /\/api\/anime\?page=1&limit=10&random=true/);
   assert.match(app, /readRecentCatalogIds\(recentKey\)/);
   assert.match(app, /rememberRecentCatalogIds\(recentKey/);
-  assert.match(api, /baseFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
+  assert.match(api, /publicFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
 });
 
 test("TV and Anime load-more requests exclude already visible canonical IDs", async () => {
