@@ -139,10 +139,12 @@ test('stale public catalog responses are served when a database read fails', asy
     staleUntil
   }]]);
   let requestedKey = '';
+  let returnedEntry = null;
   const redis = {
     get: async (value) => {
       requestedKey = value;
-      return store.get(value) ?? null;
+      returnedEntry = store.get(value) ?? null;
+      return returnedEntry;
     },
     set: async () => 'OK'
   };
@@ -152,7 +154,11 @@ test('stale public catalog responses are served when a database read fails', asy
 
   const response = await app.request(requestUrl);
   assert.equal(requestedKey, key);
-  assert.equal(response.status, 200);
+  assert.equal(returnedEntry?.status, 200);
+  assert.equal(typeof returnedEntry?.body, 'string');
+  assert.ok(returnedEntry?.freshUntil < Date.now());
+  assert.ok(returnedEntry?.staleUntil > Date.now());
   assert.equal(response.headers.get('x-situla-cache'), 'STALE');
+  assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { items: [{ mediaType: 'anime', malId: 5114 }] });
 });
