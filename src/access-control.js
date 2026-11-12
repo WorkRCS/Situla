@@ -164,7 +164,14 @@ async function applyHeartbeat(session, principal, playing, now) {
       $set: { status: 'locked', isPlaying: false, endedAt: now, expiresAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) }
     });
   }
-  return { access, billableSeconds, sessionId: String(session._id) };
+  return {
+    access,
+    billableSeconds,
+    sessionId: String(session._id),
+    startedPlaying: Boolean(playing) && !Boolean(session.isPlaying),
+    mediaType: session.mediaType,
+    mediaId: String(session.mediaId)
+  };
 }
 
 export async function startPlaybackSession(principal, media, now = new Date()) {
