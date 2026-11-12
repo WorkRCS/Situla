@@ -1180,8 +1180,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         setAnimeTotal(Number(payload.pagination?.total) || animeTotal);
         setError("");
       }
-    } catch (requestError) {
-      setError(requestError.message || "Unable to load the next catalog page.");
+    } catch {
+      const hasExistingItems = tab === "tv" ? tvShows.length > 0
+        : tab === "anime" ? animeShows.length > 0
+          : tab === "search" ? searchResults.length > 0
+            : movies.length > 0;
+      setError(hasExistingItems
+        ? ""
+        : "Connection is slow. Your current catalog remains available; try loading more again shortly.");
     } finally {
       loadMoreLock.current = false;
       setLoadingMore(false);

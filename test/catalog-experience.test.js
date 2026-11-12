@@ -240,3 +240,11 @@ test("catalog refresh failures retain previously rendered Movie, TV and Anime it
   assert.doesNotMatch(app, /if \(tab === "tv"\) setTvShows\(\[\]\)/);
   assert.doesNotMatch(app, /else setAnimeShows\(\[\]\)/);
 });
+
+test("load-more failures keep current catalog cards and do not surface raw server or timeout messages", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const loadMore = app.slice(app.indexOf("async function loadMore"), app.indexOf("function removeHistoryItem"));
+  assert.match(loadMore, /const hasExistingItems = tab === "tv"/);
+  assert.match(loadMore, /Your current catalog remains available/);
+  assert.doesNotMatch(loadMore, /requestError\.message|setMovies\(\[\]\)|setTvShows\(\[\]\)|setAnimeShows\(\[\]\)/);
+});
