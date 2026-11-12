@@ -302,7 +302,7 @@ app.post('/api/auth/email', async (c) => {
         await user.save();
       }
       if (!user.passwordHash || !await verifyPassword(password, user.passwordHash)) {
-        return c.json({ error: 'Email or password is incorrect. Use Google Sign-in if this account was created with Google.', code: 'INVALID_CREDENTIALS' }, 401);
+        return c.json({ error: 'Email or password is incorrect.', code: 'INVALID_CREDENTIALS' }, 401);
       }
       if (!user.hasPassword) {
         user.hasPassword = true;

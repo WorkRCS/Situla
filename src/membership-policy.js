@@ -19,6 +19,27 @@ export function getWatchPolicy(user = null, now = new Date()) {
   return { planId: 'premium', billingCycle, ...WATCH_POLICIES.premium[billingCycle] };
 }
 
+export function getAccessSnapshot(policy, state = {}, now = new Date()) {
+  const unlimited = policy.allowanceSeconds === null;
+  const usedSeconds = unlimited ? 0 : Math.max(0, Number(state.usedSeconds) || 0);
+  const cooldownUntil = !unlimited && state.cooldownUntil ? new Date(state.cooldownUntil) : null;
+  const cooldownRemainingSeconds = cooldownUntil && cooldownUntil > now
+    ? Math.ceil((cooldownUntil.getTime() - now.getTime()) / 1000) : 0;
+  const remainingSeconds = unlimited
+    ? null : Math.max(0, policy.allowanceSeconds - usedSeconds);
+  return {
+    allowed: cooldownRemainingSeconds === 0 && (remainingSeconds === null || remainingSeconds > 0),
+    planId: policy.planId,
+    billingCycle: policy.billingCycle,
+    allowanceSeconds: policy.allowanceSeconds,
+    cooldownSeconds: policy.cooldownSeconds,
+    usedSeconds,
+    remainingSeconds,
+    cooldownUntil,
+    cooldownRemainingSeconds
+  };
+}
+
 export function addCalendarMonths(date, months) {
   const next = new Date(date);
   const day = next.getDate();

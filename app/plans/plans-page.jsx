@@ -54,7 +54,7 @@ const PLANS = [
       "No account or sign-in required",
       "Browse Home, Search, Movies, TV and Anime",
       "Up to 1 hour of watch access per cycle",
-      "1-hour watch cooldown after the allowance",
+      "2-hour watch cooldown after the allowance",
       "Guest restriction uses public IP and an anonymous session",
       "Catalog browsing stays available during cooldown"
     ],
@@ -79,7 +79,7 @@ const PLANS = [
     features: [
       "Account and sign-in required",
       "Up to 3 hours of account watch time per cycle",
-      "2-hour watch cooldown after the allowance",
+      "1-hour watch cooldown after the allowance",
       "1 registered device at a time",
       "Account and device-based access checks",
       "Browse the full catalog during cooldown"

@@ -93,3 +93,11 @@ test("Public-facing playback copy does not disclose provider brands", async () =
   assert.ok(profile.includes("<strong>Premium movie playback</strong>"));
   assert.ok(tvDetail.includes("open the episode in Situla"));
 });
+
+
+test("Plan feature copy matches the active Guest and Free cooldown policy", async () => {
+  const page = await read("../app/plans/plans-page.jsx");
+  assert.ok(page.includes('"2-hour watch cooldown after the allowance"'));
+  assert.ok(page.includes('"1-hour watch cooldown after the allowance"'));
+  assert.ok(!page.includes('"2-hour watch cooldown after the allowance",\n      "1 registered device at a time"'));
+});

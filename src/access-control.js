@@ -1,7 +1,7 @@
 import { getCookie, setCookie } from 'hono/cookie';
 import { randomToken, hashToken, keyedHash, getClientIp, GUEST_COOKIE, getAuthenticatedSession } from './auth.js';
 import { GuestAccess, GuestSession, UsageState, PlaybackSession } from './models.js';
-import { getWatchPolicy } from './membership-policy.js';
+import { getWatchPolicy, getAccessSnapshot } from './membership-policy.js';
 
 const HEARTBEAT_MAX_SECONDS = 45;
 const ACTIVE_SESSION_LEASE_MS = 90 * 1000;
@@ -70,6 +70,16 @@ async function ensureUsageState(principal) {
 export async function readAccessStatus(principal, now = new Date()) {
   const policy = getWatchPolicy(principal.user || null, now);
   let state = await ensureUsageState(principal);
+  if (policy.allowanceSeconds === null) {
+    if (Number(state.usedSeconds || 0) !== 0 || state.cooldownUntil) {
+      state = await UsageState.findOneAndUpdate(
+        { _id: state._id },
+        { $set: { usedSeconds: 0, cooldownUntil: null, cycleStartedAt: now } },
+        { new: true }
+      ) || await UsageState.findById(state._id);
+    }
+    return getAccessSnapshot(policy, state, now);
+  }
   if (state.cooldownUntil && new Date(state.cooldownUntil) <= now) {
     state = await UsageState.findOneAndUpdate(
       { _id: state._id, cooldownUntil: { $lte: now } },
@@ -84,22 +94,7 @@ export async function readAccessStatus(principal, now = new Date()) {
       { new: true }
     ) || await UsageState.findById(state._id);
   }
-  const cooldownUntil = state.cooldownUntil ? new Date(state.cooldownUntil) : null;
-  const cooldownRemainingSeconds = cooldownUntil && cooldownUntil > now
-    ? Math.ceil((cooldownUntil.getTime() - now.getTime()) / 1000) : 0;
-  const remainingSeconds = policy.allowanceSeconds === null
-    ? null : Math.max(0, policy.allowanceSeconds - Number(state.usedSeconds || 0));
-  return {
-    allowed: cooldownRemainingSeconds === 0 && (remainingSeconds === null || remainingSeconds > 0),
-    planId: policy.planId,
-    billingCycle: policy.billingCycle,
-    allowanceSeconds: policy.allowanceSeconds,
-    cooldownSeconds: policy.cooldownSeconds,
-    usedSeconds: Number(state.usedSeconds || 0),
-    remainingSeconds,
-    cooldownUntil,
-    cooldownRemainingSeconds
-  };
+  return getAccessSnapshot(policy, state, now);
 }
 
 async function addWatchedSeconds(principal, seconds, now) {
