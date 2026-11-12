@@ -190,6 +190,12 @@ test("TVmaze public ratings can supply TV badge signals when an IMDb mapping is 
     providerRating: 8.1,
     providerPopularity: 70
   }, "tv", now)?.key, "hot");
+  assert.equal(getCatalogBadge({
+    voteAverage: 5.2,
+    voteCount: 0,
+    providerRating: 8.1,
+    providerPopularity: 30
+  }, "tv", now)?.key, "popular");
 });
 
 test("all three badges use cached public data and require no Admin curation", async () => {
