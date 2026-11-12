@@ -530,7 +530,6 @@ app.post('/api/presence', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
   try {
-    await connectDatabase();
     const body = await c.req.json().catch(() => ({}));
     const activityId = String(body.activityId || '');
     if (!/^[a-zA-Z0-9_-]{16,100}$/.test(activityId) ||
@@ -538,6 +537,7 @@ app.post('/api/presence', async (c) => {
         (body.stop !== undefined && typeof body.stop !== 'boolean')) {
       return c.json({ error: 'Invalid activity heartbeat.' }, 400);
     }
+    await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
     const sourceSessionId = principal.ownerType === 'user'
       ? principal.session._id : principal.guestSession._id;
