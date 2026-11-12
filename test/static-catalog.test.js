@@ -65,7 +65,7 @@ test("200 new Anime entries have unique MAL IDs, matching posters/banners and ep
     stillCount += stills;
   }
   assert.equal(episodeCount, 2883);
-  assert.equal(stillCount, 2881);
+  assert.equal(stillCount, 2883);
 });
 
 test("Anime cleanup is dry-run by default and only deletes records with no poster or banner", async () => {
