@@ -124,7 +124,7 @@ export function validateOfflineAnime(record) {
   if (!safeHttps(record?.bannerUrl) || !safeHttps(record?.backdropUrl)) throw new Error("missing landscape banner/backdrop");
   if (!catalogReleaseYear(record, "anime")) throw new Error("missing release year");
   if (!Number.isSafeInteger(Number(record?.episodes)) || Number(record.episodes) < 1) throw new Error("missing episode total");
-  if (!hasSafeGenres(record) || ["rx", "hentai"].includes(String(record?.rating || "").toLowerCase())) {
+  if (record?.adult === true || !hasSafeGenres(record) || ["rx", "hentai"].includes(String(record?.rating || "").toLowerCase())) {
     throw new Error("adult anime or disallowed genres");
   }
   if (record?.malUrl !== "https://myanimelist.net/anime/" + id) throw new Error("missing canonical MAL URL");
