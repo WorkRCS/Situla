@@ -193,7 +193,7 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
     <>
       <div className="movie-poster">
         <MoviePosterImage movie={movie} />
-        {isPopularCatalogItem(movie, "movie") && <span className="popular-pill">POPULAR</span>}
+        {isPopularCatalogItem(movie, "movie") && <span className="popular-pill">Popular</span>}
         {movie.voteAverage > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(movie.voteAverage).toFixed(1)}</span>
         )}
@@ -325,7 +325,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
     <>
       <div className="movie-poster">
         <SeriesPosterImage item={item} title={title} />
-        {isPopularCatalogItem(item, kind) && <span className="popular-pill">POPULAR</span>}
+        {isPopularCatalogItem(item, kind) && <span className="popular-pill">Popular</span>}
         {rating > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
         )}
