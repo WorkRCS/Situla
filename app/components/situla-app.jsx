@@ -387,6 +387,60 @@ function movieNavigationKey(movie) {
   return "movie:" + String(movie?.imdbId || "").toLowerCase();
 }
 
+function useMediaRowPointerDrag() {
+  const rowRef = useRef(null);
+  const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false, suppressClick: false });
+
+  function onPointerDown(event) {
+    if (event.pointerType !== "mouse" || event.button !== 0 ||
+        event.target?.closest?.("button, input, select, textarea, [contenteditable='true']")) return;
+    dragRef.current = {
+      active: true,
+      startX: event.clientX,
+      startScroll: event.currentTarget.scrollLeft,
+      moved: false,
+      suppressClick: false
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function onPointerMove(event) {
+    const drag = dragRef.current;
+    if (!drag.active) return;
+    const distance = event.clientX - drag.startX;
+    if (Math.abs(distance) > 8) drag.moved = true;
+    if (!drag.moved) return;
+    event.currentTarget.scrollLeft = drag.startScroll - distance;
+    event.currentTarget.classList.add("is-pointer-dragging");
+    event.preventDefault();
+  }
+
+  function onPointerUp(event) {
+    const drag = dragRef.current;
+    if (!drag.active) return;
+    drag.active = false;
+    drag.suppressClick = drag.moved;
+    event.currentTarget.classList.remove("is-pointer-dragging");
+  }
+
+  function onPointerCancel(event) {
+    dragRef.current.active = false;
+    dragRef.current.suppressClick = false;
+    dragRef.current.moved = false;
+    event.currentTarget.classList.remove("is-pointer-dragging");
+  }
+
+  function onClickCapture(event) {
+    if (!dragRef.current.suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragRef.current.suppressClick = false;
+    dragRef.current.moved = false;
+  }
+
+  return { rowRef, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture };
+}
+
 const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload }) {
   const [shareFeedback, setShareFeedback] = useState("");
   const [sharePreparing, setSharePreparing] = useState(false);
@@ -581,6 +635,7 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
 }
 
 function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
+  const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
   return (
     <section className="netflix-shelf home-series-shelf">
@@ -593,7 +648,15 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
           Explore all <BootstrapIcon icon="arrow-up-right" size={14} />
         </Link>
       </div>
-      <div className="media-row flex gap-4 overflow-x-auto pb-3">
+      <div
+        ref={shelfDrag.rowRef}
+        className="media-row flex gap-4 overflow-x-auto pb-3"
+        onPointerDown={shelfDrag.onPointerDown}
+        onPointerMove={shelfDrag.onPointerMove}
+        onPointerUp={shelfDrag.onPointerUp}
+        onPointerCancel={shelfDrag.onPointerCancel}
+        onClickCapture={shelfDrag.onClickCapture}
+      >
         {items.slice(0, 10).map((item) => (
           <SeriesCard
             key={kind === "tv" ? item.tmdbId : item.malId}
@@ -612,6 +675,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
 }
 
 function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
+  const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
   return (
     <section className="netflix-shelf home-series-shelf">
@@ -625,7 +689,15 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
           <Link href="/anime" className="shelf-browse-link">Anime <BootstrapIcon icon="arrow-up-right" size={13} /></Link>
         </div>
       </div>
-      <div className="media-row flex gap-4 overflow-x-auto pb-3">
+      <div
+        ref={shelfDrag.rowRef}
+        className="media-row flex gap-4 overflow-x-auto pb-3"
+        onPointerDown={shelfDrag.onPointerDown}
+        onPointerMove={shelfDrag.onPointerMove}
+        onPointerUp={shelfDrag.onPointerUp}
+        onPointerCancel={shelfDrag.onPointerCancel}
+        onClickCapture={shelfDrag.onClickCapture}
+      >
         {items.slice(0, 10).map((item) => {
           const kind = item.homeMediaKind;
           return (
@@ -647,41 +719,8 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
 }
 
 function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
-  const rowRef = useRef(null);
-  const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
+  const shelfDrag = useMediaRowPointerDrag();
   if (!movies.length) return null;
-
-  function onPointerDown(event) {
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
-    dragRef.current = {
-      active: true,
-      startX: event.clientX,
-      startScroll: rowRef.current?.scrollLeft || 0,
-      moved: false,
-      suppressClick: false
-    };
-  }
-
-  function onPointerMove(event) {
-    if (!dragRef.current.active || !rowRef.current) return;
-    const distance = event.clientX - dragRef.current.startX;
-    if (Math.abs(distance) > 8) dragRef.current.moved = true;
-    if (dragRef.current.moved) rowRef.current.scrollLeft = dragRef.current.startScroll - distance;
-  }
-
-  function onPointerUp() {
-    if (!dragRef.current.active) return;
-    dragRef.current.active = false;
-    dragRef.current.suppressClick = dragRef.current.moved;
-  }
-
-  function onClickCapture(event) {
-    if (!dragRef.current.suppressClick) return;
-    event.preventDefault();
-    event.stopPropagation();
-    dragRef.current.suppressClick = false;
-    dragRef.current.moved = false;
-  }
 
   return (
     <section className="netflix-shelf">
@@ -692,13 +731,13 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingN
         </div>
       </div>
       <div
-        ref={rowRef}
+        ref={shelfDrag.rowRef}
         className="media-row flex gap-4 overflow-x-auto pb-3"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onClickCapture={onClickCapture}
+        onPointerDown={shelfDrag.onPointerDown}
+        onPointerMove={shelfDrag.onPointerMove}
+        onPointerUp={shelfDrag.onPointerUp}
+        onPointerCancel={shelfDrag.onPointerCancel}
+        onClickCapture={shelfDrag.onClickCapture}
       >
         {movies.map((movie, index) => (
           <MovieCard
@@ -1734,7 +1773,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         document.body
       )}
 
-      <div className={tab === "home" ? "home-page-layout" : "catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")}>
+      <div className={tab === "home" ? "home-page-layout" : "catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")}>
 
 
         {tab === "home" && (
@@ -1927,11 +1966,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
 
         {tab === "movies" && (
-          <section className="pb-8">
-            <div className="section-heading">
-              <div><span>EXPLORE THE CATALOG</span><h1 className="mt-1 text-2xl font-black">Movies</h1></div>
-            </div>
-            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(savedMediaKey(catalogSpotlight, "movie"))} />}
+          <section className="pb-8" aria-label="Movies catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(savedMediaKey(catalogSpotlight, "movie"))} />}
             {loading && !movies.length ? (
               <SkeletonGrid count={12} />
             ) : movies.length ? (
@@ -1952,11 +1987,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         {tab === "tv" && (
-          <section className="pb-8">
-            <div className="section-heading">
-              <div><span>WATCH BY SEASON & EPISODE</span><h1 className="mt-1 text-2xl font-black">TV series</h1></div>
-            </div>
-            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="tv" onWatch={openTvSeries} />}
+          <section className="pb-8" aria-label="TV series catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="tv" onWatch={openTvSeries} />}
             {loading && !tvShows.length ? (
               <SkeletonGrid count={12} />
             ) : tvShows.length ? (
@@ -1977,11 +2008,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         {tab === "anime" && (
-          <section className="pb-8">
-            <div className="section-heading">
-              <div><span>MYANIMELIST · SUB & DUB</span><h1 className="mt-1 text-2xl font-black">Anime series</h1></div>
-            </div>
-            {catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="anime" onWatch={openAnimeSeries} />}
+          <section className="pb-8" aria-label="Anime catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="anime" onWatch={openAnimeSeries} />}
             {loading && !animeShows.length ? (
               <SkeletonGrid count={12} />
             ) : animeShows.length ? (
