@@ -104,8 +104,11 @@ test("Anime list and search APIs omit heavy episode guides while detail API expo
   assert.match(api, /export function animeSeriesDto/);
   assert.match(api, /episodeGuide: Array\.isArray\(anime\.episodeGuide\)/);
   assert.match(api, /AnimeSeries\.find\(filter\)\.select\('-episodeGuide -relatedAnime'\)/);
-  assert.match(api, /const animeFilter = numericId[\s\S]*?\$text: \{ \$search: query \}/);
-  assert.match(api, /AnimeSeries\.find\(animeFilter\)\.select\('-episodeGuide -relatedAnime'\)/);
+  const search = api.slice(api.indexOf("app.get('/api/search'"), api.indexOf("app.get('/api/movies/suggestions'"));
+  assert.match(search, /type: 'anime'[\s\S]*?Model: AnimeSeries/);
+  assert.match(search, /dateField: 'airedFrom'/);
+  assert.match(search, /select: 'malId title titleEnglish[\s\S]*?rating'/);
+  assert.doesNotMatch(search, /select: '[^']*episodeGuide/);
   assert.match(api, /AnimeSeries\.findOne\(\{ malId, type: \{ \$in: \['TV', 'ONA'\] \} \}\)\.lean\(\)/);
 });
 

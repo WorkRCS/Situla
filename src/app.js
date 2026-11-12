@@ -960,12 +960,8 @@ app.get('/api/search', async (c) => {
       year < 1870 || year > new Date().getFullYear())) {
     return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
   }
-  if (query && query.length < 3) {
-    return c.json({ items: [], hasMore: false, page: 1, limit: 20, minQueryLength: 3 });
-  }
-  if (!query && selectedType === 'all' && year === null) {
-    return c.json({ items: [], hasMore: false, page: 1, limit: 20, minQueryLength: 3 });
-  }
+  if (query && query.length < 3) return c.json({ items: [] });
+  if (!query && selectedType === 'all' && year === null) return c.json({ items: [] });
 
   const requestedPage = Number(c.req.query('page') || 1);
   const requestedLimit = Number(c.req.query('limit') || 20);

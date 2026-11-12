@@ -337,10 +337,12 @@ test('Hindi movie player URL receives the same validated IMDb ID and gold theme'
 });
 
 
-test('global search returns an empty list for short queries without touching the database', async () => {
-  const response = await app.request('/api/search?q=a');
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { items: [] });
+test('global search returns an empty list below the three-character threshold without touching the database', async () => {
+  for (const query of ['a', 'ab']) {
+    const response = await app.request('/api/search?q=' + query);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { items: [] });
+  }
 });
 
 test('TVmaze importer matches exact candidate titles and maps verified season/episode metadata', async () => {
