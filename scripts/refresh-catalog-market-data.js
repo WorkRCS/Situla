@@ -164,7 +164,8 @@ async function fetchTvmazeShow(record) {
     Number(referenceTail.split("/")[0].split("?")[0].split("#")[0]) || 0;
   if (referenceId > 0) {
     const direct = await fetchTvmazeResource(TVMAZE_API + "/shows/" + referenceId);
-    return chooseTvmazeMatch(direct ? [direct] : [], record);
+    const matchedDirect = chooseTvmazeMatch(direct ? [direct] : [], record);
+    if (matchedDirect) return matchedDirect;
   }
   const query = encodeURIComponent(record.title || record.originalTitle || "");
   if (!query) return null;
