@@ -28,7 +28,9 @@ function marketSignals(item, mediaType) {
   const votes = Math.max(0, number(isAnime ? item?.scoredBy : item?.voteCount));
   const storedRating = number(isAnime ? item?.score : item?.voteAverage);
   const providerRating = isTv ? number(item?.providerRating) : 0;
-  const rating = clamp(storedRating > 0 ? storedRating : providerRating, 0, 10);
+  const rating = clamp(isTv && votes === 0 && providerRating > 0
+    ? providerRating
+    : storedRating > 0 ? storedRating : providerRating, 0, 10);
   const popularity = Math.max(
     0,
     number(item?.popularity),
