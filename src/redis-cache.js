@@ -132,16 +132,16 @@ export function createCatalogResponseCache({
   }
 
   function serveCached(c, entry, status, layer) {
-    const headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Cache-Control': 'no-store',
-      'X-Situla-Cache': status
-    };
-    if (layer) headers['X-Situla-Cache-Layer'] = layer;
+    // Set diagnostic headers on the context before creating the replacement response;
+    // returning a stale body after next() must not inherit the failed response status/headers.
+    c.header('Cache-Control', 'no-store');
+    c.header('Content-Type', 'application/json; charset=UTF-8');
+    c.header('X-Situla-Cache', status);
+    if (layer) c.header('X-Situla-Cache-Layer', layer);
     if (status === 'STALE') {
-      headers['X-Situla-Cache-Age'] = String(Math.max(0, Math.floor((Date.now() - entry.freshUntil) / 1000)));
+      c.header('X-Situla-Cache-Age', String(Math.max(0, Math.floor((Date.now() - entry.freshUntil) / 1000))));
     }
-    return c.body(entry.body, 200, headers);
+    return c.newResponse(entry.body, 200);
   }
 
   return async (c, next) => {
