@@ -17,7 +17,7 @@ import {
   validateOfflineTv
 } from "../scripts/seed-catalog.js";
 import { calculateDecayedTrendScore, getCatalogBadge } from "../src/catalog-popularity.js";
-import { calculateVoteVelocity7d } from "../scripts/refresh-catalog-market-data.js";
+import { calculateVoteVelocity7d, chooseTvmazeMatch } from "../scripts/refresh-catalog-market-data.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
@@ -171,6 +171,22 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
   assert.equal(calculateVoteVelocity7d(0, null, 200, now), 0);
 });
 
+test("TVmaze public ratings can supply TV badge signals when an IMDb mapping is unavailable", async () => {
+  const now = Date.now();
+  const match = chooseTvmazeMatch([
+    { score: 0.98, show: { id: 12, name: "Example Series", premiered: "2024-01-01", rating: { average: 8.1 }, weight: 70 } },
+    { score: 0.99, show: { id: 13, name: "Example Series", premiered: "2014-01-01", rating: { average: 9.9 }, weight: 90 } }
+  ], { title: "Example Series", releaseYear: 2024 });
+  assert.equal(match?.id, 12);
+  assert.equal(chooseTvmazeMatch([{ show: { name: "Different Series", premiered: "2024-01-01" } }],
+    { title: "Example Series", releaseYear: 2024 }), null);
+  assert.equal(getCatalogBadge({
+    firstAirDate: new Date(now - (30 * 24 * 60 * 60 * 1000)).toISOString(),
+    providerRating: 8.1,
+    providerPopularity: 70
+  }, "tv", now)?.key, "hot");
+});
+
 test("all three badges use cached public data and require no Admin curation", async () => {
   const adminApi = await read("../src/admin.js");
   const adminUi = await read("../app/components/admin-dashboard.jsx");
@@ -188,6 +204,8 @@ test("all three badges use cached public data and require no Admin curation", as
   assert.match(app, /catalogBadge: getCatalogBadge/);
   assert.match(refresh, /datasets\.imdbws\.com/);
   assert.match(refresh, /api\.jikan\.moe/);
+  assert.match(refresh, /api\.tvmaze\.com/);
+  assert.match(refresh, /refreshTvmazeMarketData/);
   assert.match(refresh, /externalImdbId/);
   assert.match(refresh, /calculateVoteVelocity7d/);
   assert.equal(pkg.scripts["refresh:catalog-signals"], "node scripts/refresh-catalog-market-data.js");
@@ -200,10 +218,14 @@ test("catalog cards render differentiated automatic badges and search asks for a
   const css = await read("../app/globals.css");
   assert.match(app, /movie\.catalogBadge\.label/);
   assert.match(app, /item\.catalogBadge\.label/);
+  assert.doesNotMatch(app, /catalogBadge\.icon/);
   assert.doesNotMatch(app, /popular-pill|isPopularCatalogItem/);
   assert.match(app, /placeholder="Search & Title"/);
   assert.doesNotMatch(app, /Search a title or IMDb \/ TMDB \/ MAL ID/);
   assert.match(css, /\.catalog-badge-hot/);
   assert.match(css, /\.catalog-badge-popular/);
   assert.match(css, /\.catalog-badge-featured/);
+  assert.match(css, /linear-gradient\\(135deg, rgba\\(8, 75, 43/);
+  assert.match(css, /linear-gradient\\(135deg, rgba\\(126, 25, 55/);
+  assert.match(css, /linear-gradient\\(135deg, rgba\\(108, 67, 14/);
 });
