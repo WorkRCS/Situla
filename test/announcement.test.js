@@ -56,6 +56,11 @@ test('announcement API and admin CRUD persist media, schedule and account-scoped
   const db = await read('../src/db.js');
 
   assert.match(app, /app\.get\('\/api\/announcements'/);
+  const publicFeedStart = app.indexOf("app.get('/api/announcements'");
+  const publicFeedEnd = app.indexOf("\napp.get('/api/announcements/:announcementId/image'", publicFeedStart);
+  const publicFeed = app.slice(publicFeedStart, publicFeedEnd);
+  assert.ok(publicFeed.includes("Announcement.find({ status: { $in: ['published', 'scheduled'] }, scheduledAt: { $lte: now } })"));
+  assert.doesNotMatch(publicFeed, /role:|planId:|segment:|audience:|userId:/);
   assert.match(app, /app\.get\('\/api\/announcements\/:announcementId\/image'/);
   assert.match(app, /app\.post\('\/api\/announcements\/:announcementId\/read'/);
   assert.match(app, /viewerScope/);
@@ -92,6 +97,7 @@ test('announcement UI schedules, uploads or embeds media, and lets visitors mark
   assert.match(manager, /Publish \/ schedule/);
   assert.match(manager, /FormData/);
   assert.match(center, /Mark as read/);
+  assert.ok(center.includes('if (pathname?.startsWith("/suspended") || loading || !items.length) return null;'));
   assert.match(utils, /timeZoneName: 'short'/);
   assert.match(utils, /year: 'numeric'/);
   assert.match(center, /formatAnnouncementDateTime/);
