@@ -399,3 +399,18 @@ test("catalog card titles and TV/Anime metadata wrap cleanly at mobile and table
   assert.match(responsivePolish, /:is\(button,a,\[role="button"\]\):focus-visible/);
   assert.match(responsivePolish, /:where\(\.search-dialog,\.history-card,\.about-situla-card/);
 });
+
+
+test("Movie, TV and Anime card badges, ratings and save/share controls scale with card size", async () => {
+  const css = await read("../app/globals.css");
+  const sizes = css.slice(css.lastIndexOf("/* Balanced media-card controls:"));
+
+  assert.match(sizes, /container-type:inline-size/);
+  assert.match(sizes, /\.movie-card \.catalog-badge[\s\S]*?min-height:27px[\s\S]*?font-size:11px/);
+  assert.match(sizes, /font-size:clamp\(11px,6cqi,14px\)/);
+  assert.match(sizes, /\.movie-card \.rating-pill[\s\S]*?font-size:12px/);
+  assert.match(sizes, /font-size:clamp\(12px,6\.2cqi,14px\)/);
+  assert.match(sizes, /width:clamp\(37px,20cqi,46px\)/);
+  assert.match(sizes, /width:clamp\(19px,9cqi,22px\) !important/);
+  assert.match(sizes, /\.movie-card\.series-card-tv > \.share-button/);
+});
