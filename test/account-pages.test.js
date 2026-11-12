@@ -41,7 +41,7 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.includes("/api/auth/email"));
   assert.ok(login.includes("/api/auth/google"));
   assert.ok(login.includes("rememberMe"));
-  assert.ok(login.includes("defaultChecked"));
+  assert.ok(login.includes("checked={rememberMe}"));
   assert.ok(login.includes("Remember me"));
   assert.ok(login.includes('className="account-divider" role="separator">OR</div>'));
   assert.ok(login.indexOf("Remember me") < login.indexOf("Continue with email"));
@@ -90,7 +90,7 @@ test("Premium pricing data is shared by Plans and the demo membership profile", 
   const membership = await read("../src/membership-preview.js");
   assert.ok(plans.includes('from "../../src/membership-preview.js"'));
   assert.ok(account.includes("PREMIUM_BILLING"));
-  assert.ok(account.includes("ACTIVE_BILLING.monthlyPrice"));
+  assert.ok(account.includes("activeBilling.monthlyPrice"));
   assert.ok(membership.includes("monthlyPrice: 199"));
   assert.ok(membership.includes("monthlyPrice: 149"));
   assert.ok(membership.includes("monthlyPrice: 119"));

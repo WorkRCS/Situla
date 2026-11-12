@@ -36,22 +36,31 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     playingRef.current = Boolean(playing);
     const task = async () => {
       if (playbackSessionRef.current !== sessionId) return;
-      const response = await fetch(stop ? "/api/playback/stop" : "/api/playback/heartbeat", {
-        method: "POST",
-        credentials: "same-origin",
-        keepalive: Boolean(stop),
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(stop ? { sessionId } : { sessionId, playing: Boolean(playing) })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (stop) {
-        playbackSessionRef.current = null;
-        return;
-      }
-      if (!response.ok || payload.access?.allowed === false) {
-        playbackSessionRef.current = null;
-        setPlaybackSessionId(null);
-        setMetadataError(payload.error || "Your watch allowance has ended. Playback is locked until cooldown finishes.");
+      try {
+        const response = await fetch(stop ? "/api/playback/stop" : "/api/playback/heartbeat", {
+          method: "POST",
+          credentials: "same-origin",
+          keepalive: Boolean(stop),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(stop ? { sessionId } : { sessionId, playing: Boolean(playing) })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (stop) {
+          playbackSessionRef.current = null;
+          setPlaybackSessionId(null);
+          return;
+        }
+        if (!response.ok || payload.access?.allowed === false) {
+          playbackSessionRef.current = null;
+          setPlaybackSessionId(null);
+          setMetadataError(payload.error || "Your watch allowance has ended. Playback is locked until cooldown finishes.");
+        }
+      } catch {
+        if (!stop) {
+          playbackSessionRef.current = null;
+          setPlaybackSessionId(null);
+          setMetadataError("The playback connection was lost. Reopen the Watch Page to verify access again.");
+        }
       }
     };
     heartbeatQueueRef.current = heartbeatQueueRef.current.catch(() => {}).then(task);
