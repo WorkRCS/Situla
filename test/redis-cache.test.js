@@ -128,23 +128,30 @@ test('process memory cache serves repeated catalog reads without another Redis r
 });
 
 test('stale public catalog responses are served when a database read fails', async () => {
-  const key = buildCatalogCacheKey('https://situla.example/api/search?q=naruto', 'public');
+  const requestUrl = 'http://localhost/api/search?q=naruto';
+  const key = buildCatalogCacheKey(requestUrl, 'public');
   const body = JSON.stringify({ items: [{ mediaType: 'anime', malId: 5114 }] });
+  const staleUntil = Date.now() + 60_000;
   const store = new Map([[key, {
     status: 200,
     body,
     freshUntil: Date.now() - 1_000,
-    staleUntil: Date.now() + 60_000
+    staleUntil
   }]]);
+  let requestedKey = '';
   const redis = {
-    get: async (requestedKey) => store.get(requestedKey) ?? null,
+    get: async (value) => {
+      requestedKey = value;
+      return store.get(value) ?? null;
+    },
     set: async () => 'OK'
   };
   const app = new Hono();
   app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis }));
   app.get('/api/search', (c) => c.json({ error: 'database unavailable' }, 503));
 
-  const response = await app.request('/api/search?q=naruto');
+  const response = await app.request(requestUrl);
+  assert.equal(requestedKey, key);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('x-situla-cache'), 'STALE');
   assert.deepEqual(await response.json(), { items: [{ mediaType: 'anime', malId: 5114 }] });
