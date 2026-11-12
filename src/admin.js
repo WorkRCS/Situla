@@ -61,8 +61,8 @@ router.use('*', async (c, next) => {
   const isObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || ''));
   const validCatalogTarget = method === 'PATCH' && segments.length === 4 &&
     segments[0] === 'catalog' && segments[3] === 'featured' &&
-    (segments[1] === 'movie' ? /^tt\\d{5,12}$/i.test(segments[2]) :
-      ['tv', 'anime'].includes(segments[1]) && /^\\d{1,12}$/.test(segments[2]));
+    (segments[1] === 'movie' ? /^tt\d{5,12}$/i.test(segments[2]) :
+      ['tv', 'anime'].includes(segments[1]) && /^\d{1,12}$/.test(segments[2]));
   const knownRoute =
     (method === 'GET' && ['/dashboard', '/guests', '/users', '/sales', '/announcements', '/catalog'].includes(path)) ||
     validCatalogTarget ||
@@ -589,7 +589,7 @@ router.get('/catalog', async (c) => {
   const configurations = {
     movie: {
       Model: Movie,
-      filter: { imdbId: /^tt\\d{5,12}$/i, adult: { $ne: true } },
+      filter: { imdbId: /^tt\d{5,12}$/i, adult: { $ne: true } },
       select: 'imdbId title releaseYear releaseDate posterUrl isFeatured voteAverage voteCount popularity trendScore trendUpdatedAt',
       idField: 'imdbId'
     },
@@ -644,13 +644,13 @@ router.patch('/catalog/:mediaType/:mediaId/featured', async (c) => {
 
   let Model;
   let filter;
-  if (mediaType === 'movie' && /^tt\\d{5,12}$/i.test(mediaId)) {
+  if (mediaType === 'movie' && /^tt\d{5,12}$/i.test(mediaId)) {
     Model = Movie;
     filter = { imdbId: mediaId.toLowerCase() };
-  } else if (mediaType === 'tv' && /^\\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
+  } else if (mediaType === 'tv' && /^\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
     Model = TvSeries;
     filter = { tmdbId: Number(mediaId) };
-  } else if (mediaType === 'anime' && /^\\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
+  } else if (mediaType === 'anime' && /^\d{1,12}$/.test(mediaId) && Number(mediaId) > 0) {
     Model = AnimeSeries;
     filter = { malId: Number(mediaId), type: { $in: ['TV', 'ONA'] } };
   } else {
