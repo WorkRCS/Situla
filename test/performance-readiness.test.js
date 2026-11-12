@@ -45,7 +45,7 @@ test("catalog search uses existing text indexes rather than collection-wide rege
   const search = api.slice(api.indexOf("app.get('/api/search'"), api.indexOf("app.get('/api/movies/suggestions'"));
   const suggestions = api.slice(api.indexOf("app.get('/api/movies/suggestions'"), api.indexOf("app.get('/api/movies'"));
   assert.equal(search.split("$text: { $search: query }").length - 1, 1);
-  assert.match(search, /const textFilter = \{ \$and: \[\.\.\.scope, \{ \$text: \{ \$search: query \} \} \] \}/);
+  assert.ok(search.includes("const textFilter = { $and: [...scope, { $text: { $search: query } }] }"));
   assert.match(search, /Promise\.allSettled\(\[textTask, partialTask\]\)/);
   assert.match(search, /fuzzyPattern/);
   assert.ok(suggestions.includes("$text: { $search: tokens.join(' ') }"));
