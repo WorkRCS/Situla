@@ -124,22 +124,22 @@ img { display: block; }
   pointer-events: none; white-space: nowrap;
 }
 .catalog-badge-popular {
-  border-color: rgba(74, 222, 128, .48);
-  background: linear-gradient(135deg, rgba(8, 75, 43, .97), rgba(14, 105, 62, .95));
-  color: #c9ffdf;
-  box-shadow: 0 5px 18px rgba(10, 120, 65, .22), inset 0 1px 0 rgba(220, 255, 232, .12);
+  border-color: rgba(74, 222, 128, .72);
+  background: linear-gradient(135deg, rgba(20, 83, 45, .99), rgba(22, 163, 74, .97));
+  color: #ecfff1;
+  box-shadow: 0 5px 18px rgba(22, 163, 74, .28), inset 0 1px 0 rgba(230, 255, 238, .16);
 }
 .catalog-badge-hot {
-  border-color: rgba(251, 113, 153, .58);
-  background: linear-gradient(135deg, rgba(126, 25, 55, .98), rgba(174, 35, 80, .96));
-  color: #ffe1eb;
-  box-shadow: 0 5px 18px rgba(190, 24, 93, .24), inset 0 1px 0 rgba(255, 225, 235, .14);
+  border-color: rgba(248, 113, 113, .78);
+  background: linear-gradient(135deg, rgba(127, 29, 29, .99), rgba(220, 38, 38, .98));
+  color: #fff1f2;
+  box-shadow: 0 5px 18px rgba(220, 38, 38, .32), inset 0 1px 0 rgba(255, 235, 235, .16);
 }
 .catalog-badge-featured {
-  border-color: rgba(245, 183, 72, .58);
-  background: linear-gradient(135deg, rgba(108, 67, 14, .98), rgba(153, 91, 18, .96));
-  color: #ffedbd;
-  box-shadow: 0 5px 18px rgba(161, 98, 7, .24), inset 0 1px 0 rgba(255, 237, 189, .14);
+  border-color: rgba(250, 204, 21, .82);
+  background: linear-gradient(135deg, rgba(133, 77, 14, .99), rgba(234, 179, 8, .98));
+  color: #fffbea;
+  box-shadow: 0 5px 18px rgba(234, 179, 8, .28), inset 0 1px 0 rgba(255, 250, 220, .2);
 }
 .rating-pill {
   position: absolute; left: 8px; top: auto; bottom: 8px; display: flex; align-items: center; gap: 4px;
