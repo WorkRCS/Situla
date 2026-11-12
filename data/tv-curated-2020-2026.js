@@ -1,8 +1,8 @@
 // Static, manually researched TV-series additions for 2020–2026.
 // Series IDs, release dates and episode guides are cross-checked against TVmaze.
-// TVmaze facts and episode descriptions are CC BY-SA 4.0; preserve attribution/share-alike.
-// Episode thumbnails and wide backgrounds are hotlinked to official Netflix image assets;
-// selected portrait posters are linked from TVmaze or TheTVDB, never downloaded/rehosted.
+// TVmaze facts and adapted episode descriptions are CC BY-SA 4.0; preserve attribution/share-alike.
+// Poster/stills are linked from TVmaze and Netflix official assets; not downloaded/rehosted.
+// Landscape backdrops are separately selected, official Netflix artwork.
 export const MANUAL_TV_SERIES_2020_2026 = [
   {
     "tmdbId": 115004,
@@ -348,6 +348,95 @@ export const MANUAL_TV_SERIES_2020_2026 = [
             "runtime": 31,
             "stillUrl": "https://dnm.nflximg.net/api/v6/Rzjo4m-VcRyE32Swxls9Vg-Ew2k/AAAAQeTFm_wr1VuXodiPbPweKX4Lt8HLBZvbPAy4x0pcxWxSymdEbeQyQ8PQI9ZBp1y-XQG84sLoATtjDbBfTgA8zcNVVv2fEEXPbQp8auJww05MGGqbgkW2qm4mHcjU.jpg?r=67b",
             "voteAverage": 8.3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tmdbId": 99581,
+    "externalImdbId": "tt9815454",
+    "title": "Unorthodox",
+    "originalTitle": "Unorthodox",
+    "overview": "Esty Shapiro, a young woman raised in a strict Hasidic Jewish community in Brooklyn, leaves an arranged marriage and travels to Berlin in search of a different life. As she finds friendship and new possibilities among musicians, her family and past catch up with her.",
+    "posterUrl": "https://static.tvmaze.com/uploads/images/medium_portrait/248/620726.jpg",
+    "backdropUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/MgXQGyNr1xbI8tJSYiMWv5kXg5g/AAAABdw7po_BAq7ivteKnBZTsOvmFK_ot2YHuFIgxuL5qLyOTUzueQFF-IQ_CGIRGOqQ4O5m_7QgM3Vv4uL5E1PUr5TUTMEIARYyhT73jTeu6Yyy5Bcxm-v7znpDRQ.jpg?r=c69",
+    "firstAirDate": "2020-03-26",
+    "releaseYear": 2020,
+    "runtime": 54,
+    "adult": false,
+    "isPopular": true,
+    "metadataSource": "Manual static curation; TVmaze facts and Netflix episode metadata (TVmaze CC BY-SA 4.0)",
+    "sourceId": 41072,
+    "sourceUrl": "https://www.themoviedb.org/tv/99581",
+    "referenceUrl": "https://www.tvmaze.com/shows/41072/unorthodox",
+    "network": "Netflix",
+    "country": "Germany",
+    "creators": [
+      "Anna Winger",
+      "Alexa Karolinski"
+    ],
+    "voteAverage": 7.9,
+    "voteCount": 0,
+    "popularity": 0,
+    "genres": [
+      "Drama"
+    ],
+    "keywords": [
+      "Limited Series",
+      "Historical Drama",
+      "Social Issues",
+      "Based on a Book"
+    ],
+    "certification": "TV-MA",
+    "status": "Ended",
+    "numberOfSeasons": 1,
+    "numberOfEpisodes": 4,
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "name": "Season 1",
+        "overview": "Esty's decision to leave her arranged marriage brings her to Berlin, where she discovers a new community while her family tries to find her.",
+        "airDate": "2020-03-26",
+        "episodeCount": 4,
+        "posterUrl": null,
+        "voteAverage": 0,
+        "episodes": [
+          {
+            "episodeNumber": 1,
+            "name": "Part 1",
+            "overview": "Born and raised in a New York Hasidic community, Esty struggles after a fruitless first year of marriage. She runs away to Berlin and finds new freedom.",
+            "airDate": "2020-03-26",
+            "runtime": 52,
+            "stillUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/9pS1daC2n6UGc3dUogvWIPMR_OU/AAAABbJSjNCkh5NaP9eNQIbE0K3KgXKh9JTBjmImkh--44pj2x2RSSWor_tEnPEUPujoAHk6SE6NtdQoHlglmeO0I248VDiQbYIKgDAQSBBMi9fF6FwpNPDEwku5k.jpg?r=be4",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 2,
+            "name": "Part 2",
+            "overview": "Esty's Berlin friends challenge many of her old beliefs but also provide a safe space to explore new ways of being. Yanky and Moishe search for Esty.",
+            "airDate": "2020-03-26",
+            "runtime": 52,
+            "stillUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/9pS1daC2n6UGc3dUogvWIPMR_OU/AAAABdVa_TD5CMU4g2Ddv8mwC3h5A5Y7UDm4_eMY6O4n2uQ-EBsRPt2WkCyJYc_TyyEJYdzd3igzlx4RtBniHdeoF86ZnpqBjmDqdjhpAr4v1NGDmeS7kt-W72Cp.jpg?r=2ab",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 3,
+            "name": "Part 3",
+            "overview": "As Moishe secretly gathers evidence against Esty, she realizes she needs help to audition for the scholarship she desperately needs.",
+            "airDate": "2020-03-26",
+            "runtime": 55,
+            "stillUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/9pS1daC2n6UGc3dUogvWIPMR_OU/AAAABbgMAT0eEreG0DQNCp7waXiZYdsN0HBMbmEW7bCvj-gFOj5qhY1A7UZTlQ0RUQxuP1WXGFNBqLVBl3PoopuYbuLc_pCAR9ZWPX8pOLiSLWVZNcOby4DlOaCJ.jpg?r=bfd",
+            "voteAverage": 0
+          },
+          {
+            "episodeNumber": 4,
+            "name": "Part 4",
+            "overview": "Moishe brutally confronts Esty, sending her running to Leah for help. After Esty has her audition, she and Yanky have it out.",
+            "airDate": "2020-03-26",
+            "runtime": 54,
+            "stillUrl": "https://occ-0-3012-988.1.nflxso.net/dnm/api/v6/9pS1daC2n6UGc3dUogvWIPMR_OU/AAAABQf4TTbkwWm_NfW9Tdfpm0goGBsEXt8aERVHpYksntZIDR-yKHk-uuujBsEbLzgSaGoklLfg4_PI7Ph242MngyE9LBEjee-D2jH7JX4uEtMLsdrnQQgXEaNj.jpg?r=771",
+            "voteAverage": 0
           }
         ]
       }
