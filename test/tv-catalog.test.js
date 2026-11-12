@@ -181,7 +181,7 @@ test("TV seed is new-only and cannot overwrite an existing series document", asy
   assert.match(api, /'seasons\.episodes': 0/);
   assert.match(ci, /npm run check:tv/);
   assert.match(workflow, /timeout-minutes: 60/);
-  assert.match(workflow, /TVmaze metadata/);
-  assert.match(workflow, /Cinemeta metadata by IMDb ID/);
+  assert.match(workflow, /Default catalogue seed reads committed data files only/);
+  assert.doesNotMatch(workflow, /TVmaze metadata|Cinemeta metadata by IMDb ID/);
   assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
 });
