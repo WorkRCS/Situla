@@ -4855,3 +4855,13 @@ body:has(.login-page) .site-footer { display:none !important; }
   .media-row.is-pointer-dragging { scroll-snap-type:x proximity; }
   :is(button,a,[role="button"]):focus-visible { transition:none !important; }
 }
+
+
+/* Shared page-surface depth: consistent across Home, catalog, detail, saved,
+   search and settings surfaces without changing their existing fills. */
+.app-shell {
+  background-image:radial-gradient(ellipse 86% 34% at 50% 0%,rgba(232,182,91,.016),transparent 100%);
+}
+:where(.search-dialog,.history-card,.series-detail-hero,.series-detail-panel,.plans-table-wrap) {
+  box-shadow:0 16px 38px rgba(0,0,0,.2),inset 0 1px 0 rgba(232,182,91,.04);
+}
