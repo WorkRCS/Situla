@@ -65,7 +65,7 @@ test("Plans page uses Lucide icons and explicit included/missing feature states"
   assert.ok(page.includes("plans-feature-status"));
   assert.ok(page.includes("plans-matrix-mobile-label"));
   assert.ok(page.includes('available: false'));
-  assert.ok(page.includes("30-minute cooldown (6-month billing)"));
+  assert.ok(page.includes("20-minute cooldown (6-month billing)"));
   assert.ok(page.includes("Unlimited streaming (Yearly billing)"));
   assert.ok(!page.includes('className="bi '));
 });
