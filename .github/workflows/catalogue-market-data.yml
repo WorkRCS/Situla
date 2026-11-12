@@ -1,0 +1,47 @@
+name: catalogue-market-data
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalogue-market-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check database credential configuration
+        id: database
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          if [ -z "$MONGODB_URI" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Daily public market-data refresh is not enabled yet. Add the MONGODB_URI repository secret once to allow the scheduled job to update cached ratings and votes."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Refresh IMDb and MyAnimeList public market data
+        if: steps.database.outputs.ready == 'true'
+        run: npm run refresh:catalog-signals
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME || 'situla' }}
