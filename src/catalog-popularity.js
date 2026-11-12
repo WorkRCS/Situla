@@ -92,9 +92,12 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
 
   const current = now instanceof Date ? now.getTime() : Number(now);
   const signals = marketSignals(item, mediaType);
-  if (!Number.isFinite(current) || signals.rating <= 0) return null;
+  if (!Number.isFinite(current)) return null;
 
   const trendScore = calculateDecayedTrendScore(item.trendScore, item.trendUpdatedAt, current);
+  if (trendScore >= HOT_TREND_SCORE) return { key: "hot", label: "Hot" };
+  if (signals.rating <= 0) return null;
+
   const voteVelocity7d = Math.max(0, number(item.voteVelocity7d));
   const releasedAt = releaseTimestamp(item);
   const ageDays = releasedAt && Number.isFinite(current)
