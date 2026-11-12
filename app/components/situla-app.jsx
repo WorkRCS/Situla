@@ -792,10 +792,22 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const discoverQuery = recentIds.length ? "?exclude=" + encodeURIComponent(recentIds.join(",")) : "";
         const endpoint = tab === "search" ? "/api/search?q=" + encodeURIComponent(query.trim()) : (isDiscover ? "/api/movies/discover" + discoverQuery : "/api/movies?" + params.toString());
         const requestSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
-        const response = await fetch(endpoint, { cache: "no-store", signal: requestSignal });
-        const payload = await response.json().catch(() => ({}));
+        let response = await fetch(endpoint, { cache: "no-store", signal: requestSignal });
+        let payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Movie catalog is not available.");
-        const items = Array.isArray(payload.items) ? payload.items : [];
+        let items = Array.isArray(payload.items) ? payload.items : [];
+        if (isDiscover && !items.length && (recentIds.length > 0 || Number(payload.pagination?.total) > 0)) {
+          // Retry from the beginning if a stored recently-seen list exhausted
+          // a small catalog, or if discovery returned a stale/partial empty page.
+          response = await fetch("/api/movies?page=1&limit=10", { cache: "no-store", signal: requestSignal });
+          const fallback = await response.json().catch(() => ({}));
+          if (response.ok && Array.isArray(fallback.items) && fallback.items.length) {
+            payload = fallback;
+            items = fallback.items;
+          } else if (!response.ok) {
+            throw new Error(fallback.error || "Movie catalog is not available.");
+          }
+        }
         if (tab === "search") {
           setSearchResults(items);
           setMovies([]);
@@ -1325,7 +1337,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }
 
   const sortedHistory = [...watchHistory].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
-  const hasMoreMovies = movies.length < moviesTotal;
+  const hasMoreMovies = movies.length > 0 && movies.length < moviesTotal;
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
   const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;

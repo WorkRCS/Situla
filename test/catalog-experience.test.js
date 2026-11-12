@@ -10,6 +10,22 @@ test("opening the search modal closes the account menu without calling an undecl
   assert.doesNotMatch(app, /setNotificationsOpen/);
 });
 
+test("Movie discovery falls back when recent exclusions exhaust the catalog and avoids an empty load-more state", async () => {
+  const api = await read("../src/app.js");
+  const app = await read("../app/components/situla-app.jsx");
+  const discoverStart = api.indexOf("app.get('/api/movies/discover'");
+  const discoverEnd = api.indexOf("app.get('/api/search'", discoverStart);
+  const discover = api.slice(discoverStart, discoverEnd);
+  assert.match(discover, /if \(excludedIds\.length && \(!result\.items\?\.length \|\| total === 0\)\)/);
+  assert.match(discover, /Movie\.aggregate\(\[\{ \$match: baseFilter \}, \{ \$facet: facets \}\]\)/);
+  assert.match(discover, /if \(!result\.items\?\.length && total > 0\)/);
+  assert.match(discover, /Movie\.find\(baseFilter\)/);
+  assert.match(discover, /featured: result\.featured\?\.length \? result\.featured : \[fallbackItems\[0\]\]/);
+  assert.match(app, /if \(isDiscover && !items\.length\)/);
+  assert.match(app, /fetch\("\/api\/movies\?page=1&limit=10"/);
+  assert.match(app, /const hasMoreMovies = movies\.length > 0 && movies\.length < moviesTotal/);
+});
+
 test("TV and Anime initial catalog requests rotate to a random first batch", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const api = await read("../src/app.js");

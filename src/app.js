@@ -886,10 +886,18 @@ app.get('/api/movies/discover', async (c) => {
           { $limit: PREMIUM_FEED_LIMIT }
         ];
       }
-      const [result, total] = await Promise.all([
-        Movie.aggregate([{ $match: baseFilter }, { $sort: dateSort }, { $facet: facets }]),
+      let [result, total] = await Promise.all([
+        Movie.aggregate([{ $match: baseFilter }, { $sort: dateSort }, { $facet: facets }]).then((rows) => rows[0] || {}),
         Movie.countDocuments(baseFilter)
       ]);
+      if (!result.itemsLatest?.length && total > 0) {
+        const fallbackItems = await Movie.find(baseFilter).sort(dateSort).limit(PREMIUM_FEED_LIMIT).lean();
+        result = {
+          ...result,
+          itemsLatest: fallbackItems,
+          featuredLatest: result.featuredLatest?.length ? result.featuredLatest : fallbackItems.slice(0, 1)
+        };
+      }
       const categories = MOVIE_CATEGORIES.map((category) => ({
         key: category.key,
         name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
@@ -916,14 +924,40 @@ app.get('/api/movies/discover', async (c) => {
         { $sample: { size: PREMIUM_FEED_LIMIT } }
       ];
     }
-    const [result] = await Movie.aggregate([{ $match: publicFilter }, { $facet: facets }]);
+    let [result, total] = await Promise.all([
+      Movie.aggregate([{ $match: publicFilter }, { $facet: facets }]).then((rows) => rows[0] || {}),
+      Movie.countDocuments(publicFilter)
+    ]);
+    // A browser may have marked every record as recently shown (for example,
+    // after a small local catalog was exhausted). Restart at the full catalog
+    // instead of returning an empty page with a positive total.
+    if (excludedIds.length && (!result.items?.length || total === 0)) {
+      [result, total] = await Promise.all([
+        Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]).then((rows) => rows[0] || {}),
+        Movie.countDocuments(baseFilter)
+      ]);
+    }
+    // If the aggregation facet is unexpectedly empty while records exist,
+    // fall back to a direct indexed read so the catalogue does not render blank.
+    if (!result.items?.length && total > 0) {
+      const fallbackItems = await Movie.find(baseFilter)
+        .sort({ popularity: -1, releaseDate: -1, _id: 1 })
+        .limit(PREMIUM_FEED_LIMIT)
+        .lean();
+      if (fallbackItems.length) {
+        result = {
+          ...result,
+          items: fallbackItems,
+          featured: result.featured?.length ? result.featured : [fallbackItems[0]]
+        };
+      }
+    }
     const categories = MOVIE_CATEGORIES.map((category) => ({
       key: category.key,
       name: category.name === 'Science Fiction' ? 'Sci-Fi' : category.name,
       genre: category.name,
       items: (result?.[category.key] || []).map(movieDto)
     })).filter((category) => category.items.length > 0);
-    const total = await Movie.countDocuments(publicFilter);
     return c.json({
       featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
       items: (result?.items || []).map(movieDto),
