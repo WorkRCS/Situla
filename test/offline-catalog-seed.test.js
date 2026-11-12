@@ -101,7 +101,7 @@ test("prepared offline packs report real gaps instead of lowering the completene
   assert.ok(prepared.anime.records.every((item) => validateOfflineAnime(item)));
 });
 
-test("Hot, Popular and Featured badges use separate market, trend and editorial signals", () => {
+test("Hot, Popular and Featured badges use separate market, trend and editorial signals", async () => {
   const now = Date.now();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
