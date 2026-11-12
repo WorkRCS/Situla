@@ -285,3 +285,15 @@ The seed writes only locally committed records that pass these checks. It report
 
 The old provider-backed Movie and TV seeders are available only through explicit `legacy-online` package scripts. They are not called by any default seed command. The legacy Anime seed remains available as `seed:anime:legacy-curated` for its historical 80%-still pack, but it is also not the default path.
 
+
+## Catalogue badge and discovery signals
+
+Situla uses one strongest badge per poster card, in this order: **Hot**, **Popular**, then **Featured**. The badge is not applied merely because a record exists in the database.
+
+- **Popular** is derived from provider market data. Movie/TV records use vote average, vote count and TMDB popularity. Anime uses MAL score, scored-by count, rank and popularity. The rating is Bayesian-smoothed against a prior so that a tiny sample of extreme scores cannot outrank a well-supported title. Vote depth and provider reach are separate inputs; vote count alone is not enough.
+- **Hot** is derived from Situla playback starts. Each authorised playback start contributes one unit to an exponentially decaying momentum score with a seven-day half-life. The score is decayed on read as well, so a title naturally loses the Hot badge when new viewing activity stops. This is a platform trend signal, not an external-provider rating.
+- **Featured** is an editorial selection represented by `isFeatured`. It is not a low-rating category and is not inferred from a weak score. Only a record explicitly curated as Featured receives it.
+- The old `isPopular` boolean is legacy-only and is ignored by badge calculation. The offline seed does not write that flag to every new record.
+- Badge calculation is performed from the already-loaded record; there is no per-card network call or metadata API lookup. Playback momentum is updated with one atomic MongoDB update-pipeline write after a successful playback-session start.
+
+The exact Netflix/Disney ranking models are proprietary and are not reproducible from public catalogue fields. Situla therefore uses an explainable multi-signal model based on the provider metrics and first-party playback activity that the application actually has. Do not describe it as their exact algorithm or fabricate critic, rating, viewing or trend data that Situla does not collect.
