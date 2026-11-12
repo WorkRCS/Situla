@@ -29,7 +29,8 @@
     "seed:movies:legacy-online": "node scripts/seed-static-catalog.js --movies && npm run seed:movie-additions:legacy-online",
     "seed:tv:legacy-online": "node scripts/seed-static-catalog.js --tv && node scripts/seed-tv-series.js",
     "seed:anime:legacy-curated": "node scripts/seed-anime-additions.js",
-    "seed:catalog:legacy-online": "npm run seed:movies:legacy-online && npm run seed:tv:legacy-online && npm run seed:anime:legacy-curated"
+    "seed:catalog:legacy-online": "npm run seed:movies:legacy-online && npm run seed:tv:legacy-online && npm run seed:anime:legacy-curated",
+    "refresh:catalog-signals": "node scripts/refresh-catalog-market-data.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
