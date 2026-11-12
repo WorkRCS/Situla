@@ -149,6 +149,8 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
     async function authorizePlayback() {
       setMetadataError("");
       try {
+        await heartbeatQueueRef.current.catch(() => {});
+        if (controller.signal.aborted) return;
         const media = kind === "tv"
           ? { mediaType: "tv", mediaId: String(tvRoute.tmdbId), season: tvRoute.season, episode: tvRoute.episode }
           : { mediaType: "anime", mediaId: String(animeRoute.malId), episode: animeRoute.episode, audio: animeRoute.audio };
@@ -179,8 +181,13 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
 
   useEffect(() => {
     if (!playbackSessionId) return undefined;
+    const onPageHide = () => { void sendPlaybackHeartbeat(false, true); };
     const timer = window.setInterval(() => sendPlaybackHeartbeat(playingRef.current), 15000);
-    return () => window.clearInterval(timer);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("pagehide", onPageHide);
+    };
   }, [playbackSessionId]);
 
   useEffect(() => {
@@ -336,10 +343,12 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
         <div className="player-message">
           <div className="player-message-card">
             <div className="player-message-mark">S</div>
-            <h1>{loading ? "Preparing playback" : "Playback unavailable"}</h1>
-            <p>{metadataError || (kind === "tv"
-              ? "This series is not available in the Situla catalog yet."
-              : loading ? "Loading saved media details…" : "This episode could not be loaded.")}</p>
+            <h1>{loading ? "Preparing playback" : metadataError ? "Playback unavailable" : verifiedMediaKey === mediaKey ? "Checking watch access" : "Playback unavailable"}</h1>
+            <p>{metadataError || (loading
+              ? "Loading saved media details…"
+              : verifiedMediaKey === mediaKey
+                ? "Verifying your watch allowance before loading the player…"
+                : kind === "tv" ? "This episode is not available in the Situla catalog yet." : "This episode could not be loaded.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>
         </div>

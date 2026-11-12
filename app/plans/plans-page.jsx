@@ -407,11 +407,11 @@ export default function PlansPage() {
 
         <section className="plans-launch-note">
           <Info size={13} strokeWidth={2} aria-hidden="true" />
-          <div><strong>Plan page preview — membership systems are not active yet.</strong><p>Account sign-in, Premium checkout, verified status, device registration, IP restrictions and server-side watch enforcement will be implemented separately. Prices and launch dates have not been announced. The demo controls above do not create accounts, take payments or grant access.</p></div>
+          <div><strong>Account and watch limits are server-enforced.</strong><p>Email sign-up, Google sign-in (after OAuth setup), registered devices and watch cooldowns use the Situla backend. Premium access is currently activated by an administrator; online checkout and automatic subscription renewal are not connected, so the Buy Premium action does not take payment or grant a plan.</p></div>
         </section>
 
         <div className="plans-bottom-cta">
-          <div><span className="plans-section-kicker">READY WHEN YOU ARE</span><h2>Start with Situla, your way.</h2><p>Browse now, or explore the membership options before they launch.</p></div>
+          <div><span className="plans-section-kicker">READY WHEN YOU ARE</span><h2>Start with Situla, your way.</h2><p>Browse as a guest or create an account. Premium checkout is not connected yet.</p></div>
           <Link href="/" className="plans-action plans-action-guest"><Compass size={16} strokeWidth={2.1} aria-hidden="true" /> Explore Situla</Link>
         </div>
       </div>

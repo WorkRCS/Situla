@@ -27,7 +27,7 @@ test("Plans page presents the three Situla access modes and their agreed limits"
   assert.ok(page.includes("IP is not a unique person identifier"));
   assert.ok(page.includes("TV browser"));
   assert.ok(page.includes("Playback access policy"));
-  assert.ok(page.includes("not active yet"));
+  assert.ok(page.includes("Account and watch limits are server-enforced"));
   assert.ok(footer.includes('<Link href="/plans">Plans</Link>'));
 });
 

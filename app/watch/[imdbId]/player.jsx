@@ -122,6 +122,8 @@ export default function PlayerExperience({ imdbId }) {
     async function authorizePlayback() {
       setPlaybackError("");
       try {
+        await heartbeatQueueRef.current.catch(() => {});
+        if (controller.signal.aborted) return;
         const response = await fetch("/api/playback/start", {
           method: "POST",
           credentials: "same-origin",
@@ -149,8 +151,13 @@ export default function PlayerExperience({ imdbId }) {
 
   useEffect(() => {
     if (!playbackSessionId) return undefined;
+    const onPageHide = () => { void sendPlaybackHeartbeat(false, true); };
     const timer = window.setInterval(() => sendPlaybackHeartbeat(playingRef.current), 15000);
-    return () => window.clearInterval(timer);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("pagehide", onPageHide);
+    };
   }, [playbackSessionId]);
 
   useEffect(() => {
@@ -257,9 +264,10 @@ export default function PlayerExperience({ imdbId }) {
         <div className="player-message">
           <div className="player-message-card">
             <div className="player-message-mark">S</div>
-            <h1>{loading ? "Preparing your movie" : "Playback unavailable"}</h1>
+            <h1>{loading ? "Preparing your movie" : playbackError ? "Playback unavailable" : catalogVerified ? "Checking watch access" : "Playback unavailable"}</h1>
             <p>{playbackError || movie?.playerError || (loading
               ? "Loading saved movie details…"
+              : catalogVerified ? "Verifying your watch allowance before loading the player…"
               : "This title is not available in the Situla catalog yet.")}</p>
             <button type="button" className="gold-button" onClick={() => router.back()}>Back to Situla</button>
           </div>

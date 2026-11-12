@@ -3937,3 +3937,13 @@ body:has(.login-page) .site-footer { display:none !important; }
     scroll-behavior:auto !important; animation:none !important; transition:none !important;
   }
 }
+
+
+.profile-device-list{display:grid;gap:9px;margin-top:14px}
+.profile-device-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid rgba(255,255,255,.075);border-radius:13px;background:rgba(255,255,255,.025);min-width:0}
+.profile-device-copy{display:grid;gap:4px;min-width:0}
+.profile-device-copy strong{font-size:12px;color:#f5f0e8;font-weight:700}
+.profile-device-copy small{font-size:10px;color:#96939a;overflow-wrap:anywhere}
+.profile-device-revoke{flex:none;border:1px solid rgba(240,196,113,.2);border-radius:9px;background:rgba(240,196,113,.06);color:#edc47c;padding:7px 10px;font-size:10px;font-weight:800;transition:background .2s ease}
+.profile-device-revoke:hover:not(:disabled){background:rgba(240,196,113,.13)}
+.profile-device-revoke:disabled{opacity:.5;cursor:wait}

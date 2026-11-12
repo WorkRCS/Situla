@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2,
@@ -271,6 +272,14 @@ export function LoginPage() {
   );
 }
 
+function formatAccessDuration(value) {
+  if (value === null || value === undefined) return "Unlimited";
+  const seconds = Math.max(0, Math.floor(Number(value) || 0));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours ? hours + "h " + minutes + "m" : minutes + "m";
+}
+
 function formatAccountDate(value) {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value + "T00:00:00"));
 }
@@ -292,9 +301,14 @@ function ReadonlyAccountField({ icon: FieldIcon, label, value }) {
 }
 
 export function ProfilePage() {
+  const router = useRouter();
   const [account, setAccount] = useState(null);
   const [accountLoading, setAccountLoading] = useState(true);
   const [deviceSummary, setDeviceSummary] = useState({ active: 0, limit: 1 });
+  const [devices, setDevices] = useState([]);
+  const [access, setAccess] = useState(null);
+  const [revokingDeviceId, setRevokingDeviceId] = useState("");
+  const [deviceNotice, setDeviceNotice] = useState("");
   const [renewalNotice, setRenewalNotice] = useState("");
   const [clock, setClock] = useState(null);
 
@@ -311,6 +325,10 @@ export function ProfilePage() {
         }
         setAccount(payload.user);
         setDeviceSummary(payload.devices || { active: 0, limit: 1 });
+        setAccess(payload.access || null);
+        const devicesResponse = await fetch("/api/auth/devices", { cache: "no-store", credentials: "same-origin" });
+        const devicesPayload = await devicesResponse.json().catch(() => ({}));
+        if (active && devicesResponse.ok) setDevices(Array.isArray(devicesPayload.items) ? devicesPayload.items : []);
       } catch {
         if (active) setAccount(null);
       } finally {
@@ -328,6 +346,41 @@ export function ProfilePage() {
       window.removeEventListener("focus", onFocus);
     };
   }, []);
+
+  async function revokeDevice(deviceId) {
+    if (revokingDeviceId) return;
+    setRevokingDeviceId(deviceId);
+    setDeviceNotice("");
+    try {
+      const response = await fetch("/api/auth/devices/" + encodeURIComponent(deviceId), {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "This device could not be removed.");
+      if (payload.currentDevice) {
+        window.dispatchEvent(new Event("situla:auth-change"));
+        router.replace("/login");
+        return;
+      }
+      const [meResponse, devicesResponse] = await Promise.all([
+        fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" }),
+        fetch("/api/auth/devices", { cache: "no-store", credentials: "same-origin" })
+      ]);
+      const me = await meResponse.json().catch(() => ({}));
+      const list = await devicesResponse.json().catch(() => ({}));
+      if (meResponse.ok) {
+        setDeviceSummary(me.devices || { active: 0, limit: 1 });
+        setAccess(me.access || null);
+      }
+      if (devicesResponse.ok) setDevices(Array.isArray(list.items) ? list.items : []);
+      setDeviceNotice("The selected device has been signed out.");
+    } catch (error) {
+      setDeviceNotice(error.message || "This device could not be removed.");
+    } finally {
+      setRevokingDeviceId("");
+    }
+  }
 
   const now = clock || new Date();
   const today = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
@@ -417,8 +470,8 @@ export function ProfilePage() {
                 <div className="profile-plan-price"><strong>{activeBilling ? "₹" + activeBilling.monthlyPrice.toLocaleString("en-IN") : "Free"}</strong><span>/ month</span><small>{activeBilling?.billingLabel || "No subscription"}</small></div>
               </div>
               <div className="profile-purchase-row">
-                <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> {membershipActive ? "Purchased · Enjoy Premium" : "Free plan · Active"} <Sparkles size={15} /></button>
-                <span className="profile-purchase-caption"><LockKeyhole size={12} /> Already part of your account</span>
+                <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> {membershipActive ? "Premium · Active" : "Free plan · Active"} <Sparkles size={15} /></button>
+                <span className="profile-purchase-caption"><LockKeyhole size={12} /> Verified by the Situla server</span>
               </div>
               <div className="profile-membership-progress">
                 <div className="profile-progress-heading"><span>MEMBERSHIP PERIOD</span><strong>{Math.round(elapsedPercent)}% elapsed</strong></div>
@@ -475,13 +528,33 @@ export function ProfilePage() {
               <div className="profile-access-row"><span>Account status</span><strong className="is-active">Active</strong></div>
               <div className="profile-access-row"><span>Current plan</span><strong>{account.planId === "premium" ? "Premium" : "Free"}</strong></div>
               <div className="profile-access-row"><span>Registered devices</span><strong>{deviceSummary.active} / {deviceSummary.limit} used</strong></div>
+              <div className="profile-access-row"><span>Watch access</span><strong>{access?.cooldownRemainingSeconds > 0 ? "Cooldown · " + formatAccessDuration(access.cooldownRemainingSeconds) : access?.remainingSeconds === null ? "Unlimited" : formatAccessDuration(access?.remainingSeconds) + " left"}</strong></div>
               <div className="profile-access-row"><span>Smart TV browser</span><strong>Web access</strong></div>
-              <p className="profile-access-footnote">Membership and device status are read from the server.</p>
+              <div className="profile-device-list" aria-label="Registered devices">
+                {devices.map((device) => (
+                  <div className="profile-device-row" key={device.id}>
+                    <span className="profile-device-copy">
+                      <strong>{device.current ? "This device" : "Registered device"}{device.slot ? " · " + device.slot : ""}</strong>
+                      <small>{device.label || "Browser"} · {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleDateString() : "Recently active"}</small>
+                    </span>
+                    <button
+                      type="button"
+                      className="profile-device-revoke"
+                      onClick={() => revokeDevice(device.id)}
+                      disabled={Boolean(revokingDeviceId)}
+                    >
+                      {revokingDeviceId === device.id ? "Removing…" : device.current ? "Sign out" : "Remove"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {deviceNotice && <p className="profile-action-notice" role="status">{deviceNotice}</p>}
+              <p className="profile-access-footnote">Membership, watch allowance and devices are verified by the server.</p>
             </section>
           </aside>
         </div>
       </div>
-      <p className="account-page-caption">SITULA ACCOUNT EXPERIENCE <span>·</span> UI PREVIEW</p>
+      <p className="account-page-caption">SITULA ACCOUNT EXPERIENCE <span>·</span> SERVER-VERIFIED SESSION</p>
     </main>
   );
 }
