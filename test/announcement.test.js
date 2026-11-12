@@ -82,8 +82,9 @@ test('announcement API and admin CRUD persist media, schedule and account-scoped
   assert.match(models, /const announcementSchema/);
   assert.match(models, /const announcementReadSchema/);
   assert.match(models, /announcementReadSchema\.index\(\{ userId: 1, announcementId: 1 \}, \{ unique: true \}\)/);
-  assert.match(db, /Announcement\.createIndexes\(\)/);
-  assert.match(db, /AnnouncementRead\.createIndexes\(\)/);
+  assert.match(db, /const INDEXED_MODELS = \[[\s\S]*?Announcement, AnnouncementRead/);
+  assert.match(db, /initializeDatabaseIndexes/);
+  assert.match(db, /INDEXED_MODELS\.map\(\(Model\) => Model\.createIndexes\(\)\)/);
 });
 
 test('announcement UI schedules, uploads or embeds media, and lets visitors mark items read', async () => {
