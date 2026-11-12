@@ -10,12 +10,7 @@ import {
   Globe2, LockKeyhole, LogIn, Mail, MonitorSmartphone, ShieldCheck,
   Sparkles, Tv, UserRound
 } from "lucide-react";
-import {
-  DEMO_ACCOUNT, DEMO_MEMBERSHIP, PREMIUM_BILLING,
-  readDemoAccountSession, setDemoAccountSession
-} from "../../src/membership-preview.js";
-
-const ACTIVE_BILLING = PREMIUM_BILLING.find((item) => item.id === DEMO_MEMBERSHIP.billingCycle) || PREMIUM_BILLING[0];
+import { PREMIUM_BILLING } from "../../src/membership-preview.js";
 
 function AccountBrand() {
   return (
@@ -73,6 +68,9 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
   const [posterColumns, setPosterColumns] = useState({ downward: [], upward: [] });
   const preloadedPosterUrls = useRef(new Set());
 
@@ -191,15 +189,26 @@ export function LoginPage() {
     };
   }, [posterColumns]);
 
-  function completeDemoSignIn() {
-    setDemoAccountSession(true);
-    router.push("/profile");
-  }
-
-  function submitEmail(event) {
+  async function submitEmail(event) {
     event.preventDefault();
-    if (!email.trim() || !password) return;
-    completeDemoSignIn();
+    if (submitting || !email.trim() || !password) return;
+    setSubmitting(true);
+    setAuthError("");
+    try {
+      const response = await fetch("/api/auth/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ email, password, rememberMe })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Sign-in failed. Please try again.");
+      router.replace("/profile");
+    } catch (error) {
+      setAuthError(error.message || "Sign-in is temporarily unavailable.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -238,14 +247,15 @@ export function LoginPage() {
             </label>
             <div className="login-form-options">
               <label className="account-remember">
-                <input type="checkbox" name="rememberMe" defaultChecked />
+                <input type="checkbox" name="rememberMe" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />
                 <span>Remember me</span>
               </label>
             </div>
-            <button type="submit" className="account-primary-button">Continue with email</button>
+            <button type="submit" className="account-primary-button" disabled={submitting}>Continue with email</button>
           </form>
+          {authError && <p className="account-action-notice" role="alert">{authError}</p>}
           <div className="account-divider" role="separator">OR</div>
-          <button type="button" className="account-google-button" onClick={completeDemoSignIn}>
+          <button type="button" className="account-google-button" onClick={() => window.location.assign("/api/auth/google")}>
             <img
               className="account-google-logo"
               src="https://developers.google.com/static/identity/images/g-logo.png"
@@ -282,33 +292,76 @@ function ReadonlyAccountField({ icon: FieldIcon, label, value }) {
 }
 
 export function ProfilePage() {
-  const [signedIn, setSignedIn] = useState(true);
+  const [account, setAccount] = useState(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [deviceSummary, setDeviceSummary] = useState({ active: 0, limit: 1 });
   const [renewalNotice, setRenewalNotice] = useState("");
   const [clock, setClock] = useState(null);
 
   useEffect(() => {
-    const syncDemoAccount = () => setSignedIn(readDemoAccountSession());
-    syncDemoAccount();
-    setClock(new Date());
-    window.addEventListener("storage", syncDemoAccount);
-    window.addEventListener("situla:demo-account", syncDemoAccount);
+    let active = true;
+    async function loadAccount() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (!active) return;
+        if (!response.ok || !payload.user) {
+          setAccount(null);
+          return;
+        }
+        setAccount(payload.user);
+        setDeviceSummary(payload.devices || { active: 0, limit: 1 });
+      } catch {
+        if (active) setAccount(null);
+      } finally {
+        if (active) {
+          setClock(new Date());
+          setAccountLoading(false);
+        }
+      }
+    }
+    loadAccount();
+    const onFocus = () => loadAccount();
+    window.addEventListener("focus", onFocus);
     return () => {
-      window.removeEventListener("storage", syncDemoAccount);
-      window.removeEventListener("situla:demo-account", syncDemoAccount);
+      active = false;
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
-  const now = clock || new Date("2026-11-11T12:00:00");
+  const now = clock || new Date();
   const today = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
-  const daysActive = Math.max(0, daysBetween(DEMO_MEMBERSHIP.startedAt, today));
-  const daysRemaining = daysBetween(today, DEMO_MEMBERSHIP.expiresAt);
-  const membershipActive = daysRemaining >= 0;
-  const renewalAvailable = !membershipActive || daysRemaining <= DEMO_MEMBERSHIP.renewWindowDays;
-  const elapsedPercent = Math.min(100, Math.max(0, (daysActive / (ACTIVE_BILLING.months * 30)) * 100));
+  const membership = account?.membership || {};
+  const membershipActive = account?.planId === "premium" && membership.status === "active" &&
+    (!membership.expiresAt || new Date(membership.expiresAt) > now);
+  const activeBilling = PREMIUM_BILLING.find((item) => item.id === membership.billingCycle) || null;
+  const startedAt = membership.startedAt ? String(membership.startedAt).slice(0, 10) :
+    account?.createdAt ? String(account.createdAt).slice(0, 10) : today;
+  const expiresAt = membership.expiresAt ? String(membership.expiresAt).slice(0, 10) : null;
+  const daysActive = Math.max(0, daysBetween(startedAt, today));
+  const daysRemaining = expiresAt ? daysBetween(today, expiresAt) : null;
+  const renewalAvailable = membershipActive && daysRemaining !== null && daysRemaining <= 21;
+  const elapsedPercent = activeBilling && daysRemaining !== null
+    ? Math.min(100, Math.max(0, (daysActive / (activeBilling.months * 30)) * 100)) : 0;
   const activeLabel = daysActive === 1 ? "1 day" : daysActive + " days";
-  const expiryLabel = daysRemaining < 0 ? "Expired" : daysRemaining === 0 ? "Expires today" : daysRemaining + " days left";
+  const expiryLabel = !membershipActive ? "No Premium subscription" :
+    daysRemaining < 0 ? "Expired" : daysRemaining === 0 ? "Expires today" : daysRemaining + " days left";
 
-  if (!signedIn) {
+  if (accountLoading) {
+    return (
+      <main className="account-page profile-page">
+        <AccountPageTopbar profile />
+        <section className="profile-signed-out">
+          <span className="profile-empty-icon"><LockKeyhole size={25} /></span>
+          <span className="account-eyebrow">SITULA ACCOUNT</span>
+          <h1>Loading your account.</h1>
+          <p>Checking your secure server session.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (!account) {
     return (
       <main className="account-page profile-page">
         <AccountPageTopbar profile />
@@ -316,7 +369,7 @@ export function ProfilePage() {
           <span className="profile-empty-icon"><LockKeyhole size={25} /></span>
           <span className="account-eyebrow">MEMBER ACCESS REQUIRED</span>
           <h1>Your profile is waiting.</h1>
-          <p>Sign in to view the demo membership and account details.</p>
+          <p>Sign in to view your account and membership details.</p>
           <Link href="/login" className="account-primary-button"><LogIn size={17} /> Go to login <ArrowRight size={16} /></Link>
         </section>
       </main>
@@ -334,21 +387,21 @@ export function ProfilePage() {
 
         <section className="profile-overview-panel">
           <div className="profile-identity">
-            <div className="profile-avatar-large">{DEMO_ACCOUNT.initials}<span><Check size={13} /></span></div>
+            <div className="profile-avatar-large">{account.initials}<span><Check size={13} /></span></div>
             <div className="profile-identity-copy">
               <span className="profile-overline">SITULA MEMBER</span>
-              <h2>{DEMO_ACCOUNT.name} {DEMO_ACCOUNT.verified && <BadgeCheck size={21} aria-label="Verified Premium member" />}</h2>
-              <p>{DEMO_ACCOUNT.email}</p>
+              <h2>{account.name} {membershipActive && account.emailVerified && <BadgeCheck size={21} aria-label="Verified Premium member" />}</h2>
+              <p>{account.email}</p>
               <div className="profile-identity-badges">
-                <span className="profile-verified-badge"><BadgeCheck size={13} /> Premium Verified</span>
+                <span className="profile-verified-badge">{membershipActive ? <><BadgeCheck size={13} /> Premium Verified</> : "Free member"}</span>
                 <span className="profile-active-badge"><i /> Account active</span>
               </div>
             </div>
           </div>
           <div className="profile-account-health">
             <span>ACCOUNT STATUS</span>
-            <strong><i /> {DEMO_ACCOUNT.accountStatus}</strong>
-            <small>Good standing · Demo account</small>
+            <strong><i /> {account.status === 'active' ? 'Active' : 'Suspended'}</strong>
+            <small>Good standing · Server account</small>
           </div>
         </section>
 
@@ -360,31 +413,31 @@ export function ProfilePage() {
                 <span className="profile-plan-active"><i /> {membershipActive ? "ACTIVE MEMBERSHIP" : "MEMBERSHIP EXPIRED"}</span>
               </div>
               <div className="profile-plan-heading">
-                <div><span className="profile-overline">YOUR CURRENT PLAN</span><h2>Premium</h2><p>More room for every story.</p></div>
-                <div className="profile-plan-price"><strong>₹{ACTIVE_BILLING.monthlyPrice.toLocaleString("en-IN")}</strong><span>/ month</span><small>{ACTIVE_BILLING.billingLabel}</small></div>
+                <div><span className="profile-overline">YOUR CURRENT PLAN</span><h2>{account.planId === "premium" ? "Premium" : "Free"}</h2><p>{account.planId === "premium" ? "More room for every story." : "Your Situla account is active."}</p></div>
+                <div className="profile-plan-price"><strong>{activeBilling ? "₹" + activeBilling.monthlyPrice.toLocaleString("en-IN") : "Free"}</strong><span>/ month</span><small>{activeBilling?.billingLabel || "No subscription"}</small></div>
               </div>
               <div className="profile-purchase-row">
-                <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> Purchased · Enjoy Premium <Sparkles size={15} /></button>
+                <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> {membershipActive ? "Purchased · Enjoy Premium" : "Free plan · Active"} <Sparkles size={15} /></button>
                 <span className="profile-purchase-caption"><LockKeyhole size={12} /> Already part of your account</span>
               </div>
               <div className="profile-membership-progress">
                 <div className="profile-progress-heading"><span>MEMBERSHIP PERIOD</span><strong>{Math.round(elapsedPercent)}% elapsed</strong></div>
                 <div className="profile-progress-track"><span style={{ width: elapsedPercent + "%" }} /></div>
-                <div className="profile-progress-labels"><span>Started {formatAccountDate(DEMO_MEMBERSHIP.startedAt)}</span><span>{formatAccountDate(DEMO_MEMBERSHIP.expiresAt)}</span></div>
+                <div className="profile-progress-labels"><span>Started {formatAccountDate(startedAt)}</span><span>{expiresAt ? formatAccountDate(expiresAt) : 'No expiry'}</span></div>
               </div>
               <div className="profile-plan-stats">
                 <div><CalendarDays size={16} /><span><small>ACTIVE FOR</small><strong>{activeLabel}</strong></span></div>
                 <div><Clock3 size={16} /><span><small>EXPIRY STATUS</small><strong>{expiryLabel}</strong></span></div>
-                <div><CreditCard size={16} /><span><small>BILLING CYCLE</small><strong>{ACTIVE_BILLING.label}</strong></span></div>
+                <div><CreditCard size={16} /><span><small>BILLING CYCLE</small><strong>{activeBilling?.label || 'Free'}</strong></span></div>
               </div>
               {renewalAvailable ? (
                 <div className="profile-renewal-panel">
                   <span className="profile-renewal-icon"><Sparkles size={17} /></span>
-                  <span className="profile-renewal-copy"><strong>{membershipActive ? "Your renewal window is open" : "Renew Premium to restore access"}</strong><small>{membershipActive ? "Renew before " + formatAccountDate(DEMO_MEMBERSHIP.expiresAt) + " to keep your membership going." : "Your previous membership period has ended."}</small></span>
-                  <button type="button" onClick={() => setRenewalNotice("Renewal is a visual preview only. Checkout and payment are not connected.")}>Renew plan <ArrowRight size={15} /></button>
+                  <span className="profile-renewal-copy"><strong>{membershipActive ? "Your renewal window is open" : "Renew Premium to restore access"}</strong><small>{membershipActive ? "Renew before " + formatAccountDate(expiresAt) + " to keep your membership going." : "Your previous membership period has ended."}</small></span>
+                  <button type="button" onClick={() => setRenewalNotice("Payment checkout is not connected. Premium renewal will remain unavailable until payments are enabled.")}>Renew plan <ArrowRight size={15} /></button>
                 </div>
               ) : (
-                <div className="profile-renewal-locked"><LockKeyhole size={15} /><span>Renewal opens {daysRemaining - DEMO_MEMBERSHIP.renewWindowDays} days from now, within 21 days of expiry.</span></div>
+                <div className="profile-renewal-locked"><LockKeyhole size={15} /><span>{membershipActive ? "Renewal opens " + Math.max(0, (daysRemaining || 0) - 21) + " days from now, within 21 days of expiry." : "No renewal is required for the Free plan. Payment checkout is not connected."}</span></div>
               )}
               {renewalNotice && <p className="profile-action-notice" role="status">{renewalNotice}</p>}
             </section>
@@ -392,12 +445,12 @@ export function ProfilePage() {
             <section className="profile-benefits-card">
               <div className="profile-section-heading"><div><span className="account-eyebrow">WHAT YOU GET</span><h2>Premium benefits</h2></div><span className="profile-benefit-count">06 BENEFITS</span></div>
               <div className="profile-benefit-grid">
-                <div className="profile-benefit-item"><span><Clock3 size={17} /></span><strong>{ACTIVE_BILLING.allowance} watch allowance</strong><small>Per membership cycle</small></div>
-                <div className="profile-benefit-item"><span><LockKeyhole size={17} /></span><strong>{ACTIVE_BILLING.cooldown} cooldown</strong><small>Between watch sessions</small></div>
-                <div className="profile-benefit-item"><span><MonitorSmartphone size={17} /></span><strong>Up to 3 devices</strong><small>Manage your registered devices</small></div>
+                <div className="profile-benefit-item"><span><Clock3 size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.allowance : "3 hours"} watch allowance</strong><small>Per membership cycle</small></div>
+                <div className="profile-benefit-item"><span><LockKeyhole size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.cooldown : "1 hour"} cooldown</strong><small>Between watch sessions</small></div>
+                <div className="profile-benefit-item"><span><MonitorSmartphone size={17} /></span><strong>Up to {deviceSummary.limit} device{deviceSummary.limit === 1 ? "" : "s"}</strong><small>Manage your registered devices</small></div>
                 <div className="profile-benefit-item"><span><BadgeCheck size={17} /></span><strong>Verified badge</strong><small>Premium member identity</small></div>
                 <div className="profile-benefit-item"><span><Sparkles size={17} /></span><strong>Early movie updates</strong><small>Upcoming titles and release info</small></div>
-                <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>Premium movie playback</strong><small>Planned · Not active yet</small></div>
+                <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>Premium movie playback</strong><small>Payment not connected</small></div>
               </div>
               <Link href="/plans" className="profile-view-plans">Compare all plans <ArrowRight size={15} /></Link>
             </section>
@@ -406,24 +459,24 @@ export function ProfilePage() {
           <aside className="profile-secondary-column">
             <section className="profile-details-card">
               <div className="profile-section-heading"><div><span className="account-eyebrow">ACCOUNT IDENTITY</span><h2>Personal details</h2></div><Fingerprint size={19} /></div>
-              <p className="profile-locked-intro">These details are fixed in this preview and cannot be edited.</p>
+              <p className="profile-locked-intro">Account details are managed securely by Situla.</p>
               <div className="profile-readonly-list">
                 <ReadonlyAccountField icon={UserRound} label="Display name" value={DEMO_ACCOUNT.name} />
                 <ReadonlyAccountField icon={Mail} label="Email address" value={DEMO_ACCOUNT.email} />
-                <ReadonlyAccountField icon={Fingerprint} label="Sign-in method" value={DEMO_ACCOUNT.loginMethod} />
-                <ReadonlyAccountField icon={Globe2} label="Profile avatar" value="Situla member avatar" />
+                <ReadonlyAccountField icon={Fingerprint} label="Sign-in method" value={account.loginMethod} />
+                <ReadonlyAccountField icon={Globe2} label="Profile avatar" value={account.initials + " account avatar"} />
               </div>
-              <div className="profile-security-note"><ShieldCheck size={16} /><span><strong>Account identity protected</strong><small>Profile name, email and avatar editing are not available in this demo.</small></span></div>
+              <div className="profile-security-note"><ShieldCheck size={16} /><span><strong>Account identity protected</strong><small>Profile identity and sign-in details are protected by your server session.</small></span></div>
             </section>
 
             <section className="profile-access-card">
               <div className="profile-section-heading"><div><span className="account-eyebrow">ACCESS SNAPSHOT</span><h2>Your access</h2></div><Tv size={19} /></div>
-              <div className="profile-access-row"><span>Plan status</span><strong className={membershipActive ? "is-active" : "is-expired"}>{membershipActive ? "Active" : "Expired"}</strong></div>
+              <div className="profile-access-row"><span>Plan status</span><strong className={membershipActive ? "is-active" : "is-expired"}>{membershipActive ? "Active" : "Free"}</strong></div>
               <div className="profile-access-row"><span>Account status</span><strong className="is-active">Active</strong></div>
-              <div className="profile-access-row"><span>Current plan</span><strong>Premium</strong></div>
-              <div className="profile-access-row"><span>Registered devices</span><strong>0 / 3 used</strong></div>
+              <div className="profile-access-row"><span>Current plan</span><strong>{account.planId === "premium" ? "Premium" : "Free"}</strong></div>
+              <div className="profile-access-row"><span>Registered devices</span><strong>{deviceSummary.active} / {deviceSummary.limit} used</strong></div>
               <div className="profile-access-row"><span>Smart TV browser</span><strong>Web access</strong></div>
-              <p className="profile-access-footnote">Illustrative account information · Not connected to an access API.</p>
+              <p className="profile-access-footnote">Membership and device status are read from the server.</p>
             </section>
           </aside>
         </div>

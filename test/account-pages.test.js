@@ -38,6 +38,9 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.includes("Password"));
   assert.ok(login.includes("Continue with email"));
   assert.ok(login.includes("Continue with Google"));
+  assert.ok(login.includes("/api/auth/email"));
+  assert.ok(login.includes("/api/auth/google"));
+  assert.ok(login.includes("rememberMe"));
   assert.ok(login.includes("defaultChecked"));
   assert.ok(login.includes("Remember me"));
   assert.ok(login.includes('className="account-divider" role="separator">OR</div>'));
@@ -53,7 +56,8 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes("Profile avatar"));
   assert.ok(pages.includes("Locked"));
   assert.ok(pages.includes("Early movie updates"));
-  assert.ok(membership.includes("renewWindowDays: 21"));
+  assert.ok(account.includes("/api/auth/me"));
+  assert.ok(account.includes("Server account"));
   assert.ok(membership.includes('status: "active"'));
 });
 
