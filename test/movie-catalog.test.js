@@ -118,7 +118,7 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   assert.match(app, /current\.map\(\(item\) => String\(item\.imdbId/);
   assert.doesNotMatch(app, /current\.map\(\(item\) => item\.tmdbId\)/);
   assert.match(app, /function MoviePosterImage/);
-  assert.match(app, /AbortSignal\.timeout\(20000\)/);
+  assert.match(app, /AbortSignal\.timeout\(30_000\)/);
   assert.match(api, /items: \[\{ \$sample: \{ size: PREMIUM_FEED_LIMIT \} \}\]/);
   const premiumFeed = await readFile(new URL("../src/premium-feed.js", import.meta.url), "utf8");
   assert.match(premiumFeed, /PREMIUM_FEED_LIMIT = 10/);

@@ -141,7 +141,7 @@ test('stale successful catalog responses are served when the database route fail
     set: async () => 'OK'
   };
   const app = new Hono();
-  app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis }));
+  app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis, getVariant: async () => 'standard' }));
   app.get('/api/tv', (c) => c.json({ error: 'database unavailable' }, 503));
 
   const response = await app.request('/api/tv?page=1');
