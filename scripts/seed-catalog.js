@@ -14,8 +14,8 @@ import { isPopularCatalogItem } from "../src/catalog-popularity.js";
 export const CATALOG_YEAR_START = 2020;
 export const CATALOG_YEAR_END = 2026;
 const DISALLOWED_GENRES = /^(adult|erotica|porn|pornographic|hentai)$/i;
-const IMDB_ID = /^tt\\d{5,12}$/i;
-const DATE = /^\\d{4}-\\d{2}-\\d{2}$/;
+const IMDB_ID = /^tt\d{5,12}$/i;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function safeHttps(value) {
   try {
@@ -27,7 +27,7 @@ function safeHttps(value) {
 }
 
 function titleKey(value) {
-  return String(value || "").normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
+  return String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
@@ -162,13 +162,20 @@ export function prepareOfflineCatalog() {
       return year !== null && year >= CATALOG_YEAR_START && year <= CATALOG_YEAR_END;
     });
     const unique = new Map();
+    const uniqueTitles = new Set();
     const rejected = {};
     for (const record of inWindow) {
       try {
         validators[kind](record);
         const idField = kind === "movie" ? "imdbId" : kind === "tv" ? "tmdbId" : "malId";
         const id = kind === "movie" ? String(record[idField]).toLowerCase() : String(Number(record[idField]));
-        if (!unique.has(id)) unique.set(id, record);
+        const displayTitle = kind === "anime" ? record.titleEnglish || record.title : record.title;
+        const displayYear = catalogReleaseYear(record, kind);
+        const normalizedTitleKey = titleKey(displayTitle) + "|" + String(displayYear || "");
+        if (!unique.has(id) && !uniqueTitles.has(normalizedTitleKey)) {
+          unique.set(id, record);
+          uniqueTitles.add(normalizedTitleKey);
+        }
       } catch (error) {
         const reason = error.message || "record validation failed";
         rejected[reason] = (rejected[reason] || 0) + 1;
@@ -250,11 +257,11 @@ export async function seedOfflineCatalog(selectedKinds = ["movie", "tv", "anime"
     summary[kind] = { ...summary[kind], ...result };
   }
 
-  const complete = selectedKinds.every((kind) => prepared[kind].inWindow > 0 && prepared[kind].records.length > 0);
+  const hasUsableRecordsForEveryKind = selectedKinds.every((kind) => prepared[kind].records.length > 0);
   if (!complete) {
     console.warn("PARTIAL OFFLINE SEED: the local data pack does not yet contain complete, policy-compliant Movie, TV and Anime records for the entire 2020–2026 catalogue.");
   }
-  return { complete, summary };
+  return { hasUsableRecordsForEveryKind, summary };
 }
 
 async function main() {
