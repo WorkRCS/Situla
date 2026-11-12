@@ -17,8 +17,8 @@ test("saved collection accepts Movies, TV series, and Anime with type-safe IDs",
   saved = toggleSavedMedia(saved, tv, "tv");
   saved = toggleSavedMedia(saved, anime, "anime");
 
-  assert.deepEqual(saved.map(savedMediaKey), ["anime:123", "tv:123", "movie:tt1234567"]);
-  assert.deepEqual(saved.map(savedMediaType), ["anime", "tv", "movie"]);
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["anime:123", "tv:123", "movie:tt1234567"]);
+  assert.deepEqual(saved.map((item) => savedMediaType(item)), ["anime", "tv", "movie"]);
   assert.equal(saved.length, 3);
 });
 
@@ -32,8 +32,8 @@ test("saved list normalizes legacy movie-only entries and keeps all three media 
     { title: "Invalid entry" }
   ]);
 
-  assert.deepEqual(saved.map(savedMediaType), ["movie", "tv", "anime"]);
-  assert.deepEqual(saved.map(savedMediaKey), ["movie:tt1234567", "tv:456", "anime:789"]);
+  assert.deepEqual(saved.map((item) => savedMediaType(item)), ["movie", "tv", "anime"]);
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["movie:tt1234567", "tv:456", "anime:789"]);
   assert.equal(saved[0].mediaType, "movie");
 });
 
@@ -44,7 +44,7 @@ test("saved items can be removed independently without affecting another media t
   saved = toggleSavedMedia(saved, tv, "tv");
   saved = toggleSavedMedia(saved, { tmdbId: "987", mediaType: "tv" }, "tv");
 
-  assert.deepEqual(saved.map(savedMediaKey), ["movie:tt7654321"]);
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["movie:tt7654321"]);
   assert.deepEqual(toggleSavedMedia(saved, { malId: 42 }, "anime"), [
     { malId: 42, mediaType: "anime" },
     { imdbId: "tt7654321", mediaType: "movie" }

@@ -225,7 +225,7 @@ test("saved-media helpers preserve legacy movie saves and toggle TV and Anime in
   let saved = normalizeSavedMediaList([legacyMovie]);
   saved = toggleSavedMedia(saved, tv, "tv");
   saved = toggleSavedMedia(saved, anime, "anime");
-  assert.deepEqual(saved.map(savedMediaKey), ["anime:123", "tv:123", "movie:tt1234567"]);
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["anime:123", "tv:123", "movie:tt1234567"]);
   saved = toggleSavedMedia(saved, tv, "tv");
-  assert.deepEqual(saved.map(savedMediaKey), ["anime:123", "movie:tt1234567"]);
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["anime:123", "movie:tt1234567"]);
 });
