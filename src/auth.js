@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { OAuth2Client } from 'google-auth-library';
 import { User, AuthSession, Device, AuthRateLimit } from './models.js';
+import { getWatchPolicy } from './membership-policy.js';
 
 const scrypt = promisify(scryptCallback);
 export const SESSION_COOKIE = 'situla_session';
@@ -161,7 +162,46 @@ export function isConfiguredAdmin(email) {
   return configured.includes(normalizeEmail(email));
 }
 
+export function selectDevicesToRetain(devices, limit) {
+  return [...devices].sort((left, right) => {
+    const leftSlot = Number.isInteger(left.slot) ? left.slot : Number.POSITIVE_INFINITY;
+    const rightSlot = Number.isInteger(right.slot) ? right.slot : Number.POSITIVE_INFINITY;
+    if (leftSlot !== rightSlot) return leftSlot - rightSlot;
+    const leftCreatedAt = new Date(left.createdAt || 0).getTime();
+    const rightCreatedAt = new Date(right.createdAt || 0).getTime();
+    if (leftCreatedAt !== rightCreatedAt) return leftCreatedAt - rightCreatedAt;
+    return String(left._id).localeCompare(String(right._id));
+  }).slice(0, Math.max(0, Number(limit) || 0));
+}
+
+async function enforceUserDeviceLimit(user) {
+  const deviceLimit = getWatchPolicy(user).deviceLimit;
+  const activeDevices = await Device.find({ userId: user._id, revokedAt: null })
+    .select('_id slot createdAt')
+    .lean();
+  if (activeDevices.length <= deviceLimit) return;
+
+  const retainedIds = new Set(selectDevicesToRetain(activeDevices, deviceLimit).map((device) => String(device._id)));
+  const revokeIds = activeDevices
+    .filter((device) => !retainedIds.has(String(device._id)))
+    .map((device) => device._id);
+  if (!revokeIds.length) return;
+
+  const now = new Date();
+  await Promise.all([
+    Device.updateMany(
+      { _id: { $in: revokeIds }, userId: user._id, revokedAt: null },
+      { $set: { revokedAt: now } }
+    ),
+    AuthSession.updateMany(
+      { deviceId: { $in: revokeIds }, revokedAt: null },
+      { $set: { revokedAt: now, expiresAt: now } }
+    )
+  ]);
+}
+
 export async function registerDevice(c, user) {
+  await enforceUserDeviceLimit(user);
   const existingToken = getCookie(c, DEVICE_COOKIE);
   if (existingToken) {
     const existing = await Device.findOne({
@@ -176,10 +216,7 @@ export async function registerDevice(c, user) {
     }
   }
 
-  const premiumActive = user.planId === 'premium' &&
-    user.membership?.status === 'active' &&
-    (!user.membership?.expiresAt || new Date(user.membership.expiresAt) > new Date());
-  const deviceLimit = premiumActive ? 3 : 1;
+  const deviceLimit = getWatchPolicy(user).deviceLimit;
   const activeDevices = await Device.find({ userId: user._id, revokedAt: null }).select('slot').lean();
   if (activeDevices.length >= deviceLimit) {
     const error = new Error('Your registered-device limit has been reached. Remove another device before signing in here.');
@@ -280,6 +317,7 @@ export async function getAuthenticatedSession(c) {
   if (!session) return null;
   const user = await User.findOne({ _id: session.userId, status: 'active' });
   if (!user) return null;
+  await enforceUserDeviceLimit(user);
   const device = await Device.findOne({
     _id: session.deviceId,
     userId: user._id,

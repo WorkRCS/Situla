@@ -11,7 +11,9 @@ test('Auth and playback mutation endpoints reject requests without a same-origin
     ['/api/auth/logout', 'POST'],
     ['/api/playback/start', 'POST'],
     ['/api/playback/heartbeat', 'POST'],
-    ['/api/playback/stop', 'POST']
+    ['/api/playback/stop', 'POST'],
+    ['/api/admin/users/507f1f77bcf86cd799439011/membership', 'PATCH'],
+    ['/api/auth/devices/507f1f77bcf86cd799439011', 'DELETE']
   ];
   for (const [path, method] of requests) {
     const response = await app.request(path, { method, headers: { 'content-type': 'application/json' }, body: '{}' });

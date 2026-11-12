@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret
+  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain
 } from "../src/auth.js";
 
 test("Email and password validation normalizes account identifiers", () => {
@@ -43,4 +43,23 @@ test("AUTH_SECRET must contain at least 32 bytes before account operations are a
     if (previous === undefined) delete process.env.AUTH_SECRET;
     else process.env.AUTH_SECRET = previous;
   }
+});
+
+
+test("Device entitlements retain the primary slot and discard secondary Premium devices after expiry", () => {
+  const devices = [
+    { _id: "device-2", slot: 2, createdAt: new Date("2026-11-03T00:00:00.000Z") },
+    { _id: "device-0", slot: 0, createdAt: new Date("2026-11-01T00:00:00.000Z") },
+    { _id: "device-1", slot: 1, createdAt: new Date("2026-11-02T00:00:00.000Z") }
+  ];
+  assert.deepEqual(selectDevicesToRetain(devices, 1).map((device) => device._id), ["device-0"]);
+  assert.deepEqual(selectDevicesToRetain(devices, 3).map((device) => device._id).sort(), ["device-0", "device-1", "device-2"]);
+});
+
+test("Device retention deterministically keeps the oldest un-slotted legacy device", () => {
+  const devices = [
+    { _id: "newer", slot: null, createdAt: new Date("2026-11-02T00:00:00.000Z") },
+    { _id: "older", slot: null, createdAt: new Date("2026-11-01T00:00:00.000Z") }
+  ];
+  assert.deepEqual(selectDevicesToRetain(devices, 1).map((device) => device._id), ["older"]);
 });
