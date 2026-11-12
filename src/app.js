@@ -822,18 +822,6 @@ app.post('/api/playback/start', async (c) => {
       return c.json({ error: 'Too many playback starts. Please wait before opening another title.', code: 'PLAYBACK_RATE_LIMITED' }, 429);
     }
     const result = await startPlaybackSession(principal, media);
-    const trendModel = mediaType === 'movie' ? Movie : mediaType === 'tv' ? TvSeries : AnimeSeries;
-    const trendFilter = mediaType === 'movie'
-      ? { imdbId: mediaId.toLowerCase() }
-      : mediaType === 'tv'
-        ? { tmdbId: Number(mediaId) }
-        : { malId: Number(mediaId) };
-    try {
-      await recordCatalogPlaybackStart(trendModel, trendFilter);
-    } catch (trendError) {
-      // Playback remains available even if the optional trend counter is degraded.
-      console.warn('Catalog trend signal update failed:', trendError.message);
-    }
     return c.json(result, 201);
   } catch (error) {
     return apiError(c, error, 'Playback access could not be started.');
@@ -850,7 +838,23 @@ app.post('/api/playback/heartbeat', async (c) => {
     }
     await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
-    return c.json(await heartbeatPlaybackSession(principal, body.sessionId, body.playing));
+    const result = await heartbeatPlaybackSession(principal, body.sessionId, body.playing);
+    if (result.startedPlaying) {
+      const trendModel = result.mediaType === 'movie' ? Movie : result.mediaType === 'tv' ? TvSeries : AnimeSeries;
+      const trendFilter = result.mediaType === 'movie'
+        ? { imdbId: String(result.mediaId).toLowerCase() }
+        : result.mediaType === 'tv'
+          ? { tmdbId: Number(result.mediaId) }
+          : { malId: Number(result.mediaId) };
+      try {
+        await recordCatalogPlaybackStart(trendModel, trendFilter);
+      } catch (trendError) {
+        // Playback remains available even if the optional trend counter is degraded.
+        console.warn('Catalog trend signal update failed:', trendError.message);
+      }
+    }
+    const { startedPlaying, mediaType: trendMediaType, mediaId: trendMediaId, ...response } = result;
+    return c.json(response);
   } catch (error) {
     return apiError(c, error, 'Playback heartbeat failed.');
   }
