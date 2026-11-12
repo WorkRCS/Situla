@@ -1031,7 +1031,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'originalTitle'],
       baseFilter: { imdbId: IMDB_ID, adult: { $ne: true } },
       exactFilter: IMDB_ID.test(normalizedId) ? { imdbId: normalizedId } : null,
-      select: 'imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime voteAverage voteCount popularity genres adult',
+      select: 'imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d genres adult',
       toDto: movieDto
     },
     {
@@ -1041,7 +1041,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'originalTitle'],
       baseFilter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } },
       exactFilter: numericId ? { tmdbId: numericId } : null,
-      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity genres numberOfSeasons numberOfEpisodes status',
+      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d genres numberOfSeasons numberOfEpisodes status',
       toDto: tvSeriesDto
     },
     {
@@ -1051,7 +1051,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'titleEnglish', 'titleJapanese'],
       baseFilter: { type: { $in: ['TV', 'ONA'] } },
       exactFilter: numericId ? { malId: numericId } : null,
-      select: 'malId title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity status season type source genres themes demographics studios producers rating',
+      select: 'malId title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
       toDto: animeSeriesDto
     }
   ].filter((catalog) => selectedType === 'all' || catalog.type === selectedType);
