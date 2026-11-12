@@ -212,6 +212,7 @@ test("TV and Anime cards expose the same Save control as Movie cards and feed on
   assert.match(app, /onSave=\{toggleSaved\} saved=\{savedIds\.has\(savedMediaKey\(item, "tv"\)\)\}/);
   assert.match(app, /onSave=\{toggleSaved\} saved=\{savedIds\.has\(savedMediaKey\(item, "anime"\)\)\}/);
   assert.match(app, /normalizeSavedMediaList\(saved\)/);
+  assert.doesNotMatch(app, /savedIds\.has\(featured\.imdbId\)/);
   assert.match(app, /savedMovies\.map\(\(item\) => \{/);
   assert.match(app, /kind === "tv" \? openTvSeries : openAnimeSeries/);
   assert.match(app, /Tap the bookmark on any movie, TV series, or anime to save it here\./);

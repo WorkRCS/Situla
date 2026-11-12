@@ -1515,8 +1515,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     </button>
                     {featured.mediaType === "movie" && (
                       <button className="ghost-button" onClick={() => toggleSaved(featured)}>
-                        <Icon name={savedIds.has(featured.imdbId) ? "check" : "bookmark"} size={16} />
-                        {savedIds.has(featured.imdbId) ? "In my list" : "Add to my list"}
+                        <Icon name={savedIds.has(savedMediaKey(featured, "movie")) ? "check" : "bookmark"} size={16} />
+                        {savedIds.has(savedMediaKey(featured, "movie")) ? "In my list" : "Add to my list"}
                       </button>
                     )}
                   </div>
