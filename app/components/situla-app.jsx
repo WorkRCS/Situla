@@ -193,8 +193,8 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
       <div className="movie-poster">
         <MoviePosterImage movie={movie} />
         {movie.catalogBadge && (
-          <span className={"catalog-badge catalog-badge-" + movie.catalogBadge.key}>
-            <span aria-hidden="true">{movie.catalogBadge.icon}</span> {movie.catalogBadge.label}
+          <span className={"catalog-badge catalog-badge-" + movie.catalogBadge.key} role="status" aria-label={movie.catalogBadge.label + " title"}>
+            {movie.catalogBadge.label}
           </span>
         )}
         {movie.voteAverage > 0 && (
@@ -329,8 +329,8 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
       <div className="movie-poster">
         <SeriesPosterImage item={item} title={title} />
         {item.catalogBadge && (
-          <span className={"catalog-badge catalog-badge-" + item.catalogBadge.key}>
-            <span aria-hidden="true">{item.catalogBadge.icon}</span> {item.catalogBadge.label}
+          <span className={"catalog-badge catalog-badge-" + item.catalogBadge.key} role="status" aria-label={item.catalogBadge.label + " title"}>
+            {item.catalogBadge.label}
           </span>
         )}
         {rating > 0 && (
