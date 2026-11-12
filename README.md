@@ -45,7 +45,7 @@ Administrators can create, edit, schedule, draft and delete site-wide announceme
 Run one command after setting `MONGODB_URI` and `MONGODB_DB_NAME`:
 
 ```sh
-npm run seed:catalog
+npm run seed:catalog:legacy-online
 ```
 
 The command reads version-controlled JavaScript data only; it makes no metadata-provider API calls. It imports only records dated 2020 through 2026 that pass the full policy checks, and uses insert-only writes. Movie IDs remain IMDb `tt…`, TV IDs remain numeric TMDB TV IDs, and Anime IDs remain MAL IDs. A green **Popular** tag is derived from each catalogue's own popularity/rank fields, with an explicit `isPopular` override available.
@@ -65,7 +65,7 @@ Movies and TV retain separate identifiers. Anime has its own **new-only MAL seed
 
 The new Anime pack includes individual poster/banner references, synopsis, canonical MAL links, franchise/related-season cards, and numbered season/episode guide entries. The curated pack contains 200 unique new MAL IDs, 2,883 episode guide entries, and 2,881 episode still-image references. A missing episode still is left blank rather than borrowing an image from another episode or title.
 
-### Anime check, artwork audit and new-only seed
+### Legacy Anime pack check, artwork audit and seed
 
 From the Situla project folder:
 
@@ -80,12 +80,12 @@ After reviewing the audit report, apply the cleanup:
 
 ```sh
 npm run audit:anime:apply
-npm run seed:anime
+npm run seed:anime:legacy-curated
 ```
 
 The cleanup deletes only Anime documents that have neither a usable poster nor a usable banner/backdrop. A record with at least one valid artwork image is retained. The new-only seed then inserts the curated additions whose MAL ID and title are not already in the collection. It uses insertMany in insert-only mode; it does not update or replace existing Anime records.
 
-### Verified Movie additions (five parts; 500 new titles)
+### Legacy online Movie additions (five historical discovery parts)
 
 The five discovery files separate popular, IMDb-rated, Drama, Action and Animation catalogues. At seed time the importer reads candidate IMDb IDs from Stremio's public Cinemeta catalogue, requests each title's metadata directly by IMDb ID, and independently validates its poster and landscape background image responses. No TMDb API or TMDb image host is used by the Movie seed.
 
@@ -95,21 +95,21 @@ Run the static checks and then the seed:
 
 ```sh
 npm run check:movies
-npm run seed:movies
+npm run seed:movies:legacy-online
 ```
 
 The Movie seed requires only `MONGODB_URI` and `MONGODB_DB_NAME` in `.env`. Metadata is fetched from Stremio Cinemeta over public HTTPS; no TMDb token, IMDb API subscription, or metadata API key is required. The GitHub Actions seed workflow also has a `movies` run selection and needs only the two MongoDB secrets for that selection. Situla stores the IMDb title ID as the sole Movie key and links each record to its IMDb title page.
 
-### Movie and TV seeds
+### Legacy online Movie and TV seeders
 
-The Movie command first inserts any missing entries from the original 70-record static Movie pack using insert-only semantics, then adds the 500 complete Cinemeta-verified IMDb-keyed additions. The TV seed separately prepares 200 new TV additions and inserts them in insert-only mode. The Anime seed inserts its 200 curated MAL-ID additions. All three seeds are insert-only and leave existing catalog records untouched. To seed all three, run `npm run seed:catalog`:
+The Movie command first inserts any missing entries from the original 70-record static Movie pack using insert-only semantics, then adds the 500 complete Cinemeta-verified IMDb-keyed additions. The TV seed separately prepares 200 new TV additions and inserts them in insert-only mode. The Anime seed inserts its 200 curated MAL-ID additions. All three seeds are insert-only and leave existing catalog records untouched. To run the historical provider-backed imports, use the explicit legacy command `npm run seed:catalog:legacy-online`:
 
 ```sh
-npm run seed:movies
-npm run seed:tv
-npm run seed:anime
+npm run seed:movies:legacy-online
+npm run seed:tv:legacy-online
+npm run seed:anime:legacy-curated
 # or run all three catalog seeds in order:
-npm run seed:catalog
+npm run seed:catalog:legacy-online
 ```
 
 All seed/audit commands require MongoDB credentials and database network access. `npm run seed:movies` additionally needs outbound HTTPS access to `v3-cinemeta.strem.io` and the Cinemeta artwork hosts. It does not connect to TMDb. `npm run seed:tv` needs outbound HTTPS access to TVmaze and its image hosts. Before writing anything, the TV seed requires an exact normalized title and premiere-year match, a synopsis of at least 80 characters, at least five titled episodes, consistent unique season/episode numbers, a reachable poster and at least 80% reachable episode stills. The entire 200-record TV target is preflighted before its insert begins; if there are not enough valid records, the TV additions seed stops without writing. A separate landscape backdrop is stored only when one is supplied and independently reachable; the poster is never reused as a fake backdrop. Missing or broken episode stills are stored as null, but a series is accepted only when at least 80% of its episode stills are reachable. TVmaze metadata is credited by a source link on the detail page and follows TVmaze's CC BY-SA terms. `npm run dev` never runs a seed or cleanup automatically.
