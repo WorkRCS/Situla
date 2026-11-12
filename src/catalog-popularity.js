@@ -26,29 +26,35 @@ function marketSignals(item, mediaType) {
   const isAnime = mediaType === "anime";
   const isTv = mediaType === "tv";
   const votes = Math.max(0, number(isAnime ? item?.scoredBy : item?.voteCount));
-  const rating = clamp(number(isAnime ? item?.score : item?.voteAverage), 0, 10);
-  const popularity = Math.max(0, number(item?.popularity));
+  const storedRating = number(isAnime ? item?.score : item?.voteAverage);
+  const providerRating = isTv ? number(item?.providerRating) : 0;
+  const rating = clamp(storedRating > 0 ? storedRating : providerRating, 0, 10);
+  const popularity = Math.max(
+    0,
+    number(item?.popularity),
+    isTv ? number(item?.providerPopularity) : 0
+  );
   const rank = Math.max(0, number(item?.rank));
 
-  // Bayesian smoothing limits the influence of small or newly-created vote samples.
+  // Bayesian smoothing protects ratings with very small public vote samples.
   const priorRating = 6.5;
   const priorVotes = isAnime ? 250 : isTv ? 100 : 150;
   const weightedRating = votes > 0
     ? ((rating * votes) + (priorRating * priorVotes)) / (votes + priorVotes)
-    : 0;
+    : rating;
 
   const voteScale = isAnime ? 50_000 : isTv ? 20_000 : 50_000;
   const voteDepth = votes > 0
     ? clamp(Math.log1p(votes) / Math.log1p(voteScale), 0, 1)
     : 0;
 
-  // TMDB popularity is higher-is-better; MAL rank/popularity are lower-is-better.
+  // MAL rank/popularity are lower-is-better; TMDB and TVmaze reach are higher-is-better.
   const providerReach = isAnime
     ? Math.max(
         rank > 0 ? 1 / (1 + rank / 250) : 0,
         popularity > 0 ? 1 / (1 + popularity / 250) : 0
       )
-    : 1 - Math.exp(-popularity / 35);
+    : 1 - Math.exp(-popularity / (isTv ? 24 : 30));
 
   const marketScore = (weightedRating / 10) * 0.55 + voteDepth * 0.25 + providerReach * 0.20;
 
@@ -59,12 +65,11 @@ function marketSignals(item, mediaType) {
     voteDepth,
     providerReach,
     marketScore,
-    minPopularVotes: isAnime ? 1_000 : isTv ? 300 : 500,
-    minFeaturedVotes: isAnime ? 100 : isTv ? 50 : 75,
-    minHotVotes: isAnime ? 500 : isTv ? 100 : 150
+    minPopularVotes: isAnime ? 500 : isTv ? 200 : 300,
+    minFeaturedVotes: isAnime ? 100 : isTv ? 25 : 50,
+    minHotVotes: isAnime ? 300 : isTv ? 75 : 100
   };
 }
-
 export function calculateDecayedTrendScore(score, updatedAt, now = Date.now()) {
   const value = Math.max(0, number(score));
   const updated = updatedAt instanceof Date ? updatedAt.getTime() : Date.parse(String(updatedAt || ""));
@@ -87,6 +92,8 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
 
   const current = now instanceof Date ? now.getTime() : Number(now);
   const signals = marketSignals(item, mediaType);
+  if (!Number.isFinite(current) || signals.rating <= 0) return null;
+
   const trendScore = calculateDecayedTrendScore(item.trendScore, item.trendUpdatedAt, current);
   const voteVelocity7d = Math.max(0, number(item.voteVelocity7d));
   const releasedAt = releaseTimestamp(item);
@@ -96,39 +103,55 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
   const isFresh = ageDays <= (mediaType === "anime" ? 730 : 365);
 
   const velocityThreshold = mediaType === "anime" ? 120 : mediaType === "tv" ? 70 : 100;
+  const tvmazeHot = mediaType === "tv" &&
+    signals.rating >= 7.2 &&
+    number(item.providerPopularity) >= 60 &&
+    isFresh;
   const publicProviderTrend = mediaType === "anime"
     ? signals.votes >= signals.minHotVotes && isFresh &&
       ((Number(item.rank) > 0 && Number(item.rank) <= 100) ||
        (Number(item.popularity) > 0 && Number(item.popularity) <= 50))
-    : signals.votes >= signals.minHotVotes && isFresh && signals.providerReach >= 0.72;
+    : signals.votes >= signals.minHotVotes && isFresh &&
+      (signals.providerReach >= 0.60 ||
+       (voteVelocity7d >= velocityThreshold && signals.rating >= 6.5));
 
   if (
     trendScore >= HOT_TREND_SCORE ||
     (signals.votes >= signals.minHotVotes && voteVelocity7d >= velocityThreshold && signals.rating >= 6.5) ||
-    publicProviderTrend
+    publicProviderTrend ||
+    tvmazeHot
   ) {
-    return { key: "hot", label: "Hot", icon: "🔥" };
+    return { key: "hot", label: "Hot" };
   }
 
+  const tvmazePopular = mediaType === "tv" &&
+    signals.rating >= 7.5 &&
+    number(item.providerPopularity) >= 25 &&
+    signals.marketScore >= 0.48;
   if (
-    signals.votes >= signals.minPopularVotes &&
-    signals.weightedRating >= 7 &&
-    signals.marketScore >= 0.56
+    (signals.votes >= signals.minPopularVotes &&
+      signals.weightedRating >= 6.8 &&
+      signals.marketScore >= 0.48) ||
+    tvmazePopular
   ) {
-    return { key: "popular", label: "Popular", icon: "🎉" };
+    return { key: "popular", label: "Popular" };
   }
 
+  const tvmazeFeatured = mediaType === "tv" &&
+    signals.rating >= 7 &&
+    number(item.providerPopularity) > 0 &&
+    signals.marketScore >= 0.38;
   if (
-    signals.votes >= signals.minFeaturedVotes &&
-    signals.weightedRating >= 7.2 &&
-    signals.marketScore >= 0.52
+    (signals.votes >= signals.minFeaturedVotes &&
+      signals.weightedRating >= 6.8 &&
+      signals.marketScore >= 0.40) ||
+    tvmazeFeatured
   ) {
-    return { key: "featured", label: "Featured", icon: "💖" };
+    return { key: "featured", label: "Featured" };
   }
 
   return null;
 }
-
 /**
  * Atomically record one confirmed transition into playing state. Heartbeats
  * during the same playing session do not add more engagement points.
