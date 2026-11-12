@@ -1041,7 +1041,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'originalTitle'],
       baseFilter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } },
       exactFilter: numericId ? { tmdbId: numericId } : null,
-      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d genres numberOfSeasons numberOfEpisodes status',
+      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d providerRating providerPopularity genres numberOfSeasons numberOfEpisodes status',
       toDto: tvSeriesDto
     },
     {
