@@ -79,8 +79,10 @@ test("Main app header places search before avatar and notifications", async () =
   const css = await read("../app/globals.css");
   const search = app.indexOf('className="header-search-wrap">');
   const avatar = app.indexOf('className="header-account-wrap"');
-  const notifications = app.indexOf('className="header-notifications-wrap"');
+  const notifications = app.indexOf('<AnnouncementCenter onOpen=');
+  const announcementCenter = await read("../app/components/announcement-center.jsx");
   assert.ok(search >= 0 && avatar > search && notifications > avatar);
+  assert.ok(announcementCenter.includes('className="header-notifications-wrap"'));
   assert.ok(app.includes('router.push("/profile")'));
   assert.ok(app.includes('router.push("/login")'));
   assert.ok(app.includes("/api/auth/logout"));
