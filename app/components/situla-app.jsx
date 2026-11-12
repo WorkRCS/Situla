@@ -14,7 +14,7 @@ import AnnouncementCenter from "./announcement-center.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2 } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -2146,20 +2146,38 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </Disclosure>
               </Card>
               <div className="about-situla-card rounded-2xl border border-white/10 bg-[#11131b] p-5">
-                <h2 className="font-bold">About Situla</h2>
-                <p className="mt-2 text-xs leading-5 text-[#9297a7]">Movie IDs: IMDb · TV Series IDs: TMDB · Anime IDs: MyAnimeList (MAL).</p>
-                <div className="about-provider-list">
-                  <span>Identifier providers</span>
-                  <a href="https://www.imdb.com/" target="_blank" rel="noreferrer">IMDb</a>
-                  <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a>
-                  <a href="https://myanimelist.net/" target="_blank" rel="noreferrer">MyAnimeList</a>
+                <div className="about-situla-heading">
+                  <span className="about-situla-eyebrow">THE SITULA EXPERIENCE</span>
+                  <h2 className="font-bold">About Situla</h2>
+                  <p>One place to discover movies, TV series and anime, with a catalog organized around trusted title identifiers.</p>
                 </div>
-                <p className="mt-3 text-[10px] leading-5 text-[#73798a]">Powered by the <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-[#e8b65b] underline underline-offset-4">TMDB API</a>. This product is not endorsed or certified by TMDB. Anime identifiers are provided by MyAnimeList; movie identifiers use IMDb title IDs.</p>
-                <div className="premium-coming-soon">
-                  <span className="premium-kicker">PREMIUM</span>
-                  <strong>Premium Feature</strong>
-                  <em className="premium-status">COMING SOON</em>
+                <div className="about-provider-heading">
+                  <span>POWERED BY</span>
+                  <p>Recognized media platforms for consistent title identification.</p>
                 </div>
+                <div className="about-provider-grid" aria-label="Media identifier sources">
+                  <a className="about-provider-card" href="https://www.imdb.com/" target="_blank" rel="noopener noreferrer" aria-label="IMDb — movie identifiers">
+                    <span className="about-provider-logo about-provider-logo-imdb"><img src="https://cdn.simpleicons.org/imdb/F5C518" alt="IMDb logo" loading="lazy" /></span>
+                    <span className="about-provider-copy"><strong>IMDb</strong><small>Movie identifiers</small></span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                  <a className="about-provider-card" href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" aria-label="The Movie Database — TV series identifiers">
+                    <span className="about-provider-logo about-provider-logo-tmdb"><img src="https://cdn.simpleicons.org/themoviedatabase/01B4E4" alt="The Movie Database logo" loading="lazy" /></span>
+                    <span className="about-provider-copy"><strong>TMDB</strong><small>TV series identifiers</small></span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                  <a className="about-provider-card" href="https://myanimelist.net/" target="_blank" rel="noopener noreferrer" aria-label="MyAnimeList — anime identifiers">
+                    <span className="about-provider-logo about-provider-logo-mal"><img src="https://cdn.simpleicons.org/myanimelist/2E51A2" alt="MyAnimeList logo" loading="lazy" /></span>
+                    <span className="about-provider-copy"><strong>MyAnimeList</strong><small>Anime identifiers</small></span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                </div>
+                <p className="about-provider-disclaimer">IMDb, TMDB and MyAnimeList are referenced for their respective title identifiers. Situla is an independent product and is not affiliated with or endorsed by these services.</p>
+                <Link href="/plans" className="premium-coming-soon premium-plan-link" aria-label="Explore Situla Premium plans">
+                  <span className="premium-kicker">SITULA PREMIUM</span>
+                  <span className="premium-plan-copy"><strong>Explore Situla Premium</strong><small>Compare plans and discover membership benefits.</small></span>
+                  <span className="premium-plan-action"><MousePointerClick className="premium-plan-pointer" size={18} aria-hidden="true" /><span>VIEW PLANS</span><ArrowUpRight size={14} aria-hidden="true" /></span>
+                </Link>
                 <p className="mt-3 text-[10px] font-bold tracking-[.14em] text-[#73798a]">SITULA · WEB APP</p>
               </div>
             </div>
