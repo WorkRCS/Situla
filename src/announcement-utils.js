@@ -44,3 +44,16 @@ export function resolveAnnouncementMedia(mediaUrl = '', uploadedImageUrl = '') {
   }
   return { type: 'link', src: url.href };
 }
+
+export function formatAnnouncementDateTime(value, locale) {
+  const date = parseAnnouncementDate(value);
+  if (!date) return 'Date unavailable';
+  return new Intl.DateTimeFormat(locale || undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(date);
+}

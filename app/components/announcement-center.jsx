@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bell, Check, ChevronDown, ExternalLink, Megaphone, X } from "lucide-react";
-import { resolveAnnouncementMedia } from "../../src/announcement-utils.js";
+import { formatAnnouncementDateTime, resolveAnnouncementMedia } from "../../src/announcement-utils.js";
 
 function readLocalIds(storageKey) {
   try {
@@ -23,14 +23,7 @@ function saveLocalId(id, storageKey) {
 }
 
 function announcementDate(value) {
-  if (!value) return "Date unavailable";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZoneName: "short"
-  }).format(date);
+  return formatAnnouncementDateTime(value);
 }
 
 

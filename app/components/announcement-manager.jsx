@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Check, Edit3, ImagePlus, LoaderCircle, Megaphone, Plus, RefreshCw, Trash2, UploadCloud, X } from "lucide-react";
+import { formatAnnouncementDateTime } from "../../src/announcement-utils.js";
 
 const PAGE_SIZE = 10;
-const formatDateTime = (value) => value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short", timeZoneName: "short" }) : "—";
+const formatDateTime = (value) => value ? formatAnnouncementDateTime(value) : "—";
 
 function localDateTimeValue(value = new Date()) {
   const date = new Date(value);

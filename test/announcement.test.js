@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises';
 import {
   parseAnnouncementDate,
   getAnnouncementStatus,
-  resolveAnnouncementMedia
+  resolveAnnouncementMedia,
+  formatAnnouncementDateTime
 } from '../src/announcement-utils.js';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
@@ -18,6 +19,16 @@ test('announcement dates preserve exact instants and publication scheduling is s
   assert.equal(getAnnouncementStatus('publish', '2026-11-12T11:00:00.000Z', now), 'scheduled');
   assert.equal(getAnnouncementStatus('publish', '2026-11-12T09:59:59.000Z', now), 'published');
   assert.equal(getAnnouncementStatus('publish', null, now), null);
+});
+
+
+test('announcement date-time formatting accepts a timezone name with explicit date/time fields', () => {
+  const value = '2026-11-12T10:15:00.000Z';
+  const formatted = formatAnnouncementDateTime(value, 'en-GB');
+  assert.equal(typeof formatted, 'string');
+  assert.match(formatted, /2026/);
+  assert.doesNotMatch(formatted, /Invalid Date/);
+  assert.equal(formatAnnouncementDateTime('invalid-date', 'en-GB'), 'Date unavailable');
 });
 
 test('announcement media supports uploads, direct image URLs and approved video embeds only', () => {
