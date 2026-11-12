@@ -63,7 +63,7 @@ test("global search supports shared type/year/tag filters across Movie, TV and A
   assert.match(api, /const allowedTags = new Set\(\['all', 'hot', 'popular', 'featured'\]\)/);
   assert.match(api, /tag === 'all' \|\| item\.catalogBadge\?\.key === tag/);
   assert.match(api, /: 1800;/);
-  assert.match(api, /const pageLimit = tag === 'all' \\? 20 : 90/);
+  assert.ok(api.includes("const pageLimit = tag === 'all' ? 20 : 90;"));
   assert.match(api, /const hasMore = page < pageLimit/);
   assert.match(api, /if \(!query && selectedType === 'all' && year === null && tag === 'all'\)/);
   assert.match(api, /fuzzyPattern/);
@@ -76,7 +76,7 @@ test("global search supports shared type/year/tag filters across Movie, TV and A
   assert.match(app, /search-year-filter/);
   assert.match(app, /const \[searchTag, setSearchTag\] = useState\("all"\)/);
   assert.match(app, /search-tag-filters/);
-  assert.equal((app.match(/params\\.set\\("tag", searchTag\\)/g) || []).length, 2);
+  assert.equal(app.split('params.set("tag", searchTag)').length - 1, 2);
   assert.match(app, /params\.set\("tag", searchTag\)/);
   assert.match(app, /searchType, searchYear, searchTag/);
   assert.match(css, /\.search-tag-button\.search-tag-hot\.active/);
