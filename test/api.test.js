@@ -27,6 +27,12 @@ test('Playback heartbeats validate session identifiers and playing state before 
     body: JSON.stringify({ sessionId: 'invalid', playing: true })
   });
   assert.equal(response.status, 400);
+  const invalidStop = await app.request('/api/playback/stop', {
+    method: 'POST',
+    headers: { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'invalid' })
+  });
+  assert.equal(invalidStop.status, 400);
 });
 
 test('admin and crawler API routes are removed', async () => {

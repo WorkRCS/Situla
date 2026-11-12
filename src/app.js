@@ -648,11 +648,11 @@ app.post('/api/playback/heartbeat', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
   try {
-    await connectDatabase();
     const body = await c.req.json().catch(() => ({}));
     if (!/^[a-f0-9]{24}$/i.test(String(body.sessionId || '')) || typeof body.playing !== 'boolean') {
       return c.json({ error: 'Invalid playback heartbeat.' }, 400);
     }
+    await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
     return c.json(await heartbeatPlaybackSession(principal, body.sessionId, body.playing));
   } catch (error) {
@@ -664,9 +664,9 @@ app.post('/api/playback/stop', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
   try {
-    await connectDatabase();
     const body = await c.req.json().catch(() => ({}));
     if (!/^[a-f0-9]{24}$/i.test(String(body.sessionId || ''))) return c.json({ error: 'Invalid playback session.' }, 400);
+    await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
     return c.json(await stopPlaybackSession(principal, body.sessionId));
   } catch (error) {

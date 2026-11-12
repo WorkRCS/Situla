@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2,
