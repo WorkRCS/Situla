@@ -7053,3 +7053,9 @@ body:has(.login-page) .site-footer { display:none !important; }
   .site-workspace-brand { justify-content:center;padding-inline:0; }
   .site-sidebar-brand > span { display:none; }
 }
+
+
+@media (min-width:768px) and (max-width:1100px) {
+  .site-sidebar-brand { justify-content:center;padding-inline:0; }
+  .site-sidebar-brand > span { display:none; }
+}
