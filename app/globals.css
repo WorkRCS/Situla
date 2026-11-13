@@ -6156,7 +6156,6 @@ body:has(.login-page) .site-footer { display:none !important; }
 @media (max-width:760px) {
   .upcoming-page { padding-top:15px; }
   .upcoming-page-heading { border-radius:17px; }
-  .upcoming-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px 8px; }
   .upcoming-card-body { padding:0; }
   .upcoming-toolbar { align-items:stretch; flex-direction:column; }
   .upcoming-mine-toggle { align-self:flex-start; }
