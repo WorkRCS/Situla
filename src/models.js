@@ -394,6 +394,41 @@ const authRateLimitSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 authRateLimitSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
+const upcomingItemSchema = new mongoose.Schema({
+  type: { type: String, enum: ['movie', 'tv', 'anime'], required: true, index: true },
+  title: { type: String, required: true, trim: true, maxlength: 160 },
+  posterMode: { type: String, enum: ['embed', 'image'], required: true, default: 'image' },
+  posterUrl: { type: String, default: '', maxlength: 2048 },
+  posterData: { type: Buffer, default: null, select: false },
+  posterContentType: { type: String, default: '', maxlength: 80 },
+  releaseAt: { type: Date, required: true, index: true },
+  rating: { type: Number, min: 0, max: 10, default: 0 },
+  isPopular: { type: Boolean, default: false },
+  isHot: { type: Boolean, default: false },
+  isFeatured: { type: Boolean, default: false },
+  isPremium: { type: Boolean, default: false },
+  countdownEnabled: { type: Boolean, default: true },
+  status: { type: String, enum: ['draft', 'published'], default: 'published', index: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, { timestamps: true, versionKey: false, strict: true });
+upcomingItemSchema.index({ type: 1, status: 1, releaseAt: 1 });
+upcomingItemSchema.index({ status: 1, updatedAt: -1 });
+
+const upcomingWaitlistSchema = new mongoose.Schema({
+  upcomingId: { type: mongoose.Schema.Types.ObjectId, ref: 'UpcomingItem', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdAt: { type: Date, default: Date.now }
+}, { versionKey: false, strict: true });
+upcomingWaitlistSchema.index({ upcomingId: 1, userId: 1 }, { unique: true });
+upcomingWaitlistSchema.index({ userId: 1, createdAt: -1 });
+
+const upcomingReadSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  lastSeenAt: { type: Date, required: true, default: Date.now }
+}, { timestamps: true, versionKey: false, strict: true });
+upcomingReadSchema.index({ userId: 1 }, { unique: true });
+
 const announcementSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true, maxlength: 160 },
   description: { type: String, required: true, trim: true, maxlength: 5000 },
@@ -415,6 +450,9 @@ const announcementReadSchema = new mongoose.Schema({
 announcementReadSchema.index({ userId: 1, announcementId: 1 }, { unique: true });
 announcementReadSchema.index({ announcementId: 1 });
 
+export const UpcomingItem = mongoose.models.UpcomingItem || mongoose.model('UpcomingItem', upcomingItemSchema);
+export const UpcomingWaitlist = mongoose.models.UpcomingWaitlist || mongoose.model('UpcomingWaitlist', upcomingWaitlistSchema);
+export const UpcomingRead = mongoose.models.UpcomingRead || mongoose.model('UpcomingRead', upcomingReadSchema);
 export const Announcement = mongoose.models.Announcement || mongoose.model('Announcement', announcementSchema);
 export const AnnouncementRead = mongoose.models.AnnouncementRead || mongoose.model('AnnouncementRead', announcementReadSchema);
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
