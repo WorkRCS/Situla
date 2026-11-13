@@ -1,24 +1,13 @@
-name: seed-tv-and-static-catalog
+name: catalogue-seed
 
 on:
   workflow_dispatch:
-    inputs:
-      catalog:
-        description: "Which static catalogue should be seeded"
-        required: true
-        default: "all"
-        type: choice
-        options:
-          - all
-          - movies
-          - tv
-          - anime
 
 permissions:
   contents: read
 
 concurrency:
-  group: situla-static-catalog-seed
+  group: situla-catalogue-seed
   cancel-in-progress: false
 
 jobs:
@@ -26,11 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-      MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
+      MONGODB_URI: \${{ secrets.MONGODB_URI }}
+      MONGODB_DB_NAME: \${{ secrets.MONGODB_DB_NAME }}
     steps:
-      - name: Check out source
+      - name: Check out main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -45,19 +37,9 @@ jobs:
             echo "::error::Add MONGODB_URI and MONGODB_DB_NAME as GitHub Actions secrets."
             exit 1
           fi
-          echo "Default catalogue seed reads committed data files only; no Movie, TV or Anime metadata API is called."
-          echo "The import is year-bounded (2020–2026), insert-only and rejects incomplete or adult records."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Seed selected static catalogue
-        shell: bash
-        run: |
-          case "${{ inputs.catalog }}" in
-            movies) npm run seed:movies ;;
-            tv) npm run seed:tv ;;
-            anime) npm run seed:anime ;;
-            all) npm run seed:catalog ;;
-            *) echo "Unknown catalogue option" >&2; exit 1 ;;
-          esac
+      - name: Run the single catalogue seed
+        run: npm run seed
