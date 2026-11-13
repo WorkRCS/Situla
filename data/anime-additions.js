@@ -15,6 +15,7 @@ import { ANIME_ADDITIONS_13 } from "./anime-additions-13.js";
 import { ANIME_ADDITIONS_14 } from "./anime-additions-14.js";
 import { ANIME_ADDITIONS_15 } from "./anime-additions-15.js";
 import { ANIME_ADDITIONS_16 } from "./anime-additions-16.js";
+import { ANIME_ADDITIONS_17 } from "./anime-additions-17.js";
 
 export const NEW_ANIME_CATALOG = [
   ...ANIME_ADDITIONS_01,
@@ -32,5 +33,6 @@ export const NEW_ANIME_CATALOG = [
   ...ANIME_ADDITIONS_13,
   ...ANIME_ADDITIONS_14,
   ...ANIME_ADDITIONS_15,
-  ...ANIME_ADDITIONS_16
+  ...ANIME_ADDITIONS_16,
+  ...ANIME_ADDITIONS_17
 ];
