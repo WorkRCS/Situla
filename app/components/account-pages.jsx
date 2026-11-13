@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2,
-  ChevronRight, Clock3, CreditCard, Crown, Eye, EyeOff, Film, Fingerprint,
-  Globe2, LockKeyhole, LogIn, Mail, MonitorSmartphone, ShieldCheck,
-  Sparkles, Tv, UserRound
+  ChevronRight, CircleX, Clock3, CreditCard, Crown, Eye, EyeOff, Film, Fingerprint,
+  Globe2, Info, LockKeyhole, LogIn, Mail, MonitorSmartphone, ShieldCheck,
+  Sparkles, Tv, UserRound, X
 } from "lucide-react";
 import { PREMIUM_BILLING } from "../../src/membership-preview.js";
 
@@ -328,6 +328,7 @@ export function ProfilePage() {
   const [revokingDeviceId, setRevokingDeviceId] = useState("");
   const [deviceNotice, setDeviceNotice] = useState("");
   const [renewalNotice, setRenewalNotice] = useState("");
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [clock, setClock] = useState(null);
 
   useEffect(() => {
