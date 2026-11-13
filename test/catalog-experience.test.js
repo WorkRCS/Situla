@@ -274,7 +274,7 @@ test("mobile/tablet bottom navigation has no in-app Back or Search button", asyn
   assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
   assert.match(app, /className="header-search-wrap"/);
   assert.doesNotMatch(app, /function navigateBack\(/);
-  assert.match(css, /\.bottom-nav \{ grid-template-columns:repeat\(6,minmax\(0,1fr\)\);/);
+  assert.match(css, /\.bottom-nav \{ grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/);
 });
 
 test("mobile/tablet navigation is fixed to the viewport bottom with rounded top corners", async () => {
