@@ -30,9 +30,21 @@ test("legacy MAL entries remain available without being part of the new-only add
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => item.posterUrl && item.synopsis && item.synopsis.length > 80));
 });
 
-test("200 new Anime entries have unique MAL IDs, matching posters/banners and episode still guides", () => {
-  assert.equal(NEW_ANIME_CATALOG.length, 200);
-  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 200);
+test("AniList 178083 is represented by one Tokyo Revengers Season 4 catalogue record", () => {
+  const matches = NEW_ANIME_CATALOG.filter((item) => Number(item.anilistId) === 178083);
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].malId, 59088);
+  assert.equal(matches[0].titleEnglish, "Tokyo Revengers: War of the Three Titans Arc");
+  assert.equal(matches[0].anilistUrl, "https://anilist.co/anime/178083");
+  assert.equal(matches[0].episodes, 13);
+  assert.equal(matches[0].episodeGuide.length, 13);
+  assert.equal(matches[0].episodeGuide[0].seasonNumber, 4);
+  assert.equal(matches[0].nextAiringEpisode.episode, 7);
+});
+
+test("201 new Anime entries have unique MAL IDs, matching posters/banners and episode still guides", () => {
+  assert.equal(NEW_ANIME_CATALOG.length, 201);
+  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 201);
   const normalize = (value) => String(value || "").normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   const legacyNames = new Set(
     MANUAL_ANIME_CATALOG.flatMap((item) => [item.title, item.titleEnglish]).filter(Boolean).map(normalize)
@@ -64,8 +76,8 @@ test("200 new Anime entries have unique MAL IDs, matching posters/banners and ep
     episodeCount += item.episodeGuide.length;
     stillCount += stills;
   }
-  assert.equal(episodeCount, 2883);
-  assert.equal(stillCount, 2883);
+  assert.equal(episodeCount, 2896);
+  assert.equal(stillCount, 2896);
 });
 
 test("Anime cleanup is dry-run by default and only deletes records with no poster or banner", async () => {
