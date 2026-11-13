@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  CalendarClock, Check, Clock3, Crown, Edit3, ExternalLink, Flame, ImagePlus,
+  Bell, CalendarClock, Check, Clock3, Crown, Edit3, ExternalLink, Flame, ImagePlus,
   LoaderCircle, Plus, RefreshCw, Save, Sparkles, Star, Trash2, X
 } from "lucide-react";
 
@@ -296,7 +296,7 @@ export default function UpcomingManager() {
                 <div className="upcoming-admin-item-meta">
                   <span><CalendarClock size={13} /> {new Date(item.releaseAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
                   {item.rating > 0 && <span><Star size={13} /> {Number(item.rating).toFixed(1)}</span>}
-                  <strong><BellIcon /> {Number(item.waitlistCount || 0).toLocaleString("en-IN")} waiting</strong>
+                  <strong><Bell size={13} /> {Number(item.waitlistCount || 0).toLocaleString("en-IN")} waiting</strong>
                   {item.countdownEnabled && <span><Clock3 size={13} /> Countdown on</span>}
                 </div>
               </div>
@@ -312,8 +312,4 @@ export default function UpcomingManager() {
       )}
     </section>
   );
-}
-
-function BellIcon() {
-  return <span aria-hidden="true">♧</span>;
 }
