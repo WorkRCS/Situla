@@ -307,8 +307,8 @@ test("Anime catalog is a manually curated MAL list and the seed command uses the
   const animeSeed = await read("../scripts/seed-anime-additions.js");
   const pkg = JSON.parse(await read("../package.json"));
   assert.ok(MANUAL_ANIME_CATALOG.length >= 80);
-  assert.equal(NEW_ANIME_CATALOG.length, 200);
-  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 200);
+  assert.equal(NEW_ANIME_CATALOG.length, 201);
+  assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 201);
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && ["TV", "ONA"].includes(item.type)));
   assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
