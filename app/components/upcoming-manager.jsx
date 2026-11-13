@@ -56,9 +56,11 @@ export default function UpcomingManager() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const loadItems = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const loadItems = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
       const response = await fetch("/api/admin/upcoming?type=" + activeType, {
         cache: "no-store", credentials: "same-origin"
@@ -67,13 +69,17 @@ export default function UpcomingManager() {
       if (!response.ok) throw new Error(payload.error || "Upcoming items could not be loaded.");
       setItems(Array.isArray(payload.items) ? payload.items : []);
     } catch (loadError) {
-      setError(loadError.message || "Upcoming items could not be loaded.");
+      if (!silent) setError(loadError.message || "Upcoming items could not be loaded.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [activeType]);
 
-  useEffect(() => { loadItems(); }, [loadItems]);
+  useEffect(() => {
+    loadItems();
+    const interval = window.setInterval(() => loadItems(true), 30_000);
+    return () => window.clearInterval(interval);
+  }, [loadItems]);
 
   function updateForm(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
