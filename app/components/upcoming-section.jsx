@@ -174,15 +174,6 @@ export default function UpcomingSection() {
 
   return (
     <section className="upcoming-page" aria-label="Upcoming releases">
-      <header className="upcoming-page-heading">
-        <div>
-          <span className="upcoming-eyebrow"><span className="upcoming-eyebrow-dot" /> SITULA RELEASE RADAR</span>
-          <h1>Coming Soon</h1>
-          <p>Discover what is launching next. Join the waiting list and see how many people are looking forward to each title.</p>
-        </div>
-        <div className="upcoming-heading-icon" aria-hidden="true"><CalendarClock size={29} /></div>
-      </header>
-
       <div className="upcoming-toolbar">
         <div className="upcoming-tabs" role="tablist" aria-label="Upcoming content categories">
           {UPCOMING_TABS.map((tab) => (
