@@ -5623,8 +5623,8 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 .upcoming-grid {
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:clamp(12px,1.6vw,20px);
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:clamp(12px,1.35vw,18px);
 }
 .upcoming-card {
   display:flex;
@@ -5647,7 +5647,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 .upcoming-poster {
   position:relative;
   width:100%;
-  aspect-ratio:2/2.58;
+  aspect-ratio:2/3;
   overflow:hidden;
   background:linear-gradient(145deg,#272a35,#11141d);
 }
@@ -5773,22 +5773,43 @@ body:has(.login-page) .site-footer { display:none !important; }
   border-radius:10px;
   background:linear-gradient(110deg,rgba(232,182,91,.085),rgba(232,182,91,.025));
 }
+.upcoming-rating-pill {
+  left:10px;
+  bottom:10px;
+  z-index:3;
+  min-height:25px;
+  padding:5px 8px;
+  border:1px solid rgba(243,202,120,.18);
+  box-shadow:0 5px 16px rgba(0,0,0,.32);
+  font-size:11px;
+}
 .upcoming-countdown-overlay {
   position:absolute;
-  left:10px;
-  right:10px;
+  left:50%;
+  right:auto;
   bottom:15%;
   z-index:2;
+  width:max-content;
+  max-width:calc(100% - 20px);
   margin:0;
-  padding:9px 11px;
+  padding:8px 12px;
+  transform:translateX(-50%);
   border-color:rgba(232,182,91,.34);
-  background:linear-gradient(110deg,rgba(9,11,17,.88),rgba(20,18,15,.76));
+  border-radius:9px;
+  background:linear-gradient(110deg,rgba(9,11,17,.9),rgba(20,18,15,.82));
   box-shadow:0 8px 24px rgba(0,0,0,.28);
   -webkit-backdrop-filter:blur(12px);
   backdrop-filter:blur(12px);
 }
-.upcoming-countdown-overlay > span { font-size:7px; }
-.upcoming-countdown-overlay strong { font-size:clamp(12px,1.2vw,15px); }
+.upcoming-countdown-overlay strong {
+  color:#f5d99e;
+  font-size:clamp(12px,1.1vw,15px);
+  font-weight:950;
+  line-height:1.1;
+  letter-spacing:.03em;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
 .upcoming-countdown > span {
   display:flex;
   align-items:center;
@@ -6081,12 +6102,12 @@ body:has(.login-page) .site-footer { display:none !important; }
 .upcoming-admin-empty p { margin:0; color:#8992a1; font-size:9px; }
 .upcoming-admin-empty .admin-primary-button { margin-top:7px; }
 @media (max-width:1120px) {
-  .upcoming-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .upcoming-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 @media (max-width:760px) {
   .upcoming-page { padding-top:15px; }
   .upcoming-page-heading { border-radius:17px; }
-  .upcoming-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+  .upcoming-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; }
   .upcoming-card-body { padding:10px; }
   .upcoming-toolbar { align-items:stretch; flex-direction:column; }
   .upcoming-mine-toggle { align-self:flex-start; }
@@ -6094,6 +6115,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   .upcoming-admin-heading > button { align-self:flex-start; }
 }
 @media (max-width:520px) {
+  .upcoming-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .upcoming-page-heading { gap:10px; padding:20px 16px; }
   .upcoming-heading-icon { width:49px; height:49px; border-radius:14px; }
   .upcoming-heading-icon svg { width:22px; }
@@ -6104,6 +6126,9 @@ body:has(.login-page) .site-footer { display:none !important; }
   .upcoming-results-heading > small { text-align:left; }
   .upcoming-card-body h2 { font-size:12px; }
   .upcoming-tag { font-size:6px; padding:3px 5px; }
+  .upcoming-rating-pill { left:8px; bottom:8px; min-height:23px; font-size:10px; }
+  .upcoming-countdown-overlay { bottom:14%; padding:7px 9px; }
+  .upcoming-countdown-overlay strong { font-size:11px; }
   .upcoming-wait-button { min-height:38px; gap:5px; padding:0 7px; }
   .upcoming-wait-button > span { font-size:7px; }
   .upcoming-wait-button > strong { font-size:9px; }
@@ -6125,6 +6150,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   .upcoming-card-actions { grid-template-columns:minmax(0,1fr) 32px; gap:5px; }
   .upcoming-share-button { width:32px; }
   .upcoming-wait-button > svg { width:13px; }
+  .upcoming-countdown-overlay { bottom:13%; }
 }
 @media (prefers-reduced-motion:reduce) {
   .upcoming-nav-dot,.upcoming-bell-motion,.upcoming-spin { animation:none !important; }
