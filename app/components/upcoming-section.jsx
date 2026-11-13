@@ -96,17 +96,6 @@ export default function UpcomingSection() {
   }, [loadItems]);
 
   useEffect(() => {
-    fetch("/api/upcoming/read", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: "{}"
-    }).then((response) => {
-      if (response.ok) window.dispatchEvent(new Event("situla:upcoming-read"));
-    }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!items.some((item) => item.countdownEnabled)) return undefined;
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
@@ -134,6 +123,7 @@ export default function UpcomingSection() {
       setItems((current) => current.map((entry) => entry.id === item.id
         ? { ...entry, isWaiting: Boolean(payload.isWaiting), waitlistCount: Number(payload.waitlistCount) || 0 }
         : entry));
+      window.dispatchEvent(new Event("situla:upcoming-waitlist-updated"));
     } catch (actionError) {
       setError(actionError.message || "Waiting list could not be updated.");
     } finally {
@@ -248,8 +238,10 @@ export default function UpcomingSection() {
                   {item.isHot && <UpcomingTag tone="hot"><Flame size={10} /> HOT</UpcomingTag>}
                   {item.isPopular && <UpcomingTag tone="popular">POPULAR</UpcomingTag>}
                   {item.isFeatured && <UpcomingTag tone="featured"><Sparkles size={10} /> FEATURED</UpcomingTag>}
-                  {item.isPremium && <UpcomingTag tone="premium"><Crown size={10} /> PREMIUM</UpcomingTag>}
                 </div>
+                {item.isPremium && (
+                  <span className="upcoming-tag premium upcoming-poster-premium"><Crown size={10} /> PREMIUM</span>
+                )}
                 {Number(item.rating) > 0 && Number.isFinite(Number(item.rating)) && (
                   <span className="rating-pill upcoming-rating-pill">
                     <Star size={11} fill="currentColor" /> {Number(item.rating).toFixed(1)}
@@ -260,6 +252,15 @@ export default function UpcomingSection() {
                     <strong>{countdownLabel(item.releaseAt, now)}</strong>
                   </div>
                 )}
+                <button
+                  type="button"
+                  className="upcoming-share-button upcoming-poster-share-button"
+                  onClick={() => shareItem(item)}
+                  aria-label={"Share " + item.title}
+                  title="Share this title"
+                >
+                  <Share2 size={15} />
+                </button>
               </div>
 
               <div className="upcoming-card-body">
@@ -279,9 +280,6 @@ export default function UpcomingSection() {
                     <Bell size={16} className={!item.isWaiting ? "upcoming-bell-motion" : ""} />
                     <span>{pendingId === item.id ? "Updating…" : item.isWaiting ? "On your waiting list" : "Join waiting list"}</span>
                     <strong>{Number(item.waitlistCount || 0).toLocaleString("en-IN")}</strong>
-                  </button>
-                  <button type="button" className="upcoming-share-button" onClick={() => shareItem(item)} aria-label={"Share " + item.title} title="Share this title">
-                    <Share2 size={16} />
                   </button>
                 </div>
                 <p className="upcoming-interest-note">{Number(item.waitlistCount || 0).toLocaleString("en-IN")} {Number(item.waitlistCount) === 1 ? "person is" : "people are"} waiting for this title</p>
