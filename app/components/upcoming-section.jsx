@@ -71,10 +71,24 @@ export default function UpcomingSection() {
   }, [activeType, showMine]);
 
   useEffect(() => {
+    const requestedType = new URLSearchParams(window.location.search).get("type");
+    if (UPCOMING_TABS.some((tab) => tab.id === requestedType)) setActiveType(requestedType);
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
     loadItems(controller.signal);
     return () => controller.abort();
   }, [loadItems]);
+
+  useEffect(() => {
+    if (loading || !window.location.hash.startsWith("#upcoming-")) return;
+    const targetId = decodeURIComponent(window.location.hash.slice(1));
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, items]);
 
   useEffect(() => {
     const interval = window.setInterval(() => loadItems(undefined, true), 30_000);
@@ -128,19 +142,41 @@ export default function UpcomingSection() {
   }
 
   async function shareItem(item) {
+    const url = window.location.origin + "/upcoming?type=" +
+      encodeURIComponent(item.type) + "#upcoming-" + encodeURIComponent(item.id);
     const shareData = {
       title: item.title + " · Coming soon on Situla",
       text: "See the release countdown and join the waiting list on Situla.",
-      url: window.location.origin + "/upcoming"
+      url
     };
+
     try {
-      if (navigator.share) await navigator.share(shareData);
-      else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareData.title + " — " + shareData.url);
-        setError("Share link copied.");
+      if (typeof navigator.share === "function") {
+        await navigator.share(shareData);
+        return;
       }
     } catch (shareError) {
-      if (shareError?.name !== "AbortError") setError("Sharing is not available in this browser.");
+      if (shareError?.name === "AbortError") return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        throw new Error("Clipboard API unavailable");
+      }
+      setError("Title link copied to clipboard.");
+    } catch {
+      const field = document.createElement("textarea");
+      field.value = url;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      const copied = document.execCommand("copy");
+      field.remove();
+      setError(copied ? "Title link copied to clipboard." : "Could not copy the share link.");
     }
   }
 
@@ -192,7 +228,7 @@ export default function UpcomingSection() {
       ) : items.length ? (
         <div className="upcoming-grid">
           {items.map((item) => (
-            <article className="upcoming-card" key={item.id}>
+            <article className="upcoming-card" id={"upcoming-" + item.id} key={item.id}>
               <div className="upcoming-poster">
                 {item.posterMode === "embed" && item.posterUrl ? (
                   <iframe
@@ -214,9 +250,13 @@ export default function UpcomingSection() {
                   {item.isFeatured && <UpcomingTag tone="featured"><Sparkles size={10} /> FEATURED</UpcomingTag>}
                   {item.isPremium && <UpcomingTag tone="premium"><Crown size={10} /> PREMIUM</UpcomingTag>}
                 </div>
+                {Number(item.rating) > 0 && Number.isFinite(Number(item.rating)) && (
+                  <span className="rating-pill upcoming-rating-pill">
+                    <Star size={11} fill="currentColor" /> {Number(item.rating).toFixed(1)}
+                  </span>
+                )}
                 {item.countdownEnabled && (
-                  <div className="upcoming-countdown upcoming-countdown-overlay">
-                    <span><Clock3 size={12} /> RELEASE COUNTDOWN</span>
+                  <div className="upcoming-countdown upcoming-countdown-overlay" aria-label={"Time until release: " + countdownLabel(item.releaseAt, now)}>
                     <strong>{countdownLabel(item.releaseAt, now)}</strong>
                   </div>
                 )}
@@ -225,7 +265,6 @@ export default function UpcomingSection() {
               <div className="upcoming-card-body">
                 <h2>{item.title}</h2>
                 <div className="upcoming-card-meta">
-                  {item.rating > 0 && <span><Star size={13} fill="currentColor" /> {Number(item.rating).toFixed(1)}</span>}
                   <span><CalendarClock size={13} /> {dateLabel(item.releaseAt)}</span>
                 </div>
 
@@ -241,7 +280,7 @@ export default function UpcomingSection() {
                     <span>{pendingId === item.id ? "Updating…" : item.isWaiting ? "On your waiting list" : "Join waiting list"}</span>
                     <strong>{Number(item.waitlistCount || 0).toLocaleString("en-IN")}</strong>
                   </button>
-                  <button type="button" className="upcoming-share-button" onClick={() => shareItem(item)} aria-label={"Share " + item.title}>
+                  <button type="button" className="upcoming-share-button" onClick={() => shareItem(item)} aria-label={"Share " + item.title} title="Share this title">
                     <Share2 size={16} />
                   </button>
                 </div>
