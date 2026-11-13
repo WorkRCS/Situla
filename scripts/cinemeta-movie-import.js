@@ -541,7 +541,7 @@ export async function seedMovieAdditions() {
     additionCount + "/" + MOVIE_ADDITION_TARGET + " new IMDb-keyed additions present; " + total + " total movies.");
   if (additionCount !== MOVIE_ADDITION_TARGET) {
     throw new Error("Movie additions are currently " + additionCount + "/" + MOVIE_ADDITION_TARGET +
-      ". Re-run npm run seed:movie-additions to safely fill the remaining IMDb IDs.");
+      ". Re-run npm run seed to safely fill the remaining IMDb IDs.");
   }
   return { inserted: saved.length, additionsPresent: additionCount, total };
 }
