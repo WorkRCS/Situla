@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, CreditCard, Film, House, PlayCircle,
-  Settings, Tv, UserRound
+  Search, Settings, Tv, UserRound
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -15,6 +15,7 @@ export const SITE_NAV_ITEMS = [
   { id: "tv", href: "/tv", label: "TV Series", icon: Tv },
   { id: "anime", href: "/anime", label: "Anime", icon: PlayCircle },
   { id: "upcoming", href: "/upcoming", label: "Upcoming", icon: CalendarDays },
+  { id: "search", href: "/search", label: "Search", icon: Search },
   { id: "saved", href: "/saved", label: "Saved", icon: Bookmark },
   { id: "settings", href: "/settings", label: "Settings", icon: Settings },
   { id: "plans", href: "/plans", label: "Plans", icon: CreditCard },
