@@ -1,4 +1,5 @@
 import { ProfilePage } from "../components/account-pages.jsx";
+import { SiteWorkspace } from "../components/site-sidebar.jsx";
 
 export const metadata = {
   title: "Your profile",
@@ -6,5 +7,5 @@ export const metadata = {
 };
 
 export default function ProfileRoute() {
-  return <ProfilePage />;
+  return <SiteWorkspace><ProfilePage /></SiteWorkspace>;
 }
