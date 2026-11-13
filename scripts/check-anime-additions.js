@@ -56,13 +56,16 @@ for (const item of NEW_ANIME_CATALOG) {
   stillCount += stills;
 }
 
-const seeder = await readFile(new URL("../scripts/seed-anime-additions.js", import.meta.url), "utf8");
-assert.match(seeder, /AnimeSeries\.insertMany/);
-assert.doesNotMatch(seeder, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
-assert.doesNotMatch(seeder, /\bfetch\s*\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
+const seeder = await readFile(new URL("../scripts/catalog-import.js", import.meta.url), "utf8");
+const runner = await readFile(new URL("../scripts/seed.js", import.meta.url), "utf8");
+assert.match(seeder, /AnimeSeries/);
+assert.match(seeder, /\.insertMany\(pending/);
+assert.doesNotMatch(seeder, /updateOne|findOneAndUpdate|\$set|deleteMany|deleteOne/);
+assert.match(runner, /seedOfflineCatalog/);
+assert.match(runner, /refreshCatalogMarketData/);
 
 console.log("Anime static check passed.");
 console.log("New unique MAL records:", ids.size);
 console.log("Episode guides:", episodeCount);
 console.log("Verified episode still URLs:", stillCount);
-console.log("Existing Anime seeds are not updated by the additions seeder.");
+console.log("Unified catalogue import remains insert-only; existing Anime records are not replaced.");
