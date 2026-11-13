@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
-  Bookmark, CalendarDays, Film, House, PlayCircle,
+  Bookmark, CalendarDays, Film, House, PanelLeftClose, PanelLeftOpen, PlayCircle,
   Settings, Tv, UserRound
 } from "lucide-react";
 
@@ -65,6 +65,7 @@ export function SiteSidebar({
 }) {
   const pathname = usePathname() || "/";
   const [statusUnread, setStatusUnread] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     if (typeof upcomingHasUnread === "boolean") return;
@@ -88,13 +89,27 @@ export function SiteSidebar({
 
   const showUpcomingLive = typeof upcomingHasUnread === "boolean" ? upcomingHasUnread : statusUnread;
   return (
-    <aside className="home-sidebar site-sidebar" aria-label="Main navigation">
-      {showBrand && (
-        <Link href="/" className="site-sidebar-brand" aria-label="Situla home">
-          <img src="/icon.svg" alt="" width="38" height="38" />
-          <span><strong>SITULA</strong><small>DISCOVER · WATCH</small></span>
-        </Link>
-      )}
+    <aside className={"home-sidebar site-sidebar" + (collapsed ? " is-collapsed" : "")} aria-label="Main navigation">
+      <div className="site-sidebar-heading">
+        {showBrand ? (
+          <Link href="/" className="site-sidebar-brand" aria-label="Situla home">
+            <img src="/icon.svg" alt="" width="38" height="38" />
+            <span><strong>SITULA</strong><small>DISCOVER · WATCH</small></span>
+          </Link>
+        ) : (
+          <span className="site-sidebar-caption">NAVIGATION</span>
+        )}
+        <button
+          type="button"
+          className="site-sidebar-toggle"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+        </button>
+      </div>
       <nav className="home-sidebar-nav" aria-label="Primary navigation">
         {SITE_NAV_ITEMS.map((item, index) => {
           const Icon = item.icon;
