@@ -419,6 +419,12 @@ export function animeSeriesDto(anime) {
     malId: anime.malId,
     anilistId: anime.anilistId ?? null,
     anilistUrl: anime.anilistUrl || (anime.anilistId ? 'https://anilist.co/anime/' + anime.anilistId : ''),
+    anilistScore: Number(anime.anilistScore) || 0,
+    anilistPopularity: Number(anime.anilistPopularity) || 0,
+    anilistTrending: Number(anime.anilistTrending) || 0,
+    anilistFavourites: Number(anime.anilistFavourites) || 0,
+    anilistTags: Array.isArray(anime.anilistTags) ? anime.anilistTags : [],
+    anilistUpdatedAt: anime.anilistUpdatedAt || null,
     malUrl: anime.malUrl || ('https://myanimelist.net/anime/' + anime.malId),
     title: anime.title,
     titleEnglish: anime.titleEnglish || '',
@@ -1161,7 +1167,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'titleEnglish', 'titleJapanese'],
       baseFilter: { type: { $in: ['TV', 'ONA'] } },
       exactFilter: numericId ? { malId: numericId } : null,
-      select: 'malId anilistId anilistUrl title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
+      select: 'malId anilistId anilistUrl anilistScore anilistPopularity anilistTrending anilistFavourites anilistTags anilistUpdatedAt title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
       toDto: animeSeriesDto
     }
   ].filter((catalog) => selectedType === 'all' || catalog.type === selectedType);
