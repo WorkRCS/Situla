@@ -603,7 +603,13 @@ export function ProfilePage() {
                 <div className="profile-plan-price"><strong>{activeBilling ? "₹" + activeBilling.monthlyPrice.toLocaleString("en-IN") : membershipActive && customGrantMonths ? "Admin grant" : "Free"}</strong>{activeBilling && <span>/ month</span>}<small>{activeBilling?.billingLabel || (membershipActive && customGrantMonths ? customGrantMonths + "-month administrator grant" : "No subscription")}</small></div>
               </div>
               <div className="profile-purchase-row">
-                <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> {membershipActive ? "Premium · Active" : "Free plan · Active"} <Sparkles size={15} /></button>
+                {membershipActive ? (
+                  <button type="button" className="profile-purchased-button" disabled><CheckCircle2 size={17} /> Premium · Active <Sparkles size={15} /></button>
+                ) : (
+                  <button type="button" className="profile-upgrade-trigger" onClick={() => setUpgradeModalOpen(true)}>
+                    <Crown size={17} /> Upgrade to Premium <ArrowRight size={16} />
+                  </button>
+                )}
                 <span className="profile-purchase-caption"><LockKeyhole size={12} /> Verified by the Situla server</span>
               </div>
               <div className="profile-membership-progress">
@@ -688,6 +694,7 @@ export function ProfilePage() {
         </div>
       </div>
       <p className="account-page-caption">SITULA ACCOUNT EXPERIENCE <span>·</span> SERVER-VERIFIED SESSION</p>
+      {upgradeModalOpen && !membershipActive && <PremiumUpgradeModal onClose={() => setUpgradeModalOpen(false)} />}
     </main>
   );
 }
