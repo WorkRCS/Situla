@@ -98,10 +98,26 @@ test("prepared offline packs report real gaps instead of lowering the completene
   assert.ok(prepared.movie.records.every((item) => validateOfflineMovie(item)));
   assert.equal(prepared.tv.records.length, 8);
   assert.ok(prepared.tv.records.every((item) => validateOfflineTv(item)));
-  assert.equal(prepared.anime.records.length, 200);
+  assert.equal(prepared.anime.records.length, 201);
   assert.ok(prepared.movie.rejected["synopsis shorter than 80 characters"] > 0);
   assert.ok(prepared.tv.rejected["synopsis shorter than 80 characters"] > 0);
   assert.ok(prepared.anime.records.every((item) => validateOfflineAnime(item)));
+});
+
+test("AniList 178083 is stored as one season-four record and receives the automatic Featured badge", async () => {
+  const matches = NEW_ANIME_CATALOG.filter((item) => Number(item.anilistId) === 178083);
+  assert.equal(matches.length, 1);
+  const record = matches[0];
+  assert.equal(record.malId, 59088);
+  assert.equal(record.anilistUrl, "https://anilist.co/anime/178083");
+  assert.equal(record.episodes, 13);
+  assert.equal(record.episodeGuide.length, 13);
+  assert.equal(record.episodeGuide[5].title, "Shows Her Color");
+  assert.equal(record.episodeGuide[6].title, "A Sense of Foreboding");
+  assert.deepEqual(getCatalogBadge(record, "anime", Date.UTC(2026, 10, 13)), {
+    key: "featured",
+    label: "Featured"
+  });
 });
 
 test("Hot, Popular and Featured badges are all automatic public-market classifications", async () => {
