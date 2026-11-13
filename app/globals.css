@@ -5647,7 +5647,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 .upcoming-poster {
   position:relative;
   width:100%;
-  aspect-ratio:2/2.82;
+  aspect-ratio:2/2.58;
   overflow:hidden;
   background:linear-gradient(145deg,#272a35,#11141d);
 }
@@ -5671,21 +5671,27 @@ body:has(.login-page) .site-footer { display:none !important; }
   background:radial-gradient(circle at 50% 35%,rgba(232,182,91,.13),transparent 60%),linear-gradient(145deg,#242735,#10131d);
 }
 .upcoming-poster-fallback span { color:#9ba2b0; font-size:9px; font-weight:900; letter-spacing:.12em; }
-.upcoming-poster-kind {
+.upcoming-poster-badges {
   position:absolute;
   top:10px;
   left:10px;
-  padding:6px 8px;
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:7px;
-  color:#fff;
-  background:rgba(5,7,12,.72);
-  -webkit-backdrop-filter:blur(8px);
-  backdrop-filter:blur(8px);
-  font-size:8px;
-  font-weight:950;
-  letter-spacing:.11em;
+  right:10px;
+  z-index:2;
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  pointer-events:none;
 }
+.upcoming-poster-badges .upcoming-tag {
+  min-height:21px;
+  padding:4px 7px;
+  border-radius:7px;
+  background:rgba(7,9,15,.78);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  box-shadow:0 4px 14px rgba(0,0,0,.22);
+}
+.upcoming-tag.premium { border-color:rgba(232,182,91,.42); color:#f4d697; background:rgba(54,38,14,.86); }
 .upcoming-premium-chip {
   position:absolute;
   top:10px;
@@ -5706,7 +5712,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   display:flex;
   flex:1;
   flex-direction:column;
-  padding:13px;
+  padding:11px 12px 12px;
 }
 .upcoming-card-tags,.upcoming-admin-item-tags {
   display:flex;
@@ -5733,9 +5739,9 @@ body:has(.login-page) .site-footer { display:none !important; }
 .upcoming-tag.featured { border-color:rgba(151,132,241,.23); color:#b9a9ff; background:rgba(151,132,241,.075); }
 .upcoming-card-body h2 {
   display:-webkit-box;
-  min-height:2.65em;
+  min-height:0;
   overflow:hidden;
-  margin:10px 0 8px;
+  margin:2px 0 7px;
   color:#f6f3ed;
   font-size:clamp(13px,1.2vw,15px);
   font-weight:900;
@@ -5746,7 +5752,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 .upcoming-card-meta {
   display:grid;
-  gap:7px;
+  gap:5px;
   color:#a2aaba;
   font-size:9px;
   line-height:1.45;
@@ -5767,6 +5773,22 @@ body:has(.login-page) .site-footer { display:none !important; }
   border-radius:10px;
   background:linear-gradient(110deg,rgba(232,182,91,.085),rgba(232,182,91,.025));
 }
+.upcoming-countdown-overlay {
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:15%;
+  z-index:2;
+  margin:0;
+  padding:9px 11px;
+  border-color:rgba(232,182,91,.34);
+  background:linear-gradient(110deg,rgba(9,11,17,.88),rgba(20,18,15,.76));
+  box-shadow:0 8px 24px rgba(0,0,0,.28);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+}
+.upcoming-countdown-overlay > span { font-size:7px; }
+.upcoming-countdown-overlay strong { font-size:clamp(12px,1.2vw,15px); }
 .upcoming-countdown > span {
   display:flex;
   align-items:center;
