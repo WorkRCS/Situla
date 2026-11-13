@@ -17,9 +17,9 @@ The assistant must never describe this as “the seed script crawls the whole in
 |---|---|---|---|
 | Movies | Five Cinemeta catalog definitions in `data/movie-additions-01.js` … `05.js` | Candidate catalog pages and full metadata by IMDb ID from Cinemeta; poster/background response checks | `MONGODB_URI`, `MONGODB_DB_NAME` |
 | TV series | Candidate IDs, titles, premiere dates, poster references and source links in `data/tv-additions.js` | Matching show record and embedded season/episode data from TVmaze; poster and episode-still checks | `MONGODB_URI`, `MONGODB_DB_NAME` |
-| Anime | Fully curated MAL-ID entries and metadata/artwork/episode-guide snapshots in `data/anime-additions-01.js` … `16.js` | No metadata-provider crawl; validates the committed pack and inserts it | `MONGODB_URI`, `MONGODB_DB_NAME` |
+| Anime | Curated MAL-ID entries and episode-guide snapshots in `data/anime-additions-01.js` … `17.js` | AniList GraphQL resolves AniList IDs and refreshes public score, list popularity, trending, tags and missing metadata fields | `MONGODB_URI`, `MONGODB_DB_NAME` |
 
-**No normal Movie, TV, or Anime seed needs an IMDb API subscription or a TMDb API token.** The only normal runtime credentials are the two MongoDB settings. The optional `TMDB_API_KEY` / `TMDB_API_READ_ACCESS_TOKEN` belongs only to the legacy TV-ID migration utility (`npm run migrate:tv-tmdb`), not the standard catalog seed commands.
+**The unified seed does not require provider API keys.** The runtime sources are public Cinemeta, TVmaze and AniList GraphQL endpoints; only `MONGODB_URI` and `MONGODB_DB_NAME` are required. The optional `TMDB_API_KEY` / `TMDB_API_READ_ACCESS_TOKEN` belongs only to the separate TV-ID migration utility (`npm run migrate:tv-tmdb`).
 
 ## 2. Canonical identifiers — never change these casually
 
@@ -125,10 +125,10 @@ The assistant must never describe this as “the seed script crawls the whole in
 
 - Seasonal shortlist/candidate source: [Anime Stats Tracker](https://github.com/zyhe16/anime-stats-tracker) (MIT-licensed, as documented in the repository README).
 - Matched static metadata, franchise relations, season ordering, and episode records: [Anime Mapper](https://github.com/subhajeetch-fl/anime-mapper) static data snapshots (MIT-licensed, as documented in the repository README).
-- The curated data is split among `data/anime-additions-01.js` … `data/anime-additions-16.js` and aggregated by `data/anime-additions.js`.
+- The curated data is split among `data/anime-additions-01.js` … `data/anime-additions-17.js` and aggregated by `data/anime-additions.js`.
 - Artwork references in the current snapshots include MyAnimeList CDN posters, AniList CDN banners/related-title posters, and TVDB episode stills (for example `cdn.myanimelist.net`, `s4.anilist.co`, and `artworks.thetvdb.com`). Keep each URL attached to the title/episode that it actually describes.
-- These are committed snapshots; `npm run seed:anime` does not call Jikan, MAL, AniList, TVDB, or Anime Mapper at runtime.
-- Jikan is **not** currently wired into the Anime seed. Do not add a Jikan dependency or assume it is active without updating this policy, code, and tests.
+- These committed snapshots supply the complete catalogue baseline. The unified `npm run seed` also calls AniList GraphQL in bounded batches to attach/refresh AniList IDs, public average score, list popularity, hourly trending, favourites and safe public tags. Curated titles, descriptions and artwork are preserved; AniList only fills missing metadata fields.
+- The Jikan public API was discontinued on **October 1, 2026**. Situla no longer calls Jikan; AniList GraphQL is the live Anime market-data source.
 
 **Anime minimum acceptance gate for future additions:**
 
@@ -198,19 +198,13 @@ npm test
 npm run build
 ```
 
-Seed one catalog:
+Seed and refresh all catalogues with the single entry point:
 
 ```sh
-npm run seed:movies
-npm run seed:tv
-npm run seed:anime
+npm run seed
 ```
 
-Seed all three catalogs (the `seed:catalog` alias is defined in `package.json`):
-
-```sh
-npm run seed:catalog
-```
+The runner validates and imports the curated pack, discovers/validates public Cinemeta Movie and TVmaze TV metadata, then refreshes public market signals from Cinemeta, TVmaze and AniList. It runs the stages sequentially and is safe to re-run after a partial failure.
 
 Required `.env` values for every seed:
 
@@ -270,31 +264,35 @@ When the user later says “add 100 movies”, “add 50 TV series”, or “add
 
 **Non-negotiable rule:** Never weaken a validation rule just to hit a requested count. Find more correctly matched records, or explain why the requested fully complete batch is not yet available.
 
-## 10. Default seed is offline and release-window bounded
+## 10. One unified seed entry point
 
-The default commands are `npm run seed:catalog`, `npm run seed:movies`, `npm run seed:tv`, and `npm run seed:anime`. They run `scripts/seed-catalog.js`, read only committed `data/*.js` files, and never call Cinemeta, TVmaze, TMDB, Jikan, MAL, AniList, IMDb or another metadata API. They restrict eligible records to release/airing years **2020–2026 inclusive**.
+The only user-facing catalogue seed command is `npm run seed`. It invokes `scripts/seed.js` and runs four ordered stages:
 
-The offline seed preserves the canonical keys from section 2:
+1. Validate and insert the committed, complete-content Movie/TV/Anime packs (2020–2026 curated data).
+2. Discover Movie candidates and fetch full metadata/artwork from public Cinemeta using canonical IMDb IDs.
+3. Match the committed TV candidates against public TVmaze records and import the returned show/season/episode data using canonical TMDB TV IDs.
+4. Refresh public ratings/reach/trend signals from Cinemeta (Movies), TVmaze (TV) and AniList GraphQL (Anime).
+
+The data sources retain the canonical keys from section 2:
 - Movie: valid IMDb `imdbId` matching `tt…`.
 - TV: positive numeric TMDB TV `tmdbId`.
-- Anime: positive numeric MAL `malId`.
+- Anime: positive numeric MAL `malId`, with an AniList ID stored as a cross-reference.
 
-Before connecting to MongoDB, it validates the complete local candidates. Movie requires a real synopsis, separate HTTPS poster/backdrop, year/date, runtime, genres, cast and director. TV requires synopsis, separate HTTPS poster/backdrop and a reconciled full season/episode guide with a matching still for every episode. Anime requires synopsis, poster/fallback, banner/backdrop, year, exact episode-guide count and a matching still for every episode. Adult genres and explicit adult records are rejected. A normalized title/year check is also applied in addition to canonical-ID deduplication. Database writes are insert-only; existing records are never updated.
+Movie and TV discovery are bounded to their reviewed candidate packs. Anime starts from committed MAL-ID metadata/episode-guide snapshots; AniList then refreshes the AniList mapping and public score/popularity/trending/favourites/tags in bounded batches. AniList only fills missing title, synopsis, poster, banner, release and episode-count fields; it does not overwrite curated non-empty content.
 
-The seed writes only locally committed records that pass these checks. It reports missing/rejected Movie, TV and Anime candidates rather than lowering the quality threshold or fabricating metadata. The current verified static batch contains 38 Movie records, 8 manually curated TV limited-series records, and 200 Anime entries with committed episode guides and still references. These are bounded research batches, not every worldwide 2020–2026 release. Do not describe this repository as globally complete.
+Every new record is validated before insertion. Movie requires a real synopsis, separate HTTPS poster/backdrop, year/date, runtime, genres, cast and director. TV requires synopsis, separate HTTPS poster/backdrop and a reconciled season/episode guide. Anime requires synopsis, poster/fallback, banner/backdrop, year and exact episode-guide count. Adult genres and explicit adult records are rejected. New catalogue records use insert-only writes; existing titles are never deleted or replaced. The market refresh only updates provider-signal fields and fills missing Anime metadata as described above. If a stage fails after earlier stages have inserted records, simply re-run `npm run seed`; existing IDs/titles are skipped and the process continues safely.
 
-The old provider-backed Movie and TV seeders are available only through explicit `legacy-online` package scripts. They are not called by any default seed command. The legacy Anime seed remains available as `seed:anime:legacy-curated` for its historical 80%-still pack, but it is also not the default path.
-
+The currently committed manual pack contains 38 Movie records, 8 TV limited-series records and 201 Anime additions, in addition to the public Cinemeta/TVmaze discovery packs. These are curated/provider candidate sets, not a claim of global coverage. The only database environment values needed are `MONGODB_URI` and `MONGODB_DB_NAME`.
 
 ## Automatic catalogue badge and discovery signals
 
 Situla computes exactly one strongest badge per poster card, in this order: **Hot**, **Popular**, then **Featured**. All three labels are automatic for Movie, TV and Anime. Admins cannot set, unset or override a badge; no per-title manual flags are read.
 
-- **Popular** is based on real public rating averages, vote/scored-by counts and provider reach. Movies and TV use IMDb's public `title.ratings.tsv.gz` dataset keyed by canonical IMDb ID; Anime uses MyAnimeList public data through Jikan keyed by MAL ID. A Bayesian prior reduces the effect of thin vote samples.
-- **Hot** is based on recent public vote growth (seven-day velocity), fresh provider-trend signals and confirmed Situla transitions into active playback. Playback momentum has a seven-day exponential half-life; periodic heartbeats in one session do not inflate the score.
-- **Featured** is an automatic quality spotlight: a well-rated title with a meaningful public vote sample which does not already qualify as Hot or Popular. It is not a manual editorial switch and is not assigned to low-rated/unknown titles.
-- A daily GitHub Actions job runs `npm run refresh:catalog-signals`. It streams the public IMDb ratings snapshot, refreshes MAL data at a rate-limited cadence, calculates vote growth against the previous database snapshot, and stores current ratings, counts, freshness and vote velocity in MongoDB.
-- Set the GitHub Actions repository secret `MONGODB_URI` once to authorize this scheduled database refresh. The repository variable `MONGODB_DB_NAME` is optional and defaults to `situla`. If the secret is absent the scheduled job logs a warning and skips the refresh rather than silently fabricating metrics.
+- **Popular** combines public rating averages, available vote/scored-by counts and provider reach. Movies use Cinemeta IMDb-keyed metadata; TV uses TVmaze rating/weight; Anime uses AniList average score and public list popularity alongside the curated MAL snapshot. A Bayesian prior reduces the effect of thin rating samples.
+- **Hot** uses recent public signal growth, fresh provider trends (including AniList hourly Anime trending) and confirmed Situla transitions into active playback. Playback momentum has a seven-day exponential half-life; periodic heartbeats in one session do not inflate the score.
+- **Featured** is the automatic default quality spotlight when a title does not meet the stronger Hot/Popular thresholds. It is not a manual editorial switch.
+- A daily GitHub Actions job refreshes provider signals from Cinemeta, TVmaze and AniList GraphQL. The public AniList API is rate-limited; the refresh batches multiple MAL/AniList lookups into one request and backs off on HTTP 429.
+- Set the GitHub Actions repository secret `MONGODB_URI` once to authorize scheduled updates. The repository variable `MONGODB_DB_NAME` is optional and defaults to `situla`. If the secret is absent the scheduled job logs a warning and skips refresh rather than silently fabricating metrics.
 - Badge computation reads already-cached database fields and performs no per-card metadata network call. The UI renders only the badge returned by the shared catalogue scoring function.
 - Legacy `isPopular` and `isFeatured` values are ignored and removed from the active Mongoose schemas. Existing database documents may retain old fields until MongoDB is cleaned up, but those values do not affect rendering.
 
