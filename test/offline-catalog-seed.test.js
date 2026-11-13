@@ -15,21 +15,26 @@ import {
   validateOfflineAnime,
   validateOfflineMovie,
   validateOfflineTv
-} from "../scripts/seed-catalog.js";
+} from "../scripts/catalog-import.js";
 import { calculateDecayedTrendScore, getCatalogBadge } from "../src/catalog-popularity.js";
 import { calculateVoteVelocity7d, chooseTvmazeMatch } from "../scripts/refresh-catalog-market-data.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("offline catalog seeder is bounded to 2020–2026 and has no metadata API/network client", async () => {
-  const script = await read("../scripts/seed-catalog.js");
+test("one unified seed command runs curated imports, public metadata discovery and market refresh in order", async () => {
+  const script = await read("../scripts/catalog-import.js");
+  const runner = await read("../scripts/seed.js");
   const pkg = JSON.parse(await read("../package.json"));
   assert.equal(CATALOG_YEAR_START, 2020);
   assert.equal(CATALOG_YEAR_END, 2026);
-  assert.equal(pkg.scripts["seed:catalog"], "node scripts/seed-catalog.js");
-  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
-  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.match(runner, /seedOfflineCatalog/);
+  assert.match(runner, /seedMovieAdditions/);
+  assert.match(runner, /seedTvSeries/);
+  assert.match(runner, /refreshCatalogMarketData/);
+  assert.match(runner, /process\.argv/);
+  assert.doesNotMatch(runner, /deleteMany|deleteOne|dropCollection/i);
   assert.doesNotMatch(script, /fetch\s*\(|axios|api\.themoviedb|api\.tvmaze|cinemeta/i);
   assert.match(script, /\.insertMany\(pending/);
   assert.match(script, /TvSeries/);
@@ -237,16 +242,21 @@ test("all three badges use cached public data and require no Admin curation", as
   assert.doesNotMatch(models, /isFeatured|isPopular/);
   assert.match(models, /voteVelocity7d/);
   assert.match(models, /marketDataUpdatedAt/);
+  assert.match(models, /anilistPopularity/);
+  assert.match(models, /anilistTags/);
   assert.match(app, /catalogBadge: getCatalogBadge/);
-  assert.match(refresh, /datasets\.imdbws\.com/);
-  assert.match(refresh, /api\.jikan\.moe/);
+  assert.match(refresh, /v3-cinemeta\.strem\.io/);
+  assert.match(refresh, /graphql\.anilist\.co/);
   assert.match(refresh, /api\.tvmaze\.com/);
   assert.match(refresh, /refreshTvmazeMarketData/);
-  assert.match(refresh, /externalImdbId/);
+  assert.match(refresh, /refreshAniListMarketData/);
+  assert.match(refresh, /refreshCinemetaMovieRatings/);
   assert.match(refresh, /calculateVoteVelocity7d/);
-  assert.equal(pkg.scripts["refresh:catalog-signals"], "node scripts/refresh-catalog-market-data.js");
+  assert.doesNotMatch(refresh, /api\.jikan\.moe|datasets\.imdbws\.com/);
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /MONGODB_URI/);
+  assert.match(workflow, /node scripts\/refresh-catalog-market-data\.js/);
 });
 
 test("catalog cards render differentiated automatic badges and search asks for a title only", async () => {
