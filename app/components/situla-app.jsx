@@ -11,10 +11,11 @@ import { Card, CardContent, CardHeader } from "./ui/card.jsx";
 import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
+import UpcomingSection from "./upcoming-section.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, BadgeCheck, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, CalendarDays, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -777,6 +778,7 @@ const NAV_ITEMS = [
   { id: "movies", href: "/movies", label: "Movies", icon: "film" },
   { id: "tv", href: "/tv", label: "TV", icon: "tv" },
   { id: "anime", href: "/anime", label: "Anime", icon: "play" },
+  { id: "upcoming", href: "/upcoming", label: "Upcoming", icon: "calendar" },
   { id: "search", href: "/search", label: "Search", icon: "search" },
   { id: "saved", href: "/saved", label: "Saved", icon: "saved" },
   { id: "settings", href: "/settings", label: "Settings", icon: "settings" }
@@ -799,7 +801,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchLoadingMore, setSearchLoadingMore] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
+  const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const demoSignedIn = Boolean(accountUser);
+
+  useEffect(() => {
+    let active = true;
+    async function refreshUpcomingStatus() {
+      try {
+        const response = await fetch("/api/upcoming/status", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (active && response.ok) setUpcomingHasUnread(Boolean(payload.hasUnread));
+      } catch {}
+    }
+    refreshUpcomingStatus();
+    const interval = window.setInterval(refreshUpcomingStatus, 45_000);
+    window.addEventListener("focus", refreshUpcomingStatus);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshUpcomingStatus);
+    };
+  }, []);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
@@ -1559,6 +1581,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 movies: "MOVIE COLLECTION",
                 tv: "TV SERIES",
                 anime: "ANIME COLLECTION",
+                upcoming: "UPCOMING RELEASES",
                 search: "SEARCH MOVIES",
                 saved: "YOUR COLLECTION",
                 settings: "APP SETTINGS"
@@ -1567,9 +1590,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
             {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
-              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
-                <Icon name={item.icon} size={17} />
-                <span>{item.label}</span>
+              <Link key={item.id} href={item.href} onClick={item.id === "upcoming" ? () => {
+                setUpcomingHasUnread(false);
+                fetch("/api/upcoming/read", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
+              } : undefined} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
+                {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
+                <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <i className="upcoming-nav-dot" aria-label="New upcoming updates" />}</span>
               </Link>
             ))}
           </nav>
@@ -2028,6 +2054,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </section>
         )}
 
+        {tab === "upcoming" && <UpcomingSection />}
+
         {tab === "search" && (
           <section className="pb-8">
             <div className="section-heading">
@@ -2194,11 +2222,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <Link
             key={item.id}
             href={item.href}
+            onClick={item.id === "upcoming" ? () => {
+              setUpcomingHasUnread(false);
+              fetch("/api/upcoming/read", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
+            } : undefined}
             className={"nav-button" + (tab === item.id ? " active" : "")}
             aria-current={tab === item.id ? "page" : undefined}
           >
-            <Icon name={item.icon} size={20} />
-            <span>{item.label}</span>
+            {item.id === "upcoming" ? <CalendarDays size={20} /> : <Icon name={item.icon} size={20} />}
+            <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <i className="upcoming-nav-dot" aria-label="New upcoming updates" />}</span>
           </Link>
         ))}
       </nav>
