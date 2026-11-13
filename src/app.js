@@ -417,6 +417,8 @@ export function animeSeriesDto(anime) {
   return {
     id: String(anime._id),
     malId: anime.malId,
+    anilistId: anime.anilistId ?? null,
+    anilistUrl: anime.anilistUrl || (anime.anilistId ? 'https://anilist.co/anime/' + anime.anilistId : ''),
     malUrl: anime.malUrl || ('https://myanimelist.net/anime/' + anime.malId),
     title: anime.title,
     titleEnglish: anime.titleEnglish || '',
@@ -1159,7 +1161,7 @@ app.get('/api/search', async (c) => {
       searchFields: ['title', 'titleEnglish', 'titleJapanese'],
       baseFilter: { type: { $in: ['TV', 'ONA'] } },
       exactFilter: numericId ? { malId: numericId } : null,
-      select: 'malId title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
+      select: 'malId anilistId anilistUrl title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
       toDto: animeSeriesDto
     }
   ].filter((catalog) => selectedType === 'all' || catalog.type === selectedType);
