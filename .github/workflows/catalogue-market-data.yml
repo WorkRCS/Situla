@@ -1,4 +1,4 @@
-name: catalogue-market-data
+name: catalogue-public-signals
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/catalogue-market-data.yml"
       - "scripts/refresh-catalog-market-data.js"
+      - "scripts/cinemeta-movie-import.js"
+      - "scripts/tvmaze-series-import.js"
       - "src/catalog-popularity.js"
       - "src/models.js"
       - "data/tv-curated-2020-2026.js"
@@ -47,9 +49,9 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Refresh IMDb, TVmaze and MyAnimeList public market data
+      - name: Refresh public Cinemeta, TVmaze and AniList market data
         if: steps.database.outputs.ready == 'true'
-        run: npm run refresh:catalog-signals
+        run: node scripts/refresh-catalog-market-data.js
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME || 'situla' }}
