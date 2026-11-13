@@ -80,6 +80,8 @@ export default function UpcomingSection() {
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: "{}"
+    }).then((response) => {
+      if (response.ok) window.dispatchEvent(new Event("situla:upcoming-read"));
     }).catch(() => {});
   }, []);
 
