@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bell, CalendarClock, Clock3, Crown, Flame, ListChecks, LoaderCircle, Share2, Sparkles, Star } from "lucide-react";
+import { Bell, CalendarClock, Crown, Flame, ListChecks, LoaderCircle, Share2, Sparkles, Star } from "lucide-react";
 
 const UPCOMING_TABS = [
   { id: "movie", label: "Movies", subtitle: "Upcoming Movies" },
