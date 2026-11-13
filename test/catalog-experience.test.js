@@ -103,13 +103,20 @@ test("catalog loading is bounded and off-screen image/grid work is deferred", as
   assert.match(app, /\}, 10000\)/);
 });
 
-test("seed:catalog runs one offline 2020–2026 catalogue seed command", async () => {
+test("one seed command runs the full catalogue ingestion and public-signal refresh pipeline", async () => {
   const pkg = JSON.parse(await read("../package.json"));
-  assert.equal(pkg.scripts["seed:catalog"], "node scripts/seed-catalog.js");
-  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
-  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
-  assert.equal(pkg.scripts["seed:catalog:legacy-online"].includes("legacy-online"), true);
+  const runner = await read("../scripts/seed.js");
+  const refresh = await read("../scripts/refresh-catalog-market-data.js");
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.match(runner, /seedOfflineCatalog/);
+  assert.match(runner, /seedMovieAdditions/);
+  assert.match(runner, /seedTvSeries/);
+  assert.match(runner, /refreshCatalogMarketData/);
+  assert.match(refresh, /graphql\.anilist\.co/);
+  assert.match(refresh, /v3-cinemeta\.strem\.io/);
+  assert.match(refresh, /api\.tvmaze\.com/);
+  assert.doesNotMatch(refresh, /api\.jikan\.moe|datasets\.imdbws\.com/);
 });
 
 test("search is rendered above the app through a body portal and uses responsive header controls", async () => {
