@@ -283,10 +283,10 @@ export default function UpcomingSection() {
                   {item.isHot && <UpcomingTag tone="hot"><Flame size={10} /> HOT</UpcomingTag>}
                   {item.isPopular && <UpcomingTag tone="popular">POPULAR</UpcomingTag>}
                   {item.isFeatured && <UpcomingTag tone="featured"><Sparkles size={10} /> FEATURED</UpcomingTag>}
+                  {item.isPremium && (
+                    <span className="upcoming-tag premium upcoming-poster-premium"><Crown size={10} /> PREMIUM</span>
+                  )}
                 </div>
-                {item.isPremium && (
-                  <span className="upcoming-tag premium upcoming-poster-premium"><Crown size={10} /> PREMIUM</span>
-                )}
                 {Number(item.rating) > 0 && Number.isFinite(Number(item.rating)) && (
                   <span className="rating-pill upcoming-rating-pill">
                     <Star size={11} fill="currentColor" /> {Number(item.rating).toFixed(1)}
