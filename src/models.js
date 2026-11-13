@@ -160,6 +160,8 @@ const animeNextAiringSchema = new mongoose.Schema({
 
 const animeSeriesSchema = new mongoose.Schema({
   malId: { type: Number, required: true, unique: true, min: 1 },
+  anilistId: { type: Number, min: 1 },
+  anilistUrl: { type: String, default: "" },
   title: { type: String, required: true, trim: true },
   titleEnglish: { type: String, default: '' },
   titleJapanese: { type: String, default: '' },
@@ -200,6 +202,7 @@ const animeSeriesSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 
 animeSeriesSchema.index({ type: 1, rank: 1, score: -1 });
+animeSeriesSchema.index({ anilistId: 1 }, { unique: true, sparse: true });
 animeSeriesSchema.index({ trendScore: -1, trendUpdatedAt: -1 });
 animeSeriesSchema.index({ airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
