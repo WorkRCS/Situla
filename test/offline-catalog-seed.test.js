@@ -150,6 +150,10 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
     score: 8.3, scoredBy: 50000, rank: 150, popularity: 180
   }, "anime", now)?.key, "popular");
   assert.equal(getCatalogBadge({
+    anilistScore: 8.4, anilistPopularity: 100000, scoredBy: 10000,
+    airedFrom: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
+  }, "anime", now)?.key, "popular");
+  assert.equal(getCatalogBadge({
     voteAverage: 8.0, voteCount: 5000, popularity: 90
   }, "tv", now)?.key, "popular");
 
@@ -190,6 +194,10 @@ test("Hot, Popular and Featured badges are all automatic public-market classific
   assert.equal(getCatalogBadge({
     score: 8.0, scoredBy: 5000, rank: 30, popularity: 30,
     airedFrom: new Date(now - (60 * 24 * 60 * 60 * 1000)).toISOString()
+  }, "anime", now)?.key, "hot");
+  assert.equal(getCatalogBadge({
+    anilistScore: 7.6, anilistTrending: 75,
+    airedFrom: new Date(now - (30 * 24 * 60 * 60 * 1000)).toISOString()
   }, "anime", now)?.key, "hot");
 
   const staleTrend = {
