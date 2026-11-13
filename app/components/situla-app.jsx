@@ -1884,7 +1884,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         document.body
       )}
 
-      <div className={tab === "home" ? "home-page-layout" : "catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")}>
+      <div className={tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")}>
 
 
         {tab === "home" && (
