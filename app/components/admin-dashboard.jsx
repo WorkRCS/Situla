@@ -8,6 +8,7 @@ import {
   UserRound, Users, X, CircleDollarSign, Eye, Globe2, History, UserPlus, UserX, Megaphone
 } from "lucide-react";
 import AnnouncementManager from "./announcement-manager.jsx";
+import UpcomingManager from "./upcoming-manager.jsx";
 
 const PAGE_SIZE = 10;
 const dateTime = (value) => value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -429,6 +430,7 @@ export default function AdminDashboard() {
           <button className={activeTab === "users" ? "active" : ""} onClick={() => setActiveTab("users")}><Users size={17} /> Users <span>{stats?.users?.total ?? "—"}</span></button>
           <button className={activeTab === "sales" ? "active" : ""} onClick={() => setActiveTab("sales")}><CircleDollarSign size={17} /> Sales <span>{stats?.sales?.total ?? "—"}</span></button>
           <button className={activeTab === "announcements" ? "active" : ""} onClick={() => setActiveTab("announcements")}><Megaphone size={17} /> Announcements</button>
+          <button className={activeTab === "upcoming" ? "active" : ""} onClick={() => setActiveTab("upcoming")}><CalendarClock size={17} /> Upcoming</button>
         </nav>
 
         {activeTab === "guests" && <section className="admin-section-panel">
@@ -469,6 +471,8 @@ export default function AdminDashboard() {
         </section>}
 
         {activeTab === "announcements" && <AnnouncementManager />}
+
+        {activeTab === "upcoming" && <UpcomingManager />}
 
         {notice && <div className="admin-toast admin-toast-success"><Check size={16} /> {notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
         {error && <div className="admin-toast admin-toast-error">{error}<button onClick={() => setError("")}><X size={14} /></button></div>}
