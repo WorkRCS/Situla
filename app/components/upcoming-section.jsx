@@ -208,28 +208,26 @@ export default function UpcomingSection() {
                 ) : (
                   <div className="upcoming-poster-fallback"><CalendarClock size={34} /><span>Coming Soon</span></div>
                 )}
-                <span className="upcoming-poster-kind">{item.type === "tv" ? "TV SERIES" : item.type.toUpperCase()}</span>
-                {item.isPremium && <span className="upcoming-premium-chip"><Crown size={11} /> PREMIUM</span>}
+                <div className="upcoming-poster-badges">
+                  {item.isHot && <UpcomingTag tone="hot"><Flame size={10} /> HOT</UpcomingTag>}
+                  {item.isPopular && <UpcomingTag tone="popular">POPULAR</UpcomingTag>}
+                  {item.isFeatured && <UpcomingTag tone="featured"><Sparkles size={10} /> FEATURED</UpcomingTag>}
+                  {item.isPremium && <UpcomingTag tone="premium"><Crown size={10} /> PREMIUM</UpcomingTag>}
+                </div>
+                {item.countdownEnabled && (
+                  <div className="upcoming-countdown upcoming-countdown-overlay">
+                    <span><Clock3 size={12} /> RELEASE COUNTDOWN</span>
+                    <strong>{countdownLabel(item.releaseAt, now)}</strong>
+                  </div>
+                )}
               </div>
 
               <div className="upcoming-card-body">
-                <div className="upcoming-card-tags">
-                  {item.isPopular && <UpcomingTag tone="popular">POPULAR</UpcomingTag>}
-                  {item.isHot && <UpcomingTag tone="hot"><Flame size={10} /> HOT</UpcomingTag>}
-                  {item.isFeatured && <UpcomingTag tone="featured"><Sparkles size={10} /> FEATURED</UpcomingTag>}
-                </div>
                 <h2>{item.title}</h2>
                 <div className="upcoming-card-meta">
                   {item.rating > 0 && <span><Star size={13} fill="currentColor" /> {Number(item.rating).toFixed(1)}</span>}
                   <span><CalendarClock size={13} /> {dateLabel(item.releaseAt)}</span>
                 </div>
-
-                {item.countdownEnabled && (
-                  <div className="upcoming-countdown">
-                    <span><Clock3 size={13} /> RELEASE COUNTDOWN</span>
-                    <strong>{countdownLabel(item.releaseAt, now)}</strong>
-                  </div>
-                )}
 
                 <div className="upcoming-card-actions">
                   <button
