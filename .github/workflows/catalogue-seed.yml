@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      MONGODB_URI: \${{ secrets.MONGODB_URI }}
-      MONGODB_DB_NAME: \${{ secrets.MONGODB_DB_NAME }}
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGODB_DB_NAME: ${{ secrets.MONGODB_DB_NAME }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
