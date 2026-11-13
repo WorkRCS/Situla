@@ -173,7 +173,18 @@ export default function UpcomingSection() {
     const posterFile = await createPosterShareFile(item);
 
     if (typeof navigator.share === "function") {
-      if (posterFile && typeof navigator.canShare === "function" && navigator.canShare({ files: [posterFile] })) {
+      let canSharePoster = false;
+      try {
+        canSharePoster = Boolean(
+          posterFile &&
+          typeof navigator.canShare === "function" &&
+          navigator.canShare({ files: [posterFile] })
+        );
+      } catch {
+        canSharePoster = false;
+      }
+
+      if (canSharePoster) {
         try {
           await navigator.share({ ...shareData, files: [posterFile] });
           return;
