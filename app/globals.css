@@ -6630,3 +6630,47 @@ body:has(.login-page) .site-footer { display:none !important; }
   .home-page-layout .home-hero-peek,
   .home-page-layout .home-side-link { animation:none !important; transition:none !important; }
 }
+
+
+/* Keep the spotlight carousel controls visible in the revised landing hero. */
+.home-hero-carousel-controls {
+  position:absolute;
+  z-index:6;
+  top:14px;
+  right:14px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 6px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  color:#f1f2f5;
+  background:rgba(8,9,14,.55);
+  font-size:9px;
+  font-weight:800;
+  pointer-events:auto;
+  backdrop-filter:blur(10px);
+}
+.home-hero-carousel-arrow {
+  display:grid;
+  width:25px;
+  height:25px;
+  flex:none;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:50%;
+  color:#f6d99f;
+  background:rgba(255,255,255,.055);
+  cursor:pointer;
+}
+.home-hero-carousel-arrow:hover {
+  border-color:rgba(232,182,91,.6);
+  background:rgba(232,182,91,.13);
+}
+@media (max-width:767px) {
+  .home-hero-carousel-controls { top:9px; right:9px; gap:5px; padding:3px 5px; }
+  .home-hero-carousel-arrow { width:23px; height:23px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .home-hero-carousel-arrow { transition:none !important; }
+}
