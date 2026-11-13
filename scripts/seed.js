@@ -1,5 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { seedOfflineCatalog } from "./catalog-import.js";
 import { seedMovieAdditions } from "./cinemeta-movie-import.js";
 import { seedTvSeries } from "./tvmaze-series-import.js";
@@ -36,7 +38,7 @@ export async function seedSitulaCatalog() {
   return summary;
 }
 
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   seedSitulaCatalog()
     .catch((error) => {
       console.error("\nSitula catalogue seed failed:", error.message);
