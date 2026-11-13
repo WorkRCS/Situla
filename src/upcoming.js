@@ -91,13 +91,23 @@ router.get('/status', async (c) => {
     await connectDatabase();
     const authenticated = await getOptionalUser(c);
     if (!authenticated) return c.json({ hasUnread: false, authenticated: false });
-    const read = await UpcomingRead.findOne({ userId: authenticated.user._id }).select('lastSeenAt').lean();
-    const lastSeenAt = read?.lastSeenAt || new Date(0);
-    const hasUnread = await UpcomingItem.exists({
+    const now = new Date();
+    const read = await UpcomingRead.findOneAndUpdate(
+      { userId: authenticated.user._id },
+      { $setOnInsert: { lastSeenAt: now } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).select('lastSeenAt').lean();
+    const [waitingRows] = await Promise.all([
+      UpcomingWaitlist.find({ userId: authenticated.user._id }).select('upcomingId').lean()
+    ]);
+    const waitingIds = waitingRows.map((row) => row.upcomingId);
+    const unreadFilter = {
       status: 'published',
-      releaseAt: { $gt: new Date() },
-      updatedAt: { $gt: lastSeenAt }
-    });
+      releaseAt: { $gt: now },
+      updatedAt: { $gt: read?.lastSeenAt || now }
+    };
+    if (waitingIds.length) unreadFilter._id = { $nin: waitingIds };
+    const hasUnread = await UpcomingItem.exists(unreadFilter);
     return c.json({ hasUnread: Boolean(hasUnread), authenticated: true });
   } catch (error) {
     console.error('Upcoming notification status failed:', error?.message || 'Unknown error');
