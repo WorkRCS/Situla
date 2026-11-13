@@ -1,6 +1,7 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TREND_HALF_LIFE_MS = 7 * DAY_MS;
 const HOT_TREND_SCORE = 6;
+const ANILIST_HOT_TREND_MIN = 50;
 const FALLBACK_CATALOG_BADGE = Object.freeze({ key: "featured", label: "Featured" });
 
 const number = (value) => {
@@ -27,7 +28,7 @@ function marketSignals(item, mediaType) {
   const isAnime = mediaType === "anime";
   const isTv = mediaType === "tv";
   const votes = Math.max(0, number(isAnime ? item?.scoredBy : item?.voteCount));
-  const storedRating = number(isAnime ? item?.score : item?.voteAverage);
+  const storedRating = number(isAnime ? (number(item?.score) > 0 ? item.score : item?.anilistScore) : item?.voteAverage);
   const providerRating = isTv ? number(item?.providerRating) : 0;
   const rating = clamp(isTv && votes === 0 && providerRating > 0
     ? providerRating
@@ -52,10 +53,14 @@ function marketSignals(item, mediaType) {
     : 0;
 
   // MAL rank/popularity are lower-is-better; TMDB and TVmaze reach are higher-is-better.
+  const anilistPopularity = isAnime ? Math.max(0, number(item?.anilistPopularity)) : 0;
+  const anilistTrending = isAnime ? Math.max(0, number(item?.anilistTrending)) : 0;
+  // MAL rank/popularity are lower-is-better; AniList list reach is higher-is-better.
   const providerReach = isAnime
     ? Math.max(
         rank > 0 ? 1 / (1 + rank / 250) : 0,
-        popularity > 0 ? 1 / (1 + popularity / 250) : 0
+        popularity > 0 ? 1 / (1 + popularity / 250) : 0,
+        1 - Math.exp(-anilistPopularity / 25_000)
       )
     : 1 - Math.exp(-popularity / (isTv ? 24 : 30));
 
@@ -114,9 +119,10 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
     number(item.providerPopularity) >= 60 &&
     isFresh;
   const publicProviderTrend = mediaType === "anime"
-    ? signals.votes >= signals.minHotVotes && isFresh &&
-      ((Number(item.rank) > 0 && Number(item.rank) <= 100) ||
-       (Number(item.popularity) > 0 && Number(item.popularity) <= 50))
+    ? (signals.votes >= signals.minHotVotes && isFresh &&
+       ((Number(item.rank) > 0 && Number(item.rank) <= 100) ||
+        (Number(item.popularity) > 0 && Number(item.popularity) <= 50))) ||
+      (anilistTrending >= ANILIST_HOT_TREND_MIN && isFresh && signals.rating >= 6.5)
     : signals.votes >= signals.minHotVotes && isFresh &&
       (signals.providerReach >= 0.60 ||
        (voteVelocity7d >= velocityThreshold && signals.rating >= 6.5));
