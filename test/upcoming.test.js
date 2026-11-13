@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { normalizeUpcomingUrl, countdownParts } from "../src/upcoming-utils.js";
 import { UpcomingItem, UpcomingWaitlist, UpcomingRead } from "../src/models.js";
+import app from "../src/app.js";
 
 test("Upcoming poster URLs require safe public HTTPS hosts", () => {
   assert.equal(normalizeUpcomingUrl("https://cdn.example.com/posters/title.jpg"), "https://cdn.example.com/posters/title.jpg");
@@ -53,4 +54,31 @@ test("Upcoming waitlist enforces one row per user and item", () => {
 test("Upcoming unread marker is unique per user", () => {
   const indexes = UpcomingRead.schema.indexes();
   assert.ok(indexes.some(([keys, options]) => keys.userId === 1 && options.unique === true));
+});
+
+
+test("Upcoming waitlist mutations enforce same-origin requests and validate IDs before database access", async () => {
+  const crossOrigin = await app.request("/api/upcoming/507f1f77bcf86cd799439011/waitlist", {
+    method: "POST",
+    headers: { origin: "https://attacker.example", host: "situla.example", "content-type": "application/json" },
+    body: "{}"
+  });
+  assert.equal(crossOrigin.status, 403);
+
+  const malformedId = await app.request("/api/upcoming/not-an-id/waitlist", {
+    method: "POST",
+    headers: { origin: "http://localhost", host: "localhost", "content-type": "application/json" },
+    body: "{}"
+  });
+  assert.equal(malformedId.status, 400);
+  assert.equal((await malformedId.json()).error, "Invalid upcoming item.");
+
+  const malformedPoster = await app.request("/api/upcoming/not-an-id/poster");
+  assert.equal(malformedPoster.status, 400);
+});
+
+test("Upcoming admin API rejects requests without an administrator session", async () => {
+  const response = await app.request("/api/admin/upcoming");
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, "ADMIN_REQUIRED");
 });
