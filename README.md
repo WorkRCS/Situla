@@ -53,7 +53,7 @@ The runner completes these stages in order:
 3. Matches TV candidates to public TVmaze records and imports their series, seasons and episode metadata, keyed by the existing TMDB TV ID.
 4. Refreshes current public catalogue signals: Movie ratings from Cinemeta, TV ratings/reach from TVmaze, and Anime score/popularity/trending/favourites/tags from AniList GraphQL. Anime continues to use MAL IDs as its catalogue/playback key; AniList IDs are cross-references.
 
-The refresh stores provider signals in MongoDB, and the existing automatic badge logic calculates one visible label (Hot, Popular or Featured). No manual badge editing is needed. The runner uses public endpoints and does not require IMDb, TMDB, Jikan or AniList API keys. It respects provider rate limits and retries temporary failures.
+The refresh stores provider signals in MongoDB, and the existing automatic badge logic calculates one visible label (Hot, Popular or Featured). No manual badge editing is needed. The runner uses public endpoints and does not require separate metadata-provider API keys. It respects provider rate limits and retries temporary failures.
 
 **Safe to rerun:** new catalogue records are validated and inserted only when their canonical ID/title is not already present. If a later stage fails, run `npm run seed` again; previously inserted records are skipped. The public market refresh updates only provider-signal fields and fills missing Anime metadata; it does not replace a curated title, description or artwork. Existing catalogue documents are never deleted.
 
