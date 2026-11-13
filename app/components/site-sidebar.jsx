@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
-  Bookmark, CalendarDays, CreditCard, Film, House, PlayCircle,
-  Search, Settings, Tv, UserRound
+  Bookmark, CalendarDays, Film, House, PlayCircle,
+  Settings, Tv, UserRound
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -15,10 +15,8 @@ export const SITE_NAV_ITEMS = [
   { id: "tv", href: "/tv", label: "TV Series", icon: Tv },
   { id: "anime", href: "/anime", label: "Anime", icon: PlayCircle },
   { id: "upcoming", href: "/upcoming", label: "Upcoming", icon: CalendarDays },
-  { id: "search", href: "/search", label: "Search", icon: Search },
   { id: "saved", href: "/saved", label: "Saved", icon: Bookmark },
   { id: "settings", href: "/settings", label: "Settings", icon: Settings },
-  { id: "plans", href: "/plans", label: "Plans", icon: CreditCard },
   { id: "profile", href: "/profile", label: "Profile", icon: UserRound }
 ];
 
@@ -106,6 +104,7 @@ export function SiteSidebar({
               {index === 5 && <span className="home-sidebar-divider" aria-hidden="true" />}
               <Link
                 href={item.href}
+                prefetch={true}
                 className={"home-side-link" + (selected ? " active" : "")}
                 aria-current={selected ? "page" : undefined}
                 title={item.label}
@@ -139,6 +138,7 @@ export function SiteWorkspace({ children }) {
             <Link
               key={item.id}
               href={item.href}
+              prefetch={true}
               className={"site-workspace-mobile-link" + (selected ? " active" : "")}
               aria-current={selected ? "page" : undefined}
             >
