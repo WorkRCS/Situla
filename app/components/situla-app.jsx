@@ -2170,6 +2170,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+            <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
           </>
         )}
