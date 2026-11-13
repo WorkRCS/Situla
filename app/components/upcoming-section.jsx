@@ -46,9 +46,11 @@ export default function UpcomingSection() {
   const [now, setNow] = useState(Date.now());
   const [pendingId, setPendingId] = useState("");
 
-  const loadItems = useCallback(async (signal) => {
-    setLoading(true);
-    setError("");
+  const loadItems = useCallback(async (signal, silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
     const params = new URLSearchParams({ type: activeType });
     if (showMine) params.set("mine", "1");
     try {
@@ -62,9 +64,9 @@ export default function UpcomingSection() {
       }
       setItems(Array.isArray(payload.items) ? payload.items : []);
     } catch (loadError) {
-      if (loadError?.name !== "AbortError") setError(loadError.message || "Upcoming titles could not be loaded.");
+      if (!silent && loadError?.name !== "AbortError") setError(loadError.message || "Upcoming titles could not be loaded.");
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      if (!signal?.aborted && !silent) setLoading(false);
     }
   }, [activeType, showMine]);
 
@@ -72,6 +74,11 @@ export default function UpcomingSection() {
     const controller = new AbortController();
     loadItems(controller.signal);
     return () => controller.abort();
+  }, [loadItems]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => loadItems(undefined, true), 30_000);
+    return () => window.clearInterval(interval);
   }, [loadItems]);
 
   useEffect(() => {
