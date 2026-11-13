@@ -95,6 +95,7 @@ router.get('/status', async (c) => {
     const lastSeenAt = read?.lastSeenAt || new Date(0);
     const hasUnread = await UpcomingItem.exists({
       status: 'published',
+      releaseAt: { $gt: new Date() },
       updatedAt: { $gt: lastSeenAt }
     });
     return c.json({ hasUnread: Boolean(hasUnread), authenticated: true });
