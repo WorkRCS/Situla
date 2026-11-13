@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import TvSeriesExperience from "./detail";
 import { connectDatabase } from "../../../src/db.js";
 import { TvSeries } from "../../../src/models.js";
+import { SiteWorkspace } from "../../components/site-sidebar.jsx";
 
 export const dynamic = "force-dynamic";
 
@@ -42,5 +43,5 @@ export default async function TvSeriesPage({ params }) {
   const { tmdbId } = await params;
   const id = normalizeTmdbId(tmdbId);
   if (!id) notFound();
-  return <TvSeriesExperience tmdbId={id} />;
+  return <SiteWorkspace><TvSeriesExperience tmdbId={id} /></SiteWorkspace>;
 }
