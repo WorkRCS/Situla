@@ -1970,65 +1970,95 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 {pendingHomeNavigation && pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId)) && (
                   <span className="hero-route-loading" role="status"><span className="inline-loading-spinner" /> Opening {featured.heroMediaLabel.toLowerCase()}…</span>
                 )}
-                {homeHeroItems.length > 1 && (
-                  <div className="home-hero-carousel-controls" aria-label="Featured titles">
-                    <button
-                      type="button"
-                      className="home-hero-carousel-arrow"
-                      aria-label="Previous featured title"
-                      onClick={() => setHeroIndex((current) => (current - 1 + homeHeroItems.length) % homeHeroItems.length)}
-                    >
-                      <BootstrapIcon icon="chevron-left" size={14} />
-                    </button>
-                    <span>{String(heroIndex + 1).padStart(2, "0")} / {String(homeHeroItems.length).padStart(2, "0")}</span>
-                    <button
-                      type="button"
-                      className="home-hero-carousel-arrow"
-                      aria-label="Next featured title"
-                      onClick={() => setHeroIndex((current) => (current + 1) % homeHeroItems.length)}
-                    >
-                      <BootstrapIcon icon="chevron-right" size={14} />
-                    </button>
-                  </div>
-                )}
                 <div className="hero-content home-hero-content">
+                  <div className="hero-eyebrow">
+                    <span className="hero-live-dot" />
+                    SITULA SPOTLIGHT · {featured.heroMediaLabel}
+                  </div>
+                  <p className="hero-kicker">
+                    {featured.mediaType === "movie"
+                      ? "A film for your next movie night"
+                      : featured.mediaType === "tv"
+                        ? "A series to settle into"
+                        : "A new world to discover"}
+                  </p>
+                  <h1 className="hero-title">{featured.heroTitle}</h1>
+
                   <div className="hero-meta home-hero-meta" aria-label="Title details">
-                    {featured.heroRuntime > 0 && <span>{formatRuntime(featured.heroRuntime)}</span>}
-                    <span>{featured.heroMediaLabel}</span>
                     {featured.heroYear && <span>{featured.heroYear}</span>}
-                    {featured.heroRating > 0 && <span className="hero-rating"><Icon name="star" size={11} /> {Number(featured.heroRating).toFixed(1)}</span>}
-                    {featured.heroGenres?.slice(0, 1).map((item) => <span key={item}>{item}</span>)}
+                    {featured.heroRating > 0 && (
+                      <span className="hero-rating"><Icon name="star" size={13} /> {Number(featured.heroRating).toFixed(1)}</span>
+                    )}
+                    {featured.heroRuntime > 0 && <span>{formatRuntime(featured.heroRuntime)}</span>}
+                    {featured.heroEpisodes > 0 && <span>{featured.heroEpisodes} episodes</span>}
+                    {featured.heroGenres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
                   </div>
 
-                  <div className="home-hero-bottom">
-                    <div className="home-hero-copy">
-                      <p className="home-hero-kicker">SITULA SPOTLIGHT</p>
-                      <h1 className="hero-title">{featured.heroTitle}</h1>
-                      <p className="home-hero-subtitle">
-                        {featured.mediaType === "movie" ? "FEATURED MOVIE" : featured.mediaType === "tv" ? "TV SERIES" : "ANIME"}
-                        {featured.heroYear ? " · " + featured.heroYear : ""}
-                      </p>
-                      <button
-                        type="button"
-                        className="home-hero-play"
-                        onClick={() => openHomeSpotlight(featured)}
-                        disabled={Boolean(pendingHomeNavigation)}
-                        aria-busy={Boolean(pendingHomeNavigation)}
-                      >
-                        {pendingHomeNavigation ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="play-fill" size={14} />}
-                        <span>{pendingHomeNavigation ? "Opening…" : featured.mediaType === "movie" ? "Watch now" : "Explore " + (featured.mediaType === "tv" ? "series" : "anime")}</span>
-                      </button>
-                    </div>
+                  <p className="hero-description home-hero-description">
+                    {featured.heroOverview || "Discover a new favourite on Situla."}
+                  </p>
+
+                  <div className="hero-actions home-hero-actions">
                     <button
                       type="button"
-                      className="home-hero-save"
+                      className="gold-button"
+                      onClick={() => openHomeSpotlight(featured)}
+                      disabled={Boolean(pendingHomeNavigation)}
+                      aria-busy={Boolean(pendingHomeNavigation)}
+                    >
+                      {pendingHomeNavigation ? <span className="inline-loading-spinner" /> : <Icon name="play" size={16} />}
+                      {pendingHomeNavigation
+                        ? "Opening…"
+                        : featured.mediaType === "movie"
+                          ? "Watch now"
+                          : featured.mediaType === "tv"
+                            ? "Explore TV series"
+                            : "Explore anime"}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button"
                       onClick={() => toggleSaved(featured, featured.mediaType)}
-                      aria-label={savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "Remove from favorites" : "Add to favorites"}
                       aria-pressed={savedIds.has(savedMediaKey(featured, featured.mediaType))}
                     >
-                      <Heart size={18} fill={savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "currentColor" : "none"} />
+                      <Heart
+                        size={15}
+                        fill={savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "currentColor" : "none"}
+                      />
+                      {savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "In my list" : "Add to my list"}
                     </button>
                   </div>
+
+                  {homeHeroItems.length > 1 && (
+                    <div className="hero-carousel-footer home-hero-carousel-footer">
+                      <span className="hero-carousel-label">DISCOVER ANOTHER STORY</span>
+                      <div className="hero-carousel-controls">
+                        <button
+                          type="button"
+                          className="hero-arrow"
+                          aria-label="Previous featured title"
+                          onClick={() => setHeroIndex((current) => (current - 1 + homeHeroItems.length) % homeHeroItems.length)}
+                        >
+                          <BootstrapIcon icon="arrow-left" size={15} />
+                        </button>
+                        <span className="hero-progress-track" aria-hidden="true">
+                          <span
+                            className="hero-progress-fill"
+                            key={featured.heroId}
+                            style={{ animationPlayState: heroPaused ? "paused" : "running" }}
+                          />
+                        </span>
+                        <button
+                          type="button"
+                          className="hero-arrow"
+                          aria-label="Next featured title"
+                          onClick={() => setHeroIndex((current) => (current + 1) % homeHeroItems.length)}
+                        >
+                          <BootstrapIcon icon="arrow-right" size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {homeHeroItems.length > 1 && (
