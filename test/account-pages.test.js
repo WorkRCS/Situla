@@ -128,3 +128,29 @@ test("Login showcase mixes live movie, TV and anime posters in opposing vertical
   assert.ok(css.includes("opacity:.54;"));
   assert.ok(css.includes("pointer-events:none;\n  user-select:none;\n  -webkit-user-drag:none;"));
 });
+
+test("Free signed-in profiles can open a responsive Premium upgrade modal with all billing periods", async () => {
+  const pages = await read("../app/components/account-pages.jsx");
+  const css = await read("../app/globals.css");
+  const modal = pages.slice(pages.indexOf("function PremiumUpgradeModal"), pages.indexOf("export function ProfilePage"));
+  const profile = pages.slice(pages.indexOf("export function ProfilePage"));
+
+  assert.match(profile, /upgradeModalOpen && !membershipActive && <PremiumUpgradeModal/);
+  assert.match(profile, /className="profile-upgrade-trigger" onClick=\{\(\) => setUpgradeModalOpen\(true\)\}/);
+  assert.match(profile, /membershipActive \? \([\s\S]*?Premium · Active/);
+  assert.match(modal, /role="dialog" aria-modal="true"/);
+  assert.match(modal, /aria-labelledby="profile-upgrade-title"/);
+  assert.match(modal, /PREMIUM_BILLING\.map/);
+  assert.match(modal, /billing\.totalPrice\.toLocaleString/);
+  assert.match(modal, /selectedBilling\.allowance/);
+  assert.match(modal, /selectedBilling\.cooldown/);
+  assert.match(modal, /Included with Premium/);
+  assert.match(modal, /Limits & not included/);
+  assert.match(modal, /Premium movie playback is planned, but not active yet/);
+  assert.match(modal, /Checkout is not connected yet/);
+  assert.match(modal, /Purchase unavailable/);
+  assert.match(modal, /event\.key === "Escape"/);
+  assert.match(css, /\.profile-upgrade-backdrop \{[\s\S]*?position:fixed/);
+  assert.match(css, /\.profile-upgrade-dialog \{[\s\S]*?max-height:min\(92dvh,900px\)/);
+  assert.match(css, /@media \(max-width:620px\) \{[\s\S]*?\.profile-upgrade-feature-grid \{ grid-template-columns:minmax\(0,1fr\)/);
+});
