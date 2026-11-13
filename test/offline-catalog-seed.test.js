@@ -238,7 +238,7 @@ test("TVmaze public ratings can supply TV badge signals when an IMDb mapping is 
   }, "tv", now)?.key, "popular");
 });
 
-test("all three badges use cached public data and require no Admin curation", async () => {
+test("existing catalog badges use cached public data while Upcoming keeps its own Admin tags", async () => {
   const adminApi = await read("../src/admin.js");
   const adminUi = await read("../app/components/admin-dashboard.jsx");
   const models = await read("../src/models.js");
@@ -247,9 +247,12 @@ test("all three badges use cached public data and require no Admin curation", as
   const workflow = await read("../.github/workflows/catalogue-market-data.yml");
   const pkg = JSON.parse(await read("../package.json"));
 
-  assert.doesNotMatch(adminApi, /catalog_featured_updated|validCatalogTarget|isFeatured/);
+  const legacyAdminApi = adminApi.slice(0, adminApi.indexOf("function serializeUpcomingAdmin"));
+  assert.doesNotMatch(legacyAdminApi, /catalog_featured_updated|validCatalogTarget|isFeatured/);
   assert.doesNotMatch(adminUi, /Featured picks|Set featured|Remove featured|updateCatalogFeatured/);
-  assert.doesNotMatch(models, /isFeatured|isPopular/);
+  const legacyCatalogModels = models.slice(0, models.indexOf("const upcomingItemSchema"));
+  assert.doesNotMatch(legacyCatalogModels, /isFeatured|isPopular/);
+  assert.match(models.slice(models.indexOf("const upcomingItemSchema")), /isFeatured/);
   assert.match(models, /voteVelocity7d/);
   assert.match(models, /marketDataUpdatedAt/);
   assert.match(models, /anilistPopularity/);
