@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, CreditCard, Film, House, PlayCircle,
   Settings, Tv, UserRound
@@ -38,7 +40,7 @@ function ContinueWatching({ items = [], onResume }) {
           <button key={item.key} type="button" className="home-continue-item" onClick={() => onResume(item)}>
             <span className="home-continue-art">
               {item.posterUrl
-                ? <img src={item.posterUrl} alt="" loading="lazy" decoding="async" />
+                ? <img src={optimizeTmdbImageUrl(item.posterUrl, "w92")} alt="" loading="lazy" decoding="async" />
                 : <Film size={17} />}
               <span className="home-continue-play"><PlayCircle size={11} /></span>
             </span>
@@ -57,12 +59,35 @@ function ContinueWatching({ items = [], onResume }) {
 
 export function SiteSidebar({
   active,
-  upcomingHasUnread = false,
+  upcomingHasUnread,
   showBrand = false,
   continueItems,
   onResume
 }) {
   const pathname = usePathname() || "/";
+  const [statusUnread, setStatusUnread] = useState(false);
+
+  useEffect(() => {
+    if (typeof upcomingHasUnread === "boolean") return;
+    let active = true;
+    async function refreshStatus() {
+      try {
+        const response = await fetch("/api/upcoming/status", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (active && response.ok) setStatusUnread(Boolean(payload.hasUnread));
+      } catch {}
+    }
+    refreshStatus();
+    const interval = window.setInterval(refreshStatus, 30_000);
+    window.addEventListener("focus", refreshStatus);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshStatus);
+    };
+  }, [upcomingHasUnread]);
+
+  const showUpcomingLive = typeof upcomingHasUnread === "boolean" ? upcomingHasUnread : statusUnread;
   return (
     <aside className="home-sidebar site-sidebar" aria-label="Main navigation">
       {showBrand && (
@@ -86,7 +111,7 @@ export function SiteSidebar({
               >
                 <Icon size={17} strokeWidth={selected ? 2.2 : 1.9} />
                 <span>{item.label}</span>
-                {item.id === "upcoming" && upcomingHasUnread && (
+                {item.id === "upcoming" && showUpcomingLive && (
                   <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>
                 )}
               </Link>
