@@ -162,6 +162,8 @@ export default function UpcomingSection() {
       field.setAttribute("readonly", "");
       field.style.position = "fixed";
       field.style.opacity = "0";
+      field.style.setProperty("user-select", "text", "important");
+      field.style.setProperty("-webkit-user-select", "text", "important");
       document.body.appendChild(field);
       field.select();
       const copied = document.execCommand("copy");
