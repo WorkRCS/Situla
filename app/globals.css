@@ -7038,3 +7038,9 @@ body:has(.login-page) .site-footer { display:none !important; }
 @media (prefers-reduced-motion:reduce) {
   .home-side-link,.site-workspace-mobile-link { transition:none !important; }
 }
+
+
+@media (min-width:768px) {
+  .site-workspace > .site-sidebar { height:100%;min-height:0;max-height:none; }
+  .site-workspace-main { height:100%;min-height:0; }
+}
