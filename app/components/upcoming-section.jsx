@@ -58,7 +58,7 @@ async function createPosterShareFile(item) {
     })[mimeType] || mimeType.split("/")[1]?.split("+")[0] || "jpg";
     const filename = (item.title || "situla-poster")
       .normalize("NFKD")
-      .replace(/[^\\w.-]+/g, "-")
+      .replace(/[^\w.-]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80) || "situla-poster";
 
