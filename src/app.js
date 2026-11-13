@@ -21,6 +21,7 @@ import {
 import { getWatchPolicy, addCalendarMonths } from './membership-policy.js';
 import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './search-ranking.js';
 import adminRouter from './admin.js';
+import upcomingRouter from './upcoming.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
@@ -47,7 +48,7 @@ app.use('*', async (c, next) => {
   c.header('X-Frame-Options', 'DENY');
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), picture-in-picture=(), fullscreen=(self "https://vidlink.pro"), autoplay=(self "https://vidlink.pro")');
-  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https://vidlink.pro https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  c.header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https:; frame-src https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   const status = c.res.status;
   if (status >= 500 || durationMs >= 1_000) {
     const event = {
@@ -191,6 +192,7 @@ app.get('/api/share-poster', async (c) => {
 });
 
 app.route('/api/admin', adminRouter);
+app.route('/api/upcoming', upcomingRouter);
 
 export function pageOptions(c, defaultLimit = 10, maxLimit = 10) {
   const requestedPage = Number(c.req.query('page') || 1);
