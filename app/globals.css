@@ -1476,8 +1476,8 @@ body { color:#f7f7fa; background:#08090e; }
 /* Consistent compact catalog grids: three posters on mobile, four on tablets. */
 .catalog-grid {
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px 12px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px 10px;
 }
 .catalog-grid > * {
   width:100%;
