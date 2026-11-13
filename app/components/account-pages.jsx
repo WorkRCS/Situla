@@ -318,6 +318,118 @@ function ReadonlyAccountField({ icon: FieldIcon, label, value }) {
   );
 }
 
+function PremiumUpgradeModal({ onClose }) {
+  const [billingCycle, setBillingCycle] = useState("monthly");
+  const closeButtonRef = useRef(null);
+  const selectedBilling = PREMIUM_BILLING.find((item) => item.id === billingCycle) || PREMIUM_BILLING[0];
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+    };
+  }, [onClose]);
+
+  const includedFeatures = [
+    "Browse Movies, TV series and Anime",
+    "Account-based watch tracking and server-verified access",
+    "Up to 3 registered devices across mobile, computer and TV",
+    "One shared account watch allowance across registered devices",
+    "Premium Verified member badge",
+    "Early upcoming-movie updates and release information"
+  ];
+  const limits = [
+    "Maximum of 3 registered devices",
+    "Watch time is shared across all registered devices",
+    "Premium movie playback is planned, but not active yet"
+  ];
+
+  return (
+    <div className="profile-upgrade-backdrop" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <section className="profile-upgrade-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-upgrade-title" aria-describedby="profile-upgrade-description">
+        <header className="profile-upgrade-header">
+          <div className="profile-upgrade-heading">
+            <span className="profile-upgrade-kicker"><Crown size={13} /> SITULA PREMIUM MEMBERSHIP</span>
+            <h2 id="profile-upgrade-title">Choose your Premium plan</h2>
+            <p id="profile-upgrade-description">More watch time, multi-device access and member benefits. Compare the available billing periods before choosing.</p>
+          </div>
+          <button ref={closeButtonRef} type="button" className="profile-upgrade-close" onClick={onClose} aria-label="Close Premium plan details">
+            <X size={19} />
+          </button>
+        </header>
+
+        <div className="profile-upgrade-body">
+          <section className="profile-upgrade-pricing" aria-labelledby="profile-upgrade-billing-title">
+            <div className="profile-upgrade-section-heading">
+              <div><span>PREMIUM BILLING</span><h3 id="profile-upgrade-billing-title">Select a membership period</h3></div>
+              <span className="profile-upgrade-currency">INR · ₹</span>
+            </div>
+            <div className="profile-upgrade-billing-options" role="group" aria-label="Premium billing period">
+              {PREMIUM_BILLING.map((billing) => (
+                <button key={billing.id} type="button" className={"profile-upgrade-billing-option" + (billingCycle === billing.id ? " is-selected" : "")} onClick={() => setBillingCycle(billing.id)} aria-pressed={billingCycle === billing.id}>
+                  <strong>{billing.label}</strong>
+                  <span>₹{billing.monthlyPrice.toLocaleString("en-IN")}<small>/mo</small></span>
+                  <em>{billing.months} {billing.months === 1 ? "month" : "months"}</em>
+                </button>
+              ))}
+            </div>
+            <div className="profile-upgrade-price-summary">
+              <div><span>Equivalent monthly rate</span><strong>₹{selectedBilling.monthlyPrice.toLocaleString("en-IN")} <small>/ month</small></strong></div>
+              <div><span>{selectedBilling.billingLabel}</span><strong>₹{selectedBilling.totalPrice.toLocaleString("en-IN")}</strong></div>
+            </div>
+          </section>
+
+          <section className="profile-upgrade-plan-stats" aria-label="Selected Premium plan limits">
+            <div><Clock3 size={17} /><span><small>WATCH ALLOWANCE</small><strong>{selectedBilling.allowance}</strong><em>per cycle</em></span></div>
+            <div><LockKeyhole size={17} /><span><small>COOLDOWN</small><strong>{selectedBilling.cooldown}</strong><em>after allowance</em></span></div>
+            <div><MonitorSmartphone size={17} /><span><small>DEVICES</small><strong>Up to 3</strong><em>registered devices</em></span></div>
+          </section>
+
+          <div className="profile-upgrade-feature-grid">
+            <section className="profile-upgrade-feature-panel">
+              <h3><CheckCircle2 size={15} /> Included with Premium</h3>
+              <ul>
+                {includedFeatures.map((feature) => <li key={feature}><Check size={13} /> <span>{feature}</span></li>)}
+                <li><Check size={13} /> <span>{selectedBilling.allowance} watch allowance per membership cycle</span></li>
+                <li><Check size={13} /> <span>{selectedBilling.cooldown === "No periodic cooldown" ? "No scheduled watch cooldown while the yearly membership is active" : selectedBilling.cooldown + " cooldown after the watch allowance"}</span></li>
+              </ul>
+            </section>
+            <section className="profile-upgrade-feature-panel is-limited">
+              <h3><Info size={15} /> Limits & not included</h3>
+              <ul>
+                {limits.map((limit) => <li key={limit}><CircleX size={13} /> <span>{limit}</span></li>)}
+                <li><CircleX size={13} /> <span>Online checkout and automatic renewal are not active yet</span></li>
+              </ul>
+            </section>
+          </div>
+
+          <div className="profile-upgrade-checkout-notice" role="status">
+            <Info size={17} />
+            <span><strong>Checkout is not connected yet.</strong><small>You can review and select a plan here, but payment cannot be collected and Premium access cannot be activated from this window yet.</small></span>
+          </div>
+        </div>
+
+        <footer className="profile-upgrade-footer">
+          <button type="button" className="profile-upgrade-secondary" onClick={onClose}>Close</button>
+          <button type="button" className="profile-upgrade-purchase" disabled aria-disabled="true"><CreditCard size={16} /> Purchase unavailable</button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 export function ProfilePage() {
   const router = useRouter();
   const [account, setAccount] = useState(null);
