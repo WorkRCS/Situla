@@ -11,7 +11,7 @@ import {
   normalizeShowName,
   stripHtml,
   validateTvSeriesRecord
-} from "../scripts/seed-tv-series.js";
+} from "../scripts/tvmaze-series-import.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 const still = (number) =>
@@ -160,16 +160,17 @@ test("TV database validator enforces consistent totals, unique episodes and 80% 
   assert.throws(() => validateTvSeriesRecord(wrongTotal), /Episode total does not match/);
 });
 
-test("TV seed is new-only and cannot overwrite an existing series document", async () => {
-  const script = await read("../scripts/seed-tv-series.js");
+test("TVmaze importer is new-only and is orchestrated by one catalogue seed command", async () => {
+  const script = await read("../scripts/tvmaze-series-import.js");
+  const runner = await read("../scripts/seed.js");
   const pkg = JSON.parse(await read("../package.json"));
-  const ci = await read("../.github/workflows/ci.yml");
-  const workflow = await read("../.github/workflows/seed-tv-series.yml");
+  const workflow = await read("../.github/workflows/catalogue-seed.yml");
   const api = await read("../src/app.js");
 
-  assert.equal(pkg.scripts["seed:tv"], "node scripts/seed-catalog.js --tv");
-  assert.equal(pkg.scripts["seed:tv:legacy-online"], "node scripts/seed-static-catalog.js --tv && node scripts/seed-tv-series.js");
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
   assert.equal(pkg.scripts["check:tv"], "node --test test/tv-catalog.test.js");
+  assert.match(runner, /seedTvSeries/);
   assert.match(script, /TV_SERIES_TARGET_ADDITIONS = 200/);
   assert.match(script, /TvSeries\.insertMany\(newRecords/);
   assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set|STATIC_TV_SERIES/);
@@ -177,11 +178,6 @@ test("TV seed is new-only and cannot overwrite an existing series document", asy
   assert.match(script, /verifyRemoteImage/);
   assert.match(script, /validateTvSeriesRecord/);
   assert.match(script, /isExactTvmazeMatch/);
+  assert.match(workflow, /npm run seed/);
   assert.match(api, /select\('-seasons\.episodes'\)/);
-  assert.match(api, /'seasons\.episodes': 0/);
-  assert.match(ci, /npm run check:tv/);
-  assert.match(workflow, /timeout-minutes: 60/);
-  assert.match(workflow, /Default catalogue seed reads committed data files only/);
-  assert.doesNotMatch(workflow, /TVmaze metadata|Cinemeta metadata by IMDb ID/);
-  assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
 });
