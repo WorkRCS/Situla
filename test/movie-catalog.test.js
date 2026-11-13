@@ -11,7 +11,7 @@ import {
   normalizeMovieTitle,
   stripMovieMarkup,
   validateMovieRecord
-} from "../scripts/seed-movie-additions.js";
+} from "../scripts/cinemeta-movie-import.js";
 
 function fixture() {
   return {
@@ -125,15 +125,15 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
 });
 
-test("Movie additions seeder uses Cinemeta, validates before insert, and never contacts TMDB", async () => {
-  const script = await readFile(new URL("../scripts/seed-movie-additions.js", import.meta.url), "utf8");
+test("Movie importer uses public Cinemeta, validates before insert, and is orchestrated by one seed command", async () => {
+  const script = await readFile(new URL("../scripts/cinemeta-movie-import.js", import.meta.url), "utf8");
+  const runner = await readFile(new URL("../scripts/seed.js", import.meta.url), "utf8");
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-  const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
-  const workflow = await readFile(new URL("../.github/workflows/seed-tv-series.yml", import.meta.url), "utf8");
-  assert.equal(pkg.scripts["seed:movie-additions:legacy-online"], "node scripts/seed-movie-additions.js");
+  const workflow = await readFile(new URL("../.github/workflows/catalogue-seed.yml", import.meta.url), "utf8");
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
   assert.equal(pkg.scripts["check:movies"], "node --test test/movie-catalog.test.js");
-  assert.equal(pkg.scripts["seed:movies"], "node scripts/seed-catalog.js --movies");
-  assert.match(pkg.scripts["seed:movies:legacy-online"], /seed-static-catalog\.js --movies.*seed:movie-additions:legacy-online/);
+  assert.match(runner, /seedMovieAdditions/);
   assert.match(script, /https:\/\/v3-cinemeta\.strem\.io/);
   assert.match(script, /Movie\.insertMany\(newRecords/);
   assert.match(script, /existingAdditionCount/);
@@ -143,7 +143,4 @@ test("Movie additions seeder uses Cinemeta, validates before insert, and never c
   assert.doesNotMatch(script, /api\.themoviedb\.org|TMDB_API_READ_ACCESS_TOKEN|TMDB_API_KEY/);
   assert.doesNotMatch(workflow, /TMDB_API_READ_ACCESS_TOKEN/);
   assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
-  assert.match(api, /randomOrder/);
-  assert.match(api, /\$sample: \{ size: limit \}/);
-  assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds/);
 });
