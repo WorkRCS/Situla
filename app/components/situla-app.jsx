@@ -810,19 +810,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       try {
         const response = await fetch("/api/upcoming/status", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
-        if (active && response.ok && tab !== "upcoming") setUpcomingHasUnread(Boolean(payload.hasUnread));
+        if (active && response.ok) setUpcomingHasUnread(Boolean(payload.hasUnread));
       } catch {}
     }
-    const markUpcomingRead = () => setUpcomingHasUnread(false);
     refreshUpcomingStatus();
-    const interval = window.setInterval(refreshUpcomingStatus, 45_000);
+    const interval = window.setInterval(refreshUpcomingStatus, 30_000);
     window.addEventListener("focus", refreshUpcomingStatus);
-    window.addEventListener("situla:upcoming-read", markUpcomingRead);
+    window.addEventListener("situla:upcoming-waitlist-updated", refreshUpcomingStatus);
     return () => {
       active = false;
       window.clearInterval(interval);
       window.removeEventListener("focus", refreshUpcomingStatus);
-      window.removeEventListener("situla:upcoming-read", markUpcomingRead);
+      window.removeEventListener("situla:upcoming-waitlist-updated", refreshUpcomingStatus);
     };
   }, [tab]);
   const [genre, setGenre] = useState("All");
@@ -1593,12 +1592,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
             {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
-              <Link key={item.id} href={item.href} onClick={item.id === "upcoming" ? () => {
-                setUpcomingHasUnread(false);
-                fetch("/api/upcoming/read", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
-              } : undefined} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
+              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
-                <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <i className="upcoming-nav-dot" aria-label="New upcoming updates" />}</span>
+                <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
               </Link>
             ))}
           </nav>
@@ -2225,10 +2221,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <Link
             key={item.id}
             href={item.href}
-            onClick={item.id === "upcoming" ? () => {
-              setUpcomingHasUnread(false);
-              fetch("/api/upcoming/read", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => {});
-            } : undefined}
             className={"nav-button" + (tab === item.id ? " active" : "")}
             aria-current={tab === item.id ? "page" : undefined}
           >
