@@ -10,8 +10,9 @@ function https(value) {
   try { return new URL(value).protocol === "https:"; } catch { return false; }
 }
 
-assert.equal(NEW_ANIME_CATALOG.length, 200, "Expected exactly 200 new Anime records.");
+assert.equal(NEW_ANIME_CATALOG.length, 201, "Expected exactly 201 new Anime records.");
 const ids = new Set();
+const anilistIds = new Set();
 const titles = new Set(MANUAL_ANIME_CATALOG.flatMap((item) => [item.title, item.titleEnglish]).filter(Boolean).map(key));
 let episodeCount = 0;
 let stillCount = 0;
@@ -20,6 +21,12 @@ for (const item of NEW_ANIME_CATALOG) {
   assert.ok(Number.isSafeInteger(item.malId) && item.malId > 0, "Invalid MAL ID.");
   assert.ok(!ids.has(item.malId), "Duplicate MAL ID: " + item.malId);
   ids.add(item.malId);
+  if (item.anilistId !== undefined) {
+    assert.ok(Number.isSafeInteger(item.anilistId) && item.anilistId > 0, "Invalid AniList ID for MAL " + item.malId);
+    assert.ok(!anilistIds.has(item.anilistId), "Duplicate AniList ID: " + item.anilistId);
+    anilistIds.add(item.anilistId);
+    assert.equal(item.anilistUrl, "https://anilist.co/anime/" + item.anilistId);
+  }
 
   const title = key(item.titleEnglish || item.title);
   assert.ok(title && !titles.has(title), "Duplicate Anime title: " + title);
