@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import {
   User, GuestAccess, ActivitySession, Device, AuthSession, UsageState,
-  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead
+  PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
+  UpcomingItem, UpcomingWaitlist
 } from './models.js';
 import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
@@ -67,7 +68,12 @@ router.use('*', async (c, next) => {
     (method === 'DELETE' && segments.length === 3 && segments[0] === 'users' && isObjectId(segments[1]) && segments[2] === 'suspension') ||
     (method === 'POST' && path === '/announcements') ||
     (method === 'PATCH' && segments.length === 2 && segments[0] === 'announcements' && isObjectId(segments[1])) ||
-    (method === 'DELETE' && segments.length === 2 && segments[0] === 'announcements' && isObjectId(segments[1]));
+    (method === 'DELETE' && segments.length === 2 && segments[0] === 'announcements' && isObjectId(segments[1])) ||
+    (method === 'GET' && path === '/upcoming') ||
+    (method === 'POST' && path === '/upcoming') ||
+    (method === 'PATCH' && segments.length === 2 && segments[0] === 'upcoming' && isObjectId(segments[1])) ||
+    (method === 'DELETE' && segments.length === 2 && segments[0] === 'upcoming' && isObjectId(segments[1])) ||
+    (method === 'GET' && segments.length === 3 && segments[0] === 'upcoming' && isObjectId(segments[1]) && segments[2] === 'poster');
   if (!knownRoute) return c.notFound();
   if (method !== 'GET' && !isSameOriginRequest(c)) {
     return c.json({ error: 'A same-origin request is required.', code: 'ORIGIN_CHECK_FAILED' }, 403);
@@ -574,6 +580,201 @@ router.delete('/announcements/:announcementId', async (c) => {
   if (!item) return c.json({ error: 'Announcement not found.' }, 404);
   await AnnouncementRead.deleteMany({ announcementId: item._id });
   await audit(c.get('adminAuth').user._id, 'announcement_deleted', 'announcement', id, { title: item.title });
+  return c.json({ deleted: true, id });
+});
+
+function serializeUpcomingAdmin(item, waitlistCount = 0) {
+  const id = String(item._id);
+  return {
+    id,
+    type: item.type,
+    title: item.title,
+    posterMode: item.posterMode,
+    posterUrl: item.posterUrl || '',
+    posterImageUrl: item.posterContentType ? '/api/admin/upcoming/' + id + '/poster' : '',
+    hasUploadedPoster: Boolean(item.posterContentType),
+    releaseAt: item.releaseAt,
+    rating: Number(item.rating || 0),
+    isPopular: Boolean(item.isPopular),
+    isHot: Boolean(item.isHot),
+    isFeatured: Boolean(item.isFeatured),
+    isPremium: Boolean(item.isPremium),
+    countdownEnabled: item.countdownEnabled !== false,
+    status: item.status,
+    waitlistCount,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt
+  };
+}
+
+function safeUpcomingUrl(value) {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    if (url.protocol !== 'https:' || url.username || url.password ||
+        host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
+        host.endsWith('.internal') || /^127\\./.test(host) || /^10\\./.test(host) ||
+        /^192\\.168\\./.test(host) || /^172\\.(1[6-9]|2[0-9]|3[0-1])\\./.test(host)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function upcomingPayload(form, current = null) {
+  const title = String(form.get('title') || '').trim();
+  const type = String(form.get('type') || '').toLowerCase();
+  const posterMode = String(form.get('posterMode') || 'image').toLowerCase();
+  const posterUrlRaw = String(form.get('posterUrl') || '').trim();
+  const posterUrl = posterUrlRaw ? safeUpcomingUrl(posterUrlRaw) : '';
+  const releaseAt = new Date(String(form.get('releaseAt') || ''));
+  const rating = Number(form.get('rating') || 0);
+  const status = String(form.get('status') || 'published');
+  const hasPosterFile = form.get('poster') && typeof form.get('poster') === 'object' &&
+    typeof form.get('poster').arrayBuffer === 'function' && Number(form.get('poster').size) > 0;
+
+  if (!title || title.length > 160) return { error: 'Title is required and must be 160 characters or fewer.' };
+  if (!['movie', 'tv', 'anime'].includes(type)) return { error: 'Choose Movies, TV Series or Anime.' };
+  if (!['embed', 'image'].includes(posterMode)) return { error: 'Choose an embed URL or image poster.' };
+  if (posterUrlRaw && !posterUrl) return { error: 'Poster URL must be a valid, public HTTPS address.' };
+  if (!Number.isFinite(releaseAt.getTime())) return { error: 'Choose a valid release date and time.' };
+  if (!Number.isFinite(rating) || rating < 0 || rating > 10) return { error: 'Rating must be between 0 and 10.' };
+  if (!['draft', 'published'].includes(status)) return { error: 'Choose Draft or Published.' };
+  if (posterMode === 'embed' && (!posterUrl || hasPosterFile)) return { error: 'An embed URL is required. Do not upload an image in embed mode.' };
+  if (posterMode === 'image' && !hasPosterFile && !posterUrl && !current?.posterContentType && form.get('keepPoster') !== 'true') {
+    return { error: 'Add an image URL or upload a poster image.' };
+  }
+  return {
+    value: {
+      type, title, posterMode, posterUrl,
+      releaseAt,
+      rating,
+      isPopular: form.get('isPopular') === 'true',
+      isHot: form.get('isHot') === 'true',
+      isFeatured: form.get('isFeatured') === 'true',
+      isPremium: form.get('isPremium') === 'true',
+      countdownEnabled: form.get('countdownEnabled') !== 'false',
+      status
+    },
+    hasPosterFile
+  };
+}
+
+async function readUpcomingPoster(form) {
+  const file = form.get('poster');
+  if (!file || typeof file !== 'object' || typeof file.arrayBuffer !== 'function' || !file.size) return null;
+  const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+  if (!allowed.has(file.type)) throw new Error('Upload a JPG, PNG, WebP, GIF or AVIF poster.');
+  if (file.size > 4 * 1024 * 1024) throw new Error('Poster images must be 4 MB or smaller.');
+  const data = Buffer.from(await file.arrayBuffer());
+  const isPng = data.length >= 8 && data.subarray(0, 8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]));
+  const isJpeg = data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff;
+  const isGif = data.length >= 6 && ['GIF87a', 'GIF89a'].includes(data.subarray(0, 6).toString('ascii'));
+  const isWebp = data.length >= 12 && data.subarray(0, 4).toString('ascii') === 'RIFF' && data.subarray(8, 12).toString('ascii') === 'WEBP';
+  const isAvif = data.length >= 12 && data.subarray(4, 12).toString('ascii').includes('ftypavif');
+  const valid = file.type === 'image/png' ? isPng : file.type === 'image/jpeg' ? isJpeg :
+    file.type === 'image/gif' ? isGif : file.type === 'image/webp' ? isWebp :
+    file.type === 'image/avif' ? isAvif : false;
+  if (!valid) throw new Error('The poster file does not match its declared image format.');
+  return { data, contentType: file.type };
+}
+
+router.get('/upcoming/:upcomingId/poster', async (c) => {
+  const id = c.req.param('upcomingId');
+  if (!objectId(id)) return c.json({ error: 'Invalid upcoming item.' }, 400);
+  const item = await UpcomingItem.findById(id).select('+posterData posterContentType').lean();
+  const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+  if (!item?.posterData || !allowed.has(item.posterContentType)) return c.json({ error: 'Poster not found.' }, 404);
+  return c.body(item.posterData, 200, {
+    'Content-Type': item.posterContentType,
+    'Content-Length': String(item.posterData.length),
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff'
+  });
+});
+
+router.get('/upcoming', async (c) => {
+  const type = String(c.req.query('type') || 'all').toLowerCase();
+  if (type !== 'all' && !['movie', 'tv', 'anime'].includes(type)) return c.json({ error: 'Invalid media type.' }, 400);
+  const filter = type === 'all' ? {} : { type };
+  const [items, total] = await Promise.all([
+    UpcomingItem.find(filter).select('-posterData').sort({ releaseAt: 1, _id: 1 }).limit(200).lean(),
+    UpcomingItem.countDocuments(filter)
+  ]);
+  const counts = items.length ? await UpcomingWaitlist.aggregate([
+    { $match: { upcomingId: { $in: items.map((item) => item._id) } } },
+    { $group: { _id: '$upcomingId', count: { $sum: 1 } } }
+  ]) : [];
+  const countMap = new Map(counts.map((row) => [String(row._id), row.count]));
+  return c.json({
+    items: items.map((item) => serializeUpcomingAdmin(item, countMap.get(String(item._id)) || 0)),
+    total
+  });
+});
+
+router.post('/upcoming', async (c) => {
+  try {
+    const form = await c.req.formData();
+    const parsed = upcomingPayload(form);
+    if (parsed.error) return c.json({ error: parsed.error }, 400);
+    const upload = await readUpcomingPoster(form);
+    const actor = c.get('adminAuth').user;
+    const item = await UpcomingItem.create({
+      ...parsed.value,
+      createdBy: actor._id,
+      updatedBy: actor._id,
+      ...(upload ? { posterData: upload.data, posterContentType: upload.contentType } : {})
+    });
+    await audit(actor._id, 'upcoming_created', 'upcoming', item._id, {
+      title: item.title, type: item.type, releaseAt: item.releaseAt, status: item.status
+    });
+    return c.json({ item: serializeUpcomingAdmin(item) }, 201);
+  } catch (error) {
+    return c.json({ error: error.message || 'Upcoming item could not be created.' }, 400);
+  }
+});
+
+router.patch('/upcoming/:upcomingId', async (c) => {
+  const id = c.req.param('upcomingId');
+  if (!objectId(id)) return c.json({ error: 'Invalid upcoming item.' }, 400);
+  const item = await UpcomingItem.findById(id);
+  if (!item) return c.json({ error: 'Upcoming item not found.' }, 404);
+  try {
+    const form = await c.req.formData();
+    const parsed = upcomingPayload(form, item);
+    if (parsed.error) return c.json({ error: parsed.error }, 400);
+    const upload = await readUpcomingPoster(form);
+    Object.assign(item, parsed.value, { updatedBy: c.get('adminAuth').user._id });
+    if (upload) {
+      item.posterData = upload.data;
+      item.posterContentType = upload.contentType;
+      item.posterUrl = '';
+    } else if (parsed.value.posterMode === 'embed' || parsed.value.posterUrl) {
+      item.posterData = null;
+      item.posterContentType = '';
+    } else if (form.get('removePoster') === 'true') {
+      item.posterData = null;
+      item.posterContentType = '';
+      item.posterUrl = '';
+    }
+    await item.save();
+    await audit(c.get('adminAuth').user._id, 'upcoming_updated', 'upcoming', item._id, {
+      title: item.title, type: item.type, releaseAt: item.releaseAt, status: item.status
+    });
+    return c.json({ item: serializeUpcomingAdmin(item) });
+  } catch (error) {
+    return c.json({ error: error.message || 'Upcoming item could not be updated.' }, 400);
+  }
+});
+
+router.delete('/upcoming/:upcomingId', async (c) => {
+  const id = c.req.param('upcomingId');
+  if (!objectId(id)) return c.json({ error: 'Invalid upcoming item.' }, 400);
+  const item = await UpcomingItem.findByIdAndDelete(id);
+  if (!item) return c.json({ error: 'Upcoming item not found.' }, 404);
+  await UpcomingWaitlist.deleteMany({ upcomingId: item._id });
+  await audit(c.get('adminAuth').user._id, 'upcoming_deleted', 'upcoming', id, { title: item.title, type: item.type });
   return c.json({ deleted: true, id });
 });
 
