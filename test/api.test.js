@@ -346,7 +346,7 @@ test('global search returns an empty list below the three-character threshold wi
 });
 
 test('TVmaze importer matches exact candidate titles and maps verified season/episode metadata', async () => {
-  const { mapTvmazeShow, normalizeShowName, stripHtml, isExactTvmazeMatch } = await import('../scripts/seed-tv-series.js');
+  const { mapTvmazeShow, normalizeShowName, stripHtml, isExactTvmazeMatch } = await import('../scripts/tvmaze-series-import.js');
   assert.equal(normalizeShowName('Pokémon & Friends'), 'pokemon and friends');
   assert.equal(stripHtml('<p>Hello &amp; welcome</p>'), 'Hello & welcome');
   const candidate = {
