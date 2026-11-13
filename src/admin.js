@@ -11,6 +11,7 @@ import { addCalendarMonths } from './membership-policy.js';
 import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
 import { memberFilter, onlineActivityFilter, clampPage } from './admin-queries.js';
 import { parseAnnouncementDate, getAnnouncementStatus } from './announcement-utils.js';
+import { normalizeUpcomingUrl } from './upcoming-utils.js';
 
 const router = new Hono();
 const PAGE_SIZE = 10;
@@ -607,27 +608,13 @@ function serializeUpcomingAdmin(item, waitlistCount = 0) {
   };
 }
 
-function safeUpcomingUrl(value) {
-  if (!value) return '';
-  try {
-    const url = new URL(value);
-    const host = url.hostname.toLowerCase();
-    if (url.protocol !== 'https:' || url.username || url.password ||
-        host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
-        host.endsWith('.internal') || /^127\\./.test(host) || /^10\\./.test(host) ||
-        /^192\\.168\\./.test(host) || /^172\\.(1[6-9]|2[0-9]|3[0-1])\\./.test(host)) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
 
 function upcomingPayload(form, current = null) {
   const title = String(form.get('title') || '').trim();
   const type = String(form.get('type') || '').toLowerCase();
   const posterMode = String(form.get('posterMode') || 'image').toLowerCase();
   const posterUrlRaw = String(form.get('posterUrl') || '').trim();
-  const posterUrl = posterUrlRaw ? safeUpcomingUrl(posterUrlRaw) : '';
+  const posterUrl = posterUrlRaw ? normalizeUpcomingUrl(posterUrlRaw) : '';
   const releaseAt = new Date(String(form.get('releaseAt') || ''));
   const rating = Number(form.get('rating') || 0);
   const status = String(form.get('status') || 'published');
@@ -638,6 +625,7 @@ function upcomingPayload(form, current = null) {
   if (!['movie', 'tv', 'anime'].includes(type)) return { error: 'Choose Movies, TV Series or Anime.' };
   if (!['embed', 'image'].includes(posterMode)) return { error: 'Choose an embed URL or image poster.' };
   if (posterUrlRaw && !posterUrl) return { error: 'Poster URL must be a valid, public HTTPS address.' };
+  if (posterMode === 'image' && hasPosterFile && posterUrl) return { error: 'Choose an image URL or upload a poster file, not both.' };
   if (!Number.isFinite(releaseAt.getTime())) return { error: 'Choose a valid release date and time.' };
   if (!Number.isFinite(rating) || rating < 0 || rating > 10) return { error: 'Rating must be between 0 and 10.' };
   if (!['draft', 'published'].includes(status)) return { error: 'Choose Draft or Published.' };
