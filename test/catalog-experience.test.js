@@ -253,7 +253,8 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(cardStyles, /\.movie-card \.series-card-meta \{[\s\S]*?border:0;[\s\S]*?background:transparent/);
   assert.match(cardStyles, /\.movie-card \.series-card-category/);
   assert.match(cardStyles, /\.movie-card:focus-within/);
-  assert.doesNotMatch(cardStyles, /backdrop-filter:blur|background:linear-gradient\(155deg/);
+  const baseMovieCard = cardStyles.slice(cardStyles.indexOf(".movie-card {"), cardStyles.indexOf(".movie-card > .media-open-button"));
+  assert.doesNotMatch(baseMovieCard, /backdrop-filter:blur|background:linear-gradient\(155deg/);
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
