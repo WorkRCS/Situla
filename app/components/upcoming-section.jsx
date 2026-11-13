@@ -37,6 +37,37 @@ function UpcomingTag({ children, tone = "" }) {
   return <span className={"upcoming-tag " + tone}>{children}</span>;
 }
 
+async function createPosterShareFile(item) {
+  const posterUrl = item.posterImageUrl || (item.posterMode === "embed" ? "" : item.posterUrl);
+  if (!posterUrl || typeof File === "undefined") return null;
+
+  try {
+    const response = await fetch(posterUrl, { mode: "cors", credentials: "omit" });
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+    if (!blob.type?.toLowerCase().startsWith("image/")) return null;
+
+    const mimeType = blob.type.toLowerCase();
+    const extension = ({
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/avif": "avif",
+      "image/gif": "gif"
+    })[mimeType] || mimeType.split("/")[1]?.split("+")[0] || "jpg";
+    const filename = (item.title || "situla-poster")
+      .normalize("NFKD")
+      .replace(/[^\\w.-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "situla-poster";
+
+    return new File([blob], filename + "." + extension, { type: blob.type });
+  } catch {
+    return null;
+  }
+}
+
 export default function UpcomingSection() {
   const [activeType, setActiveType] = useState("movie");
   const [showMine, setShowMine] = useState(false);
@@ -139,14 +170,24 @@ export default function UpcomingSection() {
       text: "See the release countdown and join the waiting list on Situla.",
       url
     };
+    const posterFile = await createPosterShareFile(item);
 
-    try {
-      if (typeof navigator.share === "function") {
+    if (typeof navigator.share === "function") {
+      if (posterFile && typeof navigator.canShare === "function" && navigator.canShare({ files: [posterFile] })) {
+        try {
+          await navigator.share({ ...shareData, files: [posterFile] });
+          return;
+        } catch (shareError) {
+          if (shareError?.name === "AbortError") return;
+        }
+      }
+
+      try {
         await navigator.share(shareData);
         return;
+      } catch (shareError) {
+        if (shareError?.name === "AbortError") return;
       }
-    } catch (shareError) {
-      if (shareError?.name === "AbortError") return;
     }
 
     try {
