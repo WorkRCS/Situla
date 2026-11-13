@@ -92,24 +92,28 @@ test("Anime cleanup is dry-run by default and only deletes records with no poste
   assert.doesNotMatch(audit, /Movie\.deleteMany|TvSeries\.deleteMany/);
 });
 
-test("Anime additions are seeded only for new MAL IDs/titles and never update old records", async () => {
-  const script = await read("../scripts/seed-anime-additions.js");
-  const staticSeed = await read("../scripts/seed-static-catalog.js");
+test("the unified seed imports the Anime pack insert-only and then refreshes public AniList data", async () => {
+  const catalogImport = await read("../scripts/catalog-import.js");
+  const runner = await read("../scripts/seed.js");
+  const marketRefresh = await read("../scripts/refresh-catalog-market-data.js");
   const pkg = JSON.parse(await read("../package.json"));
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
-  assert.equal(pkg.scripts["seed:anime:legacy-curated"], "node scripts/seed-anime-additions.js");
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
   assert.equal(pkg.scripts["check:anime"], "node scripts/check-anime-additions.js");
   assert.equal(pkg.scripts["audit:anime"], "node scripts/audit-anime-artwork.js");
   assert.equal(pkg.scripts["audit:anime:apply"], "node scripts/audit-anime-artwork.js --apply");
-  assert.match(script, /NEW_ANIME_CATALOG/);
-  assert.match(script, /existingIds/);
-  assert.match(script, /existingTitles/);
-  assert.match(script, /AnimeSeries\.insertMany/);
-  assert.doesNotMatch(script, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
-  assert.doesNotMatch(script, /\bfetch\s*\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
-  assert.doesNotMatch(staticSeed, /AnimeSeries|MANUAL_ANIME_CATALOG|--anime/);
-  assert.match(staticSeed, /STATIC_MOVIES/);
-  assert.match(staticSeed, /STATIC_TV_SERIES/);
+  assert.match(catalogImport, /NEW_ANIME_CATALOG/);
+  assert.match(catalogImport, /MANUAL_ANIME_CATALOG/);
+  assert.match(catalogImport, /AnimeSeries/);
+  assert.match(catalogImport, /\.insertMany\(pending/);
+  assert.doesNotMatch(catalogImport, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
+  assert.match(runner, /seedOfflineCatalog/);
+  assert.match(runner, /seedMovieAdditions/);
+  assert.match(runner, /seedTvSeries/);
+  assert.match(runner, /refreshCatalogMarketData/);
+  assert.match(marketRefresh, /graphql\.anilist\.co/);
+  assert.match(marketRefresh, /anilistTags/);
+  assert.doesNotMatch(marketRefresh, /api\.jikan\.moe|datasets\.imdbws\.com/);
 });
 
 test("Anime list and search APIs omit heavy episode guides while detail API exposes them", async () => {
