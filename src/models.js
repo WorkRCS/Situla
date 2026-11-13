@@ -424,7 +424,7 @@ upcomingWaitlistSchema.index({ upcomingId: 1, userId: 1 }, { unique: true });
 upcomingWaitlistSchema.index({ userId: 1, createdAt: -1 });
 
 const upcomingReadSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   lastSeenAt: { type: Date, required: true, default: Date.now }
 }, { timestamps: true, versionKey: false, strict: true });
 upcomingReadSchema.index({ userId: 1 }, { unique: true });
