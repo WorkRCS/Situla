@@ -12,10 +12,11 @@ import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
+import { SiteSidebar } from "./site-sidebar.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, CalendarDays, CreditCard, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -1621,7 +1622,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   return (
     <main className="app-shell">
-      <header className={"app-header safe-top" + (tab === "home" ? " home-app-header" : "")}>
+      <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
         <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
           <Link href="/" className="brand-lockup" aria-label="Situla home">
             <img src="/icon.svg" alt="" className="brand-logo" width="40" height="40" />
@@ -1716,6 +1717,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>
                   <div className="header-popover-divider" />
+                                    <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/plans"); }}>
+                    <CreditCard size={16} /> <span>Plans & pricing</span> <ArrowUpRight size={14} />
+                  </button>
                   {demoSignedIn ? (
                     <>
                       <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/profile"); }}>
@@ -1885,53 +1889,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
         {tab === "home" && (
           <>
-            <aside className="home-sidebar" aria-label="Main navigation">
-              <nav className="home-sidebar-nav">
-                <Link href="/" className="home-side-link active" aria-current="page">
-                  <BootstrapIcon icon="house-door-fill" size={17} /><span>Home</span>
-                </Link>
-                <Link href="/saved" className="home-side-link">
-                  <BootstrapIcon icon="heart" size={17} /><span>Favorites</span>
-                </Link>
-                <Link href="/upcoming" className="home-side-link">
-                  <CalendarDays size={17} /><span>Coming soon</span>
-                  {upcomingHasUnread && <b className="upcoming-nav-live">LIVE</b>}
-                </Link>
-                <Link href="/movies" className="home-side-link">
-                  <BootstrapIcon icon="fire" size={17} /><span>Trending</span>
-                </Link>
-                <div className="home-sidebar-divider" />
-                <Link href="/settings" className="home-side-link">
-                  <BootstrapIcon icon="gear" size={17} /><span>Settings</span>
-                </Link>
-              </nav>
-
-              <section className="home-sidebar-watch" aria-label="Continue watching">
-                <div className="home-sidebar-section-title">Continue Watching</div>
-                {sortedHistory.slice(0, 4).map((item) => {
-                  const duration = Math.max(0, Number(item.duration) || 0);
-                  const watched = Math.min(duration || Number(item.watched) || 0, Math.max(0, Number(item.watched) || 0));
-                  const progress = duration > 0 ? Math.max(0, Math.min(100, (watched / duration) * 100)) : 0;
-                  const typeLabel = item.mediaType === "tv" ? "TV SERIES" : item.mediaType === "anime" ? "ANIME" : "MOVIE";
-                  return (
-                    <button key={item.key} type="button" className="home-continue-item" onClick={() => resumeHistoryItem(item)}>
-                      <span className="home-continue-art">
-                        {item.posterUrl
-                          ? <img src={optimizeTmdbImageUrl(item.posterUrl, "w92")} alt="" loading="lazy" decoding="async" />
-                          : <BootstrapIcon icon="film" size={17} />}
-                        <span className="home-continue-play"><BootstrapIcon icon="play-fill" size={10} /></span>
-                      </span>
-                      <span className="home-continue-copy">
-                        <strong>{item.title || "Untitled"}</strong>
-                        <small>{typeLabel}{item.episode ? " · EP " + item.episode : ""}</small>
-                        <span className="home-continue-progress"><i style={{ width: progress + "%" }} /></span>
-                      </span>
-                    </button>
-                  );
-                })}
-                {!sortedHistory.length && <p className="home-sidebar-empty">Your recent watches will appear here.</p>}
-              </section>
-            </aside>
+            <SiteSidebar
+              active="home"
+              upcomingHasUnread={upcomingHasUnread}
+              continueItems={sortedHistory}
+              onResume={resumeHistoryItem}
+            />
             <div className="home-main-column">
             {featured ? (
               <section
@@ -2212,6 +2175,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
 
+        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={upcomingHasUnread} />}
+        {tab !== "home" && (
+          <div className="app-view-main-column">
         {tab === "movies" && (
           <section className="pb-8" aria-label="Movies catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(savedMediaKey(catalogSpotlight, "movie"))} />}
             {loading && !movies.length ? (
@@ -2436,6 +2402,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
           SITULA · DISCOVER MORE
         </footer>
+          </div>
+        )}
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
