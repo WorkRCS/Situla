@@ -1,29 +1,28 @@
 import "dotenv/config";
 import mongoose from "mongoose";
-import { createInterface } from "node:readline";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { Readable } from "node:stream";
-import { createGunzip } from "node:zlib";
 import { connectDatabase } from "../src/db.js";
 import { Movie, TvSeries, AnimeSeries } from "../src/models.js";
 
-const IMDB_RATINGS_URL = "https://datasets.imdbws.com/title.ratings.tsv.gz";
-const JIKAN_API = "https://api.jikan.moe/v4/anime/";
+const CINEMETA_API = String(process.env.CINEMETA_API_BASE || "https://v3-cinemeta.strem.io").replace(/\/$/, "");
+const ANILIST_GRAPHQL_URL = "https://graphql.anilist.co";
 const TVMAZE_API = "https://api.tvmaze.com";
+const CINEMETA_REQUEST_INTERVAL_MS = 300;
 const TVMAZE_REQUEST_INTERVAL_MS = 550;
+const ANILIST_REQUEST_INTERVAL_MS = 2_200;
+const ANILIST_BATCH_SIZE = 20;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const JIKAN_REQUEST_INTERVAL_MS = 450;
 const BULK_BATCH_SIZE = 500;
-const USER_AGENT = "Situla-Catalog-Market-Data/1.0 (https://github.com/WorkRCS/Situla)";
+const USER_AGENT = "Situla-Catalog-Market-Data/2.0 (https://github.com/WorkRCS/Situla)";
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 const safeNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-/** Estimate fresh public vote growth as a seven-day rate from the previous snapshot. */
+/** Estimate fresh public signal growth as a seven-day rate from the previous snapshot. */
 export function calculateVoteVelocity7d(previousVotes, previousSnapshotAt, currentVotes, now = new Date()) {
   const previous = Math.max(0, safeNumber(previousVotes));
   const current = Math.max(0, safeNumber(currentVotes));
@@ -47,72 +46,77 @@ async function writeInBatches(Model, operations) {
   return written;
 }
 
-async function refreshImdbVotes(now) {
-  const [movies, shows] = await Promise.all([
-    Movie.find({ imdbId: /^tt[0-9]{5,12}$/i })
-      .select("imdbId voteCount marketDataUpdatedAt")
-      .lean(),
-    TvSeries.find({ externalImdbId: /^tt[0-9]{5,12}$/i })
-      .select("externalImdbId voteCount marketDataUpdatedAt")
-      .lean()
-  ]);
+function parseProviderCount(value) {
+  if (Number.isFinite(Number(value))) return Math.max(0, Math.floor(Number(value)));
+  const text = String(value || "").trim().toLowerCase().replace(/,/g, "");
+  const match = text.match(/^([\d.]+)\s*([kmb])?$/);
+  if (!match) return 0;
+  const multiplier = match[2] === "k" ? 1_000 : match[2] === "m" ? 1_000_000 : match[2] === "b" ? 1_000_000_000 : 1;
+  return Math.max(0, Math.floor(Number(match[1]) * multiplier));
+}
 
-  const movieById = new Map(movies.map((item) => [String(item.imdbId).toLowerCase(), item]));
-  const tvById = new Map(shows.map((item) => [String(item.externalImdbId).toLowerCase(), item]));
-  const wanted = new Set([...movieById.keys(), ...tvById.keys()]);
-  if (!wanted.size) return { movies: 0, tv: 0 };
-
-  const response = await fetch(IMDB_RATINGS_URL, {
-    headers: { "User-Agent": USER_AGENT },
-    signal: AbortSignal.timeout(10 * 60 * 1000)
+async function fetchJsonWithRetry(url, label, attempt = 0) {
+  const response = await fetch(url, {
+    headers: { "User-Agent": USER_AGENT, "Accept": "application/json" },
+    signal: AbortSignal.timeout(20_000)
   });
-  if (!response.ok || !response.body) {
-    throw new Error("IMDb public ratings dataset download failed with HTTP " + response.status + ".");
+  if (response.status === 429 || response.status >= 500) {
+    if (attempt >= 4) throw new Error(label + " failed (HTTP " + response.status + ").");
+    const retryAfter = Number(response.headers.get("retry-after")) * 1_000;
+    await sleep(Math.max(retryAfter || 1_500 * (attempt + 1), 1_000));
+    return fetchJsonWithRetry(url, label, attempt + 1);
   }
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(label + " failed (HTTP " + response.status + ").");
+  return response.json();
+}
 
-  const movieOps = [];
-  const tvOps = [];
-  const input = Readable.fromWeb(response.body).pipe(createGunzip());
-  const rows = createInterface({ input, crlfDelay: Infinity });
-  let first = true;
+async function refreshCinemetaMovieRatings(now) {
+  const records = await Movie.find({ imdbId: /^tt[0-9]{5,12}$/i })
+    .select("imdbId voteAverage voteCount marketDataUpdatedAt")
+    .lean();
+  const operations = [];
+  let unavailable = 0;
 
-  for await (const line of rows) {
-    if (first) {
-      first = false;
+  for (let index = 0; index < records.length; index += 1) {
+    if (index > 0) await sleep(CINEMETA_REQUEST_INTERVAL_MS);
+    const item = records[index];
+    const imdbId = String(item.imdbId).toLowerCase();
+    let payload;
+    try {
+      payload = await fetchJsonWithRetry(
+        CINEMETA_API + "/meta/movie/" + encodeURIComponent(imdbId) + ".json",
+        "Cinemeta Movie metadata for " + imdbId
+      );
+    } catch (error) {
+      unavailable += 1;
+      console.warn("Movie public rating skipped for " + imdbId + ": " + error.message);
       continue;
     }
-    const [rawId, rawRating, rawVotes] = line.split("\t");
-    const id = String(rawId || "").toLowerCase();
-    if (!wanted.has(id)) continue;
 
-    const voteAverage = Math.min(10, Math.max(0, safeNumber(rawRating)));
-    const voteCount = Math.max(0, Math.floor(safeNumber(rawVotes)));
-    const fieldsFor = (previous) => ({
-      voteAverage,
-      voteCount,
-      voteVelocity7d: calculateVoteVelocity7d(
-        previous.voteCount,
-        previous.marketDataUpdatedAt,
-        voteCount,
-        now
-      ),
-      marketDataUpdatedAt: now
-    });
-    const movie = movieById.get(id);
-    const tv = tvById.get(id);
-    if (movie) movieOps.push({
-      updateOne: { filter: { imdbId: id }, update: { $set: fieldsFor(movie) } }
-    });
-    if (tv) tvOps.push({
-      updateOne: { filter: { externalImdbId: id }, update: { $set: fieldsFor(tv) } }
-    });
-    if (movie) wanted.delete(id);
-    if (tv) wanted.delete(id);
+    const meta = payload?.meta;
+    if (!meta) {
+      unavailable += 1;
+      continue;
+    }
+    const rating = Math.min(10, Math.max(0, safeNumber(meta.imdbRating ?? meta.voteAverage)));
+    const votes = parseProviderCount(meta.imdbVotes ?? meta.voteCount);
+    const fields = { marketDataUpdatedAt: now };
+    if (rating > 0) fields.voteAverage = rating;
+    if (votes > 0) {
+      fields.voteCount = votes;
+      fields.voteVelocity7d = calculateVoteVelocity7d(item.voteCount, item.marketDataUpdatedAt, votes, now);
+    }
+    if (rating > 0 || votes > 0) {
+      operations.push({ updateOne: { filter: { imdbId }, update: { $set: fields } } });
+    } else {
+      unavailable += 1;
+    }
   }
 
   return {
-    movies: await writeInBatches(Movie, movieOps),
-    tv: await writeInBatches(TvSeries, tvOps)
+    cinemetaMovies: await writeInBatches(Movie, operations),
+    cinemetaMoviesUnavailable: unavailable
   };
 }
 
@@ -148,7 +152,7 @@ async function fetchTvmazeResource(url, attempt = 0) {
   });
   if (response.status === 429 || response.status >= 500) {
     if (attempt >= 4) throw new Error("TVmaze request failed (HTTP " + response.status + ").");
-    const retryAfter = Number(response.headers.get("retry-after")) * 1000;
+    const retryAfter = Number(response.headers.get("retry-after")) * 1_000;
     await sleep(Math.max(retryAfter || 0, 1_000 * (attempt + 1)));
     return fetchTvmazeResource(url, attempt + 1);
   }
@@ -214,73 +218,173 @@ async function refreshTvmazeMarketData(now) {
   };
 }
 
-async function fetchJikanAnime(malId, attempt = 0) {
-  const response = await fetch(JIKAN_API + encodeURIComponent(malId), {
+function cleanAniListDescription(value) {
+  return String(value || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 5_000);
+}
+
+function dateFromAniList(value) {
+  const year = Number(value?.year);
+  const month = Number(value?.month);
+  const day = Number(value?.day);
+  if (!Number.isInteger(year) || year < 1880) return null;
+  return year + "-" + String(month > 0 ? month : 1).padStart(2, "0") +
+    "-" + String(day > 0 ? day : 1).padStart(2, "0");
+}
+
+function animeStatusLabel(status) {
+  return ({
+    FINISHED: "Finished Airing",
+    RELEASING: "Currently Airing",
+    NOT_YET_RELEASED: "Not yet aired",
+    CANCELLED: "Cancelled",
+    HIATUS: "On Hiatus"
+  })[String(status || "").toUpperCase()] || "";
+}
+
+async function fetchAniListBatch(records, attempt = 0) {
+  const fields = "id idMal averageScore popularity trending favourites " +
+    "title { romaji english native } description(asHtml: false) " +
+    "startDate { year month day } season seasonYear episodes duration status format genres " +
+    "bannerImage coverImage { large extraLarge } " +
+    "tags { name rank isAdult isMediaSpoiler isGeneralSpoiler }";
+  const selections = records.map((record, index) => {
+    const id = Number(record.anilistId) > 0
+      ? "id: " + Number(record.anilistId)
+      : "idMal: " + Number(record.malId);
+    return "a" + index + ": Media(" + id + ", type: ANIME) { " + fields + " }";
+  });
+  const response = await fetch(ANILIST_GRAPHQL_URL, {
+    method: "POST",
     headers: {
       "User-Agent": USER_AGENT,
-      "Accept": "application/json"
+      "Accept": "application/json",
+      "Content-Type": "application/json"
     },
-    signal: AbortSignal.timeout(20_000)
+    body: JSON.stringify({ query: "query { " + selections.join("\n") + " }" }),
+    signal: AbortSignal.timeout(30_000)
   });
 
   if (response.status === 429 || response.status >= 500) {
-    if (attempt >= 4) throw new Error("Jikan request failed for MAL " + malId + " (HTTP " + response.status + ").");
-    const retryAfter = Number(response.headers.get("retry-after")) * 1000;
-    await sleep(Math.max(retryAfter || 0, 1_000 * (attempt + 1)));
-    return fetchJikanAnime(malId, attempt + 1);
+    if (attempt >= 4) throw new Error("AniList GraphQL request failed (HTTP " + response.status + ").");
+    const retryAfter = Number(response.headers.get("retry-after")) * 1_000;
+    await sleep(Math.max(retryAfter || 5_000 * (attempt + 1), 2_500));
+    return fetchAniListBatch(records, attempt + 1);
   }
-  if (!response.ok) {
-    if (response.status === 404) return null;
-    throw new Error("Jikan request failed for MAL " + malId + " (HTTP " + response.status + ").");
-  }
-
+  if (!response.ok) throw new Error("AniList GraphQL request failed (HTTP " + response.status + ").");
   const payload = await response.json();
-  return payload?.data || null;
+  if (!payload?.data) {
+    const message = Array.isArray(payload?.errors)
+      ? payload.errors.map((error) => error.message).filter(Boolean).join("; ")
+      : "No GraphQL data returned.";
+    throw new Error("AniList GraphQL response was incomplete: " + message);
+  }
+  return records.map((record, index) => payload.data["a" + index] || null);
 }
 
-async function refreshAnimeVotes(now) {
+async function refreshAniListMarketData(now) {
   const records = await AnimeSeries.find({ malId: { $gt: 0 }, type: { $in: ["TV", "ONA"] } })
-    .select("malId score scoredBy rank popularity marketDataUpdatedAt")
+    .select("malId anilistId title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl bannerUrl backdropUrl airedFrom releaseYear episodes duration score genres status season")
     .lean();
-
   const operations = [];
   let unavailable = 0;
-  for (let index = 0; index < records.length; index += 1) {
-    const item = records[index];
-    if (index > 0) await sleep(JIKAN_REQUEST_INTERVAL_MS);
+  const anilistOwners = new Map();
+  for (const record of records) {
+    const existingId = Number(record.anilistId);
+    if (Number.isSafeInteger(existingId) && existingId > 0) anilistOwners.set(existingId, Number(record.malId));
+  }
 
-    let live;
+  for (let offset = 0; offset < records.length; offset += ANILIST_BATCH_SIZE) {
+    if (offset > 0) await sleep(ANILIST_REQUEST_INTERVAL_MS);
+    const batch = records.slice(offset, offset + ANILIST_BATCH_SIZE);
+    let liveRecords;
     try {
-      live = await fetchJikanAnime(item.malId);
+      liveRecords = await fetchAniListBatch(batch);
     } catch (error) {
-      unavailable += 1;
-      console.warn("Anime market data skipped for MAL " + item.malId + ": " + error.message);
-      continue;
-    }
-    if (!live) {
-      unavailable += 1;
+      unavailable += batch.length;
+      console.warn("AniList market-data batch skipped: " + error.message);
       continue;
     }
 
-    const scoredBy = Math.max(0, Math.floor(safeNumber(live.scored_by)));
-    const fields = {
-      score: Math.min(10, Math.max(0, safeNumber(live.score))),
-      scoredBy,
-      rank: Number.isFinite(Number(live.rank)) && Number(live.rank) > 0 ? Number(live.rank) : null,
-      popularity: Number.isFinite(Number(live.popularity)) && Number(live.popularity) > 0
-        ? Number(live.popularity)
-        : null,
-      voteVelocity7d: calculateVoteVelocity7d(item.scoredBy, item.marketDataUpdatedAt, scoredBy, now),
-      marketDataUpdatedAt: now
-    };
-    operations.push({
-      updateOne: { filter: { malId: item.malId }, update: { $set: fields } }
-    });
+    for (let index = 0; index < batch.length; index += 1) {
+      const item = batch[index];
+      const live = liveRecords[index];
+      if (!live || Number(live.idMal) !== Number(item.malId)) {
+        unavailable += 1;
+        continue;
+      }
+      const anilistId = Number(live.id);
+      const owner = anilistOwners.get(anilistId);
+      if (owner && owner !== Number(item.malId)) {
+        unavailable += 1;
+        console.warn("AniList duplicate mapping skipped: " + anilistId + " is already linked to MAL " + owner + ".");
+        continue;
+      }
+      anilistOwners.set(anilistId, Number(item.malId));
+
+      const averageScore = Math.min(100, Math.max(0, safeNumber(live.averageScore)));
+      const popularity = Math.max(0, Math.floor(safeNumber(live.popularity)));
+      const trending = Math.max(0, Math.floor(safeNumber(live.trending)));
+      const favourites = Math.max(0, Math.floor(safeNumber(live.favourites)));
+      const fields = {
+        anilistId,
+        anilistUrl: "https://anilist.co/anime/" + anilistId,
+        anilistScore: averageScore / 10,
+        anilistPopularity: popularity,
+        anilistTrending: trending,
+        anilistFavourites: favourites,
+        anilistTags: (Array.isArray(live.tags) ? live.tags : [])
+          .filter((tag) => tag?.name && !tag.isAdult && !tag.isMediaSpoiler && !tag.isGeneralSpoiler)
+          .sort((a, b) => Number(b.rank || 0) - Number(a.rank || 0))
+          .map((tag) => String(tag.name).trim())
+          .filter(Boolean)
+          .slice(0, 40),
+        anilistUpdatedAt: now
+      };
+
+      // Public metadata only fills gaps; curated values remain authoritative.
+      if (!item.titleEnglish && live.title?.english) fields.titleEnglish = String(live.title.english).trim();
+      if (!item.title && live.title?.romaji) fields.title = String(live.title.romaji).trim();
+      if (!item.titleJapanese && live.title?.native) fields.titleJapanese = String(live.title.native).trim();
+      if (!item.synopsis) fields.synopsis = cleanAniListDescription(live.description);
+      if (!item.posterUrl && (live.coverImage?.extraLarge || live.coverImage?.large)) {
+        fields.posterUrl = live.coverImage.extraLarge || live.coverImage.large;
+      }
+      if (!item.posterFallbackUrl && live.coverImage?.large) fields.posterFallbackUrl = live.coverImage.large;
+      if (!item.bannerUrl && live.bannerImage) fields.bannerUrl = live.bannerImage;
+      if (!item.backdropUrl && live.bannerImage) fields.backdropUrl = live.bannerImage;
+      if (!item.airedFrom) fields.airedFrom = dateFromAniList(live.startDate);
+      if (!item.releaseYear && Number(live.seasonYear) > 0) fields.releaseYear = Number(live.seasonYear);
+      if (!item.episodes && Number(live.episodes) > 0) fields.episodes = Number(live.episodes);
+      if (!item.duration && Number(live.duration) > 0) fields.duration = live.duration + " min per episode";
+      if (!item.status && live.status) fields.status = animeStatusLabel(live.status);
+      if (!item.season && live.season && Number(live.seasonYear) > 0) {
+        fields.season = String(live.season).toLowerCase() + " " + Number(live.seasonYear);
+      }
+      if (!item.genres?.length && Array.isArray(live.genres)) fields.genres = live.genres.filter(Boolean);
+      if (!(Number(item.score) > 0) && averageScore > 0) fields.score = averageScore / 10;
+
+      operations.push({
+        updateOne: { filter: { malId: item.malId }, update: { $set: fields } }
+      });
+    }
   }
 
   return {
-    anime: await writeInBatches(AnimeSeries, operations),
-    animeUnavailable: unavailable
+    anilistAnime: await writeInBatches(AnimeSeries, operations),
+    anilistAnimeUnavailable: unavailable
   };
 }
 
@@ -289,10 +393,10 @@ export async function refreshCatalogMarketData({ now = new Date() } = {}) {
     throw new Error("Set MONGODB_URI and MONGODB_DB_NAME before refreshing catalogue market data.");
   }
   await connectDatabase();
-  const imdb = await refreshImdbVotes(now);
+  const cinemeta = await refreshCinemetaMovieRatings(now);
   const tvmaze = await refreshTvmazeMarketData(now);
-  const anime = await refreshAnimeVotes(now);
-  return { ...imdb, ...tvmaze, ...anime, updatedAt: now.toISOString() };
+  const anilist = await refreshAniListMarketData(now);
+  return { ...cinemeta, ...tvmaze, ...anilist, updatedAt: now.toISOString() };
 }
 
 async function main() {
