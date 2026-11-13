@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead } from './models.js';
+import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead, UpcomingItem, UpcomingWaitlist, UpcomingRead } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
@@ -7,7 +7,8 @@ let indexesPromise;
 const INDEXED_MODELS = [
   Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess,
   GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession,
-  MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead
+  MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
+  UpcomingItem, UpcomingWaitlist, UpcomingRead
 ];
 
 function databaseError(message, code, cause) {
