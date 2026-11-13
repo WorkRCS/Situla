@@ -1,4 +1,5 @@
 import PlansPage from "./plans-page.jsx";
+import { SiteWorkspace } from "../components/site-sidebar.jsx";
 
 export const metadata = {
   title: "Plans & Access",
@@ -6,5 +7,5 @@ export const metadata = {
 };
 
 export default function PlansRoute() {
-  return <PlansPage />;
+  return <SiteWorkspace><PlansPage /></SiteWorkspace>;
 }
