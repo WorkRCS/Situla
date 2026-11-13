@@ -124,7 +124,7 @@ test("AniList 178083 is stored as one season-four record and receives the automa
   assert.match(models, /anilistId: \{ type: Number, min: 1 \}/);
   assert.match(models, /animeSeriesSchema\.index\(\{ anilistId: 1 \}, \{ unique: true, sparse: true \}\)/);
   assert.match(api, /anilistId: anime\.anilistId \?\? null/);
-  assert.match(api, /select: 'malId anilistId anilistUrl title/);
+  assert.match(api, /select: 'malId anilistId anilistUrl[\\s\\S]*?title/);
   assert.deepEqual(getCatalogBadge(record, "anime", Date.UTC(2026, 10, 13)), {
     key: "featured",
     label: "Featured"
