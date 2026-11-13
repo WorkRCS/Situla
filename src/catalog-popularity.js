@@ -72,6 +72,8 @@ function marketSignals(item, mediaType) {
     weightedRating,
     voteDepth,
     providerReach,
+    anilistPopularity,
+    anilistTrending,
     marketScore,
     minPopularVotes: isAnime ? 500 : isTv ? 200 : 500,
     minFeaturedVotes: isAnime ? 100 : isTv ? 25 : 50,
@@ -122,7 +124,7 @@ export function getCatalogBadge(item, mediaType, now = Date.now()) {
     ? (signals.votes >= signals.minHotVotes && isFresh &&
        ((Number(item.rank) > 0 && Number(item.rank) <= 100) ||
         (Number(item.popularity) > 0 && Number(item.popularity) <= 50))) ||
-      (anilistTrending >= ANILIST_HOT_TREND_MIN && isFresh && signals.rating >= 6.5)
+      (signals.anilistTrending >= ANILIST_HOT_TREND_MIN && isFresh && signals.rating >= 6.5)
     : signals.votes >= signals.minHotVotes && isFresh &&
       (signals.providerReach >= 0.60 ||
        (voteVelocity7d >= velocityThreshold && signals.rating >= 6.5));
