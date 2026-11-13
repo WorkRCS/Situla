@@ -120,7 +120,7 @@ test("Anime list and search APIs omit heavy episode guides while detail API expo
   const search = api.slice(api.indexOf("app.get('/api/search'"), api.indexOf("app.get('/api/movies/suggestions'"));
   assert.match(search, /type: 'anime'[\s\S]*?Model: AnimeSeries/);
   assert.match(search, /dateField: 'airedFrom'/);
-  assert.match(search, /select: 'malId title titleEnglish[\s\S]*?rating'/);
+  assert.match(search, /select: 'malId (?:anilistId anilistUrl )?title titleEnglish[\s\S]*?rating'/);
   assert.doesNotMatch(search, /select: '[^']*episodeGuide/);
   assert.match(api, /AnimeSeries\.findOne\(\{ malId, type: \{ \$in: \['TV', 'ONA'\] \} \}\)\.lean\(\)/);
 });
