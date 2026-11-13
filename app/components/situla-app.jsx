@@ -757,6 +757,23 @@ function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingN
 }
 
 
+function SkeletonCard() {
+  return <div className="skeleton-card" aria-hidden="true"><div className="skeleton-poster" /><div className="skeleton-line wide" /><div className="skeleton-line short" /></div>;
+}
+
+function SkeletonShelf({ title = "Loading titles…" }) {
+  return (
+    <section className="netflix-shelf skeleton-shelf" aria-label={title}>
+      <div className="section-heading shelf-heading"><h2>{title}</h2></div>
+      <div className="media-row flex gap-4 overflow-hidden">{Array.from({ length: 7 }, (_, index) => <SkeletonCard key={index} />)}</div>
+    </section>
+  );
+}
+
+function SkeletonGrid({ count = 12 }) {
+  return <div className="skeleton-grid">{Array.from({ length: count }, (_, index) => <SkeletonCard key={index} />)}</div>;
+}
+
 function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pendingNavigation = "", onMoviePreload, onSeriesPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
@@ -803,23 +820,6 @@ function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pe
       </div>
     </section>
   );
-}
-
-function SkeletonCard() {
-  return <div className="skeleton-card" aria-hidden="true"><div className="skeleton-poster" /><div className="skeleton-line wide" /><div className="skeleton-line short" /></div>;
-}
-
-function SkeletonShelf({ title = "Loading titles…" }) {
-  return (
-    <section className="netflix-shelf skeleton-shelf" aria-label={title}>
-      <div className="section-heading shelf-heading"><h2>{title}</h2></div>
-      <div className="media-row flex gap-4 overflow-hidden">{Array.from({ length: 7 }, (_, index) => <SkeletonCard key={index} />)}</div>
-    </section>
-  );
-}
-
-function SkeletonGrid({ count = 12 }) {
-  return <div className="skeleton-grid">{Array.from({ length: count }, (_, index) => <SkeletonCard key={index} />)}</div>;
 }
 
 const NAV_ITEMS = [
@@ -1969,6 +1969,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 />
                 {pendingHomeNavigation && pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId)) && (
                   <span className="hero-route-loading" role="status"><span className="inline-loading-spinner" /> Opening {featured.heroMediaLabel.toLowerCase()}…</span>
+                )}
+                {homeHeroItems.length > 1 && (
+                  <div className="home-hero-carousel-controls" aria-label="Featured titles">
+                    <button
+                      type="button"
+                      className="home-hero-carousel-arrow"
+                      aria-label="Previous featured title"
+                      onClick={() => setHeroIndex((current) => (current - 1 + homeHeroItems.length) % homeHeroItems.length)}
+                    >
+                      <BootstrapIcon icon="chevron-left" size={14} />
+                    </button>
+                    <span>{String(heroIndex + 1).padStart(2, "0")} / {String(homeHeroItems.length).padStart(2, "0")}</span>
+                    <button
+                      type="button"
+                      className="home-hero-carousel-arrow"
+                      aria-label="Next featured title"
+                      onClick={() => setHeroIndex((current) => (current + 1) % homeHeroItems.length)}
+                    >
+                      <BootstrapIcon icon="chevron-right" size={14} />
+                    </button>
+                  </div>
                 )}
                 <div className="hero-content home-hero-content">
                   <div className="hero-meta home-hero-meta" aria-label="Title details">
