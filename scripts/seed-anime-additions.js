@@ -12,15 +12,25 @@ function validHttps(value) {
 }
 
 export function validateNewAnime(records = NEW_ANIME_CATALOG) {
-  if (!Array.isArray(records) || records.length !== 200) {
-    throw new Error("Expected exactly 200 curated new Anime records.");
+  if (!Array.isArray(records) || records.length !== 201) {
+    throw new Error("Expected exactly 201 curated new Anime records.");
   }
   const ids = new Set();
+  const anilistIds = new Set();
   const titles = new Set();
   for (const item of records) {
     if (!Number.isSafeInteger(item?.malId) || item.malId < 1) throw new Error("Invalid MAL ID.");
     if (ids.has(item.malId)) throw new Error("Duplicate MAL ID: " + item.malId);
     ids.add(item.malId);
+    if (item.anilistId !== undefined && item.anilistId !== null) {
+      if (!Number.isSafeInteger(item.anilistId) || item.anilistId < 1 || anilistIds.has(item.anilistId)) {
+        throw new Error("Invalid or duplicate AniList ID for MAL " + item.malId);
+      }
+      if (item.anilistUrl !== "https://anilist.co/anime/" + item.anilistId) {
+        throw new Error("Incorrect canonical AniList URL for MAL " + item.malId);
+      }
+      anilistIds.add(item.anilistId);
+    }
     const title = normalizeTitle(item.titleEnglish || item.title);
     if (!title || titles.has(title)) throw new Error("Duplicate/empty Anime title: " + item.malId);
     titles.add(title);
@@ -59,14 +69,15 @@ export async function seedAnimeAdditions() {
 
   await connectDatabase();
   const existing = await AnimeSeries.find({})
-    .select("malId title titleEnglish")
+    .select("malId anilistId title titleEnglish")
     .lean();
   const existingIds = new Set(existing.map((item) => Number(item.malId)));
+  const existingAniListIds = new Set(existing.map((item) => Number(item.anilistId)).filter((id) => Number.isSafeInteger(id) && id > 0));
   const existingTitles = new Set(existing.flatMap((item) => [item.title, item.titleEnglish]).filter(Boolean).map(normalizeTitle));
 
   const newRecords = NEW_ANIME_CATALOG.filter((item) => {
     const title = normalizeTitle(item.titleEnglish || item.title);
-    return !existingIds.has(item.malId) && !existingTitles.has(title);
+    return !existingIds.has(item.malId) && !(item.anilistId && existingAniListIds.has(item.anilistId)) && !existingTitles.has(title);
   });
   const skipped = NEW_ANIME_CATALOG.length - newRecords.length;
 
