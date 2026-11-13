@@ -2,6 +2,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
 import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
+import RouteProgress from "./components/route-progress.jsx";
 
 
 export const metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <RouteProgress />
         {children}
         <PresenceTracker />
         <SiteFooter />
