@@ -141,7 +141,7 @@ test("Free signed-in profiles can open a responsive Premium upgrade modal with a
   assert.match(modal, /role="dialog" aria-modal="true"/);
   assert.match(modal, /aria-labelledby="profile-upgrade-title"/);
   assert.match(modal, /PREMIUM_BILLING\.map/);
-  assert.match(modal, /billing\.totalPrice\.toLocaleString/);
+  assert.match(modal, /selectedBilling\\.totalPrice\\.toLocaleString/);
   assert.match(modal, /selectedBilling\.allowance/);
   assert.match(modal, /selectedBilling\.cooldown/);
   assert.match(modal, /Included with Premium/);
