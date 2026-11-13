@@ -114,6 +114,12 @@ test("AniList 178083 is stored as one season-four record and receives the automa
   assert.equal(record.episodeGuide.length, 13);
   assert.equal(record.episodeGuide[5].title, "Shows Her Color");
   assert.equal(record.episodeGuide[6].title, "A Sense of Foreboding");
+  const api = await read("../src/app.js");
+  const models = await read("../src/models.js");
+  assert.match(models, /anilistId: \{ type: Number, min: 1 \}/);
+  assert.match(models, /animeSeriesSchema\.index\(\{ anilistId: 1 \}, \{ unique: true, sparse: true \}\)/);
+  assert.match(api, /anilistId: anime\.anilistId \?\? null/);
+  assert.match(api, /select: 'malId anilistId anilistUrl title/);
   assert.deepEqual(getCatalogBadge(record, "anime", Date.UTC(2026, 10, 13)), {
     key: "featured",
     label: "Featured"
