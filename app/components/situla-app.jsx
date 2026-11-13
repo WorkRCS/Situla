@@ -810,18 +810,21 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       try {
         const response = await fetch("/api/upcoming/status", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
-        if (active && response.ok) setUpcomingHasUnread(Boolean(payload.hasUnread));
+        if (active && response.ok && tab !== "upcoming") setUpcomingHasUnread(Boolean(payload.hasUnread));
       } catch {}
     }
+    const markUpcomingRead = () => setUpcomingHasUnread(false);
     refreshUpcomingStatus();
     const interval = window.setInterval(refreshUpcomingStatus, 45_000);
     window.addEventListener("focus", refreshUpcomingStatus);
+    window.addEventListener("situla:upcoming-read", markUpcomingRead);
     return () => {
       active = false;
       window.clearInterval(interval);
       window.removeEventListener("focus", refreshUpcomingStatus);
+      window.removeEventListener("situla:upcoming-read", markUpcomingRead);
     };
-  }, []);
+  }, [tab]);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
