@@ -285,7 +285,7 @@ test("mobile/tablet navigation is fixed to the viewport bottom with rounded top 
   const dockStyles = css.slice(css.indexOf("/* Mobile and tablet navigation:"));
   assert.match(dockStyles, /\.bottom-nav \{[\s\S]*?position:fixed !important;[\s\S]*?left:0 !important;[\s\S]*?right:0 !important;[\s\S]*?bottom:0 !important;[\s\S]*?width:100% !important;/);
   assert.match(dockStyles, /border-radius:22px 22px 0 0 !important/);
-  assert.match(css, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\) !important/);
+  assert.match(css, /grid-template-columns:repeat\(7,minmax\(0,1fr\)\) !important/);
   assert.match(css, /-webkit-backdrop-filter:blur\(26px\) saturate\(180%\) !important/);
   assert.doesNotMatch(css, /\.bottom-nav,\.rating-pill,\.save-button/);
   assert.match(css, /animation:premium-glass-sheen-forward 1s linear infinite/);
