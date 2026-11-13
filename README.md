@@ -1,6 +1,6 @@
 # Situla
 
-Situla is a mobile-first movie, TV and anime catalog built as a Next.js website. Catalog content is stored in MongoDB. The canonical curation, source, metadata validation, artwork and insert-only seed procedure is documented in [CATALOG_CRAWLING_POLICY.md](CATALOG_CRAWLING_POLICY.md). The default `npm run seed:catalog` command is offline: it reads committed data files only, filters to 2020–2026, preserves IMDb/TMDB/MAL identifiers and inserts only records that pass the complete-content and content-safety checks. It does not call Movie, TV or Anime metadata APIs. Provider-backed historical seeders are isolated behind explicitly named `legacy-online` commands and are not used by the default seed.
+Situla is a mobile-first Movie, TV and Anime catalogue built with Next.js and MongoDB. The single `npm run seed` command validates the curated data packs, imports public Cinemeta Movie metadata, matches TVmaze series/episode data, and refreshes public rating, popularity, trend and tag signals from Cinemeta, TVmaze and AniList. It preserves IMDb, TMDB and MAL as the canonical IDs, skips existing catalogue records, and never deletes or replaces saved titles. The complete source/validation rules are documented in [CATALOG_CRAWLING_POLICY.md](CATALOG_CRAWLING_POLICY.md).
 
 ## Identifiers and playback
 
@@ -38,29 +38,35 @@ Movie and TV poster cards offer the device-native share sheet. The shared payloa
 
 Administrators can create, edit, schedule, draft and delete site-wide announcements from the Admin dashboard. Visitors see published announcements only after their scheduled timestamp. Read receipts are stored per signed-in account, while guests use browser-local read state. An announcement can include either a secure HTTPS media URL (direct images render as images; supported YouTube/Vimeo URLs render in an iframe) or an uploaded JPG, PNG, WebP, GIF or AVIF image up to 4 MB. Uploaded images are stored with the announcement in MongoDB, so no additional storage token is required. Schedule times are saved as ISO timestamps and displayed in each visitor's local time zone.
 
-## Static catalogue seed
+## Unified catalogue seed
 
-### Default offline 2020–2026 seed
-
-Set `MONGODB_URI` and `MONGODB_DB_NAME`, then run one command:
+Set `MONGODB_URI` and `MONGODB_DB_NAME` in your local `.env` file. Then run this one command from the repository root:
 
 ```sh
-npm run seed:catalog
+npm run seed
 ```
 
-The default seed reads version-controlled JavaScript files under `data/` only. It does not call Cinemeta, TVmaze, TMDB, IMDb, Jikan, MAL, AniList or any other metadata API. It filters all three catalogues to **2020–2026 inclusive**, preserves the canonical keys (Movie: IMDb `imdbId`; TV: numeric TMDB `tmdbId`; Anime: MAL `malId`), validates completeness/content policy, and writes only new records with insert-only operations. Re-running it is safe; existing IDs and normalized title/year pairs are skipped.
+The runner completes these stages in order:
 
-Individual offline imports are also available:
+1. Validates and inserts the locally curated 2020–2026 Movie, TV and Anime records.
+2. Discovers and imports complete Movie metadata/artwork from public Cinemeta, keyed by IMDb title ID.
+3. Matches TV candidates to public TVmaze records and imports their series, seasons and episode metadata, keyed by the existing TMDB TV ID.
+4. Refreshes current public catalogue signals: Movie ratings from Cinemeta, TV ratings/reach from TVmaze, and Anime score/popularity/trending/favourites/tags from AniList GraphQL. Anime continues to use MAL IDs as its catalogue/playback key; AniList IDs are cross-references.
 
-```sh
-npm run seed:movies
-npm run seed:tv
-npm run seed:anime
-```
+The refresh stores provider signals in MongoDB, and the existing automatic badge logic calculates one visible label (Hot, Popular or Featured). No manual badge editing is needed. The runner uses public endpoints and does not require IMDb, TMDB, Jikan or AniList API keys. It respects provider rate limits and retries temporary failures.
 
-Poster cards show at most one automatically classified catalogue badge: **🔥 Hot**, **🎉 Popular**, or **💖 Featured**. All three are calculated from public market data and first-party playback activity; no Admin selection, per-title manual flag, or hand-maintained popularity value is involved. Movies and TV use IMDb's public title ratings/vote-count dataset; Anime uses MyAnimeList's public Jikan scores, scored-by counts and rank/popularity. Bayesian smoothing discounts thin rating samples. **Popular** requires a strong, adequately supported market rating; **Hot** uses recent vote growth, fresh provider trend signals and confirmed Situla playback; **Featured** is an automatic quality spotlight for well-rated titles which do not already qualify as Hot or Popular. Public signals are refreshed daily and cached in MongoDB, so card rendering makes no per-title network request. Configure the GitHub Actions repository secret `MONGODB_URI` once (and optionally the `MONGODB_DB_NAME` repository variable; default `situla`) to enable the scheduled refresh. This is Situla's own explainable model, not a claim to reproduce proprietary Netflix/Disney ranking systems.
+**Safe to rerun:** new catalogue records are validated and inserted only when their canonical ID/title is not already present. If a later stage fails, run `npm run seed` again; previously inserted records are skipped. The public market refresh updates only provider-signal fields and fills missing Anime metadata; it does not replace a curated title, description or artwork. Existing catalogue documents are never deleted.
 
-**Current data-pack limitation:** a manually researched static Movie pack now contains 38 valid 2020–2026 entries, including separate poster/backdrop URLs, descriptions, genres, cast and directors. This is a first verified batch, not every film released worldwide. A manually researched static TV pack now has eight manually curated limited-series records (*Mare of Easttown*, *The Queen's Gambit*, *Baby Reindeer*, *Unorthodox*, *The Serpent*, *Ripley*, *Eric*, and *Adolescence*), with full guides spanning 4–8 episodes each, separate poster/backdrop and episode thumbnails; this is still not a complete global TV catalogue. The committed Anime additions have 200 year-window entries, and all 200 now pass the stricter complete-guide/100%-still gate. The offline command therefore inserts the validated Movie, TV and Anime records; it does **not** claim that all worldwide releases have been covered. More fully researched static Movie, TV and Anime packs must be committed under `data/` before global completeness can be claimed.
+The current committed data includes 38 manually curated Movie records, 8 manually curated TV limited-series records and 201 curated Anime additions, alongside the provider-discovery packs. These are quality-checked batches, not a claim that every worldwide release has been indexed.
+
+### Provider and badge signals
+
+- **Movies:** Cinemeta metadata and IMDb-keyed public rating/vote fields.
+- **TV:** TVmaze rating and provider reach, with exact title/year matching for series metadata.
+- **Anime:** AniList GraphQL resolves the AniList cross-reference and refreshes average score, list popularity, trending, favourites and non-adult/non-spoiler tags; MAL remains the primary catalogue ID.
+- **Hot / Popular / Featured:** computed automatically from stored public-provider signals plus Situla playback momentum. Poster cards do not make per-title metadata requests.
+
+A scheduled GitHub Actions job also refreshes public signals daily when the repository secret `MONGODB_URI` is configured. Its database name comes from `MONGODB_DB_NAME` (defaults to `situla`).
 
 ### Checks and artwork audit
 
@@ -68,24 +74,13 @@ Poster cards show at most one automatically classified catalogue badge: **🔥 H
 npm run check:movies
 npm run check:tv
 npm run check:anime
+npm test
+npm run build
 npm run audit:anime
 ```
 
-The artwork audit is a dry run by default. It reports existing Anime records with no usable poster or banner/backdrop and writes its review output to `reports/anime-artwork-audit.json`. Applying the old cleanup remains an explicit action via `npm run audit:anime:apply`.
+The Anime artwork audit is a dry run by default. It reports existing Anime records with no usable poster or banner/backdrop and writes its review output to `reports/anime-artwork-audit.json`. Applying the separate historical cleanup remains explicit via `npm run audit:anime:apply`.
 
-### Historical provider-backed seeders (explicit legacy only)
-
-The previous Cinemeta Movie and TVmaze TV importers remain available for deliberate legacy use, but **none is called by the default seed commands**:
-
-```sh
-npm run seed:movies:legacy-online
-npm run seed:tv:legacy-online
-npm run seed:catalog:legacy-online
-```
-
-Those commands make outbound provider requests and are not the offline 2020–2026 workflow. The historical Anime 80%-still pack can be seeded separately with `npm run seed:anime:legacy-curated`; the default `seed:anime` uses the stricter offline validator.
- 
- 
 ### Required environment
 
 Keep the existing `MONGODB_URI` and `MONGODB_DB_NAME` values. Generate a unique server secret and set it as `AUTH_SECRET`:
