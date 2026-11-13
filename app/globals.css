@@ -7044,3 +7044,12 @@ body:has(.login-page) .site-footer { display:none !important; }
   .site-workspace > .site-sidebar { height:100%;min-height:0;max-height:none; }
   .site-workspace-main { height:100%;min-height:0; }
 }
+
+
+@media (min-width:768px) {
+  .app-shell:has(.app-view-layout) { padding-left:0 !important;padding-right:0 !important; }
+}
+@media (min-width:768px) and (max-width:1100px) {
+  .site-workspace-brand { justify-content:center;padding-inline:0; }
+  .site-sidebar-brand > span { display:none; }
+}
