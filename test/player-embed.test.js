@@ -300,25 +300,28 @@ test("Anime embed keeps Situla MAL/episode/audio routes and uses its configured 
   assert.match(player, /attachFullscreenLandscapeLock\(frame\)/);
 });
 
-test("Anime catalog is a manually curated MAL list and the seed command uses the offline bulk seeder", async () => {
+test("Anime catalog has canonical MAL IDs and all catalogue imports run through one seed command", async () => {
   const { MANUAL_ANIME_CATALOG } = await import("../data/anime-catalog.js");
   const { NEW_ANIME_CATALOG } = await import("../data/anime-additions.js");
-  const script = await read("../scripts/seed-static-catalog.js");
-  const animeSeed = await read("../scripts/seed-anime-additions.js");
+  const catalogImport = await read("../scripts/catalog-import.js");
+  const runner = await read("../scripts/seed.js");
+  const marketRefresh = await read("../scripts/refresh-catalog-market-data.js");
   const pkg = JSON.parse(await read("../package.json"));
   assert.ok(MANUAL_ANIME_CATALOG.length >= 80);
   assert.equal(NEW_ANIME_CATALOG.length, 201);
   assert.equal(new Set(NEW_ANIME_CATALOG.map((item) => item.malId)).size, 201);
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && ["TV", "ONA"].includes(item.type)));
-  assert.equal(pkg.scripts["seed:anime"], "node scripts/seed-catalog.js --anime");
-  assert.equal(pkg.scripts["seed:anime:legacy-curated"], "node scripts/seed-anime-additions.js");
-  assert.match(animeSeed, /AnimeSeries\.insertMany/);
-  assert.doesNotMatch(animeSeed, /bulkWrite|updateOne|findOneAndUpdate|\$set/);
-  assert.doesNotMatch(script, /AnimeSeries|MANUAL_ANIME_CATALOG|--anime/);
-  assert.match(script, /Model\.bulkWrite/);
-  assert.match(script, /\$setOnInsert/);
-  assert.doesNotMatch(script, /fetch\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
+  assert.equal(pkg.scripts.seed, "node scripts/seed.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.match(runner, /seedOfflineCatalog/);
+  assert.match(runner, /seedMovieAdditions/);
+  assert.match(runner, /seedTvSeries/);
+  assert.match(runner, /refreshCatalogMarketData/);
+  assert.match(catalogImport, /AnimeSeries/);
+  assert.match(catalogImport, /\.insertMany\(pending/);
+  assert.doesNotMatch(catalogImport, /fetch\(|axios|api\.jikan|api\.tvmaze|api\.themoviedb/i);
+  assert.match(marketRefresh, /graphql\.anilist\.co/);
 });
 
 
