@@ -7059,3 +7059,46 @@ body:has(.login-page) .site-footer { display:none !important; }
   .site-sidebar-brand { justify-content:center;padding-inline:0; }
   .site-sidebar-brand > span { display:none; }
 }
+
+
+/* YouTube-style route progress: stays at the top edge while a page transition is pending. */
+.site-route-progress {
+  position:fixed;
+  z-index:10000;
+  top:0;
+  right:0;
+  left:0;
+  display:block;
+  width:100%;
+  height:2px;
+  overflow:hidden;
+  opacity:0;
+  pointer-events:none;
+  background:transparent;
+  transition:opacity .16s ease;
+}
+.site-route-progress.is-visible { opacity:1; }
+.site-route-progress > span {
+  position:relative;
+  display:block;
+  height:100%;
+  min-width:0;
+  border-radius:0 2px 2px 0;
+  background:linear-gradient(90deg,#d69a3e 0%,#e8b65b 45%,#f7d58b 100%);
+  box-shadow:0 0 8px rgba(232,182,91,.48),0 0 2px rgba(255,230,180,.7);
+  transition:width .14s cubic-bezier(.22,.7,.25,1);
+}
+.site-route-progress > span::after {
+  content:"";
+  position:absolute;
+  top:0;
+  right:0;
+  width:72px;
+  height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,246,220,.95));
+  filter:blur(1px);
+}
+@media (prefers-reduced-motion:reduce) {
+  .site-route-progress,.site-route-progress > span { transition:none !important; }
+  .site-route-progress > span::after { display:none; }
+}
