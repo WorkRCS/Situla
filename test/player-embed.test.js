@@ -167,7 +167,7 @@ test("Situla landing keeps the original gold palette and uses a distinct discove
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
 
-  assert.match(app, /className=\{tab === "home" \? "home-page-layout"/);
+  assert.match(app, /className=\{\(tab === "home" \? "home-page-layout"/);
   assert.match(app, /className="home-discovery"/);
   assert.match(app, /className="discovery-card discovery-movies"/);
   assert.match(app, /className="discovery-card discovery-tv"/);
@@ -382,4 +382,35 @@ test("desktop homepage hero stays compact without changing the gold palette", as
   assert.match(css, /@media \(min-width:1101px\)[\s\S]*?\.home-page-layout \.hero-card[\s\S]*?min-height:clamp\(340px,43vh,460px\)/);
   assert.match(css, /--accent:#e8b65b/);
   assert.match(css, /#f7d58b/);
+});
+
+
+test("Home and catalog headers share one search trigger without an inline catalog selector", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  const headerStart = app.indexOf('<div className="header-actions">');
+  const accountStart = app.indexOf('<div className="header-account-wrap">', headerStart);
+  const headerActions = app.slice(headerStart, accountStart);
+
+  assert.ok(headerActions.includes('className="header-search-wrap"'));
+  assert.ok(headerActions.includes("<Search"));
+  assert.ok(headerActions.includes("setSearchOpen(true)"));
+  assert.ok(headerActions.indexOf("header-search-wrap") < headerActions.indexOf("<Search"));
+  assert.doesNotMatch(app, /home-media-type|home-search-filter|home-search-control/);
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?header-search-label \{ display:none; \}/);
+});
+
+test("Sidebar collapse updates the parent grid and persists between routes", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+  const css = await read("../app/globals.css");
+
+  assert.match(app, /onCollapsedChange=\{setSidebarCollapsed\}/);
+  assert.match(app, /sidebarCollapsed \? " is-sidebar-collapsed" : ""/);
+  assert.match(sidebar, /localStorage\.setItem\("situla:sidebar-collapsed:v1"/);
+  assert.match(sidebar, /onCollapsedChange\?\.\(collapsed\)/);
+  assert.match(sidebar, /site-workspace" \+ \(sidebarCollapsed \? " is-sidebar-collapsed"/);
+  assert.match(css, /\.home-page-layout\.is-sidebar-collapsed/);
+  assert.match(css, /\.site-workspace\.is-sidebar-collapsed/);
+  assert.doesNotMatch(css, /:has\(> \.site-sidebar\.is-collapsed\)/);
 });
