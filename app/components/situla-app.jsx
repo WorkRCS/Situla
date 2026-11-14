@@ -852,6 +852,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const demoSignedIn = Boolean(accountUser);
 
   useEffect(() => {
@@ -1649,52 +1650,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ))}
           </nav>
           <div className="header-actions">
-            {tab === "home" ? (
-              <div className="home-search-control">
-                <label className="home-media-type" aria-label="Choose catalog">
-                  <select value={searchType} onChange={(event) => setSearchType(event.target.value)}>
-                    <option value="movie">Movies</option>
-                    <option value="all">All</option>
-                    <option value="tv">TV series</option>
-                    <option value="anime">Anime</option>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="header-search search-box header-search-trigger"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search movies, TV series and anime"
-                  aria-haspopup="dialog"
-                  aria-expanded={searchOpen}
-                >
-                  <Search size={18} strokeWidth={2} aria-hidden="true" />
-                  <span className="header-search-label">Movies, series, shows...</span>
-                </button>
-                <button
-                  type="button"
-                  className="home-search-filter"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Open search filters"
-                  title="Search filters"
-                >
-                  <BootstrapIcon icon="sliders" size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="header-search-wrap">
-                <button
-                  type="button"
-                  className="header-search search-box header-search-trigger"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Search movies, TV series and anime"
-                  aria-haspopup="dialog"
-                  aria-expanded={searchOpen}
-                >
-                  <Search size={18} strokeWidth={2} aria-hidden="true" />
-                  <span className="header-search-label">Search movies, TV & anime</span>
-                </button>
-              </div>
-            )}            <div className="header-account-wrap">
+            <div className="header-search-wrap">
+              <button
+                type="button"
+                className="header-search search-box header-search-trigger"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search movies, TV series and anime"
+                aria-haspopup="dialog"
+                aria-expanded={searchOpen}
+              >
+                <Search size={18} strokeWidth={2} aria-hidden="true" />
+                <span className="header-search-label">Search movies, TV & anime</span>
+              </button>
+            </div>
+            <div className="header-account-wrap">
               <button
                 type="button"
                 className="header-avatar-trigger"
@@ -1884,7 +1853,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         document.body
       )}
 
-      <div className={tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")}>
+      <div className={(tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")) + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
 
 
         {tab === "home" && (
@@ -1894,6 +1863,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               upcomingHasUnread={upcomingHasUnread}
               continueItems={sortedHistory}
               onResume={resumeHistoryItem}
+              onCollapsedChange={setSidebarCollapsed}
             />
             <div className="home-main-column">
             {featured ? (
@@ -2131,7 +2101,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
 
-        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={upcomingHasUnread} />}
+        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={upcomingHasUnread} onCollapsedChange={setSidebarCollapsed} />}
         {tab !== "home" && (
           <div className="app-view-main-column">
         {tab === "movies" && (
