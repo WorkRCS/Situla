@@ -51,7 +51,7 @@ test("Premium billing periods use the current plan values and do not imply check
   assert.ok(page.includes("Checkout unavailable"));
   assert.ok(page.includes("activated by an administrator"));
   assert.ok(page.includes("Online checkout and renewals are not available yet."));
-  assert.ok(page.includes("Unlimited"));
+  assert.ok(page.includes("selectedBilling.allowance"));
 });
 
 test("Plans page removes preview-only and repeated comparison sections", async () => {
