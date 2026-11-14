@@ -61,7 +61,8 @@ export function SiteSidebar({
   upcomingHasUnread,
   showBrand = false,
   continueItems,
-  onResume
+  onResume,
+  onCollapsedChange
 }) {
   const pathname = usePathname() || "/";
   const [statusUnread, setStatusUnread] = useState(false);
@@ -72,6 +73,10 @@ export function SiteSidebar({
       setCollapsed(window.localStorage.getItem("situla:sidebar-collapsed:v1") === "1");
     } catch {}
   }, []);
+
+  useEffect(() => {
+    onCollapsedChange?.(collapsed);
+  }, [collapsed, onCollapsedChange]);
 
   useEffect(() => {
     if (typeof upcomingHasUnread === "boolean") return;
@@ -151,9 +156,10 @@ export function SiteSidebar({
 
 export function SiteWorkspace({ children }) {
   const pathname = usePathname() || "/";
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   return (
-    <div className="site-workspace">
-      <SiteSidebar showBrand />
+    <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
+      <SiteSidebar showBrand onCollapsedChange={setSidebarCollapsed} />
       <div className="site-workspace-main">{children}</div>
       <nav className="site-workspace-mobile-nav" aria-label="Main navigation">
         {SITE_NAV_ITEMS.map((item) => {
