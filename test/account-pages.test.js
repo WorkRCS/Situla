@@ -160,7 +160,7 @@ test("Profile stays in the account menu and responsive navigation stays compact"
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  const navItems = sidebar.match(/export const SITE_NAV_ITEMS = \\[([\\s\\S]*?)\\];/)?.[1] || "";
+  const navItems = sidebar.match(/export const SITE_NAV_ITEMS = \[([\s\S]*?)\];/)?.[1] || "";
 
   assert.doesNotMatch(navItems, /profile|Profile/);
   assert.ok(app.includes('router.push("/profile")'));
