@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, Film, House, PanelLeftClose, PanelLeftOpen, PlayCircle,
-  Settings, Tv, UserRound
+  Settings, Tv
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -16,12 +16,10 @@ export const SITE_NAV_ITEMS = [
   { id: "anime", href: "/anime", label: "Anime", icon: PlayCircle },
   { id: "upcoming", href: "/upcoming", label: "Upcoming", icon: CalendarDays },
   { id: "saved", href: "/saved", label: "Saved", icon: Bookmark },
-  { id: "settings", href: "/settings", label: "Settings", icon: Settings },
-  { id: "profile", href: "/profile", label: "Profile", icon: UserRound }
+  { id: "settings", href: "/settings", label: "Settings", icon: Settings }
 ];
 
-// The mobile dock intentionally mirrors the seven-item navigation already used
-// by the main app; Profile remains available from the account menu.
+// Profile is intentionally omitted from navigation; it remains in the header account menu.
 export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS
   .filter((item) => item.id !== "profile")
   .map((item) => item.id === "tv" ? { ...item, label: "TV" } : item);
