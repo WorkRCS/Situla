@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AuthRateLimit } from "../src/models.js";
+import { AuthRateLimit, AuthSession } from "../src/models.js";
 import {
   hashPassword, verifyPassword, validEmail, validPassword,
-  hashToken, safeEqual, normalizeEmail, authSecret, selectDevicesToRetain, hasAdminRole, getClientIp, isAccountSuspended, enforceRateLimit
+  hashToken, safeEqual, normalizeEmail, authSecret, SESSION_COOKIE_MAX_AGE_SECONDS, hasAdminRole, getClientIp, isAccountSuspended, enforceRateLimit
 } from "../src/auth.js";
 
 test("Rate-limit aggregation updates explicitly enable Mongoose 9 update pipelines", async () => {
@@ -125,24 +125,14 @@ test("Permanent suspensions remain enforced until an administrator restores the 
   assert.equal(user.status, "suspended");
 });
 
-test("Device entitlements retain the primary slot and discard secondary Premium devices after expiry", () => {
-  const devices = [
-    { _id: "device-2", slot: 2, createdAt: new Date("2026-11-03T00:00:00.000Z") },
-    { _id: "device-0", slot: 0, createdAt: new Date("2026-11-01T00:00:00.000Z") },
-    { _id: "device-1", slot: 1, createdAt: new Date("2026-11-02T00:00:00.000Z") }
-  ];
-  assert.deepEqual(selectDevicesToRetain(devices, 1).map((device) => device._id), ["device-0"]);
-  assert.deepEqual(selectDevicesToRetain(devices, 3).map((device) => device._id).sort(), ["device-0", "device-1", "device-2"]);
+test("Auth sessions have no fixed expiry or registered-device dependency", () => {
+  assert.equal(AuthSession.schema.path("deviceId"), undefined);
+  assert.equal(AuthSession.schema.path("expiresAt"), undefined);
+  assert.ok(AuthSession.schema.path("userId"));
+  assert.ok(AuthSession.schema.path("tokenHash"));
+  assert.ok(SESSION_COOKIE_MAX_AGE_SECONDS >= 365 * 24 * 60 * 60);
+  assert.equal(AuthSession.schema.indexes().some(([keys]) => Object.hasOwn(keys, "expiresAt")), false);
 });
-
-test("Device retention deterministically keeps the oldest un-slotted legacy device", () => {
-  const devices = [
-    { _id: "newer", slot: null, createdAt: new Date("2026-11-02T00:00:00.000Z") },
-    { _id: "older", slot: null, createdAt: new Date("2026-11-01T00:00:00.000Z") }
-  ];
-  assert.deepEqual(selectDevicesToRetain(devices, 1).map((device) => device._id), ["older"]);
-});
-
 
 test("Administrator authority is determined only by the persisted User role", () => {
   assert.equal(hasAdminRole({ role: "admin", email: "admin@example.com" }), true);
