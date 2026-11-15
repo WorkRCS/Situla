@@ -443,7 +443,7 @@ function useMediaRowPointerDrag() {
   return { rowRef, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture };
 }
 
-const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload }) {
+const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved = false, navigating = false, onPreload, homeRank = 0, cardClassName = "" }) {
   const [shareFeedback, setShareFeedback] = useState("");
   const [sharePreparing, setSharePreparing] = useState(false);
   const isTv = kind === "tv";
@@ -531,6 +531,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
         {rating > 0 && (
           <span className="rating-pill"><Icon name="star" size={11} /> {Number(rating).toFixed(1)}</span>
         )}
+        {Number(homeRank) > 0 && <span className="home-collection-rank" aria-hidden="true">{String(homeRank).padStart(2, "0")}</span>}
         {navigating && <span className="media-loading-overlay" role="status" aria-label={"Opening " + (isTv ? "TV series" : "anime")}><span className="inline-loading-spinner" /></span>}
       </div>
       <h3 className="mt-2 truncate text-[13px] font-bold text-white">{title}</h3>
@@ -540,7 +541,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
   );
 
   return (
-    <article className={"movie-card series-card series-card-" + kind}>
+    <article className={"movie-card series-card series-card-" + kind + (cardClassName ? " " + cardClassName : "")}>
       {href ? (
         <Link
           href={href}
@@ -636,15 +637,16 @@ function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
   );
 }
 
-function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
+function SeriesShelf({ title, eyebrow, description = "", variant = "series", items, kind, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
   return (
-    <section className="netflix-shelf home-series-shelf">
+    <section className={"netflix-shelf home-series-shelf home-collection-" + variant}>
       <div className="section-heading shelf-heading">
         <div>
           {eyebrow && <span>{eyebrow}</span>}
           <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
+          {description && <p className="home-collection-description">{description}</p>}
         </div>
         <Link href={kind === "tv" ? "/tv" : "/anime"} className="shelf-browse-link">
           Explore all <BootstrapIcon icon="arrow-up-right" size={14} />
@@ -659,7 +661,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
         onPointerCancel={shelfDrag.onPointerCancel}
         onClickCapture={shelfDrag.onClickCapture}
       >
-        {items.slice(0, 10).map((item) => (
+        {items.slice(0, 10).map((item, index) => (
           <SeriesCard
             key={kind === "tv" ? item.tmdbId : item.malId}
             item={item}
@@ -668,6 +670,7 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
             onSave={onSave}
             saved={savedIds?.has(savedMediaKey(item, kind)) || false}
             onPreload={onPreload}
+            homeRank={index + 1}
             navigating={pendingNavigation === seriesNavigationKey(item, kind)}
           />
         ))}
@@ -676,15 +679,16 @@ function SeriesShelf({ title, eyebrow, items, kind, onOpen, onSave, savedIds, pe
   );
 }
 
-function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
+function MixedSeriesShelf({ title, eyebrow, description = "", variant = "popular", items, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
   return (
-    <section className="netflix-shelf home-series-shelf">
+    <section className={"netflix-shelf home-series-shelf home-collection-" + variant}>
       <div className="section-heading shelf-heading">
         <div>
           {eyebrow && <span>{eyebrow}</span>}
           <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
+          {description && <p className="home-collection-description">{description}</p>}
         </div>
         <div className="shelf-browse-links">
           <Link href="/tv" className="shelf-browse-link">TV <BootstrapIcon icon="arrow-up-right" size={13} /></Link>
@@ -700,7 +704,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
         onPointerCancel={shelfDrag.onPointerCancel}
         onClickCapture={shelfDrag.onClickCapture}
       >
-        {items.slice(0, 10).map((item) => {
+        {items.slice(0, 10).map((item, index) => {
           const kind = item.homeMediaKind;
           return (
             <SeriesCard
@@ -711,6 +715,7 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
               onSave={onSave}
               saved={savedIds?.has(savedMediaKey(item, kind)) || false}
               onPreload={onPreload}
+              homeRank={index + 1}
               navigating={pendingNavigation === seriesNavigationKey(item, kind)}
             />
           );
@@ -720,16 +725,17 @@ function MixedSeriesShelf({ title, eyebrow, items, onOpen, onSave, savedIds, pen
   );
 }
 
-function MovieShelf({ title, eyebrow, movies, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
+function MovieShelf({ title, eyebrow, description = "", variant = "movies", movies, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
   if (!movies.length) return null;
 
   return (
-    <section className="netflix-shelf">
+    <section className={"netflix-shelf home-movie-shelf home-collection-" + variant}>
       <div className="section-heading shelf-heading">
         <div>
           {eyebrow && <span>{eyebrow}</span>}
           <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
+          {description && <p className="home-collection-description">{description}</p>}
         </div>
       </div>
       <div
@@ -783,8 +789,9 @@ function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pe
     <section className="netflix-shelf home-mixed-shelf">
       <div className="section-heading shelf-heading">
         <div>
-          <span>ONE MIXED CATALOG</span>
+          <span>ACROSS MOVIES · TV · ANIME</span>
           <h2>Trending now</h2>
+          <p className="home-collection-description">A rotating mix of stories from every corner of the Situla catalog.</p>
         </div>
       </div>
       <div
