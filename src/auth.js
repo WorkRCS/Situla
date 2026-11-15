@@ -2,12 +2,10 @@ import { createHash, createHmac, randomBytes, scrypt as scryptCallback, timingSa
 import { promisify } from 'node:util';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { OAuth2Client } from 'google-auth-library';
-import { User, AuthSession, Device, AuthRateLimit } from './models.js';
-import { getWatchPolicy } from './membership-policy.js';
+import { User, AuthSession, AuthRateLimit } from './models.js';
 
 const scrypt = promisify(scryptCallback);
 export const SESSION_COOKIE = 'situla_session';
-export const DEVICE_COOKIE = 'situla_device';
 export const GUEST_COOKIE = 'situla_guest';
 export const OAUTH_STATE_COOKIE = 'situla_google_state';
 export const OAUTH_NONCE_COOKIE = 'situla_google_nonce';
@@ -15,6 +13,7 @@ const PASSWORD_COST = 32768;
 const PASSWORD_BLOCK_SIZE = 8;
 const PASSWORD_PARALLELISM = 1;
 const PASSWORD_KEY_LENGTH = 64;
+export const SESSION_COOKIE_MAX_AGE_SECONDS = 400 * 24 * 60 * 60;
 let oauthClient;
 
 export function authSecret() {
@@ -138,6 +137,8 @@ function cookieSettings(maxAge, path = '/') {
 
 export function clearAuthCookies(c) {
   deleteCookie(c, SESSION_COOKIE, cookieSettings(0));
+  // Clean up the legacy registered-device cookie on the next explicit sign-out.
+  deleteCookie(c, 'situla_device', cookieSettings(0));
   deleteCookie(c, GUEST_COOKIE, cookieSettings(0));
   deleteCookie(c, OAUTH_STATE_COOKIE, cookieSettings(0, '/api/auth/google'));
   deleteCookie(c, OAUTH_NONCE_COOKIE, cookieSettings(0, '/api/auth/google'));
@@ -191,7 +192,6 @@ export async function getSuspendedSession(c) {
   if (!token) return null;
   const session = await AuthSession.findOne({
     tokenHash: hashToken(token),
-    expiresAt: { $gt: new Date() },
     revokedAt: null
   });
   if (!session) return null;
@@ -200,175 +200,47 @@ export async function getSuspendedSession(c) {
   return { session, user };
 }
 
-export function selectDevicesToRetain(devices, limit) {
-  return [...devices].sort((left, right) => {
-    const leftSlot = Number.isInteger(left.slot) ? left.slot : Number.POSITIVE_INFINITY;
-    const rightSlot = Number.isInteger(right.slot) ? right.slot : Number.POSITIVE_INFINITY;
-    if (leftSlot !== rightSlot) return leftSlot - rightSlot;
-    const leftCreatedAt = new Date(left.createdAt || 0).getTime();
-    const rightCreatedAt = new Date(right.createdAt || 0).getTime();
-    if (leftCreatedAt !== rightCreatedAt) return leftCreatedAt - rightCreatedAt;
-    return String(left._id).localeCompare(String(right._id));
-  }).slice(0, Math.max(0, Number(limit) || 0));
-}
-
-async function enforceUserDeviceLimit(user) {
-  const deviceLimit = getWatchPolicy(user).deviceLimit;
-  const activeDevices = await Device.find({ userId: user._id, revokedAt: null })
-    .select('_id slot createdAt')
-    .lean();
-  if (activeDevices.length <= deviceLimit) return;
-
-  const retainedIds = new Set(selectDevicesToRetain(activeDevices, deviceLimit).map((device) => String(device._id)));
-  const revokeIds = activeDevices
-    .filter((device) => !retainedIds.has(String(device._id)))
-    .map((device) => device._id);
-  if (!revokeIds.length) return;
-
-  const now = new Date();
-  await Promise.all([
-    Device.updateMany(
-      { _id: { $in: revokeIds }, userId: user._id, revokedAt: null },
-      { $set: { revokedAt: now } }
-    ),
-    AuthSession.updateMany(
-      { deviceId: { $in: revokeIds }, revokedAt: null },
-      { $set: { revokedAt: now, expiresAt: now } }
-    )
-  ]);
-}
-
-export async function registerDevice(c, user) {
-  await enforceUserDeviceLimit(user);
-  const existingToken = getCookie(c, DEVICE_COOKIE);
-  if (existingToken) {
-    const existing = await Device.findOne({
-      userId: user._id,
-      tokenHash: hashToken(existingToken),
-      revokedAt: null
-    });
-    if (existing) {
-      existing.lastSeenAt = new Date();
-      await existing.save();
-      return existing;
-    }
-  }
-
-  const deviceLimit = getWatchPolicy(user).deviceLimit;
-  const activeDevices = await Device.find({ userId: user._id, revokedAt: null }).select('slot').lean();
-  if (activeDevices.length >= deviceLimit) {
-    const error = new Error('Your registered-device limit has been reached. Remove another device before signing in here.');
-    error.status = 403;
-    error.code = 'DEVICE_LIMIT';
-    throw error;
-  }
-  const occupiedSlots = new Set(activeDevices.map((device) => device.slot).filter(Number.isInteger));
-  for (const legacyDevice of activeDevices.filter((device) => !Number.isInteger(device.slot))) {
-    for (let slot = 0; slot < deviceLimit; slot += 1) {
-      if (occupiedSlots.has(slot)) continue;
-      try {
-        const migrated = await Device.findOneAndUpdate(
-          { _id: legacyDevice._id, slot: null, revokedAt: null },
-          { $set: { slot } },
-          { returnDocument: 'after' }
-        );
-        if (migrated) {
-          occupiedSlots.add(slot);
-          break;
-        }
-        const current = await Device.findById(legacyDevice._id).select('slot').lean();
-        if (Number.isInteger(current?.slot)) {
-          occupiedSlots.add(current.slot);
-          break;
-        }
-      } catch (error) {
-        if (error?.code !== 11000) throw error;
-      }
-    }
-  }
-  const refreshedDevices = await Device.find({ userId: user._id, revokedAt: null }).select('slot').lean();
-  const currentSlots = new Set(refreshedDevices.map((device) => device.slot).filter(Number.isInteger));
-  const candidateSlots = Array.from({ length: deviceLimit }, (_, slot) => slot)
-    .filter((slot) => !currentSlots.has(slot));
-  const token = randomToken();
-  let device = null;
-  for (const slot of candidateSlots) {
-    try {
-      device = await Device.create({
-        userId: user._id,
-        slot,
-        tokenHash: hashToken(token),
-        label: String(c.req.header('user-agent') || 'Browser').slice(0, 180),
-        lastSeenAt: new Date(),
-        revokedAt: null
-      });
-      break;
-    } catch (error) {
-      if (error?.code !== 11000) throw error;
-    }
-  }
-  if (!device) {
-    const error = new Error('Your registered-device limit has been reached. Remove another device before signing in here.');
-    error.status = 403;
-    error.code = 'DEVICE_LIMIT';
-    throw error;
-  }
-  setCookie(c, DEVICE_COOKIE, token, cookieSettings(365 * 24 * 60 * 60));
-  return device;
-}
-
-export async function createLoginSession(c, user, rememberMe = true) {
-  const device = await registerDevice(c, user);
+export async function createLoginSession(c, user) {
   const token = randomToken();
   const now = new Date();
-  const lifetimeSeconds = rememberMe ? 30 * 24 * 60 * 60 : 12 * 60 * 60;
-  const expiresAt = new Date(now.getTime() + lifetimeSeconds * 1000);
   const ip = getClientIp(c);
   await AuthSession.create({
     userId: user._id,
-    deviceId: device._id,
     tokenHash: hashToken(token),
-    rememberMe: Boolean(rememberMe),
     ipHash: ip ? keyedHash('auth-ip:' + ip) : null,
     lastSeenAt: now,
-    expiresAt,
     revokedAt: null
   });
   const previousToken = getCookie(c, SESSION_COOKIE);
   if (previousToken) {
-    await AuthSession.updateOne({ tokenHash: hashToken(previousToken), revokedAt: null }, { $set: { revokedAt: now, expiresAt: now } });
+    await AuthSession.updateOne(
+      { tokenHash: hashToken(previousToken), revokedAt: null },
+      { $set: { revokedAt: now } }
+    );
   }
-  setCookie(c, SESSION_COOKIE, token, cookieSettings(rememberMe ? lifetimeSeconds : undefined));
+  setCookie(c, SESSION_COOKIE, token, cookieSettings(SESSION_COOKIE_MAX_AGE_SECONDS));
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: now } });
-  return { device, expiresAt };
+  return { createdAt: now };
 }
 
 export async function getAuthenticatedSession(c) {
   const token = getCookie(c, SESSION_COOKIE);
-  const deviceToken = getCookie(c, DEVICE_COOKIE);
-  if (!token || !deviceToken) return null;
+  if (!token) return null;
   const session = await AuthSession.findOne({
     tokenHash: hashToken(token),
-    expiresAt: { $gt: new Date() },
     revokedAt: null
   });
   if (!session) return null;
   const user = await User.findById(session.userId);
   if (!user || await isAccountSuspended(user) || user.status !== 'active') return null;
-  await enforceUserDeviceLimit(user);
-  const device = await Device.findOne({
-    _id: session.deviceId,
-    userId: user._id,
-    tokenHash: hashToken(deviceToken),
-    revokedAt: null
-  });
-  if (!device) return null;
   const now = new Date();
-  if (now.getTime() - new Date(session.lastSeenAt).getTime() > 60000) {
+  if (now.getTime() - new Date(session.lastSeenAt || 0).getTime() > 60000) {
     await AuthSession.updateOne({ _id: session._id }, { $set: { lastSeenAt: now } });
-    await Device.updateOne({ _id: device._id }, { $set: { lastSeenAt: now } });
   }
-  return { session, user, device };
+  // Refresh the persistent cookie during authenticated activity so an active
+  // account is not signed out by a deployment or a fixed inactivity timer.
+  setCookie(c, SESSION_COOKIE, token, cookieSettings(SESSION_COOKIE_MAX_AGE_SECONDS));
+  return { session, user };
 }
 
 export async function revokeCurrentSession(c) {
@@ -376,7 +248,7 @@ export async function revokeCurrentSession(c) {
   if (token) {
     await AuthSession.updateOne(
       { tokenHash: hashToken(token), revokedAt: null },
-      { $set: { revokedAt: new Date(), expiresAt: new Date() } }
+      { $set: { revokedAt: new Date() } }
     );
   }
   clearAuthCookies(c);
