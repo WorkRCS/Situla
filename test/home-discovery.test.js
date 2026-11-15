@@ -124,6 +124,11 @@ test("landing page loads changing discovery pools and gives each collection its 
   assert.ok(app.includes('params.set("exclude", recentIds.join(","))'));
   assert.ok(app.includes("rememberRecentCatalogIds(recentKey"));
   assert.ok(app.includes("spotlightItems: homeHeroItems"));
+  assert.ok(app.includes("const homeFreshMoviesRequested = useRef(false)"));
+  assert.ok(app.includes("if (!homeMoviesReady || !movies.length || homeFreshMoviesRequested.current) return;"));
+  assert.ok(app.includes('fetch("/api/movies?" + params.toString()'));
+  assert.ok(app.includes("movies: [...homeFreshMovies, ...movies]"));
+  assert.ok(app.includes(String.raw`/^tt\d{5,12}$/`));
   assert.ok(app.includes("items.map((item) => item.mediaType === \"movie\""));
   assert.ok(app.includes('variant="popular"'));
   assert.ok(app.includes('variant="rated"'));
