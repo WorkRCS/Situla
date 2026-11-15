@@ -1021,7 +1021,11 @@ app.get('/api/movies/discover', async (c) => {
     // instead of returning an empty page with a positive total.
     if (excludedIds.length && (!result.items?.length || total === 0)) {
       [result, total] = await Promise.all([
-        Movie.aggregate([{ $match: baseFilter }, { $facet: facets }]).then((rows) => rows[0] || {}),
+        Movie.aggregate([
+          { $match: baseFilter },
+          { $sort: HOME_MOVIE_DISCOVERY_SORT },
+          { $facet: facets }
+        ]).then((rows) => rows[0] || {}),
         Movie.countDocuments(baseFilter)
       ]);
     }
