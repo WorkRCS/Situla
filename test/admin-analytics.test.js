@@ -44,7 +44,7 @@ test('custom-month Premium membership uses the monthly Premium watch policy', ()
   assert.equal(policy.planId, 'premium');
   assert.equal(policy.billingCycle, 'custom');
   assert.equal(policy.allowanceSeconds, 18000);
-  assert.equal(policy.deviceLimit, 3);
+  assert.equal(Object.hasOwn(policy, 'deviceLimit'), false);
 });
 
 test('premium status respects exact expiry and expired membership falls back to Free', () => {
