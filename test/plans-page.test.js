@@ -100,3 +100,30 @@ test("Guest and Free watch cooldowns are visible without demo-only text", async 
   assert.ok(page.includes('value="1 hour" detail="after the limit"'));
   assert.doesNotMatch(page, /01:42:18|00:42:18|setInterval/);
 });
+
+
+test("Plans mobile layout flows naturally before the global footer", async () => {
+  const css = await read("../app/globals.css");
+  const layout = await read("../app/layout.jsx");
+  assert.ok(layout.includes("{children}"));
+  assert.ok(layout.includes("<SiteFooter />"));
+  const mobileRules = css.slice(css.lastIndexOf("/* Let Plans content set the workspace height"));
+  assert.ok(mobileRules.includes("@media (max-width:767px)"));
+  assert.ok(mobileRules.includes("height:auto !important;"));
+  assert.ok(mobileRules.includes("max-height:none !important;"));
+  assert.ok(mobileRules.includes("min-height:0 !important;"));
+  assert.ok(mobileRules.includes("padding-bottom:calc(38px + 78px + env(safe-area-inset-bottom))"));
+  assert.ok(mobileRules.includes("margin-bottom:calc(78px + env(safe-area-inset-bottom))"));
+});
+
+test("the shared workspace nav is edge-attached rather than a floating capsule", async () => {
+  const css = await read("../app/globals.css");
+  const sharedNav = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
+  assert.ok(sharedNav.includes("position:fixed !important;"));
+  assert.ok(sharedNav.includes("left:0 !important;"));
+  assert.ok(sharedNav.includes("right:0 !important;"));
+  assert.ok(sharedNav.includes("bottom:0 !important;"));
+  assert.ok(sharedNav.includes("width:100% !important;"));
+  assert.ok(sharedNav.includes("border-radius:22px 22px 0 0 !important;"));
+  assert.doesNotMatch(sharedNav, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
+});
