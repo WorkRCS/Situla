@@ -47,11 +47,9 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.includes("Continue with Google"));
   assert.ok(login.includes("/api/auth/email"));
   assert.ok(login.includes("/api/auth/google"));
-  assert.ok(login.includes("rememberMe"));
-  assert.ok(login.includes("checked={rememberMe}"));
-  assert.ok(login.includes("Remember me"));
+  assert.doesNotMatch(login, /rememberMe|Remember me/);
   assert.ok(login.includes('className="account-divider" role="separator">OR</div>'));
-  assert.ok(login.indexOf("Remember me") < login.indexOf("Continue with email"));
+  assert.ok(login.indexOf("Password") < login.indexOf("Continue with email"));
   assert.ok(login.indexOf("Continue with email") < login.indexOf(">OR</div>"));
   assert.ok(login.indexOf(">OR</div>") < login.indexOf("Continue with Google"));
   assert.doesNotMatch(login, /MEMBER ACCESS|Welcome back|Sign in to continue|Forgot password|Explore membership|account-demo-disclaimer|UserRound/);
@@ -69,8 +67,7 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(pages.includes("/api/auth/me"));
   assert.ok(pages.includes("/api/auth/me"));
   assert.ok(pages.includes("SERVER-VERIFIED SESSION"));
-  assert.ok(pages.includes("/api/auth/devices"));
-  assert.ok(pages.includes("profile-device-revoke"));
+  assert.doesNotMatch(pages, /\/api\/auth\/devices|profile-device-revoke|deviceSummary|Remember me/);
   assert.ok(membership.includes('status: "active"'));
 });
 
