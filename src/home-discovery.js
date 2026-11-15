@@ -209,3 +209,27 @@ export function buildHomeCollections({
     categoryShelves
   };
 }
+
+
+const HOME_ROUTE_FIELDS = Object.freeze({
+  movie: "imdbId",
+  tv: "tmdbId",
+  anime: "malId"
+});
+
+export function homeMediaRoute(item, mediaType) {
+  const field = HOME_ROUTE_FIELDS[mediaType];
+  if (!item || !field) return null;
+
+  if (mediaType === "movie") {
+    const imdbId = String(item.imdbId || "").trim().toLowerCase();
+    return /^tt\\d{5,12}$/.test(imdbId) ? "/watch/" + encodeURIComponent(imdbId) : null;
+  }
+
+  const rawId = item[field];
+  const id = String(rawId ?? "").trim();
+  if (!/^\\d{1,12}$/.test(id)) return null;
+  const numericId = Number(id);
+  if (!Number.isSafeInteger(numericId) || numericId < 1) return null;
+  return (mediaType === "tv" ? "/tv/" : "/anime/") + encodeURIComponent(String(numericId));
+}
