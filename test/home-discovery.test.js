@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { buildHomeCollections, homeMediaKey, mixHomeSpotlight, toHomeSpotlight } from "../src/home-discovery.js";
+import { buildHomeCollections, homeMediaKey, homeMediaRoute, mixHomeSpotlight, toHomeSpotlight } from "../src/home-discovery.js";
 
 test("home spotlight normalizes movie, TV, and anime metadata", () => {
   const movie = toHomeSpotlight({ imdbId: "TT1234567", title: "Film", voteAverage: 8.1 }, "movie");
@@ -116,27 +116,60 @@ test("home collections reserve featured titles and never repeat an ID between sh
 });
 
 
-test("landing page loads changing discovery pools and gives each collection its own layout", async () => {
-  const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
-  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "36", random: "true" })'));
-  assert.ok(app.includes('params.set("exclude", recentIds.join(","))'));
-  assert.ok(app.includes("rememberRecentCatalogIds(recentKey"));
+test("home media IDs resolve to real detail/watch routes", () => {
+  assert.equal(homeMediaRoute({ imdbId: "TT1234567" }, "movie"), "/watch/tt1234567");
+  assert.equal(homeMediaRoute({ tmdbId: 123 }, "tv"), "/tv/123");
+  assert.equal(homeMediaRoute({ malId: 456 }, "anime"), "/anime/456");
+  assert.equal(homeMediaRoute({ imdbId: "1234567" }, "movie"), null);
+  assert.equal(homeMediaRoute({ tmdbId: 0 }, "tv"), null);
+  assert.equal(homeMediaRoute({ malId: "not-a-number" }, "anime"), null);
+  assert.equal(homeMediaRoute({ malId: 456 }, "unknown"), null);
+});
+
+test("landing cards explicitly navigate and use live database catalogue ordering", async () => {
+  const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
+  const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const movieRoute = await readFile(new URL("../app/watch/[imdbId]/page.jsx", import.meta.url), "utf8");
+  const tvRoute = await readFile(new URL("../app/tv/[tmdbId]/page.jsx", import.meta.url), "utf8");
+  const animeRoute = await readFile(new URL("../app/anime/[malId]/page.jsx", import.meta.url), "utf8");
+
+  assert.ok(app.includes('import { buildHomeCollections, homeMediaRoute, mixHomeSpotlight, toHomeSpotlight }'));
+  assert.ok(app.includes("onOpen?.(movie);"));
+  assert.ok(app.includes("onOpen?.(item, kind);"));
+  assert.ok(!app.includes("navigate: false"));
+  assert.ok(app.includes("if (!movieCardHref(movie)) return openMovie(movie, options);"));
+  assert.ok(app.includes("if (!seriesCardHref(series, kind))"));
+  assert.ok(movieRoute.includes("{ imdbId }"));
+  assert.ok(tvRoute.includes("{ tmdbId }"));
+  assert.ok(animeRoute.includes("{ malId }"));
+
+  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "36" })'));
+  assert.ok(app.includes('fetch(endpoint, { cache: "no-store", signal })'));
+  assert.ok(!app.includes('new URLSearchParams({ page: "1", limit: "36", random: "true" })'));
   assert.ok(app.includes("spotlightItems: homeHeroItems"));
   assert.ok(app.includes('activeHeroId={homeHeroItems[heroIndex]?.heroId}'));
   assert.ok(app.includes("const trendingItems = items.filter((item) => item.heroId !== activeHeroId);"));
   assert.ok(!app.includes('className="spotlight-strip"'));
-  assert.ok(app.includes("const homeFreshMoviesRequested = useRef(false)"));
-  assert.ok(app.includes("if (!homeMoviesReady || !movies.length || homeFreshMoviesRequested.current) return;"));
-  assert.ok(app.includes('fetch("/api/movies?" + params.toString()'));
-  assert.ok(app.includes("movies: [...homeFreshMovies, ...movies]"));
-  assert.ok(app.includes(String.raw`/^tt\d{5,12}$/`));
-  assert.ok(app.includes("items.map((item) => item.mediaType === \"movie\""));
+  assert.ok(!app.includes("homeFreshMoviesRequested"));
+  assert.ok(app.includes("LIVE DATABASE · MOVIES · TV · ANIME"));
+  assert.ok(app.includes("RECORDED VOTE COUNTS"));
+  assert.ok(app.includes("PROVIDER RATING DATA"));
   assert.ok(app.includes('variant="popular"'));
   assert.ok(app.includes('variant="rated"'));
   assert.ok(app.includes('variant="television"'));
   assert.ok(app.includes('variant="anime"'));
+
+  const discoveryStart = api.indexOf("app.get('/api/movies/discover'");
+  const discoveryEnd = api.indexOf("app.get('/api/search'", discoveryStart);
+  const discovery = api.slice(discoveryStart, discoveryEnd);
+  assert.ok(discovery.includes("HOME_DISCOVERY_LIMIT"));
+  assert.ok(discovery.includes("HOME_MOVIE_DISCOVERY_SORT"));
+  assert.ok(discovery.includes("{ $sort: HOME_MOVIE_DISCOVERY_SORT }"));
+  assert.ok(!discovery.includes("$sample"));
+  assert.ok(discovery.includes("Movie.countDocuments"));
+
   assert.ok(css.includes(".home-collection-popular"));
   assert.ok(css.includes(".home-collection-rated"));
   assert.ok(css.includes(".home-collection-television"));
