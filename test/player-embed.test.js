@@ -431,7 +431,7 @@ test("sidebar routes share the exact existing seven-item mobile navigation bar",
   assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
   assert.ok(css.includes("bottom:0 !important"));
   assert.ok(css.includes("width:100% !important"));
-  assert.ok(css.includes(".site-workspace-mobile-nav { display:flex !important; }"));
+  assert.ok(css.includes(".bottom-nav,.site-workspace-mobile-nav { display:grid !important; }"));
   assert.ok(css.includes(".site-workspace-mobile-nav { display:none !important; }"));
 });
 
