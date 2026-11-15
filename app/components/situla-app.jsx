@@ -12,7 +12,7 @@ import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
-import { SiteSidebar } from "./site-sidebar.jsx";
+import { SITE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
@@ -904,6 +904,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [animePage, setAnimePage] = useState(1);
   const [animeTotal, setAnimeTotal] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState("");
   const loadMoreLock = useRef(false);
 
   useEffect(() => {
@@ -1444,6 +1445,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   async function loadMore() {
     if (loadMoreLock.current) return;
     loadMoreLock.current = true;
+    setLoadMoreError("");
     setLoadingMore(true);
     try {
       if (tab === "home" || tab === "movies" || tab === "search") {
@@ -1465,6 +1467,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more movies.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        if (!nextItems.length) throw new Error("No additional movies were returned. Please try again.");
         if (tab !== "search") {
           const recentKey = tab === "movies" ? "situla:recent-catalog:movies" : "situla:recent-catalog:home";
           rememberRecentCatalogIds(recentKey, nextItems.map((item) => item.imdbId));
@@ -1496,6 +1499,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more TV series.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        if (!nextItems.length) throw new Error("No additional TV series were returned. Please try again.");
         rememberRecentCatalogIds("situla:recent-catalog:tv", nextItems.map((item) => item.tmdbId));
         setTvShows((current) => {
           const ids = new Set(current.map((item) => Number(item.tmdbId)).filter((id) => Number.isSafeInteger(id)));
@@ -1524,6 +1528,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Unable to load more anime.");
         const nextItems = Array.isArray(payload.items) ? payload.items : [];
+        if (!nextItems.length) throw new Error("No additional Anime titles were returned. Please try again.");
         rememberRecentCatalogIds("situla:recent-catalog:anime", nextItems.map((item) => item.malId));
         setAnimeShows((current) => {
           const ids = new Set(current.map((item) => Number(item.malId)).filter((id) => Number.isSafeInteger(id)));
@@ -1538,14 +1543,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         setAnimeTotal(Number(payload.pagination?.total) || animeTotal);
         setError("");
       }
-    } catch {
+    } catch (loadError) {
       const hasExistingItems = tab === "tv" ? tvShows.length > 0
         : tab === "anime" ? animeShows.length > 0
           : tab === "search" ? searchResults.length > 0
             : movies.length > 0;
-      setError(hasExistingItems
-        ? ""
-        : "Connection is slow. Your current catalog remains available; try loading more again shortly.");
+      const mediaLabel = tab === "tv" ? "TV series" : tab === "anime" ? "Anime" : "movies";
+      const statusMessage = loadError?.name === "TimeoutError"
+        ? "The request timed out. Your current titles are still available; try loading more again."
+        : "Could not load more " + mediaLabel + ". Your current titles are still available; please try again.";
+      setLoadMoreError(statusMessage);
+      if (!hasExistingItems) setError(statusMessage);
     } finally {
       loadMoreLock.current = false;
       setLoadingMore(false);
@@ -2094,7 +2102,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
-            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+            {hasMoreMovies && !loading && (
+              <div className="catalog-load-more">
+                <button
+                  type="button"
+                  className="ghost-button catalog-load-more-button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  aria-busy={loadingMore}
+                >
+                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading movies…</> : <>Load more movies <BootstrapIcon icon="arrow-right" size={16} /></>}
+                </button>
+                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+              </div>
+            )}
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
           </>
@@ -2142,7 +2163,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with TMDB IDs to the database.</p></div>
             )}
-            {hasMoreTv && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more TV series"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+            {hasMoreTv && !loading && (
+              <div className="catalog-load-more">
+                <button
+                  type="button"
+                  className="ghost-button catalog-load-more-button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  aria-busy={loadingMore}
+                >
+                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading TV series…</> : <>Load more TV series <BootstrapIcon icon="arrow-right" size={16} /></>}
+                </button>
+                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+              </div>
+            )}
           </section>
         )}
 
@@ -2163,7 +2197,20 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Add curated anime records to the database.</p></div>
             )}
-            {hasMoreAnime && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more anime"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+            {hasMoreAnime && !loading && (
+              <div className="catalog-load-more">
+                <button
+                  type="button"
+                  className="ghost-button catalog-load-more-button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  aria-busy={loadingMore}
+                >
+                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading anime…</> : <>Load more anime <BootstrapIcon icon="arrow-right" size={16} /></>}
+                </button>
+                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+              </div>
+            )}
           </section>
         )}
 
@@ -2333,17 +2380,21 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className={"nav-button" + (tab === item.id ? " active" : "")}
-            aria-current={tab === item.id ? "page" : undefined}
-          >
-            {item.id === "upcoming" ? <CalendarDays size={20} /> : <Icon name={item.icon} size={20} />}
-            <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
-          </Link>
-        ))}
+        {SITE_NAV_ITEMS.map((item) => {
+          const NavigationIcon = item.icon;
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              className={"nav-button" + (tab === item.id ? " active" : "")}
+              aria-current={tab === item.id ? "page" : undefined}
+              prefetch={true}
+            >
+              <NavigationIcon size={19} strokeWidth={tab === item.id ? 2.25 : 1.9} />
+              <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
+            </Link>
+          );
+        })}
       </nav>
     </main>
   );
