@@ -265,33 +265,26 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
-test("mobile/tablet bottom navigation uses the shared sidebar items without inline Back or Search actions", async () => {
+test("mobile/tablet navigation reuses the original full-width seven-item bar", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
   const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
-  assert.doesNotMatch(bottomNav, /navigateBack|aria-label="Go back|>Back</);
-  assert.doesNotMatch(bottomNav, /setSearchOpen|>Search</);
-  assert.match(app, /SITE_NAV_ITEMS\.map/);
-  assert.match(sidebar, /export const SITE_NAV_ITEMS = \[/);
-  assert.match(sidebar, /label: "Profile"/);
-  assert.match(app, /className="header-search-wrap"/);
-  assert.doesNotMatch(app, /function navigateBack\(/);
-  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?position:fixed/);
+  const workspaceNav = sidebar.slice(sidebar.indexOf('<nav className="bottom-nav site-workspace-mobile-nav"'));
+
+  assert.ok(app.includes("SITE_MOBILE_NAV_ITEMS.map"));
+  assert.ok(workspaceNav.includes("SITE_MOBILE_NAV_ITEMS.map"));
+  assert.ok(workspaceNav.includes('className={"nav-button site-workspace-mobile-link"'));
+  assert.doesNotMatch(bottomNav, /navigateBack|setSearchOpen|>Search</);
+  assert.ok(css.includes("position:fixed !important"));
+  assert.ok(css.includes("bottom:0 !important"));
+  assert.ok(css.includes("width:100% !important"));
+  assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
+  assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
+  assert.ok(css.includes("backdrop-filter:blur(26px) saturate(180%) !important"));
+  assert.doesNotMatch(css, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
 });
-test("mobile/tablet navigation is a shared, scrollable glass dock with safe-area clearance", async () => {
-  const css = await read("../app/globals.css");
-  const app = await read("../app/components/situla-app.jsx");
-  const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
-  assert.match(bottomNav, /SITE_NAV_ITEMS\.map/);
-  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?position:fixed/);
-  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
-  assert.match(css, /overflow-x:auto/);
-  assert.match(css, /backdrop-filter:blur\(18px\) saturate\(125%\)/);
-  assert.match(css, /--site-dock-clearance:calc\(88px \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(css, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?display:flex !important/);
-  assert.match(css, /@media \(max-width:767px\)[\s\S]*?display:flex !important/);
-});
+
 test("all Situla page text is non-selectable", async () => {
   const css = await read("../app/globals.css");
   assert.match(css, /\*, \*::before, \*::after \{[\s\S]*?-webkit-user-select:none !important;[\s\S]*?user-select:none !important;/);
