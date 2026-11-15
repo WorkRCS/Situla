@@ -124,6 +124,9 @@ test("landing page loads changing discovery pools and gives each collection its 
   assert.ok(app.includes('params.set("exclude", recentIds.join(","))'));
   assert.ok(app.includes("rememberRecentCatalogIds(recentKey"));
   assert.ok(app.includes("spotlightItems: homeHeroItems"));
+  assert.ok(app.includes('activeHeroId={homeHeroItems[heroIndex]?.heroId}'));
+  assert.ok(app.includes("const trendingItems = items.filter((item) => item.heroId !== activeHeroId);"));
+  assert.ok(!app.includes('className="spotlight-strip"'));
   assert.ok(app.includes("const homeFreshMoviesRequested = useRef(false)"));
   assert.ok(app.includes("if (!homeMoviesReady || !movies.length || homeFreshMoviesRequested.current) return;"));
   assert.ok(app.includes('fetch("/api/movies?" + params.toString()'));
