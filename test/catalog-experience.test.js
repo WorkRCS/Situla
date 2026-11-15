@@ -165,7 +165,7 @@ test("TV and Anime catalogue cards keep metadata but hide synopsis outside detai
   const tvDetail = await read("../app/tv/[tmdbId]/detail.jsx");
   const animeDetail = await read("../app/anime/[malId]/detail.jsx");
   const css = await read("../app/globals.css");
-  assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
+  assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
   assert.match(app, /series-card-category/);
   assert.doesNotMatch(app, /series-card-description|const synopsis = isTv/);
   assert.doesNotMatch(css, /series-card-description/);
