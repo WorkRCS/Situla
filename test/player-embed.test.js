@@ -414,3 +414,54 @@ test("Sidebar collapse updates the parent grid and persists between routes", asy
   assert.match(css, /\.site-workspace\.is-sidebar-collapsed/);
   assert.doesNotMatch(css, /:has\(> \.site-sidebar\.is-collapsed\)/);
 });
+
+
+test("sidebar routes share one mobile and tablet navigation dock", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+  const css = await read("../app/globals.css");
+
+  assert.match(app, /import \{ SITE_NAV_ITEMS, SiteSidebar \} from "\.\/site-sidebar\.jsx"/);
+  assert.match(app, /\{SITE_NAV_ITEMS\.map\(\(item\) =>/);
+  assert.match(sidebar, /export const SITE_NAV_ITEMS = \[/);
+  assert.match(sidebar, /<nav className="site-workspace-mobile-nav"/);
+  assert.match(sidebar, /SITE_NAV_ITEMS\.map\(\(item\) =>/);
+  assert.match(css, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?\.site-workspace > \.site-sidebar \{ display:none !important; \}/);
+  assert.match(css, /\.app-shell:has\(\.home-page-layout\) \.bottom-nav,[\s\S]*?display:flex !important;/);
+  assert.match(css, /\.site-workspace-mobile-nav \{ display:flex !important; \}/);
+  assert.match(css, /\.home-page-layout > \.site-sidebar,[\s\S]*?display:none !important;/);
+});
+
+test("footer has scroll clearance below the fixed mobile and tablet navigation", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /--site-dock-clearance:calc\(88px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /body:has\(\.bottom-nav\) \.site-footer,[\s\S]*?margin-bottom:var\(--site-dock-clearance\)/);
+  assert.match(css, /\.site-workspace \{[\s\S]*?padding:14px 22px var\(--site-dock-clearance\)/);
+  assert.match(css, /\.site-workspace-main \{[\s\S]*?overflow:visible/);
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?display:flex !important;/);
+});
+
+test("header account and search controls use a clean, consistent icon treatment", async () => {
+  const css = await read("../app/globals.css");
+  assert.match(css, /\.header-avatar-trigger \{\s*border:0;/);
+  assert.match(css, /\.header-avatar-initials \{\s*border:1px solid/);
+  assert.match(css, /\.header-notification-trigger \{\s*border-color:rgba\(255,255,255/);
+  assert.match(css, /\.site-app-header \.header-search-trigger \{\s*border:1px solid/);
+  assert.match(css, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?header-search-label \{ display:none !important; \}/);
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?header-search-label \{ display:none !important; \}/);
+});
+
+test("catalog load-more failures remain visible and can be retried without losing current titles", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  assert.match(app, /const \[loadMoreError, setLoadMoreError\] = useState\(""\)/);
+  assert.match(app, /setLoadMoreError\(statusMessage\)/);
+  assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional movies were returned/);
+  assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional TV series were returned/);
+  assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional Anime titles were returned/);
+  assert.equal((app.match(/catalog-load-more-error/g) || []).length, 3);
+  assert.equal((app.match(/aria-busy=\{loadingMore\}/g) || []).length, 3);
+  assert.match(app, /loadMoreLock\.current = false/);
+  assert.match(css, /\.catalog-load-more-error/);
+  assert.match(css, /\.catalog-load-spinner/);
+});
