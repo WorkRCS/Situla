@@ -7205,3 +7205,10 @@ body:has(.login-page) .site-footer { display:none !important; }
   .catalog-load-spinner { animation:none !important; }
   .bottom-nav .nav-button,.site-workspace-mobile-link,.home-side-link { transition:none !important; }
 }
+
+@media (max-width:767px) {
+  .app-shell:has(.home-page-layout) .bottom-nav,
+  .app-shell:has(.app-view-layout) .bottom-nav {
+    display:flex !important;
+  }
+}
