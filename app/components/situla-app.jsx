@@ -889,6 +889,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeTvShows, setHomeTvShows] = useState([]);
   const [homeAnimeShows, setHomeAnimeShows] = useState([]);
   const [homeFreshMovies, setHomeFreshMovies] = useState([]);
+  const [homeMoviesReady, setHomeMoviesReady] = useState(false);
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [heroPaused, setHeroPaused] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
@@ -1060,6 +1061,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   useEffect(() => {
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
+    if (tab === "home") setHomeMoviesReady(false);
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
@@ -1137,7 +1139,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           else setError("");
         }
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          if (tab === "home") setHomeMoviesReady(true);
+        }
       }
     }, tab === "search" && query.trim() ? 250 : 0);
     return () => {
@@ -1206,9 +1211,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (tab !== "home") {
       homeFreshMoviesRequested.current = false;
       setHomeFreshMovies([]);
+      setHomeMoviesReady(false);
       return;
     }
-    if (loading || !movies.length || homeFreshMoviesRequested.current) return;
+    if (!homeMoviesReady || !movies.length || homeFreshMoviesRequested.current) return;
 
     homeFreshMoviesRequested.current = true;
     const controller = new AbortController();
@@ -1245,7 +1251,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
     loadFreshMovies();
     return () => controller.abort();
-  }, [tab, loading, movies.length]);
+  }, [tab, homeMoviesReady, movies.length]);
 
   const homeHeroItems = useMemo(
     () => mixHomeSpotlight({
