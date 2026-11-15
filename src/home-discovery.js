@@ -83,7 +83,7 @@ export function homeMediaKey(item, mediaType = item?.homeMediaKind || item?.medi
   const rawId = item[field];
   if (mediaType === "movie") {
     const id = String(rawId || "").trim().toLowerCase();
-    return /^tt\\d{5,12}$/.test(id) ? "movie:" + id : "";
+    return /^tt\d{5,12}$/.test(id) ? "movie:" + id : "";
   }
   const id = Number(rawId);
   return Number.isSafeInteger(id) && id > 0 ? mediaType + ":" + id : "";
@@ -162,7 +162,8 @@ export function buildHomeCollections({
     used,
     8,
     premiumCatalog
-      ? null
+      ? (a, b) => homeReleaseDate(b) - homeReleaseDate(a) ||
+        Number(b.popularity || 0) - Number(a.popularity || 0)
       : (a, b) => Number(b.popularity || 0) - Number(a.popularity || 0) ||
         homeReleaseDate(b) - homeReleaseDate(a)
   );
@@ -172,9 +173,10 @@ export function buildHomeCollections({
     used,
     8,
     premiumCatalog
-      ? null
-      : (a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) ||
+      ? (a, b) => homeReleaseDate(b) - homeReleaseDate(a) ||
         homeRating(b, "anime") - homeRating(a, "anime")
+      : (a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) ||
+        homeRating(b, "anime") - homeRating(a, "anime)
   );
   const movieItems = takeUniqueHomeItems(
     movies,
