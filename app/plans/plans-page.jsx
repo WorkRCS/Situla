@@ -84,12 +84,10 @@ export default function PlansPage() {
             <div className="plans-metrics">
               <PlanMetric label="WATCH TIME" value="3 hours" detail="per cycle" />
               <PlanMetric label="COOLDOWN" value="1 hour" detail="after the limit" />
-              <PlanMetric label="DEVICES" value="1" detail="registered device" />
             </div>
             <ul className="plans-feature-list">
               <PlanFeature>Account sign-in and watch tracking</PlanFeature>
               <PlanFeature>Full catalog browsing during cooldown</PlanFeature>
-              <PlanFeature>One registered device at a time</PlanFeature>
             </ul>
             <Link href="/login" className="plans-card-action plans-card-action-secondary">
               Sign in or create account <ArrowRight size={15} aria-hidden="true" />
@@ -99,7 +97,7 @@ export default function PlansPage() {
           <article className="plans-card plans-card-premium">
             <div className="plans-card-heading">
               <span className="plans-plan-icon premium"><Crown size={19} aria-hidden="true" /></span>
-              <div><span className="plans-card-kicker">MULTI-DEVICE ACCESS</span><h2>Premium</h2></div>
+              <div><span className="plans-card-kicker">MEMBER BENEFITS</span><h2>Premium</h2></div>
             </div>
 
             <div className="plans-billing">
@@ -130,10 +128,9 @@ export default function PlansPage() {
             <div className="plans-metrics">
               <PlanMetric label="WATCH TIME" value={selectedBilling.allowance} detail="per billing cycle" />
               <PlanMetric label="COOLDOWN" value={selectedBilling.cooldown} detail="after the limit" />
-              <PlanMetric label="DEVICES" value="Up to 3" detail="registered devices" />
             </div>
             <ul className="plans-feature-list">
-              <PlanFeature>One shared allowance across registered devices</PlanFeature>
+              <PlanFeature>Premium watch allowance each membership cycle</PlanFeature>
               <PlanFeature>Premium Verified badge</PlanFeature>
               <PlanFeature>Early upcoming-movie updates</PlanFeature>
             </ul>
@@ -154,7 +151,7 @@ export default function PlansPage() {
           </div>
           <div>
             <ShieldCheck size={16} aria-hidden="true" />
-            <p><strong>Account and devices</strong><span>Free supports one registered device; Premium supports up to three devices on the same account.</span></p>
+            <p><strong>Account sign-in</strong><span>Email and Google sign-in use the same persistent Situla account session.</span></p>
           </div>
           <div>
             <Clock3 size={16} aria-hidden="true" />
