@@ -66,6 +66,6 @@ test("home series shelves are chunked and memoized cards receive stable callback
   assert.match(app, /const SeriesCard = memo\(function SeriesCard/);
   assert.match(app, /const toggleSaved = useCallback/);
   assert.match(app, /const openHomeSeries = useCallback/);
-  assert.match(app, /items\.slice\(0, 10\)\.map\(\(item\)/);
+  assert.match(app, /items\.slice\(0, 10\)\.map\(\(item, index\)/);
   assert.doesNotMatch(app, /items\.slice\(0, (?:16|20)\)\.map\(\(item\)/);
 });
