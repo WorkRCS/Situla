@@ -119,7 +119,7 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   assert.doesNotMatch(app, /current\.map\(\(item\) => item\.tmdbId\)/);
   assert.match(app, /function MoviePosterImage/);
   assert.match(app, /AbortSignal\.timeout\(30_000\)/);
-  assert.match(api, /items: \[\{ \$sample: \{ size: PREMIUM_FEED_LIMIT \} \}\]/);
+  assert.match(api, /Movie\.aggregate\(\[\{ \$match: randomFilter \}, \{ \$sample: \{ size: limit \} \}\]\)/);
   const premiumFeed = await readFile(new URL("../src/premium-feed.js", import.meta.url), "utf8");
   assert.match(premiumFeed, /PREMIUM_FEED_LIMIT = 10/);
   assert.match(api, /randomFilter\.imdbId = \{ \$nin: excludedIds, \$regex: IMDB_ID \}/);
