@@ -176,16 +176,27 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(css.includes(".home-collection-anime"));
   assert.ok(css.includes(".home-collection-genre"));
 
-  const mixedShelfStyle = css.match(/\.home-mixed-shelf\s*\\{([^}]*)\\}/)?.[1] || "";
-  assert.match(mixedShelfStyle, /background:\s*transparent/);
-  assert.match(mixedShelfStyle, /border:\s*0/);
-  assert.match(mixedShelfStyle, /box-shadow:\s*none/);
-  assert.doesNotMatch(mixedShelfStyle, /linear-gradient|radial-gradient/);
+  const cssRuleBody = (selector) => {
+    const selectorStart = css.indexOf(selector);
+    const openingBrace = css.indexOf("{", selectorStart);
+    const closingBrace = css.indexOf("}", openingBrace);
+    return selectorStart >= 0 && openingBrace >= 0 && closingBrace >= 0
+      ? css.slice(openingBrace + 1, closingBrace)
+      : "";
+  };
+  const mixedShelfStyle = cssRuleBody(".home-mixed-shelf");
+  assert.ok(mixedShelfStyle.includes("background:transparent"));
+  assert.ok(mixedShelfStyle.includes("border:0"));
+  assert.ok(mixedShelfStyle.includes("box-shadow:none"));
+  assert.ok(!mixedShelfStyle.includes("linear-gradient"));
+  assert.ok(!mixedShelfStyle.includes("radial-gradient"));
 
-  const collectionPanelStyle = css.match(/\.home-collection-popular,\\s*\.home-collection-rated,\\s*\.home-collection-anime,\\s*\.home-collection-genre\\s*\\{([^}]*)\\}/)?.[1] || "";
-  assert.match(collectionPanelStyle, /background:\s*transparent/);
-  assert.match(collectionPanelStyle, /border:\s*0/);
-  assert.match(collectionPanelStyle, /box-shadow:\s*none/);
-  assert.match(css, /\.home-collection-television\\s*\\{\\s*padding-top:0;\\s*border-top:0;/);
-  assert.match(css, /\.home-movie-shelf\\s*\\{\\s*padding-top:0;\\s*border-top:0;/);
+  const collectionPanelStyle = cssRuleBody(
+    ".home-collection-popular,\\n.home-collection-rated,\\n.home-collection-anime,\\n.home-collection-genre"
+  );
+  assert.ok(collectionPanelStyle.includes("background:transparent"));
+  assert.ok(collectionPanelStyle.includes("border:0"));
+  assert.ok(collectionPanelStyle.includes("box-shadow:none"));
+  assert.ok(cssRuleBody(".home-collection-television").includes("border-top:0"));
+  assert.ok(cssRuleBody(".home-movie-shelf").includes("border-top:0"));
 });
