@@ -8217,3 +8217,46 @@ body:has(.login-page) .site-footer { display:none !important; }
   }
 }
 
+
+
+/* Keep the left brand strip and the right application header on one shared vertical grid. */
+@media (min-width:1101px) {
+  :root {
+    --site-desktop-header-height:76px;
+  }
+
+  .site-app-header .header-inner {
+    box-sizing:border-box;
+    height:var(--site-desktop-header-height);
+    min-height:var(--site-desktop-header-height);
+    max-height:var(--site-desktop-header-height);
+    align-items:center;
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+  }
+
+  .site-sidebar.home-sidebar,
+  .site-workspace > .site-sidebar {
+    padding-top:env(safe-area-inset-top,0px);
+  }
+
+  .site-sidebar .site-sidebar-heading {
+    box-sizing:border-box;
+    height:calc(var(--site-desktop-header-height) + 1px);
+    min-height:calc(var(--site-desktop-header-height) + 1px);
+    max-height:calc(var(--site-desktop-header-height) + 1px);
+    align-items:center;
+    padding:0;
+    margin:0;
+    flex:none;
+    border-bottom:1px solid rgba(255,255,255,.09);
+  }
+
+  .site-sidebar.is-collapsed .site-sidebar-heading {
+    height:calc(var(--site-desktop-header-height) + 1px);
+    min-height:calc(var(--site-desktop-header-height) + 1px);
+    max-height:calc(var(--site-desktop-header-height) + 1px);
+    padding:0;
+    margin:0;
+  }
+}
