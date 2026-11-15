@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { buildHomeCollections, mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
+import { buildHomeCollections, homeMediaRoute, mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import Link from "next/link";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { Button } from "./ui/button.jsx";
@@ -110,17 +110,11 @@ function MoviePosterImage({ movie }) {
 }
 
 function movieCardHref(movie) {
-  const imdbId = String(movie?.imdbId || "").toLowerCase();
-  return /^tt\d{5,12}$/.test(imdbId) ? "/watch/" + encodeURIComponent(imdbId) : null;
+  return homeMediaRoute(movie, "movie");
 }
 
 function seriesCardHref(item, kind) {
-  if (kind === "tv") {
-    const tmdbId = Number(item?.tmdbId);
-    return Number.isSafeInteger(tmdbId) && tmdbId > 0 ? "/tv/" + tmdbId : null;
-  }
-  const malId = String(item?.malId || "").trim();
-  return /^\d+$/.test(malId) ? "/anime/" + encodeURIComponent(malId) : null;
+  return homeMediaRoute(item, kind);
 }
 
 const FALLBACK_CATALOG_BADGE = Object.freeze({ key: "featured", label: "Featured" });
@@ -764,9 +758,9 @@ function HomeMixedShelf({ items, activeHeroId = "", onMovieOpen, onSeriesOpen, o
     <section className="netflix-shelf home-mixed-shelf">
       <div className="section-heading shelf-heading">
         <div>
-          <span>ACROSS MOVIES · TV · ANIME</span>
-          <h2>Trending now</h2>
-          <p className="home-collection-description">A rotating mix of stories from every corner of the Situla catalog.</p>
+          <span>LIVE DATABASE · MOVIES · TV · ANIME</span>
+          <h2>Explore the catalog</h2>
+          <p className="home-collection-description">Current titles returned by Situla’s catalogue database, with the featured title shown above.</p>
         </div>
       </div>
       <div
@@ -863,8 +857,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [heroMovies, setHeroMovies] = useState([]);
   const [homeTvShows, setHomeTvShows] = useState([]);
   const [homeAnimeShows, setHomeAnimeShows] = useState([]);
-  const [homeFreshMovies, setHomeFreshMovies] = useState([]);
-  const [homeMoviesReady, setHomeMoviesReady] = useState(false);
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [heroPaused, setHeroPaused] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
@@ -1036,7 +1028,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   useEffect(() => {
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
-    if (tab === "home") setHomeMoviesReady(false);
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
@@ -1116,7 +1107,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
-          if (tab === "home") setHomeMoviesReady(true);
         }
       }
     }, tab === "search" && query.trim() ? 250 : 0);
@@ -1135,29 +1125,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setHomeSeriesReady(false);
 
     async function loadSeries(mediaType) {
-      const recentKey = mediaType === "tv" ? "situla:recent-catalog:tv" : "situla:recent-catalog:anime";
-      const recentIds = readRecentCatalogIds(recentKey);
-      const params = new URLSearchParams({ page: "1", limit: "36", random: "true" });
-      if (recentIds.length) params.set("exclude", recentIds.join(","));
+      const params = new URLSearchParams({ page: "1", limit: "36" });
       const endpoint = (mediaType === "tv" ? "/api/tv?" : "/api/anime?") + params.toString();
-      const fallbackEndpoint = mediaType === "tv"
-        ? "/api/tv?page=1&limit=36&random=true"
-        : "/api/anime?page=1&limit=36&random=true";
       const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
-
-      async function request(url) {
-        const response = await fetch(url, { cache: "no-store", signal });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
-        return Array.isArray(payload.items) ? payload.items : [];
-      }
-
-      let items = await request(endpoint);
-      if (!items.length && recentIds.length && !controller.signal.aborted) {
-        items = await request(fallbackEndpoint);
-      }
-      rememberRecentCatalogIds(recentKey, items.map((item) => mediaType === "tv" ? item.tmdbId : item.malId));
-      return items;
+      const response = await fetch(endpoint, { cache: "no-store", signal });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
+      return Array.isArray(payload.items) ? payload.items : [];
     }
 
     Promise.allSettled([
@@ -1180,54 +1154,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return () => controller.abort();
   }, [tab]);
 
-  const homeFreshMoviesRequested = useRef(false);
-
-  useEffect(() => {
-    if (tab !== "home") {
-      homeFreshMoviesRequested.current = false;
-      setHomeFreshMovies([]);
-      setHomeMoviesReady(false);
-      return;
-    }
-    if (!homeMoviesReady || !movies.length || homeFreshMoviesRequested.current) return;
-
-    homeFreshMoviesRequested.current = true;
-    const controller = new AbortController();
-
-    async function loadFreshMovies() {
-      const recentKey = "situla:recent-catalog:home";
-      const recentIds = readRecentCatalogIds(recentKey);
-      const currentIds = movies.map((item) => String(item.imdbId || "").toLowerCase()).filter(Boolean);
-      const excluded = [...new Set([...recentIds, ...currentIds])];
-      const params = new URLSearchParams({ page: "1", limit: "36", random: "true" });
-      if (excluded.length) params.set("exclude", excluded.join(","));
-
-      try {
-        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
-        const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store", signal });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Fresh movie picks are unavailable.");
-        if (controller.signal.aborted) return;
-
-        const fresh = Array.isArray(payload.items) ? payload.items : [];
-        const seen = new Set(currentIds);
-        const unique = fresh.filter((item) => {
-          const id = String(item?.imdbId || "").trim().toLowerCase();
-          if (!/^tt\d{5,12}$/.test(id) || seen.has(id)) return false;
-          seen.add(id);
-          return true;
-        });
-        rememberRecentCatalogIds(recentKey, unique.map((item) => item.imdbId));
-        setHomeFreshMovies(unique);
-      } catch {
-        if (!controller.signal.aborted) setHomeFreshMovies([]);
-      }
-    }
-
-    loadFreshMovies();
-    return () => controller.abort();
-  }, [tab, homeMoviesReady, movies.length]);
-
   const homeHeroItems = useMemo(
     () => mixHomeSpotlight({
       movies: heroMovies,
@@ -1240,12 +1166,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const premiumCatalog = accountUser?.planId === "premium";
   const homeCollections = useMemo(() => buildHomeCollections({
     spotlightItems: homeHeroItems,
-    movies: [...homeFreshMovies, ...movies],
+    movies,
     tv: homeTvShows,
     anime: homeAnimeShows,
     categories: categoryShelves
   }, { premiumCatalog }), [
-    homeHeroItems, movies, homeFreshMovies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
+    homeHeroItems, movies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
   ]);
   const {
     popularSeriesItems,
@@ -2104,8 +2030,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <>
                 <MixedSeriesShelf
                   title="Popular series"
-                  eyebrow="MOST DISCOVERED"
-                  description="A cross-section of the TV and anime stories getting the most attention."
+                  eyebrow="RECORDED VOTE COUNTS"
+                  description="Series ordered by the audience vote totals stored with each catalogue record."
                   variant="popular"
                   items={popularSeriesItems}
                   onOpen={openHomeSeries}
@@ -2116,8 +2042,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 />
                 <MixedSeriesShelf
                   title="Audience favourites"
-                  eyebrow="TOP-RATED PICKS"
-                  description="High-scoring series, selected separately from the popular collection."
+                  eyebrow="PROVIDER RATING DATA"
+                  description="A separate collection ranked by each title’s recorded rating and vote count."
                   variant="rated"
                   items={favoriteSeriesItems}
                   onOpen={openHomeSeries}
@@ -2128,8 +2054,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 />
                 <SeriesShelf
                   title={premiumCatalog ? "Latest TV series" : "Top TV series"}
-                  eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "POPULAR TELEVISION"}
-                  description="Television picks gathered in their own collection."
+                  eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "DATABASE POPULARITY"}
+                  description="TV series ordered by the popularity values stored in the catalogue."
                   variant="television"
                   items={topTvShows}
                   kind="tv"
@@ -2141,8 +2067,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 />
                 <SeriesShelf
                   title={premiumCatalog ? "Latest anime series" : "Top anime series"}
-                  eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "TOP-RANKED ANIME"}
-                  description="A dedicated anime shelf with titles not shown in the other series collections."
+                  eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "DATABASE RANKING"}
+                  description="Anime titles ordered by their stored provider rank, without repeating earlier collections."
                   variant="anime"
                   items={topAnimeShows}
                   kind="anime"
