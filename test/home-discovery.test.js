@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { buildHomeCollections, homeMediaKey, mixHomeSpotlight, toHomeSpotlight } from "../src/home-discovery.js";
 
 test("home spotlight normalizes movie, TV, and anime metadata", () => {
@@ -112,4 +113,25 @@ test("home collections reserve featured titles and never repeat an ID between sh
   assert.ok(collections.topTvShows.length > 0);
   assert.ok(collections.topAnimeShows.length > 0);
   assert.ok(collections.categoryShelves[0].items.some((item) => item.imdbId === "tt6000000"));
+});
+
+
+test("landing page loads changing discovery pools and gives each collection its own layout", async () => {
+  const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "36", random: "true" })'));
+  assert.ok(app.includes('params.set("exclude", recentIds.join(","))'));
+  assert.ok(app.includes("rememberRecentCatalogIds(recentKey"));
+  assert.ok(app.includes("spotlightItems: homeHeroItems"));
+  assert.ok(app.includes("items.map((item) => item.mediaType === \"movie\""));
+  assert.ok(app.includes('variant="popular"'));
+  assert.ok(app.includes('variant="rated"'));
+  assert.ok(app.includes('variant="television"'));
+  assert.ok(app.includes('variant="anime"'));
+  assert.ok(css.includes(".home-collection-popular"));
+  assert.ok(css.includes(".home-collection-rated"));
+  assert.ok(css.includes(".home-collection-television"));
+  assert.ok(css.includes(".home-collection-anime"));
+  assert.ok(css.includes(".home-collection-genre"));
 });
