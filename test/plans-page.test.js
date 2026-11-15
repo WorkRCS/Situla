@@ -17,7 +17,7 @@ test("Plans page presents the three access modes with concise, accurate limits",
   assert.ok(page.includes('value="2 hours"'));
   assert.ok(page.includes('value="3 hours"'));
   assert.ok(page.includes('value="1 hour" detail="after the limit"'));
-  assert.ok(page.includes("Up to 3"));
+  assert.doesNotMatch(page, /DEVICES|registered device|deviceLimit|Up to 3/i);
   assert.ok(page.includes("Premium Verified badge"));
   assert.ok(page.includes("Continue as Guest"));
   assert.ok(page.includes("Sign in or create account"));
