@@ -200,5 +200,5 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(collectionPanelStyle.includes("border:0"));
   assert.ok(collectionPanelStyle.includes("box-shadow:none"));
   assert.ok(cssRuleBody(".home-collection-television").includes("border-top:0"));
-  assert.ok(cssRuleBody(".home-movie-shelf").includes("border-top:0"));
+  assert.ok(landingCss.includes(".home-movie-shelf {\n  padding-top:0;\n  border-top:0;"));
 });
