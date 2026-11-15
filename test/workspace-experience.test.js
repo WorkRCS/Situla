@@ -33,7 +33,9 @@ test("server route and mutation requests expose distinct loading states", async 
   assert.ok(routeProgress.includes('wrapHistoryMethod("replaceState", false)'));
   assert.ok(routeProgress.includes("Loading page from Situla server"));
   assert.ok(activityLoader.includes('["POST", "PUT", "PATCH", "DELETE"]'));
-  assert.ok(activityLoader.includes('"/api/playback/start"') === false);
+  assert.ok(activityLoader.includes('requestMethod === "GET"'));
+  assert.ok(activityLoader.includes("Date.now() - userActionAt <= 850"));
+  assert.ok(activityLoader.includes('"/api/upcoming/status"'));
   assert.ok(activityLoader.includes('"/api/presence"'));
   assert.ok(activityLoader.includes('"/api/playback/heartbeat"'));
   assert.ok(activityLoader.includes('"/api/playback/stop"'));
