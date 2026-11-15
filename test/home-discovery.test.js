@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mixHomeSpotlight, toHomeSpotlight } from "../src/home-discovery.js";
+import { buildHomeCollections, homeMediaKey, mixHomeSpotlight, toHomeSpotlight } from "../src/home-discovery.js";
 
 test("home spotlight normalizes movie, TV, and anime metadata", () => {
   const movie = toHomeSpotlight({ imdbId: "TT1234567", title: "Film", voteAverage: 8.1 }, "movie");
@@ -38,4 +38,78 @@ test("mixed spotlight alternates media types while multiple sources remain", () 
 
 test("mixed spotlight tolerates an empty catalog", () => {
   assert.deepEqual(mixHomeSpotlight({ movies: [], tv: [], anime: [] }), []);
+});
+
+
+test("home collections reserve featured titles and never repeat an ID between shelves", () => {
+  const movies = Array.from({ length: 18 }, (_, index) => ({
+    imdbId: "tt" + String(5000000 + index),
+    title: "Movie " + index,
+    popularity: 100 - index,
+    voteAverage: 9 - index / 10
+  }));
+  const tv = Array.from({ length: 30 }, (_, index) => ({
+    tmdbId: index + 1,
+    title: "TV " + index,
+    voteCount: 1000 - index * 10,
+    voteAverage: 9.5 - index / 20,
+    popularity: 500 - index,
+    firstAirDate: "2025-" + String((index % 12) + 1).padStart(2, "0") + "-01"
+  }));
+  const anime = Array.from({ length: 30 }, (_, index) => ({
+    malId: index + 1,
+    title: "Anime " + index,
+    scoredBy: 2000 - index * 10,
+    score: 9.8 - index / 20,
+    rank: index + 1,
+    airedFrom: "2025-" + String((index % 12) + 1).padStart(2, "0") + "-01"
+  }));
+  const featured = toHomeSpotlight(movies[0], "movie");
+  const spotlightItems = [
+    featured,
+    toHomeSpotlight(tv[0], "tv"),
+    toHomeSpotlight(anime[0], "anime"),
+    toHomeSpotlight(movies[1], "movie")
+  ];
+  const categories = [{
+    key: "action",
+    name: "Action",
+    items: [
+      ...movies.slice(0, 12),
+      ...Array.from({ length: 8 }, (_, index) => ({
+        imdbId: "tt" + String(6000000 + index),
+        title: "Genre Movie " + index,
+        popularity: 50 - index
+      }))
+    ]
+  }];
+
+  const collections = buildHomeCollections({
+    featured,
+    spotlightItems,
+    movies,
+    tv,
+    anime,
+    categories
+  });
+
+  const keys = [
+    ...collections.popularSeriesItems.map((item) => homeMediaKey(item)),
+    ...collections.favoriteSeriesItems.map((item) => homeMediaKey(item)),
+    ...collections.topTvShows.map((item) => homeMediaKey(item, "tv")),
+    ...collections.topAnimeShows.map((item) => homeMediaKey(item, "anime")),
+    ...collections.movieItems.map((item) => homeMediaKey(item, "movie")),
+    ...collections.categoryShelves.flatMap((category) =>
+      category.items.map((item) => homeMediaKey(item, "movie"))
+    )
+  ].filter(Boolean);
+
+  assert.equal(new Set(keys).size, keys.length, "a title should appear in only one collection");
+  assert.ok(!keys.includes(homeMediaKey(featured)), "the active hero title must not repeat below");
+  assert.ok(!keys.includes(homeMediaKey(spotlightItems[1])), "trending TV titles must not repeat below");
+  assert.ok(collections.popularSeriesItems.length > 0);
+  assert.ok(collections.favoriteSeriesItems.length > 0);
+  assert.ok(collections.topTvShows.length > 0);
+  assert.ok(collections.topAnimeShows.length > 0);
+  assert.ok(collections.categoryShelves[0].items.some((item) => item.imdbId === "tt6000000"));
 });
