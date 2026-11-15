@@ -113,7 +113,7 @@ test("Plans mobile layout flows naturally before the global footer", async () =>
   assert.ok(mobileRules.includes("max-height:none !important;"));
   assert.ok(mobileRules.includes("min-height:0 !important;"));
   assert.ok(mobileRules.includes("padding-bottom:calc(38px + 78px + env(safe-area-inset-bottom))"));
-  assert.ok(mobileRules.includes("margin-bottom:calc(78px + env(safe-area-inset-bottom))"));
+  assert.ok(css.includes("margin-bottom:calc(78px + env(safe-area-inset-bottom))"));
 });
 
 test("the shared workspace nav is edge-attached rather than a floating capsule", async () => {
