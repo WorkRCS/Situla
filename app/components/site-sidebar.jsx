@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, Film, House, PanelLeftClose, PanelLeftOpen, PlayCircle,
-  Settings, Tv
+  Settings, ShieldCheck, Tv
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -129,31 +129,59 @@ export function SiteSidebar({
           {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
         </button>
       </div>
-      <nav className="home-sidebar-nav" aria-label="Primary navigation">
-        {SITE_NAV_ITEMS.map((item, index) => {
-          const Icon = item.icon;
-          const selected = active ? active === item.id : isNavActive(pathname, item.href);
-          return (
-            <span className="site-sidebar-nav-item" key={item.id}>
-              {index === 5 && <span className="home-sidebar-divider" aria-hidden="true" />}
-              <Link
-                href={item.href}
-                prefetch={true}
-                className={"home-side-link" + (selected ? " active" : "")}
-                aria-current={selected ? "page" : undefined}
-                title={item.label}
-              >
-                <Icon size={17} strokeWidth={selected ? 2.2 : 1.9} />
-                <span>{item.label}</span>
-                {item.id === "upcoming" && showUpcomingLive && (
-                  <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>
-                )}
-              </Link>
-            </span>
-          );
-        })}
+      <nav className="home-sidebar-nav site-sidebar-navigation" aria-label="Primary navigation">
+        <div className="site-sidebar-nav-group">
+          <span className="site-sidebar-section-label">DISCOVER</span>
+          {SITE_NAV_ITEMS.slice(0, 5).map((item) => {
+            const Icon = item.icon;
+            const selected = active ? active === item.id : isNavActive(pathname, item.href);
+            return (
+              <span className="site-sidebar-nav-item" key={item.id}>
+                <Link
+                  href={item.href}
+                  prefetch={true}
+                  className={"home-side-link" + (selected ? " active" : "")}
+                  aria-current={selected ? "page" : undefined}
+                  title={item.label}
+                >
+                  <Icon size={17} strokeWidth={selected ? 2.2 : 1.9} />
+                  <span>{item.label}</span>
+                  {item.id === "upcoming" && showUpcomingLive && (
+                    <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>
+                  )}
+                </Link>
+              </span>
+            );
+          })}
+        </div>
+        <div className="site-sidebar-nav-group site-sidebar-nav-group-secondary">
+          <span className="home-sidebar-divider" aria-hidden="true" />
+          <span className="site-sidebar-section-label">YOUR SPACE</span>
+          {SITE_NAV_ITEMS.slice(5).map((item) => {
+            const Icon = item.icon;
+            const selected = active ? active === item.id : isNavActive(pathname, item.href);
+            return (
+              <span className="site-sidebar-nav-item" key={item.id}>
+                <Link
+                  href={item.href}
+                  prefetch={true}
+                  className={"home-side-link" + (selected ? " active" : "")}
+                  aria-current={selected ? "page" : undefined}
+                  title={item.label}
+                >
+                  <Icon size={17} strokeWidth={selected ? 2.2 : 1.9} />
+                  <span>{item.label}</span>
+                </Link>
+              </span>
+            );
+          })}
+        </div>
       </nav>
       {continueItems && <ContinueWatching items={continueItems} onResume={onResume} />}
+      <div className="site-sidebar-footer" aria-label="Situla workspace">
+        <span className="site-sidebar-footer-mark"><ShieldCheck size={15} strokeWidth={1.9} /></span>
+        <span className="site-sidebar-footer-copy"><strong>SITULA WORKSPACE</strong><small>Discover · Watch · Belong</small></span>
+      </div>
     </aside>
   );
 }
