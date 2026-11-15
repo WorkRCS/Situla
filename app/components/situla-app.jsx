@@ -888,6 +888,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [heroMovies, setHeroMovies] = useState([]);
   const [homeTvShows, setHomeTvShows] = useState([]);
   const [homeAnimeShows, setHomeAnimeShows] = useState([]);
+  const [homeFreshMovies, setHomeFreshMovies] = useState([]);
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [heroPaused, setHeroPaused] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
@@ -1199,6 +1200,53 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return () => controller.abort();
   }, [tab]);
 
+  const homeFreshMoviesRequested = useRef(false);
+
+  useEffect(() => {
+    if (tab !== "home") {
+      homeFreshMoviesRequested.current = false;
+      setHomeFreshMovies([]);
+      return;
+    }
+    if (loading || !movies.length || homeFreshMoviesRequested.current) return;
+
+    homeFreshMoviesRequested.current = true;
+    const controller = new AbortController();
+
+    async function loadFreshMovies() {
+      const recentKey = "situla:recent-catalog:home";
+      const recentIds = readRecentCatalogIds(recentKey);
+      const currentIds = movies.map((item) => String(item.imdbId || "").toLowerCase()).filter(Boolean);
+      const excluded = [...new Set([...recentIds, ...currentIds])];
+      const params = new URLSearchParams({ page: "1", limit: "36", random: "true" });
+      if (excluded.length) params.set("exclude", excluded.join(","));
+
+      try {
+        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
+        const response = await fetch("/api/movies?" + params.toString(), { cache: "no-store", signal });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Fresh movie picks are unavailable.");
+        if (controller.signal.aborted) return;
+
+        const fresh = Array.isArray(payload.items) ? payload.items : [];
+        const seen = new Set(currentIds);
+        const unique = fresh.filter((item) => {
+          const id = String(item?.imdbId || "").trim().toLowerCase();
+          if (!/^tt\\d{5,12}$/.test(id) || seen.has(id)) return false;
+          seen.add(id);
+          return true;
+        });
+        rememberRecentCatalogIds(recentKey, unique.map((item) => item.imdbId));
+        setHomeFreshMovies(unique);
+      } catch {
+        if (!controller.signal.aborted) setHomeFreshMovies([]);
+      }
+    }
+
+    loadFreshMovies();
+    return () => controller.abort();
+  }, [tab, loading, movies.length]);
+
   const homeHeroItems = useMemo(
     () => mixHomeSpotlight({
       movies: heroMovies,
@@ -1211,12 +1259,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const premiumCatalog = accountUser?.planId === "premium";
   const homeCollections = useMemo(() => buildHomeCollections({
     spotlightItems: homeHeroItems,
-    movies,
+    movies: [...homeFreshMovies, ...movies],
     tv: homeTvShows,
     anime: homeAnimeShows,
     categories: categoryShelves
   }, { premiumCatalog }), [
-    homeHeroItems, movies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
+    homeHeroItems, movies, homeFreshMovies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
   ]);
   const {
     popularSeriesItems,
