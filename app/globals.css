@@ -6855,3 +6855,353 @@ body:has(.login-page) .site-footer { display:none !important; }
   }
   .site-app-header .header-actions .header-search-label { display:none; }
 }
+
+
+/* Responsive workspace, shared tablet/mobile navigation, and dock-safe page endings. */
+:root {
+  --site-dock-clearance:calc(88px + env(safe-area-inset-bottom));
+}
+.catalog-load-more {
+  display:grid;
+  justify-items:center;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin:26px auto 12px;
+  padding-inline:8px;
+}
+.catalog-load-more-button {
+  display:inline-flex;
+  min-width:min(220px,100%);
+  min-height:44px;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  border-color:rgba(255,255,255,.13);
+  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.catalog-load-more-button:disabled {
+  cursor:wait;
+  opacity:.76;
+}
+.catalog-load-spinner {
+  width:14px;
+  height:14px;
+  flex:none;
+  border:2px solid rgba(232,182,91,.24);
+  border-top-color:#e8b65b;
+  border-radius:50%;
+  animation:catalog-load-spin .72s linear infinite;
+}
+@keyframes catalog-load-spin { to { transform:rotate(360deg); } }
+.catalog-load-more-error {
+  max-width:min(560px,100%);
+  margin:0;
+  color:#e7a0a0;
+  font-size:10px;
+  line-height:1.55;
+  text-align:center;
+}
+
+/* Slight glass depth; preserve the existing charcoal and gold palette. */
+.site-app-header {
+  background:rgba(8,9,14,.78);
+  backdrop-filter:blur(18px) saturate(125%);
+  -webkit-backdrop-filter:blur(18px) saturate(125%);
+}
+.site-sidebar {
+  background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.006));
+}
+.home-side-link {
+  border:1px solid transparent;
+  background:rgba(255,255,255,.018);
+  transition:color .16s ease,border-color .16s ease,background .16s ease,transform .16s ease;
+}
+.home-side-link:hover {
+  border-color:rgba(255,255,255,.075);
+  background:rgba(255,255,255,.045);
+  backdrop-filter:blur(10px);
+}
+.home-side-link.active {
+  border-color:rgba(232,182,91,.18);
+  background:linear-gradient(110deg,rgba(232,182,91,.12),rgba(232,182,91,.045));
+  backdrop-filter:blur(12px);
+}
+.header-avatar-trigger {
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.header-avatar-trigger:hover {
+  border-color:transparent;
+  background:transparent;
+}
+.header-avatar-initials {
+  border:1px solid rgba(255,230,181,.62);
+  box-shadow:0 4px 15px rgba(214,154,62,.2),0 0 0 3px rgba(232,182,91,.055);
+}
+.header-notification-trigger {
+  border-color:rgba(255,255,255,.15);
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.site-app-header .header-search-trigger {
+  border:1px solid rgba(255,255,255,.15);
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
+  box-shadow:inset 0 1px rgba(255,255,255,.045),0 5px 18px rgba(0,0,0,.12);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.plans-card,.plans-access-notes > div {
+  background:linear-gradient(155deg,rgba(255,255,255,.045),rgba(13,15,22,.84));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.plans-card-premium {
+  background:linear-gradient(155deg,rgba(232,182,91,.085),rgba(15,16,22,.88) 68%);
+}
+.header-account-popover,.header-notification-popover,.search-dialog {
+  background:rgba(17,20,29,.88);
+  backdrop-filter:blur(20px) saturate(125%);
+  -webkit-backdrop-filter:blur(20px) saturate(125%);
+}
+
+/* One shared navigation dock is used everywhere the desktop rail is hidden. */
+.bottom-nav,.site-workspace-mobile-nav {
+  position:fixed;
+  z-index:80;
+  right:auto;
+  bottom:max(8px,env(safe-area-inset-bottom));
+  left:50%;
+  display:flex;
+  width:min(760px,calc(100% - 20px));
+  max-width:760px;
+  min-height:62px;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:4px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:17px;
+  background:rgba(12,14,21,.78);
+  box-shadow:0 14px 38px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.045);
+  backdrop-filter:blur(18px) saturate(125%);
+  -webkit-backdrop-filter:blur(18px) saturate(125%);
+  scrollbar-width:none;
+  transform:translateX(-50%);
+  -webkit-overflow-scrolling:touch;
+}
+.bottom-nav::-webkit-scrollbar,.site-workspace-mobile-nav::-webkit-scrollbar { display:none; }
+.bottom-nav .nav-button,.site-workspace-mobile-link {
+  display:flex;
+  flex:1 0 64px;
+  min-width:64px;
+  max-width:96px;
+  min-height:48px;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:4px 5px;
+  border:1px solid transparent;
+  border-radius:11px;
+  color:#858b9b;
+  background:transparent;
+  font-size:8px;
+  font-weight:750;
+  line-height:1.1;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:color .16s ease,border-color .16s ease,background .16s ease;
+}
+.bottom-nav .nav-button > svg,.site-workspace-mobile-link > svg {
+  flex:none;
+  width:18px;
+  height:18px;
+}
+.bottom-nav .nav-button.active,.site-workspace-mobile-link.active {
+  border-color:rgba(232,182,91,.17);
+  color:#f0c471;
+  background:linear-gradient(145deg,rgba(232,182,91,.13),rgba(232,182,91,.055));
+  box-shadow:inset 0 1px rgba(255,255,255,.04);
+}
+.bottom-nav .nav-button:focus-visible,.site-workspace-mobile-link:focus-visible {
+  outline:2px solid rgba(232,182,91,.8);
+  outline-offset:-3px;
+}
+.bottom-nav .nav-button:active,.site-workspace-mobile-link:active { transform:translateY(1px); }
+.site-footer { position:relative; }
+@media (max-width:1100px) {
+  /* The global footer is after the route content; this scroll tail lets it clear
+     the fixed navigation dock instead of ending underneath it. */
+  body:has(.bottom-nav) .site-footer,
+  body:has(.site-workspace-mobile-nav) .site-footer {
+    margin-bottom:var(--site-dock-clearance);
+  }
+}
+@media (min-width:1101px) {
+  .bottom-nav,.site-workspace-mobile-nav { display:none !important; }
+}
+
+/* Tablets use the same bottom dock as phones, never the desktop icon rail. */
+@media (min-width:768px) and (max-width:1100px) {
+  .app-shell:has(.home-page-layout),
+  .app-shell:has(.app-view-layout) {
+    display:block;
+    width:100%;
+    height:auto;
+    min-height:100dvh;
+    max-height:none;
+    overflow:visible;
+    padding-bottom:var(--site-dock-clearance) !important;
+  }
+  .site-app-header .header-inner {
+    display:flex;
+    width:100%;
+    max-width:1600px;
+    min-height:70px;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:10px 22px !important;
+  }
+  .site-app-header .brand-lockup { grid-column:auto; flex:none; }
+  .site-app-header .brand-copy { display:grid; }
+  .site-app-header .header-actions {
+    grid-column:auto;
+    display:flex;
+    width:auto;
+    min-width:0;
+    flex:0 0 auto;
+    justify-content:flex-end;
+    gap:8px;
+    margin-left:auto;
+  }
+  .home-page-layout,.app-view-layout {
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    min-height:0;
+    margin-inline:auto;
+    overflow:visible;
+    padding:16px 22px 28px !important;
+  }
+  .home-page-layout > .site-sidebar,
+  .app-view-layout > .site-sidebar,
+  .home-page-layout > .home-sidebar {
+    display:none !important;
+  }
+  .home-main-column,.app-view-main-column {
+    display:block;
+    width:100%;
+    height:auto;
+    min-width:0;
+    min-height:0;
+    overflow:visible;
+    padding:12px 0 30px;
+  }
+  .app-shell:has(.home-page-layout) .bottom-nav,
+  .app-shell:has(.app-view-layout) .bottom-nav {
+    display:flex !important;
+  }
+
+  .site-workspace {
+    display:block;
+    width:100%;
+    height:auto;
+    max-height:none;
+    min-height:100dvh;
+    overflow:visible;
+    padding:14px 22px var(--site-dock-clearance);
+  }
+  .site-workspace > .site-sidebar { display:none !important; }
+  .site-workspace-main {
+    width:100%;
+    height:auto;
+    min-width:0;
+    min-height:0;
+    overflow:visible;
+    padding:0;
+  }
+  .site-workspace-main > .plans-page,
+  .site-workspace-main > .account-page {
+    width:100%;
+    max-width:1440px;
+    min-height:0;
+    margin-inline:auto;
+    overflow:visible;
+  }
+  .site-workspace-main .plans-topbar .plans-brand,
+  .site-workspace-main .account-page-topbar .account-brand { display:flex; }
+  .site-workspace-main .plans-topbar,
+  .site-workspace-main .account-page-topbar { justify-content:space-between; }
+  .site-workspace-mobile-nav { display:flex !important; }
+
+  .site-app-header .header-actions .header-search-trigger {
+    width:42px;
+    min-width:42px;
+    height:42px;
+    min-height:42px;
+    justify-content:center;
+    gap:0;
+    padding:0;
+    border-radius:50%;
+  }
+  .site-app-header .header-actions .header-search-label { display:none !important; }
+}
+
+/* Small screens keep the same dock and allow the footer and final card to scroll clear. */
+@media (max-width:767px) {
+  .app-shell:has(.home-page-layout),
+  .app-shell:has(.app-view-layout) {
+    padding-bottom:var(--site-dock-clearance) !important;
+  }
+  .site-workspace {
+    padding-bottom:var(--site-dock-clearance);
+  }
+  .bottom-nav,.site-workspace-mobile-nav {
+    width:calc(100% - 16px);
+    bottom:max(8px,env(safe-area-inset-bottom));
+    border-radius:15px;
+  }
+  .site-footer-top { gap:15px; }
+  .site-footer-links { gap:10px 15px; }
+  .site-app-header .header-actions .header-search-trigger {
+    width:40px;
+    min-width:40px;
+    height:40px;
+    min-height:40px;
+    justify-content:center;
+    gap:0;
+    padding:0;
+    border-radius:50%;
+  }
+  .site-app-header .header-actions .header-search-label { display:none !important; }
+}
+@media (max-width:380px) {
+  .site-app-header .header-inner { gap:6px; padding-inline:9px !important; }
+  .site-app-header .brand-copy { display:none; }
+  .site-app-header .header-actions { gap:5px; }
+  .site-app-header .header-avatar-trigger,
+  .site-app-header .header-notification-trigger,
+  .site-app-header .header-actions .header-search-trigger {
+    width:36px;
+    min-width:36px;
+    height:36px;
+    min-height:36px;
+  }
+  .site-app-header .header-avatar-initials { width:28px; height:28px; }
+  .bottom-nav .nav-button,.site-workspace-mobile-link { flex-basis:60px; min-width:60px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .catalog-load-spinner { animation:none !important; }
+  .bottom-nav .nav-button,.site-workspace-mobile-link,.home-side-link { transition:none !important; }
+}
