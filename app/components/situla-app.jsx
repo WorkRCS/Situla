@@ -12,7 +12,7 @@ import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
-import { SITE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
+import { SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
@@ -2380,7 +2380,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {SITE_NAV_ITEMS.map((item) => {
+        {SITE_MOBILE_NAV_ITEMS.map((item) => {
           const NavigationIcon = item.icon;
           return (
             <Link
