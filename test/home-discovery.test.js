@@ -176,13 +176,16 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(css.includes(".home-collection-anime"));
   assert.ok(css.includes(".home-collection-genre"));
 
+  const landingCssStart = css.indexOf("/* Landing page collections: keep shelves");
+  assert.ok(landingCssStart >= 0);
+  const landingCss = css.slice(landingCssStart);
   const cssRuleBody = (selector) => {
-    const selectorStart = css.indexOf(selector);
+    const selectorStart = landingCss.indexOf(selector);
     if (selectorStart < 0) return "";
-    const openingBrace = css.indexOf("{", selectorStart);
-    const closingBrace = css.indexOf("}", openingBrace);
+    const openingBrace = landingCss.indexOf("{", selectorStart);
+    const closingBrace = landingCss.indexOf("}", openingBrace);
     return openingBrace >= 0 && closingBrace >= 0
-      ? css.slice(openingBrace + 1, closingBrace)
+      ? landingCss.slice(openingBrace + 1, closingBrace)
       : "";
   };
   const mixedShelfStyle = cssRuleBody(".home-mixed-shelf");
