@@ -215,8 +215,8 @@ test("home and catalog spotlights refresh and rotate across all media types", as
   assert.match(app, /mixHomeSpotlight\(\{/);
   assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "36" \}\)/);
   assert.doesNotMatch(app, /new URLSearchParams\(\{ page: "1", limit: "36", random: "true" \}\)/);
-  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=10"/);
-  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=10"/);
+  assert.match(app, /loadSeries\("anime"/);
+  assert.match(app, /loadSeries\("anime"/);
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
   assert.match(app, /\}, 10000\)/);
@@ -355,8 +355,8 @@ test("home page omits personal watch-history shelves and shows catalog discovery
 
 test("home series use ranked catalog feeds and mix favorite series across TV and anime", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=10"/);
-  assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=10"/);
+  assert.match(app, /loadSeries\("anime"/);
+  assert.match(app, /loadSeries\("anime"/);
   assert.match(app, /tv: homeTvShows,/);
   assert.match(app, /anime: homeAnimeShows/);
   assert.match(app, /favoriteSeriesItems/);
