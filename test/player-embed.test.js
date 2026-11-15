@@ -172,7 +172,7 @@ test("Situla landing keeps the original gold palette and uses a distinct discove
   assert.match(app, /className="discovery-card discovery-movies"/);
   assert.match(app, /className="discovery-card discovery-tv"/);
   assert.match(app, /className="discovery-card discovery-anime"/);
-  assert.match(app, /className="spotlight-strip"/);
+  assert.match(app, /className="netflix-shelf home-mixed-shelf"/);
   assert.match(css, /--accent:#e8b65b/);
   assert.match(css, /#f7d58b/);
   assert.doesNotMatch(css, /#55b8ff|#69c7ff|#2388ee/);
@@ -182,9 +182,9 @@ test("Situla landing keeps the original gold palette and uses a distinct discove
 
 test("home page auto-advances and lets visitors select a spotlight title", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /setInterval\([\s\S]*?\}, 10000\)/);
+  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /onClick=\{\(\) => setHeroIndex\(index\)\}/);
-  assert.match(app, /aria-pressed=\{index === heroIndex\}/);
+  assert.match(app, /aria-pressed=\{false\}/);
 });
 
 
@@ -213,6 +213,8 @@ test("home and catalog spotlights refresh and rotate across all media types", as
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
   assert.match(app, /mixHomeSpotlight\(\{/);
+  assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "36" \}\)/);
+  assert.doesNotMatch(app, /new URLSearchParams\(\{ page: "1", limit: "36", random: "true" \}\)/);
   assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=10"/);
   assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=10"/);
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
@@ -344,10 +346,10 @@ test("home page omits personal watch-history shelves and shows catalog discovery
   assert.doesNotMatch(app, /title="Continue watching"/);
   assert.doesNotMatch(app, /title="Recently opened"/);
   assert.match(app, /title="Popular series"/);
-  assert.match(app, /title="Favorite series"/);
-  assert.match(app, /title="Top TV series"/);
-  assert.match(app, /title="Top anime series"/);
-  assert.match(app, /categoryShelves\.map\(\(category\)/);
+  assert.match(app, /title="Audience favourites"/);
+  assert.match(app, /title=\{premiumCatalog \? "Latest TV series" : "Top TV series"\}/);
+  assert.match(app, /title=\{premiumCatalog \? "Latest anime series" : "Top anime series"\}/);
+  assert.match(app, /homeCategoryShelves\.map\(\(category\)/);
   assert.match(app, /title=\{category\.name\}/);
 });
 
@@ -355,8 +357,8 @@ test("home series use ranked catalog feeds and mix favorite series across TV and
   const app = await read("../app/components/situla-app.jsx");
   assert.match(app, /loadSeries\("\/api\/tv\?page=1&limit=10"/);
   assert.match(app, /loadSeries\("\/api\/anime\?page=1&limit=10"/);
-  assert.match(app, /homeTvShows\.map\(\(item\) => \(\{ \.\.\.item, homeMediaKind: "tv" \}\)\)/);
-  assert.match(app, /homeAnimeShows\.map\(\(item\) => \(\{ \.\.\.item, homeMediaKind: "anime" \}\)\)/);
+  assert.match(app, /tv: homeTvShows,/);
+  assert.match(app, /anime: homeAnimeShows/);
   assert.match(app, /favoriteSeriesItems/);
   assert.match(app, /popularSeriesItems/);
 });
