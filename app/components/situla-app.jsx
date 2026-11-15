@@ -1204,20 +1204,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       movies: heroMovies,
       tv: homeTvShows.map((item) => toHomeSpotlight(item, "tv")).filter(Boolean),
       anime: homeAnimeShows.map((item) => toHomeSpotlight(item, "anime")).filter(Boolean)
-    }),
+    }).slice(0, 20),
     [heroMovies, homeTvShows, homeAnimeShows]
   );
 
   const premiumCatalog = accountUser?.planId === "premium";
   const homeCollections = useMemo(() => buildHomeCollections({
-    featured: homeHeroItems[heroIndex] || null,
-    spotlightItems: homeHeroItems.slice(0, 14),
+    spotlightItems: homeHeroItems,
     movies,
     tv: homeTvShows,
     anime: homeAnimeShows,
     categories: categoryShelves
   }, { premiumCatalog }), [
-    homeHeroItems, heroIndex, movies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
+    homeHeroItems, movies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
   ]);
   const {
     popularSeriesItems,
