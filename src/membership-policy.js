@@ -1,10 +1,10 @@
 export const WATCH_POLICIES = Object.freeze({
-  guest: Object.freeze({ allowanceSeconds: 3600, cooldownSeconds: 7200, deviceLimit: 0 }),
-  free: Object.freeze({ allowanceSeconds: 10800, cooldownSeconds: 3600, deviceLimit: 1 }),
+  guest: Object.freeze({ allowanceSeconds: 3600, cooldownSeconds: 7200 }),
+  free: Object.freeze({ allowanceSeconds: 10800, cooldownSeconds: 3600 }),
   premium: Object.freeze({
-    monthly: Object.freeze({ allowanceSeconds: 18000, cooldownSeconds: 2400, deviceLimit: 3 }),
-    'six-months': Object.freeze({ allowanceSeconds: 36000, cooldownSeconds: 1200, deviceLimit: 3 }),
-    yearly: Object.freeze({ allowanceSeconds: null, cooldownSeconds: 0, deviceLimit: 3 })
+    monthly: Object.freeze({ allowanceSeconds: 18000, cooldownSeconds: 2400 }),
+    'six-months': Object.freeze({ allowanceSeconds: 36000, cooldownSeconds: 1200 }),
+    yearly: Object.freeze({ allowanceSeconds: null, cooldownSeconds: 0 })
   })
 });
 
