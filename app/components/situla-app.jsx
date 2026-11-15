@@ -2390,7 +2390,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               aria-current={tab === item.id ? "page" : undefined}
               prefetch={true}
             >
-              <NavigationIcon size={19} strokeWidth={tab === item.id ? 2.25 : 1.9} />
+              <NavigationIcon size={20} strokeWidth={tab === item.id ? 2.25 : 1.9} />
               <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
             </Link>
           );
