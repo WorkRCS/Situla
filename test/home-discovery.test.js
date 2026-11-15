@@ -178,9 +178,10 @@ test("landing cards explicitly navigate and use live database catalogue ordering
 
   const cssRuleBody = (selector) => {
     const selectorStart = css.indexOf(selector);
+    if (selectorStart < 0) return "";
     const openingBrace = css.indexOf("{", selectorStart);
     const closingBrace = css.indexOf("}", openingBrace);
-    return selectorStart >= 0 && openingBrace >= 0 && closingBrace >= 0
+    return openingBrace >= 0 && closingBrace >= 0
       ? css.slice(openingBrace + 1, closingBrace)
       : "";
   };
@@ -191,9 +192,7 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(!mixedShelfStyle.includes("linear-gradient"));
   assert.ok(!mixedShelfStyle.includes("radial-gradient"));
 
-  const collectionPanelStyle = cssRuleBody(
-    ".home-collection-popular,\\n.home-collection-rated,\\n.home-collection-anime,\\n.home-collection-genre"
-  );
+  const collectionPanelStyle = cssRuleBody(".home-collection-popular,");
   assert.ok(collectionPanelStyle.includes("background:transparent"));
   assert.ok(collectionPanelStyle.includes("border:0"));
   assert.ok(collectionPanelStyle.includes("box-shadow:none"));
