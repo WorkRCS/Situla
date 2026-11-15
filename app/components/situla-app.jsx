@@ -803,7 +803,7 @@ function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pe
         onPointerCancel={shelfDrag.onPointerCancel}
         onClickCapture={shelfDrag.onClickCapture}
       >
-        {items.slice(0, 14).map((item) => item.mediaType === "movie" ? (
+        {items.map((item) => item.mediaType === "movie" ? (
           <MovieCard
             key={item.heroId}
             movie={item}
