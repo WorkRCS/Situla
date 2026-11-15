@@ -176,7 +176,7 @@ export function buildHomeCollections({
       ? (a, b) => homeReleaseDate(b) - homeReleaseDate(a) ||
         homeRating(b, "anime") - homeRating(a, "anime")
       : (a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) ||
-        homeRating(b, "anime") - homeRating(a, "anime)
+        homeRating(b, "anime") - homeRating(a, "anime")
   );
   const movieItems = takeUniqueHomeItems(
     movies,
