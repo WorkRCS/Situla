@@ -8,10 +8,10 @@ import { createRequestConcurrencyGuard } from './request-guard.js';
 import mongoose from 'mongoose';
 import { getCookie, setCookie } from 'hono/cookie';
 import {
-  User, AuthSession, Device, ActivitySession, Movie, TvSeries, AnimeSeries, Announcement, AnnouncementRead
+  User, AuthSession, ActivitySession, Movie, TvSeries, AnimeSeries, Announcement, AnnouncementRead
 } from './models.js';
 import {
-  SESSION_COOKIE, DEVICE_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
+  SESSION_COOKIE, OAUTH_STATE_COOKIE, OAUTH_NONCE_COOKIE,
   authSecret, normalizeEmail, validEmail, validPassword, hashPassword, hashToken, verifyPassword,
   getClientIp, isSameOriginRequest, enforceRateLimit, hasAdminRole, keyedHash,
   getSuspendedSession, isAccountSuspended,
@@ -207,27 +207,18 @@ const catalogAccessMemo = new Map();
 const CATALOG_ACCESS_MEMO_TTL_MS = 5_000;
 const CATALOG_ACCESS_MEMO_MAX_ENTRIES = 1_000;
 
-async function resolveCatalogAccess(sessionToken, deviceToken) {
-  // This middleware runs before route handlers, so establish Mongo before any Mongoose query.
+async function resolveCatalogAccess(sessionToken) {
+  // Catalog tier lookup is tied to the authenticated account session, not a device registry.
   await connectDatabase();
   const now = new Date();
   const session = await AuthSession.findOne({
     tokenHash: hashToken(sessionToken),
-    expiresAt: { $gt: now },
     revokedAt: null
-  }).select('userId deviceId').lean();
+  }).select('userId').lean();
   if (!session) return null;
 
-  const [user, device] = await Promise.all([
-    User.findById(session.userId).select('status suspendedUntil planId membership').lean(),
-    Device.exists({
-      _id: session.deviceId,
-      userId: session.userId,
-      tokenHash: hashToken(deviceToken),
-      revokedAt: null
-    })
-  ]);
-  if (!user || !device) return null;
+  const user = await User.findById(session.userId).select('status suspendedUntil planId membership').lean();
+  if (!user) return null;
 
   const suspensionExpired = user.status === 'suspended' && user.suspendedUntil &&
     new Date(user.suspendedUntil) <= now;
@@ -235,8 +226,8 @@ async function resolveCatalogAccess(sessionToken, deviceToken) {
   return getWatchPolicy(user, now).planId === 'premium' ? { plan: 'premium' } : null;
 }
 
-async function getMemoizedCatalogAccess(sessionToken, deviceToken) {
-  const key = hashToken('catalog-tier:' + sessionToken + ':' + deviceToken);
+async function getMemoizedCatalogAccess(sessionToken) {
+  const key = hashToken('catalog-tier:' + sessionToken);
   const now = Date.now();
   const existing = catalogAccessMemo.get(key);
   if (existing && existing.expiresAt > now) {
@@ -247,7 +238,7 @@ async function getMemoizedCatalogAccess(sessionToken, deviceToken) {
   if (existing) catalogAccessMemo.delete(key);
 
   const entry = { expiresAt: Number.POSITIVE_INFINITY, promise: null };
-  entry.promise = resolveCatalogAccess(sessionToken, deviceToken).then((access) => {
+  entry.promise = resolveCatalogAccess(sessionToken).then((access) => {
     entry.expiresAt = Date.now() + CATALOG_ACCESS_MEMO_TTL_MS;
     return access;
   }).catch((error) => {
@@ -267,15 +258,14 @@ async function getPremiumCatalogAccess(c) {
   if (c.get('premiumCatalogAccessResolved')) return c.get('premiumCatalogAccess');
 
   const sessionToken = getCookie(c, SESSION_COOKIE);
-  const deviceToken = getCookie(c, DEVICE_COOKIE);
   // Anonymous traffic stays on the public feed and never opens a database connection for cache lookup.
-  if (!sessionToken || !deviceToken) {
+  if (!sessionToken) {
     c.set('premiumCatalogAccessResolved', true);
     c.set('premiumCatalogAccess', null);
     return null;
   }
 
-  const access = await getMemoizedCatalogAccess(sessionToken, deviceToken);
+  const access = await getMemoizedCatalogAccess(sessionToken);
   c.set('premiumCatalogAccessResolved', true);
   c.set('premiumCatalogAccess', access);
   return access;
@@ -540,7 +530,6 @@ app.post('/api/auth/email', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const email = normalizeEmail(body.email);
   const password = body.password;
-  const rememberMe = body.rememberMe !== false;
   if (!validEmail(email)) {
     return c.json({ error: 'Enter a valid email address.', code: 'INVALID_EMAIL' }, 400);
   }
@@ -590,8 +579,8 @@ app.post('/api/auth/email', async (c) => {
       }
     }
 
-    const session = await createLoginSession(c, user, rememberMe);
-    return c.json({ user: safeUser(user), created, sessionExpiresAt: session.expiresAt }, created ? 201 : 200);
+    await createLoginSession(c, user);
+    return c.json({ user: safeUser(user), created }, created ? 201 : 200);
   } catch (error) {
     return apiError(c, error, 'Email sign-in is temporarily unavailable.');
   }
@@ -696,7 +685,7 @@ app.get('/api/auth/google/callback', async (c) => {
     if (await isAccountSuspended(user) || user.status !== 'active') {
       throw new Error('This account is suspended or unavailable.');
     }
-    await createLoginSession(c, user, true);
+    await createLoginSession(c, user);
     clearOAuthCookies(c);
     return c.redirect('/profile', 302);
   } catch (error) {
@@ -721,16 +710,8 @@ app.get('/api/auth/me', async (c) => {
     const authenticated = await getAuthenticatedSession(c);
     if (!authenticated) return c.json({ error: 'Sign-in required.', code: 'UNAUTHENTICATED' }, 401);
     const user = authenticated.user;
-    const [deviceCount, access] = await Promise.all([
-      Device.countDocuments({ userId: user._id, revokedAt: null }),
-      readAccessStatus({ ownerType: 'user', ownerId: user._id, user })
-    ]);
-    const safe = safeUser(user);
-    return c.json({
-      user: safe,
-      devices: { active: deviceCount, limit: getWatchPolicy(user).deviceLimit },
-      access
-    });
+    const access = await readAccessStatus({ ownerType: 'user', ownerId: user._id, user });
+    return c.json({ user: safeUser(user), access });
   } catch (error) {
     return apiError(c, error, 'Could not load the account session.');
   }
@@ -824,51 +805,6 @@ app.post('/api/auth/logout', async (c) => {
     return c.json({ signedOut: true });
   } catch (error) {
     return apiError(c, error, 'Sign-out is temporarily unavailable.');
-  }
-});
-
-app.get('/api/auth/devices', async (c) => {
-  try {
-    await connectDatabase();
-    const authenticated = await getAuthenticatedSession(c);
-    if (!authenticated) return c.json({ error: 'Sign-in required.' }, 401);
-    const devices = await Device.find({ userId: authenticated.user._id, revokedAt: null })
-      .sort({ lastSeenAt: -1 }).lean();
-    return c.json({
-      items: devices.map((device) => ({
-        id: String(device._id),
-        label: device.label,
-        lastSeenAt: device.lastSeenAt,
-        slot: Number.isInteger(device.slot) ? device.slot + 1 : null,
-        current: String(device._id) === String(authenticated.device._id)
-      })),
-      limit: getWatchPolicy(authenticated.user).deviceLimit
-    });
-  } catch (error) {
-    return apiError(c, error, 'Could not load registered devices.');
-  }
-});
-
-app.delete('/api/auth/devices/:deviceId', async (c) => {
-  const originFailure = requireSameOrigin(c);
-  if (originFailure) return originFailure;
-  const deviceId = c.req.param('deviceId');
-  if (!/^[a-f0-9]{24}$/i.test(deviceId)) return c.json({ error: 'Invalid device ID.' }, 400);
-  try {
-    await connectDatabase();
-    const authenticated = await getAuthenticatedSession(c);
-    if (!authenticated) return c.json({ error: 'Sign-in required.' }, 401);
-    const device = await Device.findOne({ _id: deviceId, userId: authenticated.user._id, revokedAt: null });
-    if (!device) return c.json({ error: 'Device not found.' }, 404);
-    const now = new Date();
-    device.revokedAt = now;
-    await device.save();
-    await AuthSession.updateMany({ deviceId: device._id, revokedAt: null }, { $set: { revokedAt: now, expiresAt: now } });
-    const isCurrent = String(device._id) === String(authenticated.device._id);
-    if (isCurrent) await revokeCurrentSession(c);
-    return c.json({ revoked: true, currentDevice: isCurrent });
-  } catch (error) {
-    return apiError(c, error, 'Could not revoke the device.');
   }
 });
 
