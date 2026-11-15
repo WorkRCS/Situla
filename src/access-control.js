@@ -10,7 +10,7 @@ const GUEST_SESSION_AGE_SECONDS = 30 * 24 * 60 * 60;
 export async function resolvePlaybackPrincipal(c) {
   const authenticated = await getAuthenticatedSession(c);
   if (authenticated) {
-    return { ownerType: 'user', ownerId: authenticated.user._id, user: authenticated.user, device: authenticated.device, session: authenticated.session };
+    return { ownerType: 'user', ownerId: authenticated.user._id, user: authenticated.user, session: authenticated.session };
   }
   const suspended = await getSuspendedSession(c);
   if (suspended) {
