@@ -154,3 +154,20 @@ test("Free signed-in profiles can open a responsive Premium upgrade modal with a
   assert.match(css, /\.profile-upgrade-dialog \{[\s\S]*?max-height:min\(92dvh,900px\)/);
   assert.match(css, /@media \(max-width:620px\) \{[\s\S]*?\.profile-upgrade-feature-grid \{ grid-template-columns:minmax\(0,1fr\)/);
 });
+
+
+test("Profile stays in the account menu and responsive navigation stays compact", async () => {
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+  const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
+  const navItems = sidebar.match(/export const SITE_NAV_ITEMS = \\[([\\s\\S]*?)\\];/)?.[1] || "";
+
+  assert.doesNotMatch(navItems, /profile|Profile/);
+  assert.ok(app.includes('router.push("/profile")'));
+  assert.ok(css.includes("column-gap:0 !important;"));
+  assert.ok(css.includes("min-width:0 !important;"));
+  assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important;"));
+  assert.ok(css.includes("Shared page-header glass treatment"));
+  assert.ok(css.includes(".site-app-header .header-notification-trigger"));
+  assert.ok(css.includes(".site-app-header .header-actions .header-search-trigger"));
+});
