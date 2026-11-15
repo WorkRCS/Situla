@@ -1238,7 +1238,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const seen = new Set(currentIds);
         const unique = fresh.filter((item) => {
           const id = String(item?.imdbId || "").trim().toLowerCase();
-          if (!/^tt\\d{5,12}$/.test(id) || seen.has(id)) return false;
+          if (!/^tt\d{5,12}$/.test(id) || seen.has(id)) return false;
           seen.add(id);
           return true;
         });
