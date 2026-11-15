@@ -265,34 +265,33 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
-test("mobile/tablet bottom navigation has no in-app Back or Search button", async () => {
+test("mobile/tablet bottom navigation uses the shared sidebar items without inline Back or Search actions", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
   const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
   assert.doesNotMatch(bottomNav, /navigateBack|aria-label="Go back|>Back</);
   assert.doesNotMatch(bottomNav, /setSearchOpen|>Search</);
-  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)\.map/);
+  assert.match(app, /SITE_NAV_ITEMS\.map/);
+  assert.match(sidebar, /export const SITE_NAV_ITEMS = \[/);
+  assert.match(sidebar, /label: "Profile"/);
   assert.match(app, /className="header-search-wrap"/);
   assert.doesNotMatch(app, /function navigateBack\(/);
-  assert.match(css, /\.bottom-nav \{ grid-template-columns:repeat\(7,minmax\(0,1fr\)\);/);
+  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?position:fixed/);
 });
-
-test("mobile/tablet navigation is fixed to the viewport bottom with rounded top corners", async () => {
+test("mobile/tablet navigation is a shared, scrollable glass dock with safe-area clearance", async () => {
   const css = await read("../app/globals.css");
   const app = await read("../app/components/situla-app.jsx");
   const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
-  assert.match(bottomNav, /NAV_ITEMS\.filter/);
-  const dockStyles = css.slice(css.indexOf("/* Mobile and tablet navigation:"));
-  assert.match(dockStyles, /\.bottom-nav \{[\s\S]*?position:fixed !important;[\s\S]*?left:0 !important;[\s\S]*?right:0 !important;[\s\S]*?bottom:0 !important;[\s\S]*?width:100% !important;/);
-  assert.match(dockStyles, /border-radius:22px 22px 0 0 !important/);
-  assert.match(css, /grid-template-columns:repeat\(7,minmax\(0,1fr\)\) !important/);
-  assert.match(css, /-webkit-backdrop-filter:blur\(26px\) saturate\(180%\) !important/);
-  assert.doesNotMatch(css, /\.bottom-nav,\.rating-pill,\.save-button/);
-  assert.match(css, /animation:premium-glass-sheen-forward 1s linear infinite/);
-  assert.match(css, /@keyframes premium-glass-sheen-forward[\s\S]*?translateX\(520%\)/);
-  assert.equal((css.match(/animation:premium-glass-sheen-forward/g) || []).length, 1);
+  assert.match(bottomNav, /SITE_NAV_ITEMS\.map/);
+  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?position:fixed/);
+  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav \{[\s\S]*?bottom:max\(8px,env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /overflow-x:auto/);
+  assert.match(css, /backdrop-filter:blur\(18px\) saturate\(125%\)/);
+  assert.match(css, /--site-dock-clearance:calc\(88px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?display:flex !important/);
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?display:flex !important/);
 });
-
 test("all Situla page text is non-selectable", async () => {
   const css = await read("../app/globals.css");
   assert.match(css, /\*, \*::before, \*::after \{[\s\S]*?-webkit-user-select:none !important;[\s\S]*?user-select:none !important;/);
@@ -375,7 +374,9 @@ test("load-more failures keep current catalog cards and do not surface raw serve
   const app = await read("../app/components/situla-app.jsx");
   const loadMore = app.slice(app.indexOf("async function loadMore"), app.indexOf("function removeHistoryItem"));
   assert.match(loadMore, /const hasExistingItems = tab === "tv"/);
-  assert.match(loadMore, /Your current catalog remains available/);
+  assert.match(loadMore, /Your current titles are still available/);
+  assert.match(loadMore, /setLoadMoreError\(statusMessage\)/);
+  assert.match(loadMore, /Please try again/);
   assert.doesNotMatch(loadMore, /requestError\.message|setMovies\(\[\]\)|setTvShows\(\[\]\)|setAnimeShows\(\[\]\)/);
 });
 
