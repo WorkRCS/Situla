@@ -69,3 +69,141 @@ export function mixHomeSpotlight({ movies = [], tv = [], anime = [] } = {}, rand
 
   return mixed;
 }
+
+
+const HOME_MEDIA_ID_FIELDS = Object.freeze({
+  movie: "imdbId",
+  tv: "tmdbId",
+  anime: "malId"
+});
+
+export function homeMediaKey(item, mediaType = item?.homeMediaKind || item?.mediaType) {
+  const field = HOME_MEDIA_ID_FIELDS[mediaType];
+  if (!item || !field) return "";
+  const rawId = item[field];
+  if (mediaType === "movie") {
+    const id = String(rawId || "").trim().toLowerCase();
+    return /^tt\\d{5,12}$/.test(id) ? "movie:" + id : "";
+  }
+  const id = Number(rawId);
+  return Number.isSafeInteger(id) && id > 0 ? mediaType + ":" + id : "";
+}
+
+function homeRating(item, mediaType) {
+  return Number(mediaType === "anime" ? item?.score : item?.voteAverage) || 0;
+}
+
+function homeAudience(item, mediaType) {
+  return Number(mediaType === "tv" ? item?.voteCount : item?.scoredBy) || 0;
+}
+
+function homeReleaseDate(item) {
+  return Date.parse(item?.releaseDate || item?.firstAirDate || item?.airedFrom || "") || 0;
+}
+
+function takeUniqueHomeItems(items, mediaType, used, limit, compare) {
+  const sorted = compare ? [...items].sort(compare) : [...items];
+  const selected = [];
+  for (const item of sorted) {
+    const kind = mediaType || item?.homeMediaKind || item?.mediaType;
+    const key = homeMediaKey(item, kind);
+    if (!key || used.has(key)) continue;
+    used.add(key);
+    selected.push(item);
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
+
+/**
+ * Builds independent landing-page collections. The active hero and mixed
+ * trending row are reserved first; every later shelf consumes only unseen IDs.
+ */
+export function buildHomeCollections({
+  featured = null,
+  spotlightItems = [],
+  movies = [],
+  tv = [],
+  anime = [],
+  categories = []
+} = {}, { premiumCatalog = false } = {}) {
+  const used = new Set();
+  for (const item of [...spotlightItems, featured]) {
+    const key = homeMediaKey(item);
+    if (key) used.add(key);
+  }
+
+  const tvItems = takeUniqueHomeItems(tv, "tv", new Set(), tv.length);
+  const animeItems = takeUniqueHomeItems(anime, "anime", new Set(), anime.length);
+  const mixedSeries = [
+    ...tvItems.map((item) => ({ ...item, homeMediaKind: "tv" })),
+    ...animeItems.map((item) => ({ ...item, homeMediaKind: "anime" }))
+  ];
+
+  const popularSeriesItems = takeUniqueHomeItems(
+    mixedSeries,
+    null,
+    used,
+    8,
+    (a, b) => homeAudience(b, b.homeMediaKind) - homeAudience(a, a.homeMediaKind) ||
+      homeRating(b, b.homeMediaKind) - homeRating(a, a.homeMediaKind)
+  );
+  const favoriteSeriesItems = takeUniqueHomeItems(
+    mixedSeries,
+    null,
+    used,
+    8,
+    (a, b) => homeRating(b, b.homeMediaKind) - homeRating(a, a.homeMediaKind) ||
+      homeAudience(b, b.homeMediaKind) - homeAudience(a, a.homeMediaKind)
+  );
+  const topTvShows = takeUniqueHomeItems(
+    tvItems,
+    "tv",
+    used,
+    8,
+    premiumCatalog
+      ? null
+      : (a, b) => Number(b.popularity || 0) - Number(a.popularity || 0) ||
+        homeReleaseDate(b) - homeReleaseDate(a)
+  );
+  const topAnimeShows = takeUniqueHomeItems(
+    animeItems,
+    "anime",
+    used,
+    8,
+    premiumCatalog
+      ? null
+      : (a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) ||
+        homeRating(b, "anime") - homeRating(a, "anime")
+  );
+  const movieItems = takeUniqueHomeItems(
+    movies,
+    "movie",
+    used,
+    12,
+    (a, b) => Number(b.popularity || 0) - Number(a.popularity || 0) ||
+      Number(b.voteAverage || 0) - Number(a.voteAverage || 0)
+  );
+  const categoryShelves = (Array.isArray(categories) ? categories : [])
+    .map((category) => ({
+      ...category,
+      items: takeUniqueHomeItems(
+        Array.isArray(category?.items) ? category.items : [],
+        "movie",
+        used,
+        10,
+        (a, b) => Number(b.popularity || 0) - Number(a.popularity || 0) ||
+          Number(b.voteAverage || 0) - Number(a.voteAverage || 0)
+      )
+    }))
+    .filter((category) => category.items.length > 0);
+
+  return {
+    popularSeriesItems,
+    favoriteSeriesItems,
+    topTvShows,
+    topAnimeShows,
+    movieItems,
+    categoryShelves
+  };
+}
