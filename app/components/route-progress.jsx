@@ -12,6 +12,9 @@ export default function RouteProgress() {
 
   useEffect(() => {
     function start(target) {
+      const current = pendingRef.current;
+      if (current && current.pathname === target.pathname &&
+          current.search === target.search && !current.finishing) return;
       if (doneTimerRef.current) {
         window.clearTimeout(doneTimerRef.current);
         doneTimerRef.current = null;
@@ -52,11 +55,39 @@ export default function RouteProgress() {
       start(new URL(window.location.href));
     }
 
+    function wrapHistoryMethod(method, trackSearch) {
+      const original = window.history[method];
+      function wrappedHistoryMethod(state, title, url) {
+        let target = null;
+        try {
+          if (url !== undefined && url !== null) {
+            target = new URL(String(url), window.location.href);
+          }
+        } catch {}
+        const currentUrl = new URL(window.location.href);
+        const changed = target && target.origin === currentUrl.origin &&
+          (target.pathname !== currentUrl.pathname || (trackSearch && target.search !== currentUrl.search));
+        const result = original.apply(this, arguments);
+        if (changed) start(target);
+        return result;
+      }
+      window.history[method] = wrappedHistoryMethod;
+      return () => {
+        if (window.history[method] === wrappedHistoryMethod) {
+          window.history[method] = original;
+        }
+      };
+    }
+
+    const restorePushState = wrapHistoryMethod("pushState", true);
+    const restoreReplaceState = wrapHistoryMethod("replaceState", false);
     document.addEventListener("click", onDocumentClick, true);
     window.addEventListener("popstate", onPopState);
     return () => {
       document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener("popstate", onPopState);
+      restorePushState();
+      restoreReplaceState();
       if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
   }, []);
@@ -115,7 +146,7 @@ export default function RouteProgress() {
     <div
       className={"site-route-progress" + (visible ? " is-visible" : "")}
       role="progressbar"
-      aria-label="Loading page"
+      aria-label="Loading page from Situla server"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={visible ? progress : 0}
