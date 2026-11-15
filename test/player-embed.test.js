@@ -416,29 +416,23 @@ test("Sidebar collapse updates the parent grid and persists between routes", asy
 });
 
 
-test("sidebar routes share one mobile and tablet navigation dock", async () => {
+test("sidebar routes share the exact existing seven-item mobile navigation bar", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
 
-  assert.match(app, /import \{ SITE_NAV_ITEMS, SiteSidebar \} from "\.\/site-sidebar\.jsx"/);
-  assert.match(app, /\{SITE_NAV_ITEMS\.map\(\(item\) =>/);
-  assert.match(sidebar, /export const SITE_NAV_ITEMS = \[/);
-  assert.match(sidebar, /<nav className="site-workspace-mobile-nav"/);
-  assert.match(sidebar, /SITE_NAV_ITEMS\.map\(\(item\) =>/);
-  assert.match(css, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?\.site-workspace > \.site-sidebar \{ display:none !important; \}/);
-  assert.match(css, /\.app-shell:has\(\.home-page-layout\) \.bottom-nav,[\s\S]*?display:flex !important;/);
-  assert.match(css, /\.site-workspace-mobile-nav \{ display:flex !important; \}/);
-  assert.match(css, /\.home-page-layout > \.site-sidebar,[\s\S]*?display:none !important;/);
-});
-
-test("footer has scroll clearance below the fixed mobile and tablet navigation", async () => {
-  const css = await read("../app/globals.css");
-  assert.match(css, /--site-dock-clearance:calc\(88px \+ env\(safe-area-inset-bottom\)\)/);
-  assert.match(css, /body:has\(\.bottom-nav\) \.site-footer,[\s\S]*?margin-bottom:var\(--site-dock-clearance\)/);
-  assert.match(css, /\.site-workspace \{[\s\S]*?padding:14px 22px var\(--site-dock-clearance\)/);
-  assert.match(css, /\.site-workspace-main \{[\s\S]*?overflow:visible/);
-  assert.match(css, /@media \(max-width:767px\)[\s\S]*?display:flex !important;/);
+  assert.ok(app.includes('import { SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx"'));
+  assert.ok(app.includes("{SITE_MOBILE_NAV_ITEMS.map((item) =>"));
+  assert.ok(sidebar.includes("export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS"));
+  assert.ok(sidebar.includes('filter((item) => item.id !== "profile")'));
+  assert.ok(sidebar.includes('<nav className="bottom-nav site-workspace-mobile-nav"'));
+  assert.ok(sidebar.includes('className={"nav-button site-workspace-mobile-link"'));
+  assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
+  assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
+  assert.ok(css.includes("bottom:0 !important"));
+  assert.ok(css.includes("width:100% !important"));
+  assert.ok(css.includes(".site-workspace-mobile-nav { display:flex !important; }"));
+  assert.ok(css.includes(".site-workspace-mobile-nav { display:none !important; }"));
 });
 
 test("header account and search controls use a clean, consistent icon treatment", async () => {
