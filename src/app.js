@@ -938,6 +938,16 @@ const MOVIE_CATEGORIES = [
   { key: 'horror', name: 'Horror' }
 ];
 
+const HOME_DISCOVERY_LIMIT = 36;
+const HOME_MOVIE_DISCOVERY_SORT = {
+  trendScore: -1,
+  voteVelocity7d: -1,
+  popularity: -1,
+  voteCount: -1,
+  releaseDate: -1,
+  _id: 1
+};
+
 app.get('/api/movies/discover', async (c) => {
   try {
     await connectDatabase();
@@ -952,7 +962,7 @@ app.get('/api/movies/discover', async (c) => {
       const dateSort = buildNewestFirstSort('releaseDate', { popularity: -1 });
       const facets = {
         featuredLatest: [{ $limit: 1 }],
-        itemsLatest: [{ $limit: PREMIUM_FEED_LIMIT }]
+        itemsLatest: [{ $limit: HOME_DISCOVERY_LIMIT }]
       };
       for (const category of MOVIE_CATEGORIES) {
         facets[category.key + 'Latest'] = [
@@ -965,7 +975,7 @@ app.get('/api/movies/discover', async (c) => {
         Movie.countDocuments(baseFilter)
       ]);
       if (!result.itemsLatest?.length && total > 0) {
-        const fallbackItems = await Movie.find(baseFilter).sort(dateSort).limit(PREMIUM_FEED_LIMIT).lean();
+        const fallbackItems = await Movie.find(baseFilter).sort(dateSort).limit(HOME_DISCOVERY_LIMIT).lean();
         result = {
           ...result,
           itemsLatest: fallbackItems,
@@ -984,22 +994,26 @@ app.get('/api/movies/discover', async (c) => {
         items: (result?.itemsLatest || []).map(movieDto),
         categories,
         personalizedFeed: { plan: 'premium', sort: 'newest_first' },
-        pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
+        pagination: { page: 1, limit: HOME_DISCOVERY_LIMIT, total, totalPages: Math.ceil(total / HOME_DISCOVERY_LIMIT) }
       });
     }
 
     const facets = {
-      featured: [{ $sample: { size: 1 } }],
-      items: [{ $sample: { size: PREMIUM_FEED_LIMIT } }]
+      featured: [{ $limit: 1 }],
+      items: [{ $limit: HOME_DISCOVERY_LIMIT }]
     };
     for (const category of MOVIE_CATEGORIES) {
       facets[category.key] = [
         { $match: { genres: category.name } },
-        { $sample: { size: PREMIUM_FEED_LIMIT } }
+        { $limit: PREMIUM_FEED_LIMIT }
       ];
     }
     let [result, total] = await Promise.all([
-      Movie.aggregate([{ $match: publicFilter }, { $facet: facets }]).then((rows) => rows[0] || {}),
+      Movie.aggregate([
+        { $match: publicFilter },
+        { $sort: HOME_MOVIE_DISCOVERY_SORT },
+        { $facet: facets }
+      ]).then((rows) => rows[0] || {}),
       Movie.countDocuments(publicFilter)
     ]);
     // A browser may have marked every record as recently shown (for example,
@@ -1015,8 +1029,8 @@ app.get('/api/movies/discover', async (c) => {
     // fall back to a direct indexed read so the catalogue does not render blank.
     if (!result.items?.length && total > 0) {
       const fallbackItems = await Movie.find(baseFilter)
-        .sort({ popularity: -1, releaseDate: -1, _id: 1 })
-        .limit(PREMIUM_FEED_LIMIT)
+        .sort(HOME_MOVIE_DISCOVERY_SORT)
+        .limit(HOME_DISCOVERY_LIMIT)
         .lean();
       if (fallbackItems.length) {
         result = {
@@ -1036,7 +1050,7 @@ app.get('/api/movies/discover', async (c) => {
       featured: result?.featured?.[0] ? movieDto(result.featured[0]) : null,
       items: (result?.items || []).map(movieDto),
       categories,
-      pagination: { page: 1, limit: PREMIUM_FEED_LIMIT, total, totalPages: Math.ceil(total / PREMIUM_FEED_LIMIT) }
+      pagination: { page: 1, limit: HOME_DISCOVERY_LIMIT, total, totalPages: Math.ceil(total / HOME_DISCOVERY_LIMIT) }
     });
   } catch (error) {
     console.error('Movie discovery feed failed:', error.message);
