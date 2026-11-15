@@ -223,12 +223,12 @@ export function homeMediaRoute(item, mediaType) {
 
   if (mediaType === "movie") {
     const imdbId = String(item.imdbId || "").trim().toLowerCase();
-    return /^tt\\d{5,12}$/.test(imdbId) ? "/watch/" + encodeURIComponent(imdbId) : null;
+    return /^tt\d{5,12}$/.test(imdbId) ? "/watch/" + encodeURIComponent(imdbId) : null;
   }
 
   const rawId = item[field];
   const id = String(rawId ?? "").trim();
-  if (!/^\\d{1,12}$/.test(id)) return null;
+  if (!/^\d{1,12}$/.test(id)) return null;
   const numericId = Number(id);
   if (!Number.isSafeInteger(numericId) || numericId < 1) return null;
   return (mediaType === "tv" ? "/tv/" : "/anime/") + encodeURIComponent(String(numericId));
