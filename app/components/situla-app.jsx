@@ -2088,7 +2088,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {!homeSeriesReady ? (
               <>
                 <SkeletonShelf title="Popular series" />
-                <SkeletonShelf title="Favorite series" />
+                <SkeletonShelf title="Audience favourites" />
                 <SkeletonShelf title="Top TV series" />
                 <SkeletonShelf title="Top anime series" />
               </>
