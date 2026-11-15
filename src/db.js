@@ -1,15 +1,29 @@
 import mongoose from 'mongoose';
-import { Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead, UpcomingItem, UpcomingWaitlist, UpcomingRead } from './models.js';
+import { Movie, TvSeries, AnimeSeries, User, AuthSession, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead, UpcomingItem, UpcomingWaitlist, UpcomingRead } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
+let authSessionExpiryIndexMigrationPromise;
 
 const INDEXED_MODELS = [
-  Movie, TvSeries, AnimeSeries, User, AuthSession, Device, GuestAccess,
+  Movie, TvSeries, AnimeSeries, User, AuthSession, GuestAccess,
   GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession,
   MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
   UpcomingItem, UpcomingWaitlist, UpcomingRead
 ];
+
+async function removeLegacyAuthSessionExpiryIndex() {
+  if (!authSessionExpiryIndexMigrationPromise) {
+    authSessionExpiryIndexMigrationPromise = AuthSession.collection.dropIndex('expiresAt_1').catch((error) => {
+      if ([26, 27].includes(error?.code) || ['NamespaceNotFound', 'IndexNotFound'].includes(error?.codeName)) {
+        return null;
+      }
+      authSessionExpiryIndexMigrationPromise = undefined;
+      throw error;
+    });
+  }
+  await authSessionExpiryIndexMigrationPromise;
+}
 
 function databaseError(message, code, cause) {
   const error = new Error(message, cause ? { cause } : undefined);
@@ -53,6 +67,14 @@ export async function connectDatabase() {
       });
     }
     await connectionPromise;
+  }
+
+  // Existing installations have a TTL index that deletes otherwise valid logins.
+  // Drop it before serving authenticated requests; this is idempotent per process.
+  try {
+    await removeLegacyAuthSessionExpiryIndex();
+  } catch (error) {
+    throw databaseError('Persistent login sessions could not be initialized.', 'AUTH_SESSION_MIGRATION_FAILED', error);
   }
 
   // Index creation is a deployment/migration task, never part of a serverless cold request.
