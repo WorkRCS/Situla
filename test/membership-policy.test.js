@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { WATCH_POLICIES, getWatchPolicy, getAccessSnapshot } from "../src/membership-policy.js";
 
 test("Guest, Free and Premium watch policies use the approved server durations", () => {
-  assert.deepEqual(WATCH_POLICIES.guest, { allowanceSeconds: 3600, cooldownSeconds: 7200, deviceLimit: 0 });
-  assert.deepEqual(WATCH_POLICIES.free, { allowanceSeconds: 10800, cooldownSeconds: 3600, deviceLimit: 1 });
-  assert.deepEqual(WATCH_POLICIES.premium.monthly, { allowanceSeconds: 18000, cooldownSeconds: 2400, deviceLimit: 3 });
-  assert.deepEqual(WATCH_POLICIES.premium["six-months"], { allowanceSeconds: 36000, cooldownSeconds: 1200, deviceLimit: 3 });
-  assert.deepEqual(WATCH_POLICIES.premium.yearly, { allowanceSeconds: null, cooldownSeconds: 0, deviceLimit: 3 });
+  assert.deepEqual(WATCH_POLICIES.guest, { allowanceSeconds: 3600, cooldownSeconds: 7200 });
+  assert.deepEqual(WATCH_POLICIES.free, { allowanceSeconds: 10800, cooldownSeconds: 3600 });
+  assert.deepEqual(WATCH_POLICIES.premium.monthly, { allowanceSeconds: 18000, cooldownSeconds: 2400 });
+  assert.deepEqual(WATCH_POLICIES.premium["six-months"], { allowanceSeconds: 36000, cooldownSeconds: 1200 });
+  assert.deepEqual(WATCH_POLICIES.premium.yearly, { allowanceSeconds: null, cooldownSeconds: 0 });
 });
 
 test("An expired Premium membership falls back to the Free access policy", () => {
