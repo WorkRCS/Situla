@@ -8,7 +8,7 @@ const IGNORED_MUTATIONS = new Set([
   "/api/playback/stop"
 ]);
 
-function getTrackedMutation(input, init) {
+function getTrackedServerRequest(input, init, userActionAt) {
   if (typeof window === "undefined") return false;
 
   const requestUrl = typeof input === "string"
@@ -20,12 +20,16 @@ function getTrackedMutation(input, init) {
     init?.method || (typeof Request !== "undefined" && input instanceof Request ? input.method : "GET")
   ).toUpperCase();
 
-  if (!["POST", "PUT", "PATCH", "DELETE"].includes(requestMethod)) return false;
+  const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(requestMethod);
+  const isRecentUserRead = requestMethod === "GET" &&
+    userActionAt > 0 && Date.now() - userActionAt <= 850;
+  if (!isMutation && !isRecentUserRead) return false;
 
   try {
     const url = new URL(requestUrl, window.location.href);
     return url.origin === window.location.origin &&
       url.pathname.startsWith("/api/") &&
+      url.pathname !== "/api/upcoming/status" &&
       !IGNORED_MUTATIONS.has(url.pathname);
   } catch {
     return false;
@@ -38,11 +42,14 @@ export default function ServerActivityLoader() {
   useEffect(() => {
     const originalFetch = window.fetch;
     let pendingRequests = 0;
+    let userActionAt = 0;
     let showTimer = null;
+
+    const markUserAction = () => { userActionAt = Date.now(); };
     let disposed = false;
 
     async function trackedFetch(input, init) {
-      if (!getTrackedMutation(input, init)) {
+      if (!getTrackedServerRequest(input, init, userActionAt)) {
         return originalFetch.apply(this, arguments);
       }
 
@@ -68,8 +75,18 @@ export default function ServerActivityLoader() {
       }
     }
 
+    document.addEventListener("pointerdown", markUserAction, true);
+    document.addEventListener("keydown", markUserAction, true);
+    document.addEventListener("submit", markUserAction, true);
+    window.addEventListener("wheel", markUserAction, { capture: true, passive: true });
+    window.addEventListener("touchstart", markUserAction, { capture: true, passive: true });
     window.fetch = trackedFetch;
     return () => {
+      document.removeEventListener("pointerdown", markUserAction, true);
+      document.removeEventListener("keydown", markUserAction, true);
+      document.removeEventListener("submit", markUserAction, true);
+      window.removeEventListener("wheel", markUserAction, true);
+      window.removeEventListener("touchstart", markUserAction, true);
       disposed = true;
       if (showTimer) window.clearTimeout(showTimer);
       if (window.fetch === trackedFetch) window.fetch = originalFetch;
