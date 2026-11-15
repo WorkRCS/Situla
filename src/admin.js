@@ -1,14 +1,14 @@
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import {
-  User, GuestAccess, ActivitySession, Device, AuthSession, UsageState,
+  User, GuestAccess, ActivitySession, AuthSession, UsageState,
   PlaybackSession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
   UpcomingItem, UpcomingWaitlist
 } from './models.js';
 import { connectDatabase } from './db.js';
 import { SESSION_COOKIE, getAuthenticatedSession, hasAdminRole, isSameOriginRequest, enforceRateLimit } from './auth.js';
 import { addCalendarMonths } from './membership-policy.js';
-import { decryptSensitiveIp, parseUserAgent, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
+import { decryptSensitiveIp, escapeSearchPattern, isPremiumActive } from './admin-analytics.js';
 import { memberFilter, onlineActivityFilter, clampPage } from './admin-queries.js';
 import { parseAnnouncementDate, getAnnouncementStatus } from './announcement-utils.js';
 import { normalizeUpcomingUrl } from './upcoming-utils.js';
@@ -279,13 +279,12 @@ router.get('/users/:userId', async (c) => {
   const activityFilter = { ownerType: 'user', ownerId: user._id, expiresAt: { $gt: new Date() } };
   const activityCount = await ActivitySession.countDocuments(activityFilter);
   const activityPage = clampPage(requestedActivityPage, activityCount, PAGE_SIZE);
-  const [devices, activities, events, usage, payments, authSessions, totalAggregate] = await Promise.all([
-    Device.find({ userId: user._id }).sort({ lastSeenAt: -1 }).limit(PAGE_SIZE).lean(),
+  const [activities, events, usage, payments, authSessions, totalAggregate] = await Promise.all([
     ActivitySession.find(activityFilter).sort({ startedAt: -1 }).skip((activityPage - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean(),
     MembershipEvent.find({ userId: user._id }).sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
     UsageState.findOne({ ownerType: 'user', ownerId: user._id }).lean(),
     PaymentTransaction.find({ userId: user._id }).sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
-    AuthSession.find({ userId: user._id }).select('deviceId createdAt lastSeenAt expiresAt revokedAt').sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
+    AuthSession.find({ userId: user._id }).select('createdAt lastSeenAt revokedAt').sort({ createdAt: -1 }).limit(PAGE_SIZE).lean(),
     ActivitySession.aggregate([
       { $match: { ownerType: 'user', ownerId: user._id, expiresAt: { $gt: new Date() } } },
       { $group: { _id: null, activeSeconds: { $sum: '$activeSeconds' }, sessions: { $sum: 1 } } }
@@ -306,11 +305,6 @@ router.get('/users/:userId', async (c) => {
       },
       createdAt: user.createdAt, lastLoginAt: user.lastLoginAt || null
     },
-    devices: devices.map((device) => ({
-      id: String(device._id), label: device.label, ...parseUserAgent(device.label),
-      lastSeenAt: device.lastSeenAt, createdAt: device.createdAt, revokedAt: device.revokedAt,
-      active: !device.revokedAt
-    })),
     activity: activities.map((item) => ({
       id: String(item._id), startedAt: item.startedAt, lastSeenAt: item.lastSeenAt, endedAt: item.endedAt,
       activeSeconds: item.activeSeconds || 0,
@@ -331,8 +325,7 @@ router.get('/users/:userId', async (c) => {
       billingCycle: payment.billingCycle, createdAt: payment.createdAt, paidAt: payment.paidAt
     })),
     authSessions: authSessions.map((session) => ({
-      deviceId: String(session.deviceId), createdAt: session.createdAt, lastSeenAt: session.lastSeenAt,
-      expiresAt: session.expiresAt, revokedAt: session.revokedAt
+      createdAt: session.createdAt, lastSeenAt: session.lastSeenAt, revokedAt: session.revokedAt
     })),
     usage: { watchedSeconds: usage?.usedSeconds || 0, lastUsedAt: usage?.lastUsedAt || null },
     totals: { sessions: totalAggregate[0]?.sessions || 0, activeSeconds: totalAggregate[0]?.activeSeconds || 0 }
