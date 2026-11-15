@@ -237,7 +237,7 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
       event.preventDefault();
       return;
     }
-    onOpen?.(movie, { navigate: false });
+    onOpen?.(movie);
   }
 
   function prepareSharePoster() {
@@ -307,29 +307,16 @@ const MovieCard = memo(function MovieCard({ movie, onOpen, onSave, saved, naviga
 
   return (
     <article className="movie-card">
-      {href ? (
-        <Link
-          href={href}
-          prefetch={false}
-          onClick={handleOpen}
-          onMouseEnter={() => onPreload?.(movie)}
-          className="media-open-button media-open-link block w-full text-left no-underline"
-          aria-busy={navigating}
-        >
-          {cardContent}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={handleOpen}
-          onMouseEnter={() => onPreload?.(movie)}
-          className="media-open-button block w-full text-left"
-          disabled={navigating}
-          aria-busy={navigating}
-        >
-          {cardContent}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={handleOpen}
+        onMouseEnter={() => onPreload?.(movie)}
+        className="media-open-button block w-full text-left"
+        disabled={navigating}
+        aria-busy={navigating}
+      >
+        {cardContent}
+      </button>
       <button
         type="button"
         onClick={() => onSave(movie)}
@@ -464,7 +451,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
       event.preventDefault();
       return;
     }
-    onOpen?.(item, kind, { navigate: false });
+    onOpen?.(item, kind);
   }
 
   function handleSave(event) {
@@ -542,29 +529,16 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
 
   return (
     <article className={"movie-card series-card series-card-" + kind + (cardClassName ? " " + cardClassName : "")}>
-      {href ? (
-        <Link
-          href={href}
-          prefetch={false}
-          onClick={handleOpen}
-          onMouseEnter={() => onPreload?.(item, kind)}
-          className="media-open-button media-open-link block w-full text-left no-underline"
-          aria-busy={navigating}
-        >
-          {cardContent}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={handleOpen}
-          onMouseEnter={() => onPreload?.(item, kind)}
-          className="media-open-button block w-full text-left"
-          disabled={navigating}
-          aria-busy={navigating}
-        >
-          {cardContent}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={handleOpen}
+        onMouseEnter={() => onPreload?.(item, kind)}
+        className="media-open-button block w-full text-left"
+        disabled={navigating}
+        aria-busy={navigating}
+      >
+        {cardContent}
+      </button>
       {(isTv || isAnime) && href && <>
         <button
           type="button"
@@ -1496,11 +1470,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [openTvSeries, openAnimeSeries, openMovie]);
 
   const openHomeMovie = useCallback((movie, options) => {
+    if (!movieCardHref(movie)) return openMovie(movie, options);
     setPendingHomeNavigation(movieNavigationKey(movie));
     return openMovie(movie, options);
   }, [openMovie]);
 
   const openHomeSeries = useCallback((series, kind, options) => {
+    if (!seriesCardHref(series, kind)) {
+      return kind === "tv" ? openTvSeries(series, options) : openAnimeSeries(series, options);
+    }
     setPendingHomeNavigation(seriesNavigationKey(series, kind));
     return kind === "tv" ? openTvSeries(series, options) : openAnimeSeries(series, options);
   }, [openTvSeries, openAnimeSeries]);
