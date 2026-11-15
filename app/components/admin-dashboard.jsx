@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity, ArrowLeft, Ban, BadgeCheck, CalendarClock, Check, ChevronDown, Clock3,
-  CreditCard, Crown, Download, Laptop, LoaderCircle, LogOut, Mail, Monitor,
-  MousePointerClick, RefreshCw, Search, Shield, ShieldCheck, Smartphone, Tablet,
+  CreditCard, Crown, Download, LoaderCircle, LogOut, Mail,
+  MousePointerClick, RefreshCw, Search, Shield, ShieldCheck,
   UserRound, Users, X, CircleDollarSign, Eye, Globe2, History, UserPlus, UserX, Megaphone
 } from "lucide-react";
 import AnnouncementManager from "./announcement-manager.jsx";
@@ -43,12 +43,6 @@ function MetricCard({ icon: Icon, label, value, hint, onClick, tone = "" }) {
 
 function EmptyState({ title, detail }) {
   return <div className="admin-empty"><span><Activity size={24} /></span><strong>{title}</strong><p>{detail}</p></div>;
-}
-
-function DeviceGlyph({ type }) {
-  if (type === "Mobile") return <Smartphone size={16} />;
-  if (type === "Tablet") return <Tablet size={16} />;
-  return <Monitor size={16} />;
 }
 
 function ModalFrame({ title, subtitle, onClose, children, wide = true }) {
@@ -444,7 +438,7 @@ export default function AdminDashboard() {
         </section>}
 
         {activeTab === "users" && <section className="admin-section-panel">
-          <div className="admin-panel-heading"><div><span className="admin-kicker">ACCOUNT DIRECTORY</span><h2>Member management</h2><p>Search by email, inspect sessions and devices, assign or remove Premium, and suspend accounts.</p></div><button onClick={() => openModal("users")} className="admin-primary-button"><Users size={16} /> Manage users</button></div>
+          <div className="admin-panel-heading"><div><span className="admin-kicker">ACCOUNT DIRECTORY</span><h2>Member management</h2><p>Search by email, inspect sessions, assign or remove Premium, and suspend accounts.</p></div><button onClick={() => openModal("users")} className="admin-primary-button"><Users size={16} /> Manage users</button></div>
           <div className="admin-metric-grid admin-metric-grid-five">
             <MetricCard icon={Users} label="Total users" value={stats?.users?.total?.toLocaleString("en-IN")} hint="All registered non-admin accounts" onClick={() => openModal("users", "all")} />
             <MetricCard icon={UserRound} label="Free users" value={stats?.users?.free?.toLocaleString("en-IN")} hint="No active Premium membership" onClick={() => openModal("users", "free")} />
@@ -479,7 +473,7 @@ export default function AdminDashboard() {
         <footer className="admin-footer"><span><ShieldCheck size={14} /> Admin-only data · API role-verified</span><span>Activity retention: 180 days</span></footer>
       </div>
 
-      {modal && <ModalFrame title={modal === "guests" ? "Guest management" : modal === "users" ? "User management" : "Sales records"} subtitle={modal === "guests" ? "Guest visits, IP history, browser and active/idle time." : modal === "users" ? "Search members, review complete account profiles, devices, membership and activity." : "Provider transaction records, status and revenue."} onClose={closeModal}>
+      {modal && <ModalFrame title={modal === "guests" ? "Guest management" : modal === "users" ? "User management" : "Sales records"} subtitle={modal === "guests" ? "Guest visits, IP history, browser and active/idle time." : modal === "users" ? "Search members, review complete account profiles, membership and activity." : "Provider transaction records, status and revenue."} onClose={closeModal}>
         {modal === "guests" && selectedGuest ? <div className="admin-detail-view">
           <button className="admin-back-button" onClick={() => { setSelectedGuest(null); setGuestDetail(null); }}><ArrowLeft size={15} /> Back to guests</button>
           {guestLoading && !guestDetail ? <EmptyState title="Loading guest activity" detail="Fetching IP and visit history securely." /> : guestDetail && <>
@@ -497,7 +491,7 @@ export default function AdminDashboard() {
           </>}
         </div> : modal === "users" && selectedUser ? <div className="admin-detail-view">
           <button className="admin-back-button" onClick={() => { setSelectedUser(null); setUserDetail(null); }}><ArrowLeft size={15} /> Back to users</button>
-          {detailLoading || !userDetail ? <EmptyState title="Loading member profile" detail="Fetching membership, sessions and registered devices." /> : <>
+          {detailLoading || !userDetail ? <EmptyState title="Loading member profile" detail="Fetching membership, sessions and activity." /> : <>
             <div className="admin-user-profile-head">
               <span className="admin-user-avatar">{userName(userDetail.user).slice(0, 1).toUpperCase()}</span>
               <div className="admin-user-identity">
@@ -530,13 +524,11 @@ export default function AdminDashboard() {
               {userDetail.user.planId === "premium" ? <button className="admin-danger-button" onClick={() => removePremium({ id: userDetail.user.id, email: userDetail.user.email })}>Remove Premium</button> : <button className="admin-primary-button" onClick={() => setAssignUser({ id: userDetail.user.id, email: userDetail.user.email })}><Crown size={15} /> Assign Premium</button>}
               {userDetail.user.status === "suspended" ? <button className="admin-secondary-button" onClick={() => unsuspendAccount({ id: userDetail.user.id, email: userDetail.user.email })}>Restore access</button> : <button className="admin-danger-button" onClick={() => setSuspendUser({ id: userDetail.user.id, email: userDetail.user.email })}><Ban size={15} /> Suspend account</button>}
             </div>
-            <h3 className="admin-subheading">Devices & browsers <small>{userDetail.devices.length}</small></h3>
-            {userDetail.devices.length ? <div className="admin-device-list">{userDetail.devices.map((device) => <div key={device.id}><span className="admin-device-icon"><DeviceGlyph type={device.deviceType} /></span><div><strong>{device.browser} · {device.operatingSystem}</strong><small>{device.deviceType} · Last seen {dateTime(device.lastSeenAt)}</small><em>{device.label}</em></div><span className={"admin-status-pill " + (device.active ? "status-online" : "")}>{device.active ? "Registered" : "Revoked"}</span></div>)}</div> : <p className="admin-muted">No registered devices.</p>}
             <h3 className="admin-subheading">Recent activity <small>{userDetail.activityPage.total} sessions in retention window</small></h3>
             {userDetail.activity.length ? <div className="admin-activity-list">{userDetail.activity.map((item) => <article className="admin-activity-card" key={item.id}><div className="admin-activity-top"><strong>{dateTime(item.startedAt)}</strong><span>{duration(item.activeSeconds)} active · {duration(item.inactiveSeconds)} idle</span></div><div className="admin-activity-grid"><div><span>IP address</span><strong>{item.ipAddress || "Not available"}</strong></div><div><span>Browser</span><strong>{item.browser}</strong></div><div><span>OS / Device</span><strong>{item.operatingSystem} · {item.deviceType}</strong></div><div><span>Last seen</span><strong>{dateTime(item.lastSeenAt)}</strong></div></div><details className="admin-ua-details"><summary>Full user-agent string</summary><code>{item.userAgent}</code></details></article>)}</div> : <p className="admin-muted">No activity history captured yet.</p>}
             {userDetail.activityPage.hasMore && <button className="admin-load-more" onClick={loadUserActivityMore} disabled={detailLoading}>{detailLoading ? "Loading…" : "Load 10 older sessions"}</button>}
             <h3 className="admin-subheading">Login sessions <small>{userDetail.authSessions.length} recent sessions</small></h3>
-            {userDetail.authSessions.length ? <div className="admin-simple-list">{userDetail.authSessions.map((session,index)=><div key={index}><span>Signed in {dateTime(session.createdAt)}</span><small>Last seen {dateTime(session.lastSeenAt)} · {session.revokedAt ? "Revoked" : "Expires " + dateTime(session.expiresAt)}</small></div>)}</div> : <p className="admin-muted">No login session history recorded.</p>}
+            {userDetail.authSessions.length ? <div className="admin-simple-list">{userDetail.authSessions.map((session,index)=><div key={index}><span>Signed in {dateTime(session.createdAt)}</span><small>Last seen {dateTime(session.lastSeenAt)} · {session.revokedAt ? "Revoked" : "Active"}</small></div>)}</div> : <p className="admin-muted">No login session history recorded.</p>}
             <h3 className="admin-subheading">Payment history <small>{userDetail.payments.length} recent records</small></h3>
             {userDetail.payments.length ? <div className="admin-simple-list">{userDetail.payments.map((payment) => <div key={payment.id}><span>{payment.provider} · {payment.status.toUpperCase()} · {payment.currency} {(payment.amountMinor / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span><small>{dateTime(payment.paidAt || payment.createdAt)} · {payment.transactionRef}</small></div>)}</div> : <p className="admin-muted">No verified paid transactions recorded for this user.</p>}
             <h3 className="admin-subheading">Premium assignment history</h3>
