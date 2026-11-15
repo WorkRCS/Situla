@@ -283,7 +283,7 @@ test("mobile/tablet navigation reuses the original full-width seven-item bar", a
   assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
   assert.ok(css.includes("backdrop-filter:blur(26px) saturate(180%) !important"));
   const finalDock = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
-  assert.doesNotMatch(finalDock, /left:50%;[\\s\\S]*?transform:translateX\\(-50%\\)/);
+  assert.doesNotMatch(finalDock, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
 });
 
 test("all Situla page text is non-selectable", async () => {
