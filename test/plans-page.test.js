@@ -73,6 +73,10 @@ test("Plans page is responsive from desktop through small phones", async () => {
   assert.ok(css.includes("@media (max-width:680px)"));
   assert.ok(css.includes(".plans-cards { grid-template-columns:minmax(0,1fr)"));
   assert.ok(css.includes("@media (max-width:380px)"));
+  assert.ok(css.includes("--site-dock-clearance:calc(88px + env(safe-area-inset-bottom))"));
+  assert.ok(css.includes("body:has(.site-workspace-mobile-nav) .site-footer"));
+  assert.ok(css.includes("margin-bottom:var(--site-dock-clearance)"));
+  assert.ok(css.includes(".site-workspace-main > .plans-page"));
   assert.ok(css.includes(".plans-metrics { gap:4px; }"));
 });
 
