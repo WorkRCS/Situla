@@ -781,9 +781,10 @@ function SkeletonGrid({ count = 12 }) {
   return <div className="skeleton-grid">{Array.from({ length: count }, (_, index) => <SkeletonCard key={index} />)}</div>;
 }
 
-function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pendingNavigation = "", onMoviePreload, onSeriesPreload }) {
+function HomeMixedShelf({ items, activeHeroId = "", onMovieOpen, onSeriesOpen, onSave, savedIds, pendingNavigation = "", onMoviePreload, onSeriesPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
-  if (!items.length) return null;
+  const trendingItems = items.filter((item) => item.heroId !== activeHeroId);
+  if (!trendingItems.length) return null;
 
   return (
     <section className="netflix-shelf home-mixed-shelf">
@@ -803,7 +804,7 @@ function HomeMixedShelf({ items, onMovieOpen, onSeriesOpen, onSave, savedIds, pe
         onPointerCancel={shelfDrag.onPointerCancel}
         onClickCapture={shelfDrag.onClickCapture}
       >
-        {items.map((item) => item.mediaType === "movie" ? (
+        {trendingItems.map((item) => item.mediaType === "movie" ? (
           <MovieCard
             key={item.heroId}
             movie={item}
@@ -2075,6 +2076,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
             <HomeMixedShelf
               items={homeHeroItems}
+              activeHeroId={homeHeroItems[heroIndex]?.heroId}
               onMovieOpen={openHomeMovie}
               onSeriesOpen={openHomeSeries}
               onSave={toggleSaved}
@@ -2111,33 +2113,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </div>
             </section>
 
-            {homeHeroItems.length > 1 && (
-              <section className="spotlight-strip" aria-label="Choose a featured title">
-                <div className="spotlight-strip-heading">
-                  <span>NOW IN THE SPOTLIGHT</span>
-                  <p>More stories to discover</p>
-                </div>
-                <div className="spotlight-strip-track">
-                  {homeHeroItems.slice(0, 8).map((item, index) => (
-                    <button
-                      key={item.heroId}
-                      type="button"
-                      className={"spotlight-chip" + (index === heroIndex ? " active" : "")}
-                      onClick={() => setHeroIndex(index)}
-                      aria-pressed={index === heroIndex}
-                      aria-label={"Show " + item.heroTitle + ", " + item.heroMediaLabel}
-                    >
-                      <span className="spotlight-chip-art">
-                        {item.heroPoster
-                          ? <img src={optimizeTmdbImageUrl(item.heroPoster, "w92")} alt="" loading="lazy" decoding="async" />
-                          : <Icon name={item.mediaType === "tv" ? "tv" : item.mediaType === "anime" ? "play" : "film"} size={17} />}
-                      </span>
-                      <span className="spotlight-chip-title">{item.heroTitle}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
+
 
             {!homeSeriesReady ? (
               <>
