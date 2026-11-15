@@ -7,7 +7,7 @@ import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import {
   ArrowLeft, ArrowRight, BadgeCheck, CalendarDays, Check, CheckCircle2,
   ChevronRight, CircleX, Clock3, CreditCard, Crown, Eye, EyeOff, Film, Fingerprint,
-  Globe2, Info, LockKeyhole, LogIn, Mail, MonitorSmartphone, ShieldCheck,
+  Globe2, Info, LockKeyhole, LogIn, Mail, ShieldCheck,
   Sparkles, Tv, UserRound, X
 } from "lucide-react";
 import { PREMIUM_BILLING } from "../../src/membership-preview.js";
@@ -68,7 +68,6 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState("");
   const [posterColumns, setPosterColumns] = useState({ downward: [], upward: [] });
@@ -217,7 +216,7 @@ export function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ email: normalizedEmail, password, rememberMe })
+        body: JSON.stringify({ email: normalizedEmail, password })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Sign-in failed. Please try again.");
@@ -264,12 +263,6 @@ export function LoginPage() {
               </span>
             </label>
             <p className="login-auth-hint">New email? Situla will create a Free account automatically. Existing email? Enter your account password to sign in. Password: 10–128 bytes.</p>
-            <div className="login-form-options">
-              <label className="account-remember">
-                <input type="checkbox" name="rememberMe" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />
-                <span>Remember me</span>
-              </label>
-            </div>
             <button type="submit" className="account-primary-button" disabled={submitting}>Continue with email</button>
           </form>
           {authError && <p className="account-action-notice" role="alert">{authError}</p>}
@@ -343,14 +336,10 @@ function PremiumUpgradeModal({ onClose }) {
   const includedFeatures = [
     "Browse Movies, TV series and Anime",
     "Account-based watch tracking and server-verified access",
-    "Up to 3 registered devices across mobile, computer and TV",
-    "One shared account watch allowance across registered devices",
     "Premium Verified member badge",
     "Early upcoming-movie updates and release information"
   ];
   const limits = [
-    "Maximum of 3 registered devices",
-    "Watch time is shared across all registered devices",
     "Premium movie playback is planned, but not active yet"
   ];
 
@@ -363,7 +352,7 @@ function PremiumUpgradeModal({ onClose }) {
           <div className="profile-upgrade-heading">
             <span className="profile-upgrade-kicker"><Crown size={13} /> SITULA PREMIUM MEMBERSHIP</span>
             <h2 id="profile-upgrade-title">Choose your Premium plan</h2>
-            <p id="profile-upgrade-description">More watch time, multi-device access and member benefits. Compare the available billing periods before choosing.</p>
+            <p id="profile-upgrade-description">More watch time and member benefits. Compare the available billing periods before choosing.</p>
           </div>
           <button ref={closeButtonRef} type="button" className="profile-upgrade-close" onClick={onClose} aria-label="Close Premium plan details">
             <X size={19} />
@@ -394,7 +383,6 @@ function PremiumUpgradeModal({ onClose }) {
           <section className="profile-upgrade-plan-stats" aria-label="Selected Premium plan limits">
             <div><Clock3 size={17} /><span><small>WATCH ALLOWANCE</small><strong>{selectedBilling.allowance}</strong><em>per cycle</em></span></div>
             <div><LockKeyhole size={17} /><span><small>COOLDOWN</small><strong>{selectedBilling.cooldown}</strong><em>after allowance</em></span></div>
-            <div><MonitorSmartphone size={17} /><span><small>DEVICES</small><strong>Up to 3</strong><em>registered devices</em></span></div>
           </section>
 
           <div className="profile-upgrade-feature-grid">
@@ -431,14 +419,9 @@ function PremiumUpgradeModal({ onClose }) {
 }
 
 export function ProfilePage() {
-  const router = useRouter();
   const [account, setAccount] = useState(null);
   const [accountLoading, setAccountLoading] = useState(true);
-  const [deviceSummary, setDeviceSummary] = useState({ active: 0, limit: 1 });
-  const [devices, setDevices] = useState([]);
   const [access, setAccess] = useState(null);
-  const [revokingDeviceId, setRevokingDeviceId] = useState("");
-  const [deviceNotice, setDeviceNotice] = useState("");
   const [renewalNotice, setRenewalNotice] = useState("");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [clock, setClock] = useState(null);
@@ -455,11 +438,7 @@ export function ProfilePage() {
           return;
         }
         setAccount(payload.user);
-        setDeviceSummary(payload.devices || { active: 0, limit: 1 });
         setAccess(payload.access || null);
-        const devicesResponse = await fetch("/api/auth/devices", { cache: "no-store", credentials: "same-origin" });
-        const devicesPayload = await devicesResponse.json().catch(() => ({}));
-        if (active && devicesResponse.ok) setDevices(Array.isArray(devicesPayload.items) ? devicesPayload.items : []);
       } catch {
         if (active) setAccount(null);
       } finally {
@@ -477,41 +456,6 @@ export function ProfilePage() {
       window.removeEventListener("focus", onFocus);
     };
   }, []);
-
-  async function revokeDevice(deviceId) {
-    if (revokingDeviceId) return;
-    setRevokingDeviceId(deviceId);
-    setDeviceNotice("");
-    try {
-      const response = await fetch("/api/auth/devices/" + encodeURIComponent(deviceId), {
-        method: "DELETE",
-        credentials: "same-origin"
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "This device could not be removed.");
-      if (payload.currentDevice) {
-        window.dispatchEvent(new Event("situla:auth-change"));
-        router.replace("/login");
-        return;
-      }
-      const [meResponse, devicesResponse] = await Promise.all([
-        fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" }),
-        fetch("/api/auth/devices", { cache: "no-store", credentials: "same-origin" })
-      ]);
-      const me = await meResponse.json().catch(() => ({}));
-      const list = await devicesResponse.json().catch(() => ({}));
-      if (meResponse.ok) {
-        setDeviceSummary(me.devices || { active: 0, limit: 1 });
-        setAccess(me.access || null);
-      }
-      if (devicesResponse.ok) setDevices(Array.isArray(list.items) ? list.items : []);
-      setDeviceNotice("The selected device has been signed out.");
-    } catch (error) {
-      setDeviceNotice(error.message || "This device could not be removed.");
-    } finally {
-      setRevokingDeviceId("");
-    }
-  }
 
   const now = clock || new Date();
   const today = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
@@ -635,11 +579,10 @@ export function ProfilePage() {
             </section>
 
             <section className="profile-benefits-card">
-              <div className="profile-section-heading"><div><span className="account-eyebrow">WHAT YOU GET</span><h2>Premium benefits</h2></div><span className="profile-benefit-count">06 BENEFITS</span></div>
+              <div className="profile-section-heading"><div><span className="account-eyebrow">WHAT YOU GET</span><h2>Premium benefits</h2></div><span className="profile-benefit-count">05 BENEFITS</span></div>
               <div className="profile-benefit-grid">
                 <div className="profile-benefit-item"><span><Clock3 size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.allowance : "3 hours"} watch allowance</strong><small>Per membership cycle</small></div>
                 <div className="profile-benefit-item"><span><LockKeyhole size={17} /></span><strong>{membershipActive && activeBilling ? activeBilling.cooldown : "1 hour"} cooldown</strong><small>Between watch sessions</small></div>
-                <div className="profile-benefit-item"><span><MonitorSmartphone size={17} /></span><strong>Up to {deviceSummary.limit} device{deviceSummary.limit === 1 ? "" : "s"}</strong><small>Manage your registered devices</small></div>
                 <div className="profile-benefit-item"><span><BadgeCheck size={17} /></span><strong>{membershipActive ? "Verified badge" : "Free member access"}</strong><small>{membershipActive ? "Premium member identity" : "Registered Free account"}</small></div>
                 <div className="profile-benefit-item"><span><Sparkles size={17} /></span><strong>Early movie updates</strong><small>Upcoming titles and release info</small></div>
                 <div className="profile-benefit-item is-planned"><span><Film size={17} /></span><strong>Premium movie playback</strong><small>Payment not connected</small></div>
@@ -666,30 +609,9 @@ export function ProfilePage() {
               <div className="profile-access-row"><span>Plan status</span><strong className={membershipActive ? "is-active" : "is-expired"}>{membershipActive ? "Active" : "Free"}</strong></div>
               <div className="profile-access-row"><span>Account status</span><strong className="is-active">Active</strong></div>
               <div className="profile-access-row"><span>Current plan</span><strong>{account.planId === "premium" ? "Premium" : "Free"}</strong></div>
-              <div className="profile-access-row"><span>Registered devices</span><strong>{deviceSummary.active} / {deviceSummary.limit} used</strong></div>
               <div className="profile-access-row"><span>Watch access</span><strong>{!access ? "Checking" : access.cooldownRemainingSeconds > 0 ? "Cooldown · " + formatAccessDuration(access.cooldownRemainingSeconds) : access.remainingSeconds === null ? "Unlimited" : formatAccessDuration(access.remainingSeconds) + " left"}</strong></div>
               <div className="profile-access-row"><span>Smart TV browser</span><strong>Web access</strong></div>
-              <div className="profile-device-list" aria-label="Registered devices">
-                {devices.map((device) => (
-                  <div className="profile-device-row" key={device.id}>
-                    <span className="profile-device-copy">
-                      <strong>{device.current ? "This device" : "Registered device"}{device.slot ? " · " + device.slot : ""}</strong>
-                      <small>{device.label || "Browser"} · {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleDateString() : "Recently active"}</small>
-                    </span>
-                    <button
-                      type="button"
-                      className="profile-device-revoke"
-                      onClick={() => revokeDevice(device.id)}
-                      disabled={Boolean(revokingDeviceId)}
-                    >
-                      {revokingDeviceId === device.id ? "Removing…" : device.current ? "Sign out" : "Remove"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              {deviceNotice && <p className="profile-action-notice" role="status">{deviceNotice}</p>}
-              <p className="profile-access-footnote">Membership, watch allowance and devices are verified by the server.</p>
-            </section>
+              <p className="profile-access-footnote">Membership and watch allowance are verified by the server.</p>            </section>
           </aside>
         </div>
       </div>
