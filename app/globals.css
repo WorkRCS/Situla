@@ -8582,3 +8582,26 @@ body:has(.login-page) .site-footer { display:none !important; }
   }
   .home-series-shelf .series-card:hover { transform:none; }
 }
+
+
+/* Primary media-card actions are buttons that route through validated database IDs. */
+.movie-card .media-open-button {
+  box-sizing:border-box;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+}
+.movie-card .media-open-button:focus-visible {
+  outline:2px solid rgba(232,182,91,.8);
+  outline-offset:4px;
+}
+.movie-card .media-open-button:disabled {
+  opacity:1;
+  cursor:progress;
+}
