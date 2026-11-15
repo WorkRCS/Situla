@@ -165,7 +165,7 @@ test("TV and Anime catalogue cards keep metadata but hide synopsis outside detai
   const tvDetail = await read("../app/tv/[tmdbId]/detail.jsx");
   const animeDetail = await read("../app/anime/[malId]/detail.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
+  assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
   assert.match(app, /series-card-category/);
   assert.doesNotMatch(app, /series-card-description|const synopsis = isTv/);
   assert.doesNotMatch(css, /series-card-description/);
@@ -254,7 +254,7 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   const seriesCard = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
   const cardStyles = css.slice(css.indexOf("/* Premium catalogue polish:"));
   assert.match(movieCard, /className="movie-card"/);
-  assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind\}/);
+  assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
   assert.match(movieCard, /catalog-badge catalog-badge-/);
   assert.match(seriesCard, /catalog-badge catalog-badge-/);
   assert.match(cardStyles, /\.movie-card \{[\s\S]*?background:transparent/);
