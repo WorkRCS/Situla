@@ -20,6 +20,12 @@ export const SITE_NAV_ITEMS = [
   { id: "profile", href: "/profile", label: "Profile", icon: UserRound }
 ];
 
+// The mobile dock intentionally mirrors the seven-item navigation already used
+// by the main app; Profile remains available from the account menu.
+export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS
+  .filter((item) => item.id !== "profile")
+  .map((item) => item.id === "tv" ? { ...item, label: "TV" } : item);
+
 function isNavActive(pathname, href) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
@@ -161,8 +167,8 @@ export function SiteWorkspace({ children }) {
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
       <SiteSidebar showBrand onCollapsedChange={setSidebarCollapsed} />
       <div className="site-workspace-main">{children}</div>
-      <nav className="site-workspace-mobile-nav" aria-label="Main navigation">
-        {SITE_NAV_ITEMS.map((item) => {
+      <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
+        {SITE_MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const selected = isNavActive(pathname, item.href);
           return (
@@ -170,10 +176,10 @@ export function SiteWorkspace({ children }) {
               key={item.id}
               href={item.href}
               prefetch={true}
-              className={"site-workspace-mobile-link" + (selected ? " active" : "")}
+              className={"nav-button site-workspace-mobile-link" + (selected ? " active" : "")}
               aria-current={selected ? "page" : undefined}
             >
-              <Icon size={17} strokeWidth={selected ? 2.3 : 1.9} />
+              <Icon size={20} strokeWidth={selected ? 2.25 : 1.9} />
               <span>{item.label}</span>
             </Link>
           );
