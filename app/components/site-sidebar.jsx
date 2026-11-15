@@ -63,7 +63,6 @@ function ContinueWatching({ items = [], onResume }) {
 export function SiteSidebar({
   active,
   upcomingHasUnread,
-  showBrand = false,
   continueItems,
   onResume,
   onCollapsedChange
@@ -106,14 +105,10 @@ export function SiteSidebar({
   return (
     <aside className={"home-sidebar site-sidebar" + (collapsed ? " is-collapsed" : "")} aria-label="Main navigation">
       <div className="site-sidebar-heading">
-        {showBrand ? (
-          <Link href="/" className="site-sidebar-brand" aria-label="Situla home">
-            <img src="/icon.svg" alt="" width="38" height="38" />
-            <span><strong>SITULA</strong><small>DISCOVER · WATCH</small></span>
-          </Link>
-        ) : (
-          <span className="site-sidebar-caption">NAVIGATION</span>
-        )}
+        <Link href="/" className="site-sidebar-brand" aria-label="Situla home">
+          <img src="/icon.svg" alt="" width="38" height="38" />
+          <span><strong>SITULA</strong><small>DISCOVER · WATCH</small></span>
+        </Link>
         <button
           type="button"
           className="site-sidebar-toggle"
@@ -191,7 +186,7 @@ export function SiteWorkspace({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   return (
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
-      <SiteSidebar showBrand onCollapsedChange={setSidebarCollapsed} />
+      <SiteSidebar onCollapsedChange={setSidebarCollapsed} />
       <div className="site-workspace-main">{children}</div>
       <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
         {SITE_MOBILE_NAV_ITEMS.map((item) => {
