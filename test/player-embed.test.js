@@ -183,7 +183,7 @@ test("Situla landing keeps the original gold palette and uses a distinct discove
 test("home page auto-advances and lets visitors select a spotlight title", async () => {
   const app = await read("../app/components/situla-app.jsx");
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(app, /onClick=\{\(\) => setHeroIndex\(index\)\}/);
+  assert.match(app, /onClick=\{\(\) => setHeroIndex\(previewIndex\)\}/);
   assert.match(app, /aria-pressed=\{false\}/);
 });
 
@@ -215,7 +215,7 @@ test("home and catalog spotlights refresh and rotate across all media types", as
   assert.match(app, /mixHomeSpotlight\(\{/);
   assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "36" \}\)/);
   assert.doesNotMatch(app, /new URLSearchParams\(\{ page: "1", limit: "36", random: "true" \}\)/);
-  assert.match(app, /loadSeries\("anime"/);
+  assert.match(app, /loadSeries\("tv"/);
   assert.match(app, /loadSeries\("anime"/);
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /setCatalogSpotlightItems\(items\)/);
@@ -355,10 +355,13 @@ test("home page omits personal watch-history shelves and shows catalog discovery
 
 test("home series use ranked catalog feeds and mix favorite series across TV and anime", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /loadSeries\("anime"/);
+  assert.match(app, /loadSeries\("tv"/);
   assert.match(app, /loadSeries\("anime"/);
   assert.match(app, /tv: homeTvShows,/);
   assert.match(app, /anime: homeAnimeShows/);
+  assert.match(app, /const homeCollections = useMemo\(\(\) => buildHomeCollections\(/);
+  assert.match(app, /favoriteSeriesItems/);
+  assert.match(app, /popularSeriesItems/);
   assert.match(app, /favoriteSeriesItems/);
   assert.match(app, /popularSeriesItems/);
 });
