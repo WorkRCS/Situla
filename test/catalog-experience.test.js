@@ -17,7 +17,7 @@ test("Movie discovery falls back when recent exclusions exhaust the catalog and 
   const discoverEnd = api.indexOf("app.get('/api/search'", discoverStart);
   const discover = api.slice(discoverStart, discoverEnd);
   assert.match(discover, /if \(excludedIds\.length && \(!result\.items\?\.length \|\| total === 0\)\)/);
-  assert.match(discover, /Movie\.aggregate\(\[\{ \$match: baseFilter \}, \{ \$sort: HOME_MOVIE_DISCOVERY_SORT \}, \{ \$facet: facets \}\]\)/);
+  assert.match(discover, /Movie\.aggregate\(\[\s*\{ \$match: baseFilter \},\s*\{ \$sort: HOME_MOVIE_DISCOVERY_SORT \},\s*\{ \$facet: facets \}\s*\]\)/);
   assert.match(discover, /if \(!result\.items\?\.length && total > 0\)/);
   assert.match(discover, /Movie\.find\(baseFilter\)/);
   assert.match(discover, /featured: result\.featured\?\.length \? result\.featured : \[fallbackItems\[0\]\]/);
