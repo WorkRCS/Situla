@@ -13,7 +13,6 @@ test('Auth and playback mutation endpoints reject requests without a same-origin
     ['/api/playback/heartbeat', 'POST'],
     ['/api/playback/stop', 'POST'],
     ['/api/admin/users/507f1f77bcf86cd799439011/membership', 'PATCH'],
-    ['/api/auth/devices/507f1f77bcf86cd799439011', 'DELETE'],
     ['/api/announcements/507f1f77bcf86cd799439011/read', 'POST']
   ];
   for (const [path, method] of requests) {
@@ -55,7 +54,7 @@ test('Presence endpoint validates its payload before database access', async () 
   assert.equal((await response.json()).error, 'Invalid activity heartbeat.');
 });
 
-test('Playback start and device revocation reject malformed identifiers before database access', async () => {
+test('Playback start validates malformed identifiers before database access', async () => {
   const headers = { origin: 'http://localhost', host: 'localhost', 'content-type': 'application/json' };
   const invalidMovie = await app.request('/api/playback/start', {
     method: 'POST', headers, body: JSON.stringify({ mediaType: 'movie', mediaId: 'not-an-imdb-id' })
@@ -65,10 +64,13 @@ test('Playback start and device revocation reject malformed identifiers before d
     method: 'POST', headers, body: JSON.stringify({ mediaType: 'tv', mediaId: 'tt123', season: 1, episode: 1 })
   });
   assert.equal(invalidTv.status, 400);
-  const invalidDevice = await app.request('/api/auth/devices/not-an-object-id', {
-    method: 'DELETE', headers, body: '{}'
-  });
-  assert.equal(invalidDevice.status, 400);
+});
+
+test('Registered-device restriction endpoints are removed', async () => {
+  const list = await app.request('/api/auth/devices');
+  const revoke = await app.request('/api/auth/devices/not-an-object-id', { method: 'DELETE' });
+  assert.equal(list.status, 404);
+  assert.equal(revoke.status, 404);
 });
 
 test('Playback heartbeats validate session identifiers and playing state before database access', async () => {
