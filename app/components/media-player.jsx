@@ -353,13 +353,13 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           </div>
         </div>
       )}
-      <header className="watch-topbar series-watch-topbar">
+      <div className="series-watch-context" role="group" aria-label="Series player information">
         <button type="button" onClick={goBackFromPlayer} className="watch-control" aria-label="Back to series"><i className="bi bi-arrow-left" aria-hidden="true" /></button>
         <div className="watch-title">
           <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · {kind === "tv" ? "TV PLAYER" : "ANIME PLAYER"}</p>
           <h1 className="truncate text-sm font-bold">{title}{kind === "tv" ? " · S" + season + " E" + episode : " · EP " + episode + " · " + (audio || "sub").toUpperCase()}</h1>
         </div>
-      </header>
+      </div>
     </main>
   );
 }
