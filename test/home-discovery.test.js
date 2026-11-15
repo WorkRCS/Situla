@@ -175,4 +175,17 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(css.includes(".home-collection-television"));
   assert.ok(css.includes(".home-collection-anime"));
   assert.ok(css.includes(".home-collection-genre"));
+
+  const mixedShelfStyle = css.match(/\.home-mixed-shelf\s*\\{([^}]*)\\}/)?.[1] || "";
+  assert.match(mixedShelfStyle, /background:\s*transparent/);
+  assert.match(mixedShelfStyle, /border:\s*0/);
+  assert.match(mixedShelfStyle, /box-shadow:\s*none/);
+  assert.doesNotMatch(mixedShelfStyle, /linear-gradient|radial-gradient/);
+
+  const collectionPanelStyle = css.match(/\.home-collection-popular,\\s*\.home-collection-rated,\\s*\.home-collection-anime,\\s*\.home-collection-genre\\s*\\{([^}]*)\\}/)?.[1] || "";
+  assert.match(collectionPanelStyle, /background:\s*transparent/);
+  assert.match(collectionPanelStyle, /border:\s*0/);
+  assert.match(collectionPanelStyle, /box-shadow:\s*none/);
+  assert.match(css, /\.home-collection-television\\s*\\{\\s*padding-top:0;\\s*border-top:0;/);
+  assert.match(css, /\.home-movie-shelf\\s*\\{\\s*padding-top:0;\\s*border-top:0;/);
 });
