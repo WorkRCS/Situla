@@ -7561,7 +7561,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   .site-sidebar .site-sidebar-navigation {
     display:grid;
     flex:none;
-    gap:clamp(16px,2.1vh,24px);
+    gap:clamp(16px,2.1vh,24px) !important;
   }
   .site-sidebar .site-sidebar-nav-group {
     display:grid;
