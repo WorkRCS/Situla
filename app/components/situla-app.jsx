@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
+import { buildHomeCollections, mixHomeSpotlight, toHomeSpotlight } from "../../src/home-discovery.js";
 import Link from "next/link";
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { Button } from "./ui/button.jsx";
@@ -1146,17 +1146,35 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const controller = new AbortController();
     setHomeSeriesReady(false);
 
-    async function loadSeries(endpoint) {
+    async function loadSeries(mediaType) {
+      const recentKey = mediaType === "tv" ? "situla:recent-catalog:tv" : "situla:recent-catalog:anime";
+      const recentIds = readRecentCatalogIds(recentKey);
+      const params = new URLSearchParams({ page: "1", limit: "36", random: "true" });
+      if (recentIds.length) params.set("exclude", recentIds.join(","));
+      const endpoint = (mediaType === "tv" ? "/api/tv?" : "/api/anime?") + params.toString();
+      const fallbackEndpoint = mediaType === "tv"
+        ? "/api/tv?page=1&limit=36&random=true"
+        : "/api/anime?page=1&limit=36&random=true";
       const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
-      const response = await fetch(endpoint, { cache: "no-store", signal });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
-      return Array.isArray(payload.items) ? payload.items : [];
+
+      async function request(url) {
+        const response = await fetch(url, { cache: "no-store", signal });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Series picks are unavailable.");
+        return Array.isArray(payload.items) ? payload.items : [];
+      }
+
+      let items = await request(endpoint);
+      if (!items.length && recentIds.length && !controller.signal.aborted) {
+        items = await request(fallbackEndpoint);
+      }
+      rememberRecentCatalogIds(recentKey, items.map((item) => mediaType === "tv" ? item.tmdbId : item.malId));
+      return items;
     }
 
     Promise.allSettled([
-      loadSeries("/api/tv?page=1&limit=10"),
-      loadSeries("/api/anime?page=1&limit=10")
+      loadSeries("tv"),
+      loadSeries("anime")
     ]).then(([tvResult, animeResult]) => {
       if (controller.signal.aborted) return;
       if (tvResult.status === "fulfilled") setHomeTvShows(tvResult.value);
@@ -1183,37 +1201,25 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     [heroMovies, homeTvShows, homeAnimeShows]
   );
 
-  const homeSeriesMix = useMemo(() => [
-    ...homeTvShows.map((item) => ({ ...item, homeMediaKind: "tv" })),
-    ...homeAnimeShows.map((item) => ({ ...item, homeMediaKind: "anime" }))
-  ], [homeTvShows, homeAnimeShows]);
-
-  const popularSeriesItems = useMemo(() => [...homeSeriesMix]
-    .sort((a, b) => Number(b.homeMediaKind === "tv" ? b.voteCount : b.scoredBy) - Number(a.homeMediaKind === "tv" ? a.voteCount : a.scoredBy))
-    .slice(0, 20), [homeSeriesMix]);
-
-  const favoriteSeriesItems = useMemo(() => [...homeSeriesMix]
-    .sort((a, b) => {
-      const aScore = Number(a.homeMediaKind === "tv" ? a.voteAverage : a.score) || 0;
-      const bScore = Number(b.homeMediaKind === "tv" ? b.voteAverage : b.score) || 0;
-      const aVotes = Number(a.homeMediaKind === "tv" ? a.voteCount : a.scoredBy) || 0;
-      const bVotes = Number(b.homeMediaKind === "tv" ? b.voteCount : b.scoredBy) || 0;
-      return bScore - aScore || bVotes - aVotes;
-    })
-    .slice(0, 20), [homeSeriesMix]);
-
   const premiumCatalog = accountUser?.planId === "premium";
-  const topTvShows = useMemo(() => premiumCatalog
-    ? homeTvShows.slice(0, 20)
-    : [...homeTvShows]
-      .sort((a, b) => Number(b.popularity || 0) - Number(a.popularity || 0))
-      .slice(0, 20), [homeTvShows, premiumCatalog]);
-
-  const topAnimeShows = useMemo(() => premiumCatalog
-    ? homeAnimeShows.slice(0, 20)
-    : [...homeAnimeShows]
-      .sort((a, b) => Number(a.rank || Number.MAX_SAFE_INTEGER) - Number(b.rank || Number.MAX_SAFE_INTEGER) || Number(b.score || 0) - Number(a.score || 0))
-      .slice(0, 20), [homeAnimeShows, premiumCatalog]);
+  const homeCollections = useMemo(() => buildHomeCollections({
+    featured: homeHeroItems[heroIndex] || null,
+    spotlightItems: homeHeroItems.slice(0, 14),
+    movies,
+    tv: homeTvShows,
+    anime: homeAnimeShows,
+    categories: categoryShelves
+  }, { premiumCatalog }), [
+    homeHeroItems, heroIndex, movies, homeTvShows, homeAnimeShows, categoryShelves, premiumCatalog
+  ]);
+  const {
+    popularSeriesItems,
+    favoriteSeriesItems,
+    topTvShows,
+    topAnimeShows,
+    movieItems: homeMovieItems,
+    categoryShelves: homeCategoryShelves
+  } = homeCollections;
 
   useEffect(() => {
     if (tab !== "home" || !homeSeriesReady || !homeHeroItems.length) return;
@@ -1310,7 +1316,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     try { localStorage.setItem("situla:spotlight:" + tab, String(id)); } catch {}
   }, [tab, catalogSpotlight]);
 
-  const allGenres = useMemo(() => ["All", ...categoryShelves.map((item) => item.name)], [categoryShelves]);
+  const allGenres = useMemo(() => ["All", ...homeCategoryShelves.map((item) => item.name)], [homeCategoryShelves]);
 
   const savedIds = useMemo(() => new Set(savedMovies.map((item) => savedMediaKey(item))), [savedMovies]);
   const filteredMovies = movies;
@@ -2082,18 +2088,87 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </>
             ) : (
               <>
-                <MixedSeriesShelf title="Popular series" eyebrow="MOST DISCOVERED" items={popularSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <MixedSeriesShelf title="Favorite series" eyebrow="TOP-RATED PICKS" items={favoriteSeriesItems} onOpen={openHomeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title={premiumCatalog ? "Latest TV series" : "Top TV series"} eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "POPULAR TELEVISION"} items={topTvShows} kind="tv" onOpen={openHomeTvSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
-                <SeriesShelf title={premiumCatalog ? "Latest anime series" : "Top anime series"} eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "TOP-RANKED ANIME"} items={topAnimeShows} kind="anime" onOpen={openHomeAnimeSeries} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeSeries} />
+                <MixedSeriesShelf
+                  title="Popular series"
+                  eyebrow="MOST DISCOVERED"
+                  description="A cross-section of the TV and anime stories getting the most attention."
+                  variant="popular"
+                  items={popularSeriesItems}
+                  onOpen={openHomeSeries}
+                  onSave={toggleSaved}
+                  savedIds={savedIds}
+                  pendingNavigation={pendingHomeNavigation}
+                  onPreload={prefetchHomeSeries}
+                />
+                <MixedSeriesShelf
+                  title="Audience favourites"
+                  eyebrow="TOP-RATED PICKS"
+                  description="High-scoring series, selected separately from the popular collection."
+                  variant="rated"
+                  items={favoriteSeriesItems}
+                  onOpen={openHomeSeries}
+                  onSave={toggleSaved}
+                  savedIds={savedIds}
+                  pendingNavigation={pendingHomeNavigation}
+                  onPreload={prefetchHomeSeries}
+                />
+                <SeriesShelf
+                  title={premiumCatalog ? "Latest TV series" : "Top TV series"}
+                  eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "POPULAR TELEVISION"}
+                  description="Television picks gathered in their own collection."
+                  variant="television"
+                  items={topTvShows}
+                  kind="tv"
+                  onOpen={openHomeTvSeries}
+                  onSave={toggleSaved}
+                  savedIds={savedIds}
+                  pendingNavigation={pendingHomeNavigation}
+                  onPreload={prefetchHomeSeries}
+                />
+                <SeriesShelf
+                  title={premiumCatalog ? "Latest anime series" : "Top anime series"}
+                  eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "TOP-RANKED ANIME"}
+                  description="A dedicated anime shelf with titles not shown in the other series collections."
+                  variant="anime"
+                  items={topAnimeShows}
+                  kind="anime"
+                  onOpen={openHomeAnimeSeries}
+                  onSave={toggleSaved}
+                  savedIds={savedIds}
+                  pendingNavigation={pendingHomeNavigation}
+                  onPreload={prefetchHomeSeries}
+                />
               </>
             )}
 
             {genre === "All" ? (
               <>
-                <MovieShelf title="Movies to discover" eyebrow="FRESH PICKS FROM THE CATALOG" movies={movies} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeMovie} />
-                {categoryShelves.map((category) => (
-                  <MovieShelf key={category.key} title={category.name} eyebrow="EXPLORE BY GENRE" movies={category.items} onOpen={openHomeMovie} onSave={toggleSaved} savedIds={savedIds} pendingNavigation={pendingHomeNavigation} onPreload={prefetchHomeMovie} />
+                <MovieShelf
+                  title="Movies to discover"
+                  eyebrow="FRESH PICKS FROM THE CATALOG"
+                  description="A separate movie collection, with titles already featured above removed."
+                  variant="discover"
+                  movies={homeMovieItems}
+                  onOpen={openHomeMovie}
+                  onSave={toggleSaved}
+                  savedIds={savedIds}
+                  pendingNavigation={pendingHomeNavigation}
+                  onPreload={prefetchHomeMovie}
+                />
+                {homeCategoryShelves.map((category) => (
+                  <MovieShelf
+                    key={category.key}
+                    title={category.name}
+                    eyebrow="EXPLORE BY GENRE"
+                    description="A focused genre collection, without repeating titles from the other shelves."
+                    variant="genre"
+                    movies={category.items}
+                    onOpen={openHomeMovie}
+                    onSave={toggleSaved}
+                    savedIds={savedIds}
+                    pendingNavigation={pendingHomeNavigation}
+                    onPreload={prefetchHomeMovie}
+                  />
                 ))}
               </>
             ) : (
