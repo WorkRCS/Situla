@@ -14,7 +14,13 @@ test("shared desktop sidebar has clear workspace groups and a restrained active 
   assert.ok(sidebar.includes("SITE_NAV_ITEMS.slice(0, 5)"));
   assert.ok(sidebar.includes("SITE_NAV_ITEMS.slice(5)"));
   assert.ok(sidebar.includes("site-sidebar-footer"));
-  assert.match(css, /\.site-sidebar\.home-sidebar\s*\{[\s\S]*?border-radius:19px/);
+  assert.match(css, /\.site-sidebar\.home-sidebar\s*\{[\s\S]*?position:fixed;[\s\S]*?height:100dvh;[\s\S]*?border-radius:0 !important;/);
+  assert.ok(sidebar.includes('className="site-sidebar-heading">'));
+  assert.ok(sidebar.includes('className="site-sidebar-brand" aria-label="Situla home"'));
+  assert.ok(sidebar.includes('<small>DISCOVER · WATCH</small>'));
+  assert.doesNotMatch(sidebar, /NAVIGATION/);
+  assert.match(css, /\.site-app-header \.brand-lockup\s*\{\s*display:none !important;/);
+  assert.match(css, /\.site-sidebar\.home-sidebar\s*\{[\s\S]*?margin:0 !important;[\s\S]*?inset:0 auto 0 0;/);
   assert.match(css, /\.site-sidebar \.home-side-link\.active::before\s*\{/);
   assert.match(css, /\.site-sidebar\.is-collapsed \.site-sidebar-section-label/);
   assert.match(css, /@media \(min-width:1101px\)/);
