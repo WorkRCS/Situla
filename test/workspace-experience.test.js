@@ -22,6 +22,10 @@ test("shared desktop sidebar has clear workspace groups and a restrained active 
   assert.match(css, /\.site-app-header \.brand-lockup\s*\{\s*display:none !important;/);
   assert.match(css, /\.site-sidebar\.home-sidebar\s*\{[\s\S]*?margin:0 !important;[\s\S]*?inset:0 auto 0 0;/);
   assert.match(css, /\.site-sidebar \.home-side-link\.active::before\s*\{/);
+  assert.match(css, /--site-desktop-header-height:76px/);
+  assert.match(css, /\.site-app-header \.header-inner\s*\{[\s\S]*?height:var\(--site-desktop-header-height\);[\s\S]*?padding-top:0 !important;[\s\S]*?padding-bottom:0 !important;/);
+  assert.match(css, /\.site-sidebar \.site-sidebar-heading\s*\{[\s\S]*?height:calc\(var\(--site-desktop-header-height\) \+ 1px\);[\s\S]*?padding:0;[\s\S]*?margin:0;/);
+  assert.match(css, /\.site-sidebar\.is-collapsed \.site-sidebar-heading\s*\{[\s\S]*?height:calc\(var\(--site-desktop-header-height\) \+ 1px\);/);
   assert.match(css, /\.site-sidebar\.is-collapsed \.site-sidebar-section-label/);
   assert.match(css, /@media \(min-width:1101px\)/);
 });
