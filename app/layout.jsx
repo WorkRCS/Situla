@@ -3,6 +3,7 @@ import "./globals.css";
 import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
 import RouteProgress from "./components/route-progress.jsx";
+import ServerActivityLoader from "./components/server-activity-loader.jsx";
 
 
 export const metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="dark" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RouteProgress />
+        <ServerActivityLoader />
         {children}
         <PresenceTracker />
         <SiteFooter />
