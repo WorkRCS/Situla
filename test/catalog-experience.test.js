@@ -17,7 +17,7 @@ test("Movie discovery falls back when recent exclusions exhaust the catalog and 
   const discoverEnd = api.indexOf("app.get('/api/search'", discoverStart);
   const discover = api.slice(discoverStart, discoverEnd);
   assert.match(discover, /if \(excludedIds\.length && \(!result\.items\?\.length \|\| total === 0\)\)/);
-  assert.match(discover, /Movie\.aggregate\(\[\{ \$match: baseFilter \}, \{ \$facet: facets \}\]\)/);
+  assert.match(discover, /Movie\.aggregate\(\[\{ \$match: baseFilter \}, \{ \$sort: HOME_MOVIE_DISCOVERY_SORT \}, \{ \$facet: facets \}\]\)/);
   assert.match(discover, /if \(!result\.items\?\.length && total > 0\)/);
   assert.match(discover, /Movie\.find\(baseFilter\)/);
   assert.match(discover, /featured: result\.featured\?\.length \? result\.featured : \[fallbackItems\[0\]\]/);
@@ -80,13 +80,17 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 
-test("premium homepage keeps TV and Anime shelves in the server-provided newest-first order", async () => {
+test("premium homepage keeps TV and Anime shelves in newest-first database order", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const homeDiscovery = await read("../src/home-discovery.js");
   assert.match(app, /const premiumCatalog = accountUser\?\.planId === "premium"/);
-  assert.match(app, /const topTvShows = useMemo\(\(\) => premiumCatalog\s*\? homeTvShows\.slice\(0, 20\)/);
-  assert.match(app, /const topAnimeShows = useMemo\(\(\) => premiumCatalog\s*\? homeAnimeShows\.slice\(0, 20\)/);
+  assert.match(app, /const homeCollections = useMemo\(\(\) => buildHomeCollections\(\{/);
+  assert.match(homeDiscovery, /const topTvShows = takeUniqueHomeItems\([\s\S]*?premiumCatalog\s*\?\s*\(a, b\) => homeReleaseDate\(b\) - homeReleaseDate\(a\)/);
+  assert.match(homeDiscovery, /const topAnimeShows = takeUniqueHomeItems\([\s\S]*?premiumCatalog\s*\?\s*\(a, b\) => homeReleaseDate\(b\) - homeReleaseDate\(a\)/);
   assert.match(app, /title=\{premiumCatalog \? "Latest TV series" : "Top TV series"\}/);
   assert.match(app, /title=\{premiumCatalog \? "Latest anime series" : "Top anime series"\}/);
+  assert.match(app, /items=\{topTvShows\}/);
+  assert.match(app, /items=\{topAnimeShows\}/);
 });
 
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {
@@ -161,7 +165,7 @@ test("TV and Anime catalogue cards keep metadata but hide synopsis outside detai
   const tvDetail = await read("../app/tv/[tmdbId]/detail.jsx");
   const animeDetail = await read("../app/anime/[malId]/detail.jsx");
   const css = await read("../app/globals.css");
-  assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind\}/);
+  assert.match(app, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
   assert.match(app, /series-card-category/);
   assert.doesNotMatch(app, /series-card-description|const synopsis = isTv/);
   assert.doesNotMatch(css, /series-card-description/);
@@ -177,9 +181,11 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
   assert.match(app, /function seriesCardHref\(item, kind\)/);
   assert.match(app, /"\/tv\/" \+ tmdbId/);
   assert.match(app, /"\/anime\/" \+ encodeURIComponent\(malId\)/);
-  assert.match(app, /<Link[\s\S]*?href=\{href\}[\s\S]*?prefetch=\{false\}/);
-  assert.match(app, /onOpen\?\.\(movie, \{ navigate: false \}\)/);
-  assert.match(app, /onOpen\?\.\(item, kind, \{ navigate: false \}\)/);
+  assert.match(app, /className="media-open-button block w-full text-left"/);
+  assert.match(app, /onOpen\?\.\(movie\);/);
+  assert.match(app, /onOpen\?\.\(item, kind\);/);
+  assert.doesNotMatch(app, /onOpen\?\.\(movie, \{ navigate: false \}\)/);
+  assert.doesNotMatch(app, /onOpen\?\.\(item, kind, \{ navigate: false \}\)/);
   assert.match(app, /const openMovie = useCallback\(\(movie, \{ navigate = true \} = \{\}\) =>/);
   assert.match(app, /const openTvSeries = useCallback\(\(series, \{ navigate = true \} = \{\}\) =>/);
   assert.match(app, /const openAnimeSeries = useCallback\(\(series, \{ navigate = true \} = \{\}\) =>/);
