@@ -270,6 +270,7 @@ export function safeUser(user) {
     role: user.role,
     status: user.status,
     planId: premiumActive ? 'premium' : 'free',
+    kidsMode: Boolean(user.kidsMode),
     membership: {
       billingCycle: user.membership?.billingCycle || null,
       status: user.membership?.status || 'inactive',
