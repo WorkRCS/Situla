@@ -890,7 +890,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   async function saveKidsModePin() {
     setKidsPinError("");
     const pin = String(kidsPinSetup || "");
-    if (!/^\\d{4,8}$/.test(pin)) {
+    if (!/^\d{4,8}$/.test(pin)) {
       setKidsPinError("Parent PIN must contain 4 to 8 digits.");
       return;
     }
@@ -1838,7 +1838,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                           autoComplete="new-password"
                           maxLength={8}
                           value={kidsPinSetup}
-                          onChange={(event) => setKidsPinSetup(event.target.value.replace(/\\D/g, "").slice(0, 8))}
+                          onChange={(event) => setKidsPinSetup(event.target.value.replace(/\D/g, "").slice(0, 8))}
                           placeholder="Create 4–8 digit PIN"
                           aria-label="Create parent PIN"
                         />
@@ -1861,7 +1861,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                           autoComplete="current-password"
                           maxLength={8}
                           value={kidsPinCurrent}
-                          onChange={(event) => setKidsPinCurrent(event.target.value.replace(/\\D/g, "").slice(0, 8))}
+                          onChange={(event) => setKidsPinCurrent(event.target.value.replace(/\D/g, "").slice(0, 8))}
                           placeholder="Parent PIN to exit"
                           aria-label="Parent PIN to exit Kids Mode"
                         />
