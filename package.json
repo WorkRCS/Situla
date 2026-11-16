@@ -21,8 +21,7 @@
     "check:movies": "node --test test/movie-catalog.test.js",
     "admin:set-role": "node scripts/set-user-role.js",
     "db:indexes": "node scripts/ensure-database-indexes.js",
-    "seed": "node scripts/seed.js",
-    "seed:kids": "node scripts/replace-kids-catalog.js"
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
