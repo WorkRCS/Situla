@@ -28,7 +28,7 @@ test("Kids Mode API stores just the toggle and clears all old PIN hashes", async
   assert.ok(backend.includes("User.collection.updateMany("));
   assert.ok(backend.includes("GuestSession.collection.updateMany("));
   assert.ok(route.includes("$set: { kidsMode: body.enabled }"));
-  assert.ok(route.includes("$unset: { kidsModePinHash: "" }"));
+  assert.ok(route.includes('$unset: { kidsModePinHash: "" }'));
   assert.ok(!route.includes("body.pin"));
   assert.ok(!route.includes("verifyPassword"));
 });
