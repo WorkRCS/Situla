@@ -2220,7 +2220,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   {pendingHomeNavigation === "route:anime" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
                 </Link>
               </div>
-            </section>
+            </section>}
 
 
 
