@@ -12,7 +12,7 @@ import {
 } from "../src/models.js";
 
 const CONFIRM_FLAG = "--confirm-delete";
-const PRE_2000_DATE_PATTERN = /^(?:18|19)\\d{2}(?:-|$)/;
+const PRE_2000_DATE_PATTERN = /^(?:18|19)\d{2}(?:-|$)/;
 
 /**
  * Known numeric releaseYear is authoritative. The date field is used only
@@ -45,7 +45,7 @@ function isPre2000Record(record, dateField) {
     const year = Number(rawYear);
     if (Number.isInteger(year)) return year > 0 && year < 2000;
   }
-  const match = String(record?.[dateField] || "").match(/^(\\d{4})(?:-|$)/);
+  const match = String(record?.[dateField] || "").match(/^(\d{4})(?:-|$)/);
   return Boolean(match && Number(match[1]) > 0 && Number(match[1]) < 2000);
 }
 
@@ -110,7 +110,7 @@ export async function runPre2000MovieCleanup({ confirm = false } = {}) {
   const matchedCount = snapshots.reduce((total, item) => total + item.count, 0);
   const counts = Object.fromEntries(snapshots.map((item) => [item.name, item.count]));
 
-  console.log("\\nSitula pre-2000 catalogue cleanup");
+  console.log("\nSitula pre-2000 catalogue cleanup");
   console.log("Rule: remove records with releaseYear < 2000; use each catalogue's date field only when releaseYear is absent/null.");
   for (const item of snapshots) {
     console.log(item.name + " matches:", item.count);
@@ -119,7 +119,7 @@ export async function runPre2000MovieCleanup({ confirm = false } = {}) {
   console.log("Combined matches:", matchedCount);
 
   if (!confirm) {
-    console.log("\\nDRY RUN ONLY — no records were deleted.");
+    console.log("\nDRY RUN ONLY — no records were deleted.");
     console.log("To permanently remove these five catalogue sets, run:");
     console.log("npm run delete:catalog:before-2000 -- --confirm-delete");
     return { dryRun: true, matchedCount, deletedCount: 0, counts };
@@ -132,7 +132,7 @@ export async function runPre2000MovieCleanup({ confirm = false } = {}) {
   const deletedCount = results.reduce((total, item) => total + item.deletedCount, 0);
   const deleted = Object.fromEntries(results.map((item) => [item.name, item.deletedCount]));
 
-  console.log("\\nDeletion completed:", deletedCount, "pre-2000 catalogue records removed.");
+  console.log("\nDeletion completed:", deletedCount, "pre-2000 catalogue records removed.");
   for (const item of results) console.log(item.name + " deleted:", item.deletedCount);
   return { dryRun: false, matchedCount, deletedCount, counts, deleted };
 }
@@ -140,7 +140,7 @@ export async function runPre2000MovieCleanup({ confirm = false } = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   runPre2000MovieCleanup({ confirm: shouldDelete() })
     .catch((error) => {
-      console.error("\\nPre-2000 catalogue cleanup failed:", error?.message || error);
+      console.error("\nPre-2000 catalogue cleanup failed:", error?.message || error);
       process.exitCode = 1;
     })
     .finally(async () => {
