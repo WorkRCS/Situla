@@ -194,12 +194,12 @@ export function SiteSidebar({
   );
 }
 
-export function SiteWorkspace({ children }) {
+export function SiteWorkspace({ children, kidsMode = false }) {
   const pathname = usePathname() || "/";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   return (
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
-      <SiteSidebar onCollapsedChange={setSidebarCollapsed} />
+      <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={kidsMode} />
       <div className="site-workspace-main">{children}</div>
       <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
         {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
