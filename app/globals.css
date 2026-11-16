@@ -8640,3 +8640,11 @@ body:has(.login-page) .site-footer { display:none !important; }
 .header-kids-mode-status { min-width:19px; font-size:9px; font-weight:900; letter-spacing:.06em; }
 .header-kids-mode-description { margin:9px 0 0 26px; color:#838c9d; font-size:10px; line-height:1.5; }
 .header-kids-mode-message { margin:7px 0 0 26px; color:#efa0a0; font-size:10px; line-height:1.45; }
+
+
+/* Keep both home modes mounted so switching content never remounts the page shell. */
+.home-mode-panel,
+.kids-mode-panel { display:contents; }
+.home-mode-panel[hidden],
+.kids-mode-panel[hidden] { display:none !important; }
+.home-main-column { min-height:70vh; }
