@@ -847,6 +847,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const demoSignedIn = Boolean(accountUser);
   const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
   const kidsOnlyView = ["home", "cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
+  const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;
 
   useEffect(() => {
     let active = true;
@@ -875,12 +876,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       window.removeEventListener("situla:auth-change", refresh);
     };
   }, []);
-
-  useEffect(() => {
-    if (!kidsModeReady || !kidsMode || kidsOnlyView) return;
-    setAccountOpen(false);
-    router.replace("/");
-  }, [kidsModeReady, kidsMode, kidsOnlyView, router]);
 
   async function changeKidsMode(enabled) {
     const previousMode = kidsMode;
@@ -1741,7 +1736,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
             {navigationItems.filter((item) => item.id !== "search").map((item) => (
-              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
+              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={navigationTab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
                 <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
               </Link>
@@ -2284,9 +2279,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
 
-        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={kidsMode ? false : upcomingHasUnread} kidsMode={kidsMode} onCollapsedChange={setSidebarCollapsed} />}
+        {tab !== "home" && <SiteSidebar active={navigationTab} upcomingHasUnread={kidsMode ? false : upcomingHasUnread} kidsMode={kidsMode} onCollapsedChange={setSidebarCollapsed} />}
         {tab !== "home" && (
           <div className="app-view-main-column">
+            <div className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView} aria-hidden={kidsMode && !kidsOnlyView}>
         {["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) && (
           <CartoonsCatalog view={tab} />
         )}
@@ -2538,6 +2534,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </section>
         )}
 
+            </div>
+            <div className="kids-mode-panel" hidden={!kidsMode || kidsOnlyView} aria-hidden={!kidsMode || kidsOnlyView}>
+              <CartoonsCatalog view="cartoons" />
+            </div>
+
         <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">
           SITULA · DISCOVER MORE
         </footer>
@@ -2552,8 +2553,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <Link
               key={item.id}
               href={item.href}
-              className={"nav-button" + (tab === item.id ? " active" : "")}
-              aria-current={tab === item.id ? "page" : undefined}
+              className={"nav-button" + (navigationTab === item.id ? " active" : "")}
+              aria-current={navigationTab === item.id ? "page" : undefined}
               prefetch={true}
             >
               <NavigationIcon size={20} strokeWidth={tab === item.id ? 2.25 : 1.9} />
