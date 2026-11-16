@@ -3,61 +3,120 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Baby, Film, Search, Star, Tv, ArrowUpRight, Sparkles } from "lucide-react";
+import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 
 function formatYear(value) {
   const year = Number(value);
   if (year > 1800 && year < 3000) return String(year);
   const date = String(value || "");
-  return /^\d{4}/.test(date) ? date.slice(0, 4) : "";
+  return /^\\d{4}/.test(date) ? date.slice(0, 4) : "";
 }
 
-function CartoonCard({ item, kind }) {
+function publicOrder(items) {
+  return [...(Array.isArray(items) ? items : [])].sort((a, b) =>
+    Number(Boolean(b.featured)) - Number(Boolean(a.featured)) ||
+    Number(Boolean(b.hot)) - Number(Boolean(a.hot)) ||
+    Number(Boolean(b.popular)) - Number(Boolean(a.popular)) ||
+    (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
+    (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+    (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0)
+  );
+}
+
+function CartoonCard({ item, kind = "series" }) {
   const isMovie = kind === "movie";
   const href = isMovie
     ? "/cartoons/watch/movie/" + encodeURIComponent(item.tmdbId)
     : "/cartoons/tv/" + encodeURIComponent(item.tmdbId);
   const year = formatYear(item.releaseYear || item.releaseDate || item.firstAirDate);
-  const label = item.catalogBadge?.label || (item.popular ? "Popular" : item.hot ? "Hot" : "");
+  const badgeLabel = item.catalogBadge?.label || (item.featured ? "Featured" : item.hot ? "Hot" : item.popular ? "Popular" : "");
+  const badgeKind = item.catalogBadge?.kind || (item.featured ? "featured" : item.hot ? "hot" : "popular");
+  const posterUrl = item.posterUrl ? optimizeTmdbImageUrl(item.posterUrl, "w185") : "";
+
+  const meta = isMovie
+    ? [year || "Movie", item.runtime > 0 ? item.runtime + " min" : ""].filter(Boolean).join(" · ")
+    : [
+        year || "TV series",
+        item.runtime > 0 ? item.runtime + " min / ep" : "",
+        item.numberOfSeasons > 0 ? item.numberOfSeasons + " seasons" : "",
+        item.numberOfEpisodes > 0 ? item.numberOfEpisodes + " eps" : ""
+      ].filter(Boolean).join(" · ");
+  const category = Array.isArray(item.genres) ? item.genres.slice(0, 2).join(" · ") : "";
+
   return (
-    <Link href={href} className="movie-card cartoon-media-card">
-      <span className="movie-poster cartoon-poster">
-        {item.posterUrl
-          ? <img src={item.posterUrl} alt={item.title + " poster"} loading="lazy" decoding="async" />
-          : <span className="cartoon-poster-fallback"><Baby size={28} /></span>}
-        {label && <span className={"catalog-badge " + (item.catalogBadge?.kind || "popular")}>{label}</span>}
-        {item.minimumAge != null && <span className="cartoon-age-chip">{Number(item.minimumAge)}+</span>}
-        <span className="cartoon-card-play"><span>WATCH</span><ArrowUpRight size={14} /></span>
-      </span>
-      <span className="cartoon-card-copy">
-        <strong>{item.title}</strong>
-        <small>
-          {year}{year && item.voteAverage ? " · " : ""}
-          {item.voteAverage > 0 && <span><Star size={11} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
-          {item.numberOfEpisodes > 0 && " · " + item.numberOfEpisodes + " eps"}
-          {item.runtime > 0 && " · " + item.runtime + " min"}
-        </small>
-        {Array.isArray(item.genres) && item.genres.length > 0 && (
-          <em>{item.genres.slice(0, 2).join(" · ")}</em>
-        )}
-      </span>
-    </Link>
+    <article className={"movie-card series-card series-card-tv" + (isMovie ? " cartoon-movie-card" : " cartoon-series-card")}>
+      <Link
+        href={href}
+        className="media-open-button block w-full text-left"
+        aria-label={"Open " + (item.title || "cartoon")}
+      >
+        <div className="movie-poster">
+          {posterUrl
+            ? <img src={posterUrl} alt={item.title + " poster"} loading="lazy" decoding="async" />
+            : <span className="poster-fallback"><Baby size={28} /></span>}
+          {badgeLabel && (
+            <span className={"catalog-badge catalog-badge-" + badgeKind} role="status" aria-label={badgeLabel + " title"}>
+              {badgeLabel}
+            </span>
+          )}
+          {Number(item.voteAverage) > 0 && (
+            <span className="rating-pill"><Star size={11} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>
+          )}
+        </div>
+        <h3 className="mt-2 truncate text-[13px] font-bold text-white">{item.title}</h3>
+        <p className="series-card-meta">{meta}</p>
+        {category && <p className="series-card-category">{category}</p>}
+      </Link>
+    </article>
   );
 }
 
-function CartoonShelf({ title, eyebrow, description, items, kind = "series", moreHref }) {
+function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, variant = "series" }) {
   if (!items?.length) return null;
+  const shelfClass = kind === "movie" ? "home-movie-shelf" : "home-series-shelf";
   return (
-    <section className="netflix-shelf cartoon-shelf">
-      <div className="section-heading cartoon-shelf-heading">
+    <section className={"netflix-shelf " + shelfClass + " home-collection-" + variant}>
+      <div className="section-heading shelf-heading">
         <div>
           {eyebrow && <span>{eyebrow}</span>}
-          <h2>{title}</h2>
-          {description && <p>{description}</p>}
+          <h2 className={eyebrow ? "mt-1" : ""}>{title}</h2>
         </div>
-        {moreHref && <Link href={moreHref} className="catalog-view-all">View all <ArrowUpRight size={14} /></Link>}
+        {moreHref && <Link href={moreHref} className="shelf-browse-link">Explore all <ArrowUpRight size={14} /></Link>}
       </div>
-      <div className="cartoon-card-rail">
-        {items.map((item) => <CartoonCard key={item.tmdbId} item={item} kind={kind} />)}
+      <div className="media-row flex gap-4 overflow-x-auto pb-3">
+        {items.map((item) => <CartoonCard key={kind + ":" + item.tmdbId} item={item} kind={kind} />)}
+      </div>
+    </section>
+  );
+}
+
+function CartoonSpotlight({ item }) {
+  if (!item) return null;
+  const isMovie = item.mediaType === "cartoon_movie";
+  const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
+  const href = isMovie
+    ? "/cartoons/watch/movie/" + encodeURIComponent(item.tmdbId)
+    : "/cartoons/tv/" + encodeURIComponent(item.tmdbId);
+  const image = item.backdropUrl || item.posterUrl;
+  const imageUrl = image ? optimizeTmdbImageUrl(image, item.backdropUrl ? "w780" : "w342") : "";
+
+  return (
+    <section className="hero-card catalog-spotlight" key={item.tmdbId}>
+      {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
+      <div className="hero-content">
+        <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA KIDS · FAMILY CATALOGUE</div>
+        <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : "POPULAR CARTOON"}</p>
+        <h2 className="hero-title">{item.title}</h2>
+        <div className="hero-meta">
+          {year && <span>{year}</span>}
+          {Number(item.voteAverage) > 0 && <span className="hero-rating"><Star size={13} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
+          {item.minimumAge != null && <span>{Number(item.minimumAge)}+</span>}
+          {(item.genres || []).slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
+        </div>
+        <p className="hero-description">{item.overview || "Discover this family-friendly animated series on Situla."}</p>
+        <div className="hero-actions">
+          <Link href={href} className="gold-button"><Film size={16} /> {isMovie ? "Watch movie" : "Explore series"}</Link>
+        </div>
       </div>
     </section>
   );
@@ -86,7 +145,9 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
       setError("");
       try {
         if (homeView) {
-          const response = await fetch("/api/cartoons/home", { cache: "no-store", credentials: "same-origin", signal: controller.signal });
+          const response = await fetch("/api/cartoons/home", {
+            cache: "no-store", credentials: "same-origin", signal: controller.signal
+          });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(payload.error || "Cartoon catalog is unavailable.");
           if (!controller.signal.aborted) setHome(payload);
@@ -119,102 +180,72 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
 
   const sortedHome = useMemo(() => {
     if (!home) return null;
-    const series = Array.isArray(home.series) ? home.series : [];
-    const movies = Array.isArray(home.movies) ? home.movies : [];
+    const series = publicOrder(home.series);
+    const movies = publicOrder(home.movies);
     return {
       series,
       movies,
-      featuredSeries: home.featuredSeries || series[0] || null,
-      featuredMovie: home.featuredMovie || movies[0] || null,
-      popularSeries: series.filter((item) => item.popular).slice(0, 12),
-      hotSeries: series.filter((item) => item.hot).slice(0, 12),
+      featuredSeries: series.find((item) => item.featured) || series[0] || null,
+      featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
       featuredSeriesList: series.filter((item) => item.featured).slice(0, 12),
-      popularMovies: movies.filter((item) => item.popular).slice(0, 12),
-      featuredMovies: movies.filter((item) => item.featured).slice(0, 12)
+      hotSeries: series.filter((item) => item.hot || Number(item.trendScore) > 0).slice(0, 12),
+      popularSeries: series.filter((item) => item.popular).slice(0, 12),
+      featuredMovies: movies.filter((item) => item.featured).slice(0, 12),
+      hotMovies: movies.filter((item) => item.hot || Number(item.trendScore) > 0).slice(0, 12),
+      popularMovies: movies.filter((item) => item.popular).slice(0, 12)
     };
   }, [home]);
 
   if (loading && !homeView && !items.length) {
-    return <section className="cartoon-page-state"><span className="inline-loading-spinner" /><p>Loading approved cartoons…</p></section>;
+    return <section className="catalog-page-state"><span className="inline-loading-spinner" /><p>Loading approved cartoons…</p></section>;
   }
   if (error && !home && !items.length) {
-    return <section className="cartoon-page-state"><Baby size={30} /><h1>Cartoons are unavailable</h1><p>{error}</p></section>;
+    return <section className="catalog-page-state"><Baby size={30} /><h1>Cartoons are unavailable</h1><p>{error}</p></section>;
   }
 
   if (homeView) {
     const featured = sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
-      <section className="cartoon-hub-page pb-8" aria-label="Cartoons">
-        <div className="cartoon-page-intro">
-          <span className="cartoon-page-kicker"><Baby size={15} /> SITULA KIDS</span>
-          <h1>Cartoons for every little adventure</h1>
-          <p>A dedicated space for age-reviewed animated movies and TV series.</p>
-          <div className="cartoon-quick-links">
-            <Link href="/cartoons/movies"><Film size={16} /> Cartoon Movies <ArrowUpRight size={14} /></Link>
-            <Link href="/cartoons/tv"><Tv size={16} /> Cartoon TV <ArrowUpRight size={14} /></Link>
-          </div>
-          <span className="cartoon-catalog-count">
-            {(home?.totals?.movies ?? 0).toLocaleString()} movies · {(home?.totals?.series ?? 0).toLocaleString()} series in approved catalogue
-          </span>
-        </div>
-        {featured && (
-          <section className="hero-card cartoon-hero-card">
-            {(featured.backdropUrl || featured.posterUrl) && (
-              <img className="hero-image" src={featured.backdropUrl || featured.posterUrl} alt="" fetchPriority="high" decoding="async" />
-            )}
-            <div className="hero-content">
-              <span className="hero-eyebrow"><Sparkles size={13} /> FAMILY SPOTLIGHT</span>
-              <span className="hero-kicker">{featured.mediaType === "cartoon_movie" ? "FEATURED CARTOON MOVIE" : "FEATURED CARTOON SERIES"}</span>
-              <h2 className="hero-title">{featured.title}</h2>
-              <div className="hero-meta">
-                {formatYear(featured.releaseYear || featured.firstAirDate || featured.releaseDate)}
-                {featured.voteAverage > 0 && <span><Star size={12} fill="currentColor" /> {Number(featured.voteAverage).toFixed(1)}</span>}
-                {featured.minimumAge != null && <span>{featured.minimumAge}+</span>}
-                {featured.genres?.slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
-              </div>
-              <p className="hero-description">{featured.overview || "A family-friendly story selected for the Situla Cartoons catalogue."}</p>
-              <div className="hero-actions">
-                <Link className="gold-button" href={featured.mediaType === "cartoon_movie" ? "/cartoons/watch/movie/" + featured.tmdbId : "/cartoons/tv/" + featured.tmdbId}>
-                  <Film size={16} /> {featured.mediaType === "cartoon_movie" ? "Watch movie" : "Explore series"}
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
-        {loading && !home && <div className="cartoon-loading-state">Loading cartoons…</div>}
-        <CartoonShelf title="Featured series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Popular cartoon series" eyebrow="AUDIENCE FAVOURITES" items={sortedHome?.popularSeries} kind="series" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Cartoon movies" eyebrow="ANIMATED MOVIE NIGHT" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" moreHref="/cartoons/movies" />
-        <CartoonShelf title="Featured movies" eyebrow="CURATED FOR FAMILIES" items={sortedHome?.featuredMovies} kind="movie" moreHref="/cartoons/movies" />
+      <section className="pb-8" aria-label="Cartoons catalog">
+        <CartoonSpotlight item={featured} />
+        <CartoonShelf title="Featured TV series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" variant="featured" moreHref="/cartoons/tv" />
+        <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" variant="hot" moreHref="/cartoons/tv" />
+        <CartoonShelf title="Popular cartoon series" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularSeries} kind="series" variant="popular" moreHref="/cartoons/tv" />
+        <CartoonShelf title="Featured movies" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredMovies} kind="movie" variant="featured" moreHref="/cartoons/movies" />
+        <CartoonShelf title="Hot cartoon movies" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotMovies} kind="movie" variant="hot" moreHref="/cartoons/movies" />
+        <CartoonShelf title="Popular cartoon movies" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" variant="popular" moreHref="/cartoons/movies" />
         {sortedHome && !sortedHome.movies.length && !sortedHome.series.length && (
-          <div className="cartoon-empty-state"><Baby size={28} /><h2>Your approved cartoons catalogue is being prepared</h2><p>Run the offline cartoon seed command after the static catalogue has been reviewed.</p></div>
+          <div className="catalog-empty-state"><Baby size={28} /><h2>No approved cartoons yet</h2><p>Only reviewed family-friendly titles are shown in Kids Mode.</p></div>
         )}
+        {error && <p className="catalog-load-more-error" role="alert">{error}</p>}
       </section>
     );
   }
 
   return (
-    <section className="cartoon-catalog-page pb-8" aria-label={pageTitle}>
-      <div className="section-heading cartoon-catalog-title">
-        <div><span>SITULA KIDS · APPROVED CATALOGUE</span><h1>{pageTitle}</h1><p>Titles appear here only after an age suitability review.</p></div>
+    <section className="pb-8" aria-label={pageTitle}>
+      <div className="section-heading shelf-heading">
+        <div>
+          <span>SITULA KIDS · APPROVED CATALOGUE</span>
+          <h1>{pageTitle}</h1>
+        </div>
       </div>
-      <div className="cartoon-catalog-toolbar">
-        <label className="cartoon-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"Search " + pageTitle.toLowerCase()} aria-label={"Search " + pageTitle} /></label>
-        <label className="cartoon-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
+      <div className="catalog-toolbar">
+        <label className="catalog-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"Search " + pageTitle.toLowerCase()} aria-label={"Search " + pageTitle} /></label>
+        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
       </div>
       {!!genres.length && (
-        <div className="home-genre-row cartoon-genre-row" aria-label="Filter cartoons by genre">
+        <div className="home-genre-row">
           {["All", ...genres].map((genre) => <button type="button" key={genre} onClick={() => setSelectedGenre(genre)} className={"genre-chip" + (selectedGenre === genre ? " active" : "")} aria-pressed={selectedGenre === genre}>{genre}</button>)}
         </div>
       )}
-      {error && <p className="cartoon-inline-error">{error}</p>}
+      {error && <p className="catalog-load-more-error" role="alert">{error}</p>}
       {items.length ? (
-        <div className="catalog-grid cartoon-catalog-grid">
+        <div className="catalog-grid">
           {items.map((item) => <CartoonCard key={item.tmdbId} item={item} kind={kind} />)}
         </div>
       ) : (
-        <div className="cartoon-empty-state"><Baby size={28} /><h2>No approved titles found</h2><p>Try a different genre or search term.</p></div>
+        <div className="catalog-empty-state"><Baby size={28} /><h2>No approved titles found</h2><p>Try a different genre or search term.</p></div>
       )}
     </section>
   );
