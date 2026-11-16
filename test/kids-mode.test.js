@@ -15,7 +15,8 @@ test("Kids Mode has one password-free ON/OFF switch", async () => {
   assert.ok(app.includes("Only approved cartoon content"));
   assert.ok(!/kidsPin|Parent PIN|type="password"|saveKidsModePin/.test(app));
   assert.ok(!backend.includes("/api/kids-mode/pin"));
-  assert.ok(!backend.includes("kidsModePinHash"));
+  assert.ok(!backend.includes("verifyPassword('situla-kids-pin:"));
+  assert.ok(backend.includes("removeLegacyKidsModePinData"));
   assert.ok(!models.includes("kidsModePinHash"));
 });
 
