@@ -17,7 +17,8 @@ test("avatar menu omits the Plans & pricing redirect", async () => {
   const menuEnd = app.indexOf('<p className="header-popover-demo-note"', menuStart);
   assert.ok(menuStart >= 0 && menuEnd > menuStart, "account popover should exist");
   const accountMenu = app.slice(menuStart, menuEnd);
-  assert.doesNotMatch(accountMenu, /Plans & pricing|router\\.push\\(["']\\/plans/);
+  assert.equal(accountMenu.includes("Plans & pricing"), false);
+  assert.equal(accountMenu.includes('router.push("/plans")'), false);
   assert.match(accountMenu, /Visit profile/);
 });
 
@@ -25,11 +26,11 @@ test("global page scrolling is native and moving chrome avoids live blur filters
   const layout = await read("../app/layout.jsx");
   const css = await read("../app/globals.css");
   assert.doesNotMatch(layout, /data-scroll-behavior="smooth"/);
-  assert.match(css, /html \\{ scroll-behavior: auto; \\}/);
+  assert.ok(css.includes("html { scroll-behavior: auto; }"));
   const performanceStyles = css.slice(css.indexOf("Shared scrolling performance:"));
-  assert.match(performanceStyles, /\\.site-app-header/);
-  assert.match(performanceStyles, /backdrop-filter:none !important/);
-  assert.match(performanceStyles, /\\.bottom-nav/);
+  assert.ok(performanceStyles.includes(".site-app-header"));
+  assert.ok(performanceStyles.includes("backdrop-filter:none !important"));
+  assert.ok(performanceStyles.includes(".bottom-nav"));
 });
 
 test("background presence and announcements stop polling hidden tabs", async () => {
