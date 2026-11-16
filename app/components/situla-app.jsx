@@ -1787,7 +1787,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   <div className="header-popover-divider" />
                   <section className="header-kids-mode" aria-label="Kids Mode toggle">
                     <div className="header-kids-mode-control">
-                      <span className="header-kids-mode-icon" aria-hidden="true"><Baby size={19} /></span>
+                      <div className="header-kids-mode-label-group">
+                        <span className="header-kids-mode-icon" aria-hidden="true"><Baby size={19} /></span>
+                        <span className="header-kids-mode-label">Kids Mode</span>
+                      </div>
                       <button
                         type="button"
                         className={"header-kids-mode-switch" + (kidsMode ? " is-on" : "")}
