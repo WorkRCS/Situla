@@ -841,6 +841,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [kidsModeReady, setKidsModeReady] = useState(false);
   const [kidsModeBusy, setKidsModeBusy] = useState(false);
   const [kidsModeError, setKidsModeError] = useState("");
+  const kidsModeRequestId = useRef(0);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const demoSignedIn = Boolean(accountUser);
@@ -850,19 +851,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     let active = true;
     async function loadKidsMode() {
+      const requestId = ++kidsModeRequestId.current;
       try {
         const response = await fetch("/api/kids-mode", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Kids Mode settings are unavailable.");
-        if (active) {
+        if (active && requestId === kidsModeRequestId.current) {
           setKidsMode(Boolean(payload.enabled));
         }
       } catch {
-        if (active) {
-          setKidsMode(false);
-        }
+        // Keep the last confirmed mode on temporary network or API errors.
       } finally {
-        if (active) setKidsModeReady(true);
+        if (active && requestId === kidsModeRequestId.current) setKidsModeReady(true);
       }
     }
     loadKidsMode();
@@ -884,6 +884,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   async function changeKidsMode(enabled) {
     const previousMode = kidsMode;
+    const requestId = ++kidsModeRequestId.current;
     setKidsModeError("");
     setKidsMode(Boolean(enabled));
     setKidsModeBusy(true);
@@ -896,12 +897,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Kids Mode could not be updated.");
-      setKidsMode(Boolean(payload.enabled));
+      if (requestId === kidsModeRequestId.current) {
+        setKidsMode(Boolean(payload.enabled));
+      }
     } catch (error) {
-      setKidsMode(previousMode);
-      setKidsModeError(error.message || "Kids Mode could not be updated.");
+      if (requestId === kidsModeRequestId.current) {
+        setKidsMode(previousMode);
+        setKidsModeError(error.message || "Kids Mode could not be updated.");
+      }
     } finally {
-      setKidsModeBusy(false);
+      if (requestId === kidsModeRequestId.current) setKidsModeBusy(false);
     }
   }
 
