@@ -90,9 +90,25 @@ function kidsModeEnabled(principal) {
     : Boolean(principal?.guestSession?.kidsMode);
 }
 
-async function kidsModePrincipalDocument(principal) {
-  if (principal.ownerType === 'user') return User.findById(principal.ownerId);
-  return GuestSession.findById(principal.guestSession?._id);
+let legacyKidsModePinCleanup;
+
+async function removeLegacyKidsModePinData() {
+  if (!legacyKidsModePinCleanup) {
+    legacyKidsModePinCleanup = Promise.all([
+      User.collection.updateMany(
+        { kidsModePinHash: { $exists: true } },
+        { $unset: { kidsModePinHash: "" } }
+      ),
+      GuestSession.collection.updateMany(
+        { kidsModePinHash: { $exists: true } },
+        { $unset: { kidsModePinHash: "" } }
+      )
+    ]).catch((error) => {
+      legacyKidsModePinCleanup = undefined;
+      throw error;
+    });
+  }
+  await legacyKidsModePinCleanup;
 }
 
 async function enforceAdultCatalogBoundary(c, next) {
@@ -124,6 +140,7 @@ for (const path of [
 app.get('/api/kids-mode', async (c) => {
   try {
     await connectDatabase();
+    await removeLegacyKidsModePinData();
     const principal = await resolvePlaybackPrincipal(c);
     return c.json({
       enabled: kidsModeEnabled(principal),
@@ -139,16 +156,24 @@ app.post('/api/kids-mode', async (c) => {
   if (originFailure) return originFailure;
   try {
     await connectDatabase();
+    await removeLegacyKidsModePinData();
     const principal = await resolvePlaybackPrincipal(c);
     const body = await c.req.json().catch(() => ({}));
     if (typeof body.enabled !== 'boolean') {
       return c.json({ error: 'Choose whether Kids Mode should be enabled.', code: 'KIDS_MODE_INVALID' }, 400);
     }
-    const document = await kidsModePrincipalDocument(principal);
-    if (!document) return c.json({ error: 'Account session not found.', code: 'SESSION_NOT_FOUND' }, 404);
-    document.kidsMode = body.enabled;
-    await document.save();
-    return c.json({ enabled: Boolean(document.kidsMode) });
+    const collection = principal.ownerType === 'user' ? User.collection : GuestSession.collection;
+    const documentId = principal.ownerType === 'user' ? principal.ownerId : principal.guestSession?._id;
+    if (!documentId) return c.json({ error: 'Account session not found.', code: 'SESSION_NOT_FOUND' }, 404);
+    const result = await collection.updateOne(
+      { _id: documentId },
+      {
+        $set: { kidsMode: body.enabled },
+        $unset: { kidsModePinHash: "" }
+      }
+    );
+    if (!result.matchedCount) return c.json({ error: 'Account session not found.', code: 'SESSION_NOT_FOUND' }, 404);
+    return c.json({ enabled: Boolean(body.enabled) });
   } catch (error) {
     return apiError(c, error, 'Kids Mode could not be updated.');
   }
