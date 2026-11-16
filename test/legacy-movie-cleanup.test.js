@@ -80,8 +80,8 @@ test("cleanup targets only the five requested top-level media collections", asyn
   for (const model of ["Movie", "TvSeries", "AnimeSeries", "CartoonMovie", "CartoonSeries"]) {
     assert.match(script, new RegExp('name: "' + model + '",\\s*model: ' + model + ','));
   }
-  assert.match(script, /target\\.model\\.countDocuments\\(target\\.filter\\)/);
-  assert.match(script, /item\\.model\\.deleteMany\\(item\\.filter\\)/);
+  assert.match(script, /target\.model\.countDocuments\(target\.filter\)/);
+  assert.match(script, /item\.model\.deleteMany\(item\.filter\)/);
   assert.doesNotMatch(script, /CartoonEpisode|User|GuestSession|WatchHistory/);
   assert.match(script, /if \(!confirm\)[\s\S]*?DRY RUN ONLY/);
 });
