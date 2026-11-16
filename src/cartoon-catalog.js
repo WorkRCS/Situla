@@ -1,0 +1,56 @@
+const ROLL_NO_21_PATTERN = /roll[\s._-]*no\.?[\s._-]*21/i;
+const MIN_CARTOON_YEAR = 2000;
+
+const ROLL_NO_21_EXCLUSIONS = Object.freeze([
+  { title: ROLL_NO_21_PATTERN },
+  { originalTitle: ROLL_NO_21_PATTERN },
+  { aliases: ROLL_NO_21_PATTERN }
+]);
+
+function baseApprovedFilter(extra, yearFilter) {
+  return {
+    ...extra,
+    kidsApproved: true,
+    $and: [yearFilter],
+    $nor: ROLL_NO_21_EXCLUSIONS
+  };
+}
+
+/** Approved cartoon movies released in 2000 or later. Unknown dates are excluded. */
+export function approvedCartoonMovieFilter(extra = {}) {
+  return baseApprovedFilter(extra, {
+    $or: [
+      { releaseDate: { $gte: '2000-01-01' } },
+      { releaseDate: { $in: [null, ''] }, releaseYear: { $gte: MIN_CARTOON_YEAR } }
+    ]
+  });
+}
+
+/** Approved cartoon series that first aired in 2000 or later. Unknown dates are excluded. */
+export function approvedCartoonSeriesFilter(extra = {}) {
+  return baseApprovedFilter(extra, {
+    $or: [
+      { firstAirDate: { $gte: '2000-01-01' } },
+      { firstAirDate: { $in: [null, ''] }, releaseYear: { $gte: MIN_CARTOON_YEAR } }
+    ]
+  });
+}
+
+function readYear(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const match = text.match(/^(\d{4})(?:-|$)/);
+  return match ? Number(match[1]) : null;
+}
+
+export function isPost2000CartoonMovie(item = {}) {
+  const date = String(item.releaseDate ?? '').trim();
+  const year = date ? readYear(date) : Number(item.releaseYear);
+  return Number.isInteger(year) && year >= MIN_CARTOON_YEAR;
+}
+
+export function isPost2000CartoonSeries(item = {}) {
+  const date = String(item.firstAirDate ?? '').trim();
+  const year = date ? readYear(date) : Number(item.releaseYear);
+  return Number.isInteger(year) && year >= MIN_CARTOON_YEAR;
+}

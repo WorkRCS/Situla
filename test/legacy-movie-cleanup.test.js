@@ -38,9 +38,11 @@ test("permanent Movie deletion requires an explicit confirmation flag", () => {
 
 test("cleanup command imports and deletes only the Movie model", async () => {
   const script = await read("../scripts/delete-movies-before-2000.js");
-  assert.match(script, /import \{ Movie \} from "\.\.\/src\/models\.js"/);
+  assert.match(script, /import \{ CartoonMovie, Movie \} from "\.\.\/src\/models\.js"/);
   assert.match(script, /Movie\.countDocuments\(PRE_2000_MOVIE_FILTER\)/);
+  assert.match(script, /CartoonMovie\.countDocuments\(PRE_2000_MOVIE_FILTER\)/);
   assert.match(script, /Movie\.deleteMany\(PRE_2000_MOVIE_FILTER\)/);
-  assert.doesNotMatch(script, /CartoonMovie|TvSeries|AnimeSeries/);
+  assert.match(script, /CartoonMovie\.deleteMany\(PRE_2000_MOVIE_FILTER\)/);
+  assert.doesNotMatch(script, /TvSeries|AnimeSeries/);
   assert.match(script, /if \(!confirm\)[\s\S]*?DRY RUN ONLY/);
 });
