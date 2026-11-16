@@ -8590,6 +8590,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 
 /* Shared scrolling performance: keep native scroll and avoid live backdrop sampling
    on sticky/fixed chrome and elements that move with page content. */
+.site-app-header { background:rgba(8,9,14,.94); }
 .app-header,
 .site-app-header,
 .bottom-nav,
