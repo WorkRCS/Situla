@@ -22,7 +22,7 @@
     "admin:set-role": "node scripts/set-user-role.js",
     "db:indexes": "node scripts/ensure-database-indexes.js",
     "seed": "node scripts/seed.js",
-    "delete:movies:before-2000": "node scripts/delete-movies-before-2000.js"
+    "delete:catalog:before-2000": "node scripts/delete-movies-before-2000.js"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.6",
