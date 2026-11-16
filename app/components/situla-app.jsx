@@ -883,7 +883,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [kidsModeReady, kidsMode, kidsOnlyView, router]);
 
   async function changeKidsMode(enabled) {
+    const previousMode = kidsMode;
     setKidsModeError("");
+    setKidsMode(Boolean(enabled));
     setKidsModeBusy(true);
     try {
       const response = await fetch("/api/kids-mode", {
@@ -895,8 +897,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Kids Mode could not be updated.");
       setKidsMode(Boolean(payload.enabled));
-      router.replace("/");
     } catch (error) {
+      setKidsMode(previousMode);
       setKidsModeError(error.message || "Kids Mode could not be updated.");
     } finally {
       setKidsModeBusy(false);
@@ -1221,12 +1223,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [query, tab, genre, kidsModeReady, kidsMode]);
 
   useEffect(() => {
-    if (!kidsModeReady || kidsMode || tab !== "home") {
-      setHomeSeriesReady(false);
-      return;
-    }
+    if (!kidsModeReady || kidsMode || tab !== "home") return undefined;
     const controller = new AbortController();
-    setHomeSeriesReady(false);
 
     async function loadSeries(mediaType) {
       const params = new URLSearchParams({ page: "1", limit: "36" });
@@ -1794,11 +1792,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         role="switch"
                         aria-checked={kidsMode}
                         aria-label="Kids Mode"
+                        aria-busy={kidsModeBusy}
                         disabled={kidsModeBusy || !kidsModeReady}
                         onClick={() => changeKidsMode(!kidsMode)}
                       >
                         <span className="header-kids-mode-switch-track"><span /></span>
-                        <span className="header-kids-mode-status">{kidsModeBusy ? "…" : kidsMode ? "ON" : "OFF"}</span>
+                        <span className="header-kids-mode-status">{kidsMode ? "ON" : "OFF"}</span>
                       </button>
                     </div>
                     <p className="header-kids-mode-description">Turn on to show cartoons only. Switch off to return to Movies, TV and Anime.</p>
@@ -1983,10 +1982,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               kidsMode={kidsMode}
             />
             <div className="home-main-column">
-            {kidsMode ? (
-              <CartoonsCatalog view="cartoons" />
-            ) : (
-              <>
+            <div className="home-mode-panel" hidden={kidsMode} aria-hidden={kidsMode}>
             {featured ? (
               <section
                 className="hero-card home-hero-card"
@@ -2274,8 +2270,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </div>
             )}
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
-              </>
-            )}
+            </div>
+            <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
+              <CartoonsCatalog view="cartoons" />
+            </div>
             </div>
           </>
         )}
