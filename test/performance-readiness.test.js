@@ -11,6 +11,27 @@ test("global layout avoids full Bootstrap CSS and repeated whole-DOM extension s
   assert.doesNotMatch(layout, /MutationObserver|querySelectorAll\("\*"\)|beforeInteractive/);
 });
 
+test("avatar menu omits the Plans & pricing redirect", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const menuStart = app.indexOf('<div className="header-account-popover"');
+  const menuEnd = app.indexOf('<p className="header-popover-demo-note"', menuStart);
+  assert.ok(menuStart >= 0 && menuEnd > menuStart, "account popover should exist");
+  const accountMenu = app.slice(menuStart, menuEnd);
+  assert.doesNotMatch(accountMenu, /Plans & pricing|router\\.push\\(["']\\/plans/);
+  assert.match(accountMenu, /Visit profile/);
+});
+
+test("global page scrolling is native and moving chrome avoids live blur filters", async () => {
+  const layout = await read("../app/layout.jsx");
+  const css = await read("../app/globals.css");
+  assert.doesNotMatch(layout, /data-scroll-behavior="smooth"/);
+  assert.match(css, /html \\{ scroll-behavior: auto; \\}/);
+  const performanceStyles = css.slice(css.indexOf("Shared scrolling performance:"));
+  assert.match(performanceStyles, /\\.site-app-header/);
+  assert.match(performanceStyles, /backdrop-filter:none !important/);
+  assert.match(performanceStyles, /\\.bottom-nav/);
+});
+
 test("background presence and announcements stop polling hidden tabs", async () => {
   const presence = await read("../app/components/presence-tracker.jsx");
   const announcements = await read("../app/components/announcement-center.jsx");
