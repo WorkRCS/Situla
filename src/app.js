@@ -938,11 +938,18 @@ app.post('/api/playback/start', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
   try {
+    await connectDatabase();
     const body = await c.req.json().catch(() => ({}));
+    const principal = await resolvePlaybackPrincipal(c);
+    const kidsModeOn = kidsModeEnabled(principal);
     const mediaType = String(body.mediaType || '').toLowerCase();
     const mediaId = String(body.mediaId || '').trim();
     const media = { mediaType, mediaId };
     let validateCatalogRecord;
+
+    if (kidsModeOn && !['cartoon_movie', 'cartoon_tv'].includes(mediaType)) {
+      return c.json({ error: 'Kids Mode allows playback only from the approved Cartoons catalog.', code: 'KIDS_MODE_PLAYBACK_BLOCKED' }, 403);
+    }
 
     if (mediaType === 'movie') {
       if (!/^tt\d{5,12}$/i.test(mediaId)) return c.json({ error: 'Invalid movie ID.' }, 400);
@@ -976,17 +983,39 @@ app.post('/api/playback/start', async (c) => {
         const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
         return Boolean(anime && !(Number(anime.episodes) > 0 && episode > Number(anime.episodes)));
       };
+    } else if (mediaType === 'cartoon_movie') {
+      const tmdbId = Number(mediaId);
+      if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
+        return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
+      }
+      validateCatalogRecord = async () => Boolean(await CartoonMovie.exists({ tmdbId, kidsApproved: true }));
+      media.mediaId = String(tmdbId);
+    } else if (mediaType === 'cartoon_tv') {
+      const tmdbId = Number(mediaId);
+      const season = Number(body.season);
+      const episode = Number(body.episode);
+      if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
+          !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
+        return c.json({ error: 'Invalid cartoon TV episode route.' }, 400);
+      }
+      media.mediaId = String(tmdbId);
+      media.season = season;
+      media.episode = episode;
+      validateCatalogRecord = async () => Boolean(
+        await CartoonSeries.exists({ tmdbId, kidsApproved: true }) &&
+        await CartoonEpisode.exists({ seriesTmdbId: tmdbId, seasonNumber: season, episodeNumber: episode, kidsApproved: true })
+      );
     } else {
       return c.json({ error: 'Unsupported playback type.' }, 400);
     }
 
-    await connectDatabase();
     if (!await validateCatalogRecord()) {
-      const label = mediaType === 'movie' ? 'Movie' : mediaType === 'tv' ? 'TV episode' : 'Anime episode';
+      const label = mediaType === 'cartoon_movie' ? 'Cartoon movie'
+        : mediaType === 'cartoon_tv' ? 'Cartoon episode'
+          : mediaType === 'movie' ? 'Movie' : mediaType === 'tv' ? 'TV episode' : 'Anime episode';
       return c.json({ error: label + ' is not available in the Situla catalog.' }, 404);
     }
 
-    const principal = await resolvePlaybackPrincipal(c);
     const principalKey = String(principal.ownerId);
     if (!await enforceRateLimit('playback-start:' + principal.ownerType + ':' + principalKey, 20, 60)) {
       return c.json({ error: 'Too many playback starts. Please wait before opening another title.', code: 'PLAYBACK_RATE_LIMITED' }, 429);
@@ -1010,12 +1039,15 @@ app.post('/api/playback/heartbeat', async (c) => {
     const principal = await resolvePlaybackPrincipal(c);
     const result = await heartbeatPlaybackSession(principal, body.sessionId, body.playing);
     if (result.startedPlaying) {
-      const trendModel = result.mediaType === 'movie' ? Movie : result.mediaType === 'tv' ? TvSeries : AnimeSeries;
+      const trendModel = ({
+        movie: Movie, tv: TvSeries, anime: AnimeSeries,
+        cartoon_movie: CartoonMovie, cartoon_tv: CartoonSeries
+      })[result.mediaType];
       const trendFilter = result.mediaType === 'movie'
         ? { imdbId: String(result.mediaId).toLowerCase() }
-        : result.mediaType === 'tv'
-          ? { tmdbId: Number(result.mediaId) }
-          : { malId: Number(result.mediaId) };
+        : result.mediaType === 'anime'
+          ? { malId: Number(result.mediaId) }
+          : { tmdbId: Number(result.mediaId) };
       try {
         await recordCatalogPlaybackStart(trendModel, trendFilter);
       } catch (trendError) {
@@ -1063,6 +1095,253 @@ const HOME_MOVIE_DISCOVERY_SORT = {
   releaseDate: -1,
   _id: 1
 };
+
+function cartoonCatalogBadge(item) {
+  if (item.featured) return { label: 'Featured', kind: 'featured' };
+  if (item.hot) return { label: 'Hot', kind: 'hot' };
+  if (item.popular) return { label: 'Popular', kind: 'popular' };
+  return null;
+}
+
+function cartoonMovieDto(item) {
+  return {
+    id: String(item._id),
+    mediaType: 'cartoon_movie',
+    tmdbId: Number(item.tmdbId),
+    tmdbUrl: 'https://www.themoviedb.org/movie/' + Number(item.tmdbId),
+    title: item.title,
+    originalTitle: item.originalTitle || '',
+    aliases: Array.isArray(item.aliases) ? item.aliases : [],
+    overview: item.overview || '',
+    posterUrl: item.posterUrl || null,
+    backdropUrl: item.backdropUrl || null,
+    releaseDate: item.releaseDate || null,
+    releaseYear: item.releaseYear || null,
+    runtime: Number(item.runtime) || null,
+    genres: Array.isArray(item.genres) ? item.genres : [],
+    keywords: Array.isArray(item.keywords) ? item.keywords : [],
+    originalLanguage: item.originalLanguage || '',
+    country: Array.isArray(item.country) ? item.country : [],
+    certification: item.certification || '',
+    minimumAge: Number.isFinite(Number(item.minimumAge)) ? Number(item.minimumAge) : null,
+    contentWarnings: Array.isArray(item.contentWarnings) ? item.contentWarnings : [],
+    kidsApproved: item.kidsApproved === true,
+    voteAverage: Number(item.voteAverage) || 0,
+    voteCount: Number(item.voteCount) || 0,
+    popularity: Number(item.popularity) || 0,
+    featured: Boolean(item.featured),
+    hot: Boolean(item.hot),
+    popular: Boolean(item.popular),
+    catalogBadge: cartoonCatalogBadge(item),
+    playbackStatus: item.playbackStatus || 'unverified'
+  };
+}
+
+function cartoonSeriesDto(item, includeSeasons = false) {
+  return {
+    id: String(item._id),
+    mediaType: 'cartoon_tv',
+    tmdbId: Number(item.tmdbId),
+    tmdbUrl: 'https://www.themoviedb.org/tv/' + Number(item.tmdbId),
+    title: item.title,
+    originalTitle: item.originalTitle || '',
+    aliases: Array.isArray(item.aliases) ? item.aliases : [],
+    overview: item.overview || '',
+    posterUrl: item.posterUrl || null,
+    backdropUrl: item.backdropUrl || null,
+    firstAirDate: item.firstAirDate || null,
+    lastAirDate: item.lastAirDate || null,
+    releaseYear: item.releaseYear || null,
+    genres: Array.isArray(item.genres) ? item.genres : [],
+    keywords: Array.isArray(item.keywords) ? item.keywords : [],
+    originalLanguage: item.originalLanguage || '',
+    country: Array.isArray(item.country) ? item.country : [],
+    networks: Array.isArray(item.networks) ? item.networks : [],
+    certification: item.certification || '',
+    minimumAge: Number.isFinite(Number(item.minimumAge)) ? Number(item.minimumAge) : null,
+    contentWarnings: Array.isArray(item.contentWarnings) ? item.contentWarnings : [],
+    kidsApproved: item.kidsApproved === true,
+    voteAverage: Number(item.voteAverage) || 0,
+    voteCount: Number(item.voteCount) || 0,
+    popularity: Number(item.popularity) || 0,
+    status: item.status || '',
+    numberOfSeasons: Number(item.numberOfSeasons) || 0,
+    numberOfEpisodes: Number(item.numberOfEpisodes) || 0,
+    seasons: includeSeasons && Array.isArray(item.seasons) ? item.seasons : undefined,
+    featured: Boolean(item.featured),
+    hot: Boolean(item.hot),
+    popular: Boolean(item.popular),
+    catalogBadge: cartoonCatalogBadge(item),
+    playbackStatus: item.playbackStatus || 'unverified'
+  };
+}
+
+function cartoonEpisodeDto(item) {
+  return {
+    tmdbEpisodeId: Number(item.tmdbEpisodeId) || null,
+    seasonNumber: Number(item.seasonNumber),
+    episodeNumber: Number(item.episodeNumber),
+    name: item.name,
+    overview: item.overview || '',
+    airDate: item.airDate || null,
+    runtime: Number(item.runtime) || null,
+    stillUrl: item.stillUrl || null,
+    voteAverage: Number(item.voteAverage) || 0
+  };
+}
+
+app.get('/api/cartoons/home', async (c) => {
+  try {
+    await connectDatabase();
+    const filter = { kidsApproved: true };
+    const sort = { featured: -1, hot: -1, popular: -1, trendScore: -1, popularity: -1, voteAverage: -1, title: 1 };
+    const [movies, series, movieTotal, seriesTotal] = await Promise.all([
+      CartoonMovie.find(filter).sort(sort).limit(24).lean(),
+      CartoonSeries.find(filter).sort(sort).limit(30).lean(),
+      CartoonMovie.countDocuments(filter),
+      CartoonSeries.countDocuments(filter)
+    ]);
+    return c.json({
+      featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
+      featuredSeries: series.find((item) => item.featured) || series[0] || null,
+      movies: movies.map(cartoonMovieDto),
+      series: series.map((item) => cartoonSeriesDto(item)),
+      totals: { movies: movieTotal, series: seriesTotal }
+    });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon home is temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/movies', async (c) => {
+  try {
+    await connectDatabase();
+    const { page, limit } = pageOptions(c, 24, 48);
+    const query = safeText(c.req.query('q'));
+    const genre = safeText(c.req.query('genre'));
+    const sortKey = String(c.req.query('sort') || 'popular');
+    const filter = { kidsApproved: true };
+    if (genre) filter.genres = genre;
+    if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
+    else if (query) filter.$text = { $search: query };
+    const sort = sortKey === 'newest'
+      ? { releaseDate: -1, popularity: -1 }
+      : sortKey === 'rating'
+        ? { voteAverage: -1, voteCount: -1, popularity: -1 }
+        : sortKey === 'az'
+          ? { title: 1 }
+          : { featured: -1, hot: -1, popular: -1, popularity: -1, voteAverage: -1 };
+    const [items, total] = await Promise.all([
+      CartoonMovie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      CartoonMovie.countDocuments(filter)
+    ]);
+    return c.json({
+      items: items.map(cartoonMovieDto),
+      genres: [...new Set((await CartoonMovie.distinct('genres', { kidsApproved: true })).filter(Boolean))].sort(),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon movie catalog is temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/movies/:tmdbId', async (c) => {
+  const tmdbId = Number(c.req.param('tmdbId'));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await CartoonMovie.findOne({ tmdbId, kidsApproved: true }).lean();
+    if (!item) return c.json({ error: 'Approved cartoon movie not found.' }, 404);
+    return c.json({ item: cartoonMovieDto(item) });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon movie details are temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/series', async (c) => {
+  try {
+    await connectDatabase();
+    const { page, limit } = pageOptions(c, 24, 48);
+    const query = safeText(c.req.query('q'));
+    const genre = safeText(c.req.query('genre'));
+    const sortKey = String(c.req.query('sort') || 'popular');
+    const filter = { kidsApproved: true };
+    if (genre) filter.genres = genre;
+    if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
+    else if (query) filter.$text = { $search: query };
+    const sort = sortKey === 'newest'
+      ? { firstAirDate: -1, popularity: -1 }
+      : sortKey === 'rating'
+        ? { voteAverage: -1, voteCount: -1, popularity: -1 }
+        : sortKey === 'az'
+          ? { title: 1 }
+          : { featured: -1, hot: -1, popular: -1, popularity: -1, voteAverage: -1 };
+    const [items, total] = await Promise.all([
+      CartoonSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
+      CartoonSeries.countDocuments(filter)
+    ]);
+    return c.json({
+      items: items.map((item) => cartoonSeriesDto(item)),
+      genres: [...new Set((await CartoonSeries.distinct('genres', { kidsApproved: true })).filter(Boolean))].sort(),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon TV catalog is temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/series/:tmdbId', async (c) => {
+  const tmdbId = Number(c.req.param('tmdbId'));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) return c.json({ error: 'Invalid cartoon series ID.' }, 400);
+  try {
+    await connectDatabase();
+    const item = await CartoonSeries.findOne({ tmdbId, kidsApproved: true }).lean();
+    if (!item) return c.json({ error: 'Approved cartoon series not found.' }, 404);
+    return c.json({ item: cartoonSeriesDto(item, true) });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon series details are temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/series/:tmdbId/seasons/:seasonNumber', async (c) => {
+  const tmdbId = Number(c.req.param('tmdbId'));
+  const seasonNumber = Number(c.req.param('seasonNumber'));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId < 1 || !Number.isSafeInteger(seasonNumber) || seasonNumber < 0) {
+    return c.json({ error: 'Invalid cartoon season route.' }, 400);
+  }
+  try {
+    await connectDatabase();
+    const series = await CartoonSeries.findOne({ tmdbId, kidsApproved: true }).select('tmdbId title').lean();
+    if (!series) return c.json({ error: 'Approved cartoon series not found.' }, 404);
+    const items = await CartoonEpisode.find({
+      seriesTmdbId: tmdbId, seasonNumber, kidsApproved: true
+    }).sort({ episodeNumber: 1 }).lean();
+    return c.json({ series: { tmdbId, title: series.title }, seasonNumber, items: items.map(cartoonEpisodeDto) });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon episodes are temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/search', async (c) => {
+  const query = safeText(c.req.query('q'));
+  if (query.length < 2) return c.json({ items: [] });
+  try {
+    await connectDatabase();
+    const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
+    const filter = numericId ? { tmdbId: numericId, kidsApproved: true } : { kidsApproved: true, $text: { $search: query } };
+    const [movies, series] = await Promise.all([
+      CartoonMovie.find(filter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean(),
+      CartoonSeries.find(filter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean()
+    ]);
+    const items = [
+      ...movies.map(cartoonMovieDto),
+      ...series.map((item) => cartoonSeriesDto(item))
+    ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 30);
+    return c.json({ items });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon search is temporarily unavailable.');
+  }
+});
 
 app.get('/api/movies/discover', async (c) => {
   try {
