@@ -427,7 +427,7 @@ test("sidebar routes share the exact existing seven-item mobile navigation bar",
   const css = await read("../app/globals.css");
 
   assert.ok(app.includes('import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx"'));
-  assert.ok(app.includes("{SITE_MOBILE_NAV_ITEMS.map((item) =>"));
+  assert.ok(app.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) =>"));
   assert.ok(sidebar.includes("export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS"));
   assert.ok(sidebar.includes('filter((item) => item.id !== "profile")'));
   assert.ok(sidebar.includes('<nav className="bottom-nav site-workspace-mobile-nav"'));
