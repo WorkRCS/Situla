@@ -7,9 +7,9 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("Kids Mode accepts only 4–8 digit parent PINs on the server", async () => {
   const backend = await read("../src/app.js");
   const frontend = await read("../app/components/situla-app.jsx");
-  const validPinPattern = "if (!/^\d{4,8}$/.test(pin))";
-  const invalidEscapedPattern = "if (!/^\\d{4,8}$/.test(pin))";
-  const digitFilter = 'event.target.value.replace(/\D/g, "").slice(0, 8)';
+  const validPinPattern = String.raw`if (!/^\d{4,8}$/.test(pin))`;
+  const invalidEscapedPattern = String.raw`if (!/^\\d{4,8}$/.test(pin))`;
+  const digitFilter = String.raw`event.target.value.replace(/\D/g, "").slice(0, 8)`;
 
   assert.ok(backend.includes(validPinPattern));
   assert.ok(!backend.includes(invalidEscapedPattern));
