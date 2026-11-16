@@ -988,7 +988,7 @@ app.post('/api/playback/start', async (c) => {
       if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
         return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
       }
-      validateCatalogRecord = async () => Boolean(await CartoonMovie.exists({ tmdbId, kidsApproved: true }));
+      validateCatalogRecord = async () => Boolean(await CartoonMovie.exists(approvedCartoonFilter({ tmdbId })));
       media.mediaId = String(tmdbId);
     } else if (mediaType === 'cartoon_tv') {
       const tmdbId = Number(mediaId);
@@ -1002,7 +1002,7 @@ app.post('/api/playback/start', async (c) => {
       media.season = season;
       media.episode = episode;
       validateCatalogRecord = async () => Boolean(
-        await CartoonSeries.exists({ tmdbId, kidsApproved: true }) &&
+        await CartoonSeries.exists(approvedCartoonFilter({ tmdbId })) &&
         await CartoonEpisode.exists({ seriesTmdbId: tmdbId, seasonNumber: season, episodeNumber: episode, kidsApproved: true })
       );
     } else {
@@ -1095,6 +1095,20 @@ const HOME_MOVIE_DISCOVERY_SORT = {
   releaseDate: -1,
   _id: 1
 };
+
+const ROLL_NO_21_PATTERN = /roll[\\s._-]*no\\.?[\\s._-]*21/i;
+
+function approvedCartoonFilter(extra = {}) {
+  return {
+    ...extra,
+    kidsApproved: true,
+    $nor: [
+      { title: ROLL_NO_21_PATTERN },
+      { originalTitle: ROLL_NO_21_PATTERN },
+      { aliases: ROLL_NO_21_PATTERN }
+    ]
+  };
+}
 
 function cartoonCatalogBadge(item) {
   if (item.featured) return { label: 'Featured', kind: 'featured' };
@@ -1193,7 +1207,7 @@ function cartoonEpisodeDto(item) {
 app.get('/api/cartoons/home', async (c) => {
   try {
     await connectDatabase();
-    const filter = { kidsApproved: true };
+    const filter = approvedCartoonFilter();
     const sort = { featured: -1, hot: -1, popular: -1, trendScore: -1, popularity: -1, voteAverage: -1, title: 1 };
     const [movies, series, movieTotal, seriesTotal] = await Promise.all([
       CartoonMovie.find(filter).sort(sort).limit(24).lean(),
@@ -1220,7 +1234,7 @@ app.get('/api/cartoons/movies', async (c) => {
     const query = safeText(c.req.query('q'));
     const genre = safeText(c.req.query('genre'));
     const sortKey = String(c.req.query('sort') || 'popular');
-    const filter = { kidsApproved: true };
+    const filter = approvedCartoonFilter();
     if (genre) filter.genres = genre;
     if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
@@ -1237,7 +1251,7 @@ app.get('/api/cartoons/movies', async (c) => {
     ]);
     return c.json({
       items: items.map(cartoonMovieDto),
-      genres: [...new Set((await CartoonMovie.distinct('genres', { kidsApproved: true })).filter(Boolean))].sort(),
+      genres: [...new Set((await CartoonMovie.distinct('genres', approvedCartoonFilter())).filter(Boolean))].sort(),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -1250,7 +1264,7 @@ app.get('/api/cartoons/movies/:tmdbId', async (c) => {
   if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
   try {
     await connectDatabase();
-    const item = await CartoonMovie.findOne({ tmdbId, kidsApproved: true }).lean();
+    const item = await CartoonMovie.findOne(approvedCartoonFilter({ tmdbId })).lean();
     if (!item) return c.json({ error: 'Approved cartoon movie not found.' }, 404);
     return c.json({ item: cartoonMovieDto(item) });
   } catch (error) {
@@ -1265,7 +1279,7 @@ app.get('/api/cartoons/series', async (c) => {
     const query = safeText(c.req.query('q'));
     const genre = safeText(c.req.query('genre'));
     const sortKey = String(c.req.query('sort') || 'popular');
-    const filter = { kidsApproved: true };
+    const filter = approvedCartoonFilter();
     if (genre) filter.genres = genre;
     if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
@@ -1282,7 +1296,7 @@ app.get('/api/cartoons/series', async (c) => {
     ]);
     return c.json({
       items: items.map((item) => cartoonSeriesDto(item)),
-      genres: [...new Set((await CartoonSeries.distinct('genres', { kidsApproved: true })).filter(Boolean))].sort(),
+      genres: [...new Set((await CartoonSeries.distinct('genres', approvedCartoonFilter())).filter(Boolean))].sort(),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -1295,7 +1309,7 @@ app.get('/api/cartoons/series/:tmdbId', async (c) => {
   if (!Number.isSafeInteger(tmdbId) || tmdbId < 1) return c.json({ error: 'Invalid cartoon series ID.' }, 400);
   try {
     await connectDatabase();
-    const item = await CartoonSeries.findOne({ tmdbId, kidsApproved: true }).lean();
+    const item = await CartoonSeries.findOne(approvedCartoonFilter({ tmdbId })).lean();
     if (!item) return c.json({ error: 'Approved cartoon series not found.' }, 404);
     return c.json({ item: cartoonSeriesDto(item, true) });
   } catch (error) {
@@ -1328,7 +1342,9 @@ app.get('/api/cartoons/search', async (c) => {
   try {
     await connectDatabase();
     const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
-    const filter = numericId ? { tmdbId: numericId, kidsApproved: true } : { kidsApproved: true, $text: { $search: query } };
+    const filter = numericId
+      ? approvedCartoonFilter({ tmdbId: numericId })
+      : { ...approvedCartoonFilter(), $text: { $search: query } };
     const [movies, series] = await Promise.all([
       CartoonMovie.find(filter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean(),
       CartoonSeries.find(filter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean()
