@@ -4,6 +4,7 @@ import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
 import RouteProgress from "./components/route-progress.jsx";
 import ServerActivityLoader from "./components/server-activity-loader.jsx";
+import PersistentSitulaApp from "./components/persistent-situla-app.jsx";
 
 
 export const metadata = {
@@ -33,7 +34,7 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <RouteProgress />
         <ServerActivityLoader />
-        {children}
+        <PersistentSitulaApp>{children}</PersistentSitulaApp>
         <PresenceTracker />
         <SiteFooter />
       </body>
