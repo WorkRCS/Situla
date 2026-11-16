@@ -12,7 +12,8 @@ import { Badge } from "./ui/badge.jsx";
 import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
-import { SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
+import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
+import CartoonsCatalog from "./cartoons-catalog.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
@@ -32,6 +33,7 @@ const BOOTSTRAP_ICONS = {
   download: "download",
   external: "box-arrow-up-right",
   spark: "stars",
+  kids: "balloon",
   close: "x-lg"
 };
 
@@ -810,6 +812,14 @@ const NAV_ITEMS = [
   { id: "settings", href: "/settings", label: "Settings", icon: "settings" }
 ];
 
+const KIDS_NAV_ITEMS = [
+  { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: "kids" },
+  { id: "cartoonMovies", href: "/cartoons/movies", label: "Movies", icon: "film" },
+  { id: "cartoonTv", href: "/cartoons/tv", label: "TV Series", icon: "tv" },
+  { id: "saved", href: "/saved", label: "My List", icon: "saved" },
+  { id: "settings", href: "/settings", label: "Settings", icon: "settings" }
+];
+
 export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const router = useRouter();
   const tab = view;
@@ -827,11 +837,116 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchLoadingMore, setSearchLoadingMore] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
+  const [kidsMode, setKidsMode] = useState(false);
+  const [kidsModeReady, setKidsModeReady] = useState(false);
+  const [kidsPinConfigured, setKidsPinConfigured] = useState(false);
+  const [kidsPinSetup, setKidsPinSetup] = useState("");
+  const [kidsPinCurrent, setKidsPinCurrent] = useState("");
+  const [kidsPinError, setKidsPinError] = useState("");
+  const [kidsModeBusy, setKidsModeBusy] = useState(false);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const demoSignedIn = Boolean(accountUser);
+  const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
+  const kidsOnlyView = ["cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
 
   useEffect(() => {
+    let active = true;
+    async function loadKidsMode() {
+      try {
+        const response = await fetch("/api/kids-mode", { cache: "no-store", credentials: "same-origin" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Kids Mode settings are unavailable.");
+        if (active) {
+          setKidsMode(Boolean(payload.enabled));
+          setKidsPinConfigured(Boolean(payload.pinConfigured));
+        }
+      } catch {
+        if (active) {
+          setKidsMode(false);
+          setKidsPinConfigured(false);
+        }
+      } finally {
+        if (active) setKidsModeReady(true);
+      }
+    }
+    loadKidsMode();
+    const refresh = () => loadKidsMode();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("situla:auth-change", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("situla:auth-change", refresh);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!kidsModeReady || !kidsMode || kidsOnlyView) return;
+    setAccountOpen(false);
+    router.replace("/cartoons");
+  }, [kidsModeReady, kidsMode, kidsOnlyView, router]);
+
+  async function saveKidsModePin() {
+    setKidsPinError("");
+    const pin = String(kidsPinSetup || "");
+    if (!/^\\d{4,8}$/.test(pin)) {
+      setKidsPinError("Parent PIN must contain 4 to 8 digits.");
+      return;
+    }
+    setKidsModeBusy(true);
+    try {
+      const response = await fetch("/api/kids-mode/pin", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Parent PIN could not be saved.");
+      setKidsPinConfigured(true);
+      setKidsPinSetup("");
+      setKidsPinError("Parent PIN saved. Kids Mode is ready to turn on.");
+    } catch (error) {
+      setKidsPinError(error.message || "Parent PIN could not be saved.");
+    } finally {
+      setKidsModeBusy(false);
+    }
+  }
+
+  async function changeKidsMode(enabled) {
+    setKidsPinError("");
+    if (!enabled && !kidsPinCurrent) {
+      setKidsPinError("Enter the parent PIN to exit Kids Mode.");
+      return;
+    }
+    setKidsModeBusy(true);
+    try {
+      const response = await fetch("/api/kids-mode", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(enabled
+          ? { enabled: true }
+          : { enabled: false, pin: kidsPinCurrent })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Kids Mode could not be updated.");
+      setKidsMode(Boolean(payload.enabled));
+      setKidsPinConfigured(Boolean(payload.pinConfigured));
+      setKidsPinCurrent("");
+      setKidsPinError("");
+      setAccountOpen(false);
+      router.replace(payload.enabled ? "/cartoons" : "/");
+    } catch (error) {
+      setKidsPinError(error.message || "Kids Mode could not be updated.");
+    } finally {
+      setKidsModeBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!kidsModeReady || kidsMode) return undefined;
     let active = true;
     async function refreshUpcomingStatus() {
       try {
@@ -850,7 +965,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       window.removeEventListener("focus", refreshUpcomingStatus);
       window.removeEventListener("situla:upcoming-waitlist-updated", refreshUpcomingStatus);
     };
-  }, [tab]);
+  }, [tab, kidsModeReady, kidsMode]);
   const [genre, setGenre] = useState("All");
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
@@ -1024,9 +1139,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [searchInput, searchOpen, searchType, searchYear]);
+  }, [searchInput, searchOpen, searchType, searchYear, kidsModeReady, kidsMode]);
 
   useEffect(() => {
+    if (!kidsModeReady || kidsMode) { setLoading(false); return undefined; }
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -1114,10 +1230,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query, tab, genre]);
+  }, [query, tab, genre, kidsModeReady, kidsMode]);
 
   useEffect(() => {
-    if (tab !== "home") {
+    if (!kidsModeReady || kidsMode || tab !== "home") {
       setHomeSeriesReady(false);
       return;
     }
@@ -1152,7 +1268,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     });
 
     return () => controller.abort();
-  }, [tab]);
+  }, [tab, kidsModeReady, kidsMode]);
 
   const homeHeroItems = useMemo(
     () => mixHomeSpotlight({
@@ -1316,7 +1432,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [router]);
 
   async function loadMoreSearch() {
-    if (searchLoadingMore || !searchHasMore) return;
+    if (kidsMode || searchLoadingMore || !searchHasMore) return;
     const nextPage = searchPage + 1;
     const value = searchInput.trim();
     const params = new URLSearchParams({ page: String(nextPage), limit: "20", type: searchType });
@@ -1325,8 +1441,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setSearchLoadingMore(true);
     setSearchError("");
     try {
-      const response = await fetch("/api/search?" + params.toString(), {
+      const response = await fetch(kidsMode
+        ? "/api/cartoons/search?q=" + encodeURIComponent(value)
+        : "/api/search?" + params.toString(), {
         cache: "no-store",
+        credentials: "same-origin",
         signal: AbortSignal.timeout(20_000)
       });
       const payload = await response.json().catch(() => ({}));
@@ -1590,7 +1709,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setRecentMovies([]);
   }
 
-  const sortedHistory = [...watchHistory].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+  const visibleWatchHistory = kidsMode
+    ? watchHistory.filter((item) => ["cartoon_movie", "cartoon_tv"].includes(String(item.mediaType || "")))
+    : watchHistory;
+  const visibleSavedMovies = kidsMode
+    ? savedMovies.filter((item) => ["cartoon_movie", "cartoon_tv"].includes(savedMediaType(item)))
+    : savedMovies;
+  const sortedHistory = [...visibleWatchHistory].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
   const hasMoreMovies = movies.length > 0 && movies.length < moviesTotal;
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
@@ -1610,6 +1735,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <strong>SITULA</strong>
               <small>{({
                 home: "DISCOVER STORIES",
+                cartoons: "KIDS · CARTOONS",
+                cartoonMovies: "CARTOON MOVIES",
+                cartoonTv: "CARTOON SERIES",
                 movies: "MOVIE COLLECTION",
                 tv: "TV SERIES",
                 anime: "ANIME COLLECTION",
@@ -1621,7 +1749,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             </span>
           </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
-            {NAV_ITEMS.filter((item) => item.id !== "search").map((item) => (
+            {navigationItems.filter((item) => item.id !== "search").map((item) => (
               <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={tab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
                 <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
@@ -1634,12 +1762,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 type="button"
                 className="header-search search-box header-search-trigger"
                 onClick={() => setSearchOpen(true)}
-                aria-label="Search movies, TV series and anime"
+                aria-label={kidsMode ? "Search cartoons" : "Search movies, TV series and anime"}
                 aria-haspopup="dialog"
                 aria-expanded={searchOpen}
               >
                 <Search size={18} strokeWidth={2} aria-hidden="true" />
-                <span className="header-search-label">Search movies, TV & anime</span>
+                <span className="header-search-label">{kidsMode ? "Search cartoons" : "Search movies, TV & anime"}</span>
               </button>
             </div>
             <div className="header-account-wrap">
@@ -1664,6 +1792,56 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     </span>
                     {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>
+                  <div className="header-popover-divider" />
+                  <section className="header-kids-mode" aria-label="Kids Mode controls">
+                    <div className="header-kids-mode-heading">
+                      <span className="header-kids-mode-icon"><Baby size={16} /></span>
+                      <span><strong>Kids Mode</strong><small>Only approved cartoon content</small></span>
+                      <span className={"header-kids-mode-status" + (kidsMode ? " is-on" : "")}>{kidsMode ? "ON" : "OFF"}</span>
+                    </div>
+                    {!kidsPinConfigured && !kidsMode && (
+                      <div className="header-kids-mode-setup">
+                        <p>Set a parent PIN before turning Kids Mode on.</p>
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          autoComplete="new-password"
+                          maxLength={8}
+                          value={kidsPinSetup}
+                          onChange={(event) => setKidsPinSetup(event.target.value.replace(/\\D/g, "").slice(0, 8))}
+                          placeholder="Create 4–8 digit PIN"
+                          aria-label="Create parent PIN"
+                        />
+                        <button type="button" disabled={kidsModeBusy} onClick={saveKidsModePin}>
+                          {kidsModeBusy ? "Saving…" : "Save parent PIN"}
+                        </button>
+                      </div>
+                    )}
+                    {kidsPinConfigured && !kidsMode && (
+                      <button type="button" className="header-kids-mode-toggle" role="switch" aria-checked={false} disabled={kidsModeBusy} onClick={() => changeKidsMode(true)}>
+                        {kidsModeBusy ? "Turning on…" : "Turn on Kids Mode"}
+                      </button>
+                    )}
+                    {kidsMode && (
+                      <div className="header-kids-mode-exit">
+                        <p>Movies, TV and Anime are hidden while Kids Mode is active.</p>
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          autoComplete="current-password"
+                          maxLength={8}
+                          value={kidsPinCurrent}
+                          onChange={(event) => setKidsPinCurrent(event.target.value.replace(/\\D/g, "").slice(0, 8))}
+                          placeholder="Parent PIN to exit"
+                          aria-label="Parent PIN to exit Kids Mode"
+                        />
+                        <button type="button" disabled={kidsModeBusy} onClick={() => changeKidsMode(false)}>
+                          {kidsModeBusy ? "Checking…" : "Exit Kids Mode"}
+                        </button>
+                      </div>
+                    )}
+                    {kidsPinError && <p className="header-kids-mode-message" role="status">{kidsPinError}</p>}
+                  </section>
                   <div className="header-popover-divider" />
                   {demoSignedIn ? (
                     <>
@@ -1987,7 +2165,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               onSeriesPreload={prefetchHomeSeries}
             />
 
-            <section className="home-discovery" aria-label="Explore Situla">
+            {!kidsMode && <section className="home-discovery" aria-label="Explore Situla">
               <div className="home-section-intro">
                 <div>
                   <span>ONE PLACE. MANY WORLDS.</span>
@@ -2134,9 +2312,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
 
-        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={upcomingHasUnread} onCollapsedChange={setSidebarCollapsed} />}
+        {tab !== "home" && <SiteSidebar active={tab} upcomingHasUnread={kidsMode ? false : upcomingHasUnread} kidsMode={kidsMode} onCollapsedChange={setSidebarCollapsed} />}
         {tab !== "home" && (
           <div className="app-view-main-column">
+        {["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) && (
+          <CartoonsCatalog view={tab} />
+        )}
+
         {tab === "movies" && (
           <section className="pb-8" aria-label="Movies catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(savedMediaKey(catalogSpotlight, "movie"))} />}
             {loading && !movies.length ? (
@@ -2253,9 +2435,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         {tab === "saved" && (
           <section className="pb-8">
             <div className="section-heading"><div><span>YOUR COLLECTION</span><h1 className="mt-1 text-2xl font-black">My List</h1></div></div>
-            {savedMovies.length ? (
+            {visibleSavedMovies.length ? (
               <div className="catalog-grid">
-                {savedMovies.map((item) => {
+                {visibleSavedMovies.map((item) => {
                   const kind = savedMediaType(item);
                   const key = savedMediaKey(item);
                   return kind === "movie"
@@ -2392,7 +2574,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {SITE_MOBILE_NAV_ITEMS.map((item) => {
+        {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const NavigationIcon = item.icon;
           return (
             <Link
