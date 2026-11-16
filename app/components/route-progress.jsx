@@ -7,11 +7,12 @@ export default function RouteProgress() {
   const pathname = usePathname() || "/";
   const pendingRef = useRef(null);
   const doneTimerRef = useRef(null);
+  const startTimerRef = useRef(null);
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    function start(target) {
+    function start(target, deferStateUpdate = false) {
       const current = pendingRef.current;
       if (current && current.pathname === target.pathname &&
           current.search === target.search && !current.finishing) return;
@@ -19,15 +20,27 @@ export default function RouteProgress() {
         window.clearTimeout(doneTimerRef.current);
         doneTimerRef.current = null;
       }
-      pendingRef.current = {
+      const pending = {
         pathname: target.pathname,
         search: target.search,
         startedAt: Date.now(),
         matchedAt: 0,
         finishing: false
       };
-      setVisible(true);
-      setProgress((value) => Math.max(value, 12));
+      pendingRef.current = pending;
+
+      const showProgress = () => {
+        startTimerRef.current = null;
+        if (pendingRef.current !== pending) return;
+        setVisible(true);
+        setProgress((value) => Math.max(value, 12));
+      };
+      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
+      if (deferStateUpdate) {
+        startTimerRef.current = window.setTimeout(showProgress, 0);
+      } else {
+        showProgress();
+      }
     }
 
     function onDocumentClick(event) {
@@ -68,7 +81,9 @@ export default function RouteProgress() {
         const changed = target && target.origin === currentUrl.origin &&
           (target.pathname !== currentUrl.pathname || (trackSearch && target.search !== currentUrl.search));
         const result = original.apply(this, arguments);
-        if (changed) start(target);
+        // Next.js can call history methods from useInsertionEffect. Deferring
+        // React state updates avoids scheduling work from that effect.
+        if (changed) start(target, true);
         return result;
       }
       window.history[method] = wrappedHistoryMethod;
@@ -88,6 +103,7 @@ export default function RouteProgress() {
       window.removeEventListener("popstate", onPopState);
       restorePushState();
       restoreReplaceState();
+      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
       if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
   }, []);
