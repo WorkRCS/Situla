@@ -9,7 +9,7 @@ test("Kids Mode accepts only 4–8 digit parent PINs on the server", async () =>
   const frontend = await read("../app/components/situla-app.jsx");
 
   assert.ok(backend.includes(String.raw`if (!/^\d{4,8}$/.test(pin))`));
-  assert.ok(!backend.includes(String.raw`if (!/^\\d{4,8}$/.test(pin))`));
+  assert.ok(!backend.includes(String.raw`if (!/^\d{4,8}$/.test(pin))`));
   assert.ok(frontend.includes(String.raw`if (!/^\d{4,8}$/.test(pin))`));
   assert.ok(frontend.includes(String.raw`event.target.value.replace(/\D/g, "").slice(0, 8)`));
 });
