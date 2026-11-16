@@ -8611,3 +8611,32 @@ body:has(.login-page) .site-footer { display:none !important; }
   backdrop-filter:none !important;
 }
 
+
+
+/* Simple password-free Kids Mode switch in the account popover. */
+.header-kids-mode { padding:8px 2px 10px; }
+.header-kids-mode-control { display:flex; align-items:center; gap:10px; }
+.header-kids-mode-copy { display:grid; min-width:0; flex:1; gap:4px; }
+.header-kids-mode-copy strong { color:#fff; font-size:12px; font-weight:800; }
+.header-kids-mode-copy small { color:#8d95a6; font-size:10px; }
+.header-kids-mode-switch {
+  display:inline-flex; min-height:34px; align-items:center; gap:7px; padding:3px 5px;
+  border:1px solid rgba(255,255,255,.1); border-radius:999px; background:rgba(255,255,255,.035);
+  color:#a8afbd; cursor:pointer; transition:border-color .18s ease,background .18s ease;
+}
+.header-kids-mode-switch:focus-visible { outline:2px solid rgba(232,182,91,.85); outline-offset:3px; }
+.header-kids-mode-switch:disabled { cursor:wait; opacity:.65; }
+.header-kids-mode-switch-track {
+  display:flex; width:36px; height:20px; align-items:center; border-radius:999px;
+  background:#414858; transition:background .18s ease;
+}
+.header-kids-mode-switch-track > span {
+  display:block; width:14px; height:14px; margin-left:3px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .18s ease;
+}
+.header-kids-mode-switch.is-on { border-color:rgba(72,197,138,.4); background:rgba(72,197,138,.08); color:#6ad7a5; }
+.header-kids-mode-switch.is-on .header-kids-mode-switch-track { background:#269d6d; }
+.header-kids-mode-switch.is-on .header-kids-mode-switch-track > span { transform:translateX(16px); }
+.header-kids-mode-status { min-width:19px; font-size:9px; font-weight:900; letter-spacing:.06em; }
+.header-kids-mode-description { margin:9px 0 0 26px; color:#838c9d; font-size:10px; line-height:1.5; }
+.header-kids-mode-message { margin:7px 0 0 26px; color:#efa0a0; font-size:10px; line-height:1.45; }
