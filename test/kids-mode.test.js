@@ -42,6 +42,8 @@ test("Kids Mode switch is optimistic, avoids route navigation, and keeps both ho
   assert.ok(!handler.includes("router.replace"));
   assert.ok(home.includes('<div className="home-mode-panel" hidden={kidsMode}'));
   assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsMode}'));
+  assert.ok(app.includes('className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView}'));
+  assert.ok(app.includes('className="kids-mode-panel" hidden={!kidsMode || kidsOnlyView}'));
   assert.ok(app.includes('if (!kidsModeReady || kidsMode || tab !== "home") return undefined;'));
   assert.ok(!app.includes("setHomeSeriesReady(false);"));
 });
@@ -73,7 +75,8 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
 
   assert.ok(app.includes("import { ArrowUpRight, Baby,"));
   assert.ok(app.includes('const kidsOnlyView = ["home", "cartoons",'));
-  assert.ok(app.includes('router.replace("/")'));
+  assert.ok(!app.includes('router.replace("/")'));
+  assert.ok(app.includes('const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;'));
   assert.ok(app.includes('<CartoonsCatalog view="cartoons" />'));
   assert.ok(app.includes("kidsMode={kidsMode}"));
   assert.ok(sidebar.includes('{ id: "home", href: "/", label: "Home", icon: House }'));
