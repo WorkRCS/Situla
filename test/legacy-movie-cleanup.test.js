@@ -26,7 +26,7 @@ test("Mongo cleanup filter scopes numeric years and legacy date fallback", () =>
     releaseYear: { $type: "number", $lt: 2000 }
   });
   assert.equal(PRE_2000_MOVIE_FILTER.$or[1].releaseYear, null);
-  assert.match(PRE_2000_MOVIE_FILTER.$or[1].releaseDate.$regex, /^\^\(/);
+  assert.match(PRE_2000_MOVIE_FILTER.$or[1].releaseDate.$regex.source, /^\^\(/);
 });
 
 test("permanent Movie deletion requires an explicit confirmation flag", () => {
