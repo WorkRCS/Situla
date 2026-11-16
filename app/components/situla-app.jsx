@@ -16,7 +16,7 @@ import { SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, BadgeCheck, CalendarDays, CreditCard, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -1665,9 +1665,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>
                   <div className="header-popover-divider" />
-                                    <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/plans"); }}>
-                    <CreditCard size={16} /> <span>Plans & pricing</span> <ArrowUpRight size={14} />
-                  </button>
                   {demoSignedIn ? (
                     <>
                       <button type="button" className="header-popover-action" role="menuitem" onClick={() => { setAccountOpen(false); router.push("/profile"); }}>
