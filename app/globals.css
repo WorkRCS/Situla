@@ -23,7 +23,7 @@
 }
 button { -webkit-user-select: none; user-select: none; }
 html, body { min-height: 100%; background: var(--background); }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 body {
   margin: 0;
   color: #f7f7fa;
@@ -8587,3 +8587,26 @@ body:has(.login-page) .site-footer { display:none !important; }
   opacity:1;
   cursor:progress;
 }
+
+/* Shared scrolling performance: keep native scroll and avoid live backdrop sampling
+   on sticky/fixed chrome and elements that move with page content. */
+.app-header,
+.site-app-header,
+.bottom-nav,
+.site-workspace-mobile-nav,
+.header-notification-trigger,
+.site-app-header .header-search-trigger,
+.home-side-link:hover,
+.home-side-link.active,
+.catalog-badge-popular,
+.rating-pill,
+.save-button,
+.share-button,
+.home-hero-save,
+.upcoming-tag,
+.upcoming-premium-chip,
+.upcoming-countdown-overlay {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+
