@@ -8648,3 +8648,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 .home-mode-panel[hidden],
 .kids-mode-panel[hidden] { display:none !important; }
 .home-main-column { min-height:70vh; }
+
+/* Preserve the normal catalog DOM on non-home tabs while Kids Mode is active. */
+.app-view-mode-panel { display:contents; }
+.app-view-mode-panel[hidden] { display:none !important; }
