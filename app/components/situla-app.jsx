@@ -1089,8 +1089,38 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [tab, storageReady]);
 
   useEffect(() => {
-    if (!searchOpen) return;
+    if (!kidsModeReady || !searchOpen) return;
     const value = searchInput.trim();
+    if (kidsMode) {
+      if (value.length < 2) {
+        setSuggestions([]);
+        setSuggestionsLoading(false);
+        setSearchError("");
+        setSearchHasMore(false);
+        setSearchPage(1);
+        return undefined;
+      }
+      const controller = new AbortController();
+      const timer = window.setTimeout(async () => {
+        setSuggestionsLoading(true);
+        setSearchError("");
+        try {
+          const response = await fetch("/api/cartoons/search?q=" + encodeURIComponent(value), {
+            cache: "no-store",
+            credentials: "same-origin",
+            signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)])
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || "Cartoon search is unavailable.");
+          if (!controller.signal.aborted) setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+        } catch (error) {
+          if (!controller.signal.aborted) setSearchError(error.message || "Cartoon search is unavailable.");
+        } finally {
+          if (!controller.signal.aborted) setSuggestionsLoading(false);
+        }
+      }, 160);
+      return () => { window.clearTimeout(timer); controller.abort(); };
+    }
     if (value.length > 0 && value.length < 3) {
       setSuggestions([]);
       setSuggestionsLoading(false);
