@@ -151,7 +151,7 @@ app.post('/api/kids-mode/pin', async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const pin = String(body.pin || '');
     const currentPin = String(body.currentPin || '');
-    if (!/^\\d{4,8}$/.test(pin)) {
+    if (!/^\d{4,8}$/.test(pin)) {
       return c.json({ error: 'Parent PIN must contain 4 to 8 digits.', code: 'KIDS_PIN_INVALID' }, 400);
     }
     const document = await kidsModePrincipalDocument(principal);
