@@ -25,12 +25,16 @@ test("avatar menu omits the Plans & pricing redirect", async () => {
 test("global page scrolling is native and moving chrome avoids live blur filters", async () => {
   const layout = await read("../app/layout.jsx");
   const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
   assert.doesNotMatch(layout, /data-scroll-behavior="smooth"/);
   assert.ok(css.includes("html { scroll-behavior: auto; }"));
   const performanceStyles = css.slice(css.indexOf("Shared scrolling performance:"));
   assert.ok(performanceStyles.includes(".site-app-header"));
   assert.ok(performanceStyles.includes("backdrop-filter:none !important"));
   assert.ok(performanceStyles.includes(".bottom-nav"));
+  assert.match(app, /window\.addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
+  assert.equal((app.match(/document\.visibilityState !== "visible" \|\| isScrollingRef\.current/g) || []).length, 2);
+  assert.match(app, /window\.removeEventListener\("scroll", onScroll\)/);
 });
 
 test("background presence and announcements stop polling hidden tabs", async () => {

@@ -963,6 +963,24 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState("");
   const loadMoreLock = useRef(false);
+  const isScrollingRef = useRef(false);
+
+  useEffect(() => {
+    let stopTimer = 0;
+    const onScroll = () => {
+      isScrollingRef.current = true;
+      if (stopTimer) window.clearTimeout(stopTimer);
+      stopTimer = window.setTimeout(() => {
+        isScrollingRef.current = false;
+        stopTimer = 0;
+      }, 180);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (stopTimer) window.clearTimeout(stopTimer);
+    };
+  }, []);
 
   useEffect(() => {
     setCatalogSpotlight(null);
@@ -1309,7 +1327,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (tab !== "home" || !homeSeriesReady || homeHeroItems.length < 2 || heroPaused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible" || isScrollingRef.current) return;
       setHeroIndex((current) => (current + 1) % homeHeroItems.length);
     }, 3000);
     return () => window.clearInterval(timer);
@@ -1367,7 +1385,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (catalogSpotlightItems.length < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const interval = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible" || isScrollingRef.current) return;
       setCatalogSpotlight((current) => {
         const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
         const currentIndex = catalogSpotlightItems.findIndex((item) => String(item[idField]) === String(current?.[idField]));
