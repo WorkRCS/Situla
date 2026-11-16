@@ -45,6 +45,19 @@ export function tvSeriesPlaybackUrl(tmdbId, season, episode, startAt = 0) {
   return withSeriesPlaybackTheme(url, startAt);
 }
 
+export function cartoonTvPlaybackUrl(tmdbId, season, episode, startAt = 0) {
+  return tvSeriesPlaybackUrl(tmdbId, season, episode, startAt);
+}
+
+export function cartoonMoviePlaybackUrl(tmdbId, startAt = 0) {
+  const id = String(tmdbId ?? "").trim();
+  if (!TMDB_TV_ID.test(id)) return null;
+  const numericId = Number(id);
+  if (!Number.isSafeInteger(numericId) || numericId < 1) return null;
+  const url = new URL("/movie/" + numericId, SERIES_PLAYBACK_ORIGIN);
+  return withSeriesPlaybackTheme(url, startAt);
+}
+
 export function animeSeriesPlaybackUrl(malId, episode, audio, startAt = 0) {
   const route = normalizeAnimePlayerRoute(malId, episode, audio);
   if (!route) return null;
