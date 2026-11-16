@@ -850,6 +850,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;
 
   useEffect(() => {
+    const nextQuery = String(initialQuery || "").slice(0, 120);
+    setQuery(nextQuery);
+    setSearchInput(nextQuery);
+  }, [initialQuery]);
+
+  useEffect(() => {
     let active = true;
     async function loadKidsMode() {
       const requestId = ++kidsModeRequestId.current;
@@ -1736,7 +1742,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           </Link>
           <nav className="desktop-nav" aria-label="Primary navigation">
             {navigationItems.filter((item) => item.id !== "search").map((item) => (
-              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (tab === item.id ? " active" : "")} aria-current={navigationTab === item.id ? "page" : undefined}>
+              <Link key={item.id} href={item.href} className={"desktop-nav-link" + (navigationTab === item.id ? " active" : "")} aria-current={navigationTab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
                 <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
               </Link>
@@ -1969,19 +1975,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       )}
 
       <div className={(tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")) + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
-
+        <SiteSidebar
+          active={navigationTab}
+          upcomingHasUnread={kidsMode ? false : upcomingHasUnread}
+          continueItems={tab === "home" ? sortedHistory : undefined}
+          onResume={tab === "home" ? resumeHistoryItem : undefined}
+          onCollapsedChange={setSidebarCollapsed}
+          kidsMode={kidsMode}
+        />
 
         {tab === "home" && (
-          <>
-            <SiteSidebar
-              active="home"
-              upcomingHasUnread={upcomingHasUnread}
-              continueItems={sortedHistory}
-              onResume={resumeHistoryItem}
-              onCollapsedChange={setSidebarCollapsed}
-              kidsMode={kidsMode}
-            />
-            <div className="home-main-column">
+          <div className="home-main-column">
             <div className="home-mode-panel" hidden={kidsMode} aria-hidden={kidsMode}>
             {featured ? (
               <section
@@ -2274,12 +2278,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
               <CartoonsCatalog view="cartoons" />
             </div>
-            </div>
-          </>
+          </div>
         )}
 
-
-        {tab !== "home" && <SiteSidebar active={navigationTab} upcomingHasUnread={kidsMode ? false : upcomingHasUnread} kidsMode={kidsMode} onCollapsedChange={setSidebarCollapsed} />}
         {tab !== "home" && (
           <div className="app-view-main-column">
             <div className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView} aria-hidden={kidsMode && !kidsOnlyView}>
@@ -2557,7 +2558,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               aria-current={navigationTab === item.id ? "page" : undefined}
               prefetch={true}
             >
-              <NavigationIcon size={20} strokeWidth={tab === item.id ? 2.25 : 1.9} />
+              <NavigationIcon size={20} strokeWidth={navigationTab === item.id ? 2.25 : 1.9} />
               <span className="nav-label-with-dot">{item.label}{item.id === "upcoming" && upcomingHasUnread && <b className="upcoming-nav-live" aria-label="New releases waiting for your reminder">LIVE</b>}</span>
             </Link>
           );
