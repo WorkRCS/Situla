@@ -17,7 +17,7 @@ import CartoonsCatalog from "./cartoons-catalog.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -848,7 +848,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const demoSignedIn = Boolean(accountUser);
   const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
-  const kidsOnlyView = ["cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
+  const kidsOnlyView = ["home", "cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
 
   useEffect(() => {
     let active = true;
@@ -884,7 +884,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     if (!kidsModeReady || !kidsMode || kidsOnlyView) return;
     setAccountOpen(false);
-    router.replace("/cartoons");
+    router.replace("/");
   }, [kidsModeReady, kidsMode, kidsOnlyView, router]);
 
   async function saveKidsModePin() {
@@ -2048,8 +2048,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               continueItems={sortedHistory}
               onResume={resumeHistoryItem}
               onCollapsedChange={setSidebarCollapsed}
+              kidsMode={kidsMode}
             />
             <div className="home-main-column">
+            {kidsMode ? (
+              <CartoonsCatalog view="cartoons" />
+            ) : (
+              <>
             {featured ? (
               <section
                 className="hero-card home-hero-card"
@@ -2337,6 +2342,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </div>
             )}
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
+              </>
+            )}
             </div>
           </>
         )}
