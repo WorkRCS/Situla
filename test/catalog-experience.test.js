@@ -278,8 +278,9 @@ test("mobile/tablet navigation reuses the original full-width seven-item bar", a
   const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
   const workspaceNav = sidebar.slice(sidebar.indexOf('<nav className="bottom-nav site-workspace-mobile-nav"'));
 
-  assert.ok(app.includes("SITE_MOBILE_NAV_ITEMS.map"));
-  assert.ok(workspaceNav.includes("SITE_MOBILE_NAV_ITEMS.map"));
+  assert.ok(app.includes("SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar"));
+  assert.ok(bottomNav.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
+  assert.ok(workspaceNav.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
   assert.ok(workspaceNav.includes('className={"nav-button site-workspace-mobile-link"'));
   assert.doesNotMatch(bottomNav, /navigateBack|setSearchOpen|>Search</);
   assert.ok(css.includes("position:fixed !important"));
@@ -288,6 +289,7 @@ test("mobile/tablet navigation reuses the original full-width seven-item bar", a
   assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
   assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
   assert.ok(css.includes("backdrop-filter:blur(26px) saturate(180%) !important"));
+  assert.ok(css.includes("backdrop-filter:none !important"));
   const finalDock = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
   assert.doesNotMatch(finalDock, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
 });
@@ -342,7 +344,7 @@ test("TV and Anime cards expose the same Save control as Movie cards and feed on
   assert.match(app, /onSave=\{toggleSaved\} saved=\{savedIds\.has\(savedMediaKey\(item, "anime"\)\)\}/);
   assert.match(app, /normalizeSavedMediaList\(saved\)/);
   assert.doesNotMatch(app, /savedIds\.has\(featured\.imdbId\)/);
-  assert.match(app, /savedMovies\.map\(\(item\) => \{/);
+  assert.match(app, /visibleSavedMovies\.map\(\(item\) => \{/);
   assert.match(app, /kind === "tv" \? openTvSeries : openAnimeSeries/);
   assert.match(app, /Tap the bookmark on any movie, TV series, or anime to save it here\./);
 });

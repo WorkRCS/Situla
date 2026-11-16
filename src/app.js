@@ -112,6 +112,71 @@ async function removeLegacyKidsModePinData() {
 }
 
 async function enforceAdultCatalogBoundary(c, next) {
+  const pathname = new URL(c.req.url).pathname;
+  const method = c.req.method.toUpperCase();
+
+  // Reject malformed and empty lookups before opening MongoDB. This preserves
+  // predictable 4xx/empty responses during a database outage and avoids
+  // spending a connection on searches that cannot return catalog records.
+  if (pathname === '/api/search' && method === 'GET') {
+    const query = safeText(c.req.query('q'));
+    const selectedType = String(c.req.query('type') || 'all').toLowerCase();
+    const allowedTypes = new Set(['all', 'movie', 'tv', 'anime']);
+    if (!allowedTypes.has(selectedType)) {
+      return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
+    }
+    const yearText = String(c.req.query('year') || '').trim();
+    const year = yearText ? Number(yearText) : null;
+    if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
+        year < 1870 || year > new Date().getFullYear())) {
+      return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
+    }
+    if ((query && query.length < 3) || (!query && selectedType === 'all' && year === null)) {
+      return c.json({ items: [] });
+    }
+  }
+
+  const movieDetail = pathname.match(/^\/api\/movies\/([^/]+)$/);
+  if (movieDetail && movieDetail[1] !== 'discover' &&
+      !IMDB_ID.test(decodeURIComponent(movieDetail[1]).toLowerCase())) {
+    return c.json({ error: 'Invalid IMDb title ID.' }, 400);
+  }
+
+  const tvDetail = pathname.match(/^\/api\/tv\/([^/]+)(?:\/seasons\/([^/]+))?$/);
+  if (tvDetail) {
+    const tmdbText = decodeURIComponent(tvDetail[1]);
+    const seasonText = tvDetail[2] == null ? null : decodeURIComponent(tvDetail[2]);
+    if (!/^[0-9]{1,12}$/.test(tmdbText) || !Number.isSafeInteger(Number(tmdbText)) ||
+        Number(tmdbText) < 1 || (seasonText !== null &&
+        (!/^[0-9]{1,3}$/.test(seasonText) || !Number.isSafeInteger(Number(seasonText))))) {
+      return c.json({ error: 'Invalid TMDB series or season ID.' }, 400);
+    }
+  }
+
+  const animeDetail = pathname.match(/^\/api\/anime\/([^/]+)$/);
+  if (animeDetail && (!/^[0-9]{1,12}$/.test(decodeURIComponent(animeDetail[1])) ||
+      Number(decodeURIComponent(animeDetail[1])) < 1)) {
+    return c.json({ error: 'Invalid MyAnimeList ID.' }, 400);
+  }
+
+  if (pathname.startsWith('/api/upcoming')) {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !isSameOriginRequest(c)) {
+      return c.json({ error: 'A same-origin request is required.' }, 403);
+    }
+    if (method === 'GET' && pathname === '/api/upcoming') {
+      const type = String(c.req.query('type') || 'all').toLowerCase();
+      if (!['all', 'movie', 'tv', 'anime'].includes(type)) {
+        return c.json({ error: 'Choose Movies, TV Series or Anime.', items: [] }, 400);
+      }
+    }
+    const upcomingAction = pathname.match(/^\/api\/upcoming\/([^/]+)\/(waitlist|poster)$/);
+    if (upcomingAction && !/^[a-f0-9]{24}$/i.test(decodeURIComponent(upcomingAction[1]))) {
+      return c.json({
+        error: upcomingAction[2] === 'poster' ? 'Invalid upcoming poster.' : 'Invalid upcoming item.'
+      }, 400);
+    }
+  }
+
   try {
     await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
@@ -123,7 +188,7 @@ async function enforceAdultCatalogBoundary(c, next) {
         redirectTo: '/cartoons'
       }, 403);
     }
-    return next();
+    await next();
   } catch (error) {
     return apiError(c, error, 'Kids Mode access could not be verified.');
   }
@@ -915,78 +980,78 @@ app.get('/api/access/status', async (c) => {
 app.post('/api/playback/start', async (c) => {
   const originFailure = requireSameOrigin(c);
   if (originFailure) return originFailure;
+  const body = await c.req.json().catch(() => ({}));
+  const mediaType = String(body.mediaType || '').toLowerCase();
+  const mediaId = String(body.mediaId || '').trim();
+  const media = { mediaType, mediaId };
+  let validateCatalogRecord;
+
+  // Validate request structure before opening a database connection.
+  if (mediaType === 'movie') {
+    if (!/^tt\d{5,12}$/i.test(mediaId)) return c.json({ error: 'Invalid movie ID.' }, 400);
+    validateCatalogRecord = async () => Boolean(await Movie.exists({ imdbId: mediaId.toLowerCase(), adult: { $ne: true } }));
+  } else if (mediaType === 'tv') {
+    const tmdbId = Number(mediaId);
+    const season = Number(body.season);
+    const episode = Number(body.episode);
+    if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
+        !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
+      return c.json({ error: 'Invalid TV episode route.' }, 400);
+    }
+    media.season = season;
+    media.episode = episode;
+    validateCatalogRecord = async () => {
+      const series = await TvSeries.findOne({ tmdbId, adult: { $ne: true } }).select('seasons').lean();
+      const targetSeason = series?.seasons?.find((item) => Number(item.seasonNumber) === season);
+      return Boolean(targetSeason?.episodes?.some((item) => Number(item.episodeNumber) === episode));
+    };
+  } else if (mediaType === 'anime') {
+    const malId = Number(mediaId);
+    const episode = Number(body.episode);
+    const audio = String(body.audio || 'sub').toLowerCase();
+    if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(malId) || malId < 1 ||
+        !Number.isSafeInteger(episode) || episode < 1 || !['sub', 'dub'].includes(audio)) {
+      return c.json({ error: 'Invalid Anime episode route.' }, 400);
+    }
+    media.episode = episode;
+    media.audio = audio;
+    validateCatalogRecord = async () => {
+      const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
+      return Boolean(anime && !(Number(anime.episodes) > 0 && episode > Number(anime.episodes)));
+    };
+  } else if (mediaType === 'cartoon_movie') {
+    const tmdbId = Number(mediaId);
+    if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
+      return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
+    }
+    validateCatalogRecord = async () => Boolean(await CartoonMovie.exists(approvedCartoonFilter({ tmdbId })));
+    media.mediaId = String(tmdbId);
+  } else if (mediaType === 'cartoon_tv') {
+    const tmdbId = Number(mediaId);
+    const season = Number(body.season);
+    const episode = Number(body.episode);
+    if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
+        !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
+      return c.json({ error: 'Invalid cartoon TV episode route.' }, 400);
+    }
+    media.mediaId = String(tmdbId);
+    media.season = season;
+    media.episode = episode;
+    validateCatalogRecord = async () => Boolean(
+      await CartoonSeries.exists(approvedCartoonFilter({ tmdbId })) &&
+      await CartoonEpisode.exists({ seriesTmdbId: tmdbId, seasonNumber: season, episodeNumber: episode, kidsApproved: true })
+    );
+  } else {
+    return c.json({ error: 'Unsupported playback type.' }, 400);
+  }
+
   try {
     await connectDatabase();
-    const body = await c.req.json().catch(() => ({}));
     const principal = await resolvePlaybackPrincipal(c);
     const kidsModeOn = kidsModeEnabled(principal);
-    const mediaType = String(body.mediaType || '').toLowerCase();
-    const mediaId = String(body.mediaId || '').trim();
-    const media = { mediaType, mediaId };
-    let validateCatalogRecord;
-
     if (kidsModeOn && !['cartoon_movie', 'cartoon_tv'].includes(mediaType)) {
       return c.json({ error: 'Kids Mode allows playback only from the approved Cartoons catalog.', code: 'KIDS_MODE_PLAYBACK_BLOCKED' }, 403);
     }
-
-    if (mediaType === 'movie') {
-      if (!/^tt\d{5,12}$/i.test(mediaId)) return c.json({ error: 'Invalid movie ID.' }, 400);
-      validateCatalogRecord = async () => Boolean(await Movie.exists({ imdbId: mediaId.toLowerCase(), adult: { $ne: true } }));
-    } else if (mediaType === 'tv') {
-      const tmdbId = Number(mediaId);
-      const season = Number(body.season);
-      const episode = Number(body.episode);
-      if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
-          !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
-        return c.json({ error: 'Invalid TV episode route.' }, 400);
-      }
-      media.season = season;
-      media.episode = episode;
-      validateCatalogRecord = async () => {
-        const series = await TvSeries.findOne({ tmdbId, adult: { $ne: true } }).select('seasons').lean();
-        const targetSeason = series?.seasons?.find((item) => Number(item.seasonNumber) === season);
-        return Boolean(targetSeason?.episodes?.some((item) => Number(item.episodeNumber) === episode));
-      };
-    } else if (mediaType === 'anime') {
-      const malId = Number(mediaId);
-      const episode = Number(body.episode);
-      const audio = String(body.audio || 'sub').toLowerCase();
-      if (!/^\d{1,12}$/.test(mediaId) || !Number.isSafeInteger(malId) || malId < 1 ||
-          !Number.isSafeInteger(episode) || episode < 1 || !['sub', 'dub'].includes(audio)) {
-        return c.json({ error: 'Invalid Anime episode route.' }, 400);
-      }
-      media.episode = episode;
-      media.audio = audio;
-      validateCatalogRecord = async () => {
-        const anime = await AnimeSeries.findOne({ malId, type: { $in: ['TV', 'ONA'] } }).select('episodes episodeGuide').lean();
-        return Boolean(anime && !(Number(anime.episodes) > 0 && episode > Number(anime.episodes)));
-      };
-    } else if (mediaType === 'cartoon_movie') {
-      const tmdbId = Number(mediaId);
-      if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1) {
-        return c.json({ error: 'Invalid cartoon movie ID.' }, 400);
-      }
-      validateCatalogRecord = async () => Boolean(await CartoonMovie.exists(approvedCartoonFilter({ tmdbId })));
-      media.mediaId = String(tmdbId);
-    } else if (mediaType === 'cartoon_tv') {
-      const tmdbId = Number(mediaId);
-      const season = Number(body.season);
-      const episode = Number(body.episode);
-      if (!/^[0-9]{1,12}$/.test(mediaId) || !Number.isSafeInteger(tmdbId) || tmdbId < 1 ||
-          !Number.isSafeInteger(season) || season < 0 || !Number.isSafeInteger(episode) || episode < 1) {
-        return c.json({ error: 'Invalid cartoon TV episode route.' }, 400);
-      }
-      media.mediaId = String(tmdbId);
-      media.season = season;
-      media.episode = episode;
-      validateCatalogRecord = async () => Boolean(
-        await CartoonSeries.exists(approvedCartoonFilter({ tmdbId })) &&
-        await CartoonEpisode.exists({ seriesTmdbId: tmdbId, seasonNumber: season, episodeNumber: episode, kidsApproved: true })
-      );
-    } else {
-      return c.json({ error: 'Unsupported playback type.' }, 400);
-    }
-
     if (!await validateCatalogRecord()) {
       const label = mediaType === 'cartoon_movie' ? 'Cartoon movie'
         : mediaType === 'cartoon_tv' ? 'Cartoon episode'

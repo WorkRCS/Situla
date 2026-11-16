@@ -11,8 +11,9 @@ test("shared desktop sidebar has clear workspace groups and a restrained active 
   assert.ok(sidebar.includes('className="site-sidebar-nav-group"'));
   assert.ok(sidebar.includes("DISCOVER"));
   assert.ok(sidebar.includes("YOUR SPACE"));
-  assert.ok(sidebar.includes("SITE_NAV_ITEMS.slice(0, 5)"));
-  assert.ok(sidebar.includes("SITE_NAV_ITEMS.slice(5)"));
+  assert.ok(sidebar.includes("const navItems = kidsMode ? SITE_KIDS_NAV_ITEMS : SITE_NAV_ITEMS;"));
+  assert.ok(sidebar.includes("const discoverItems = kidsMode ? navItems.slice(0, 2) : navItems.slice(0, 5);"));
+  assert.ok(sidebar.includes("const personalItems = kidsMode ? navItems.slice(2) : navItems.slice(5);"));
   assert.ok(sidebar.includes("site-sidebar-footer"));
   assert.match(css, /\.site-sidebar\.home-sidebar\s*\{[\s\S]*?position:fixed;[\s\S]*?height:100dvh;[\s\S]*?border-radius:0 !important;/);
   assert.ok(sidebar.includes('className="site-sidebar-heading">'));

@@ -155,7 +155,7 @@ test("landing page exposes primary navigation and cinematic responsive hero styl
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
   assert.match(app, /className="desktop-nav"/);
-  assert.match(app, /NAV_ITEMS\.filter\(\(item\) => item\.id !== "search"\)/);
+  assert.match(app, /navigationItems\.filter\(\(item\) => item\.id !== "search"\)/);
   assert.match(app, /className="hero-content"/);
   assert.match(css, /\.hero-card/);
   assert.match(css, /\.hero-progress-fill/);
@@ -426,7 +426,7 @@ test("sidebar routes share the exact existing seven-item mobile navigation bar",
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
 
-  assert.ok(app.includes('import { SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx"'));
+  assert.ok(app.includes('import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx"'));
   assert.ok(app.includes("{SITE_MOBILE_NAV_ITEMS.map((item) =>"));
   assert.ok(sidebar.includes("export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS"));
   assert.ok(sidebar.includes('filter((item) => item.id !== "profile")'));
