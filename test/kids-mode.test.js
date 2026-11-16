@@ -62,20 +62,23 @@ test("Kids Mode restricts adult catalogs and playback to approved cartoons", asy
 
   assert.ok(backend.includes("'/api/movies'") && backend.includes("'/api/tv'") && backend.includes("'/api/anime'"));
   assert.ok(backend.includes("kidsModeOn && !['cartoon_movie', 'cartoon_tv'].includes(mediaType)"));
-  assert.ok(backend.includes("CartoonMovie.exists(approvedCartoonFilter({ tmdbId }))"));
-  assert.ok(backend.includes("CartoonSeries.exists(approvedCartoonFilter({ tmdbId }))"));
+  assert.ok(backend.includes("CartoonMovie.exists(approvedCartoonMovieFilter({ tmdbId }))"));
+  assert.ok(backend.includes("CartoonSeries.exists(approvedCartoonSeriesFilter({ tmdbId }))"));
   assert.ok(backend.includes("CartoonEpisode.exists({ seriesTmdbId: tmdbId, seasonNumber: season, episodeNumber: episode, kidsApproved: true })"));
 });
 
 test("Roll No. 21 is excluded from every Kids catalog API query", async () => {
   const backend = await read("../src/app.js");
+  const catalog = await read("../src/cartoon-catalog.js");
 
-  assert.ok(backend.includes(String.raw`const ROLL_NO_21_PATTERN = /roll[\s._-]*no\.?[\s._-]*21/i;`));
-  assert.ok(backend.includes("function approvedCartoonFilter(extra = {})"));
-  assert.ok(backend.includes("{ title: ROLL_NO_21_PATTERN }"));
-  assert.ok(backend.includes("{ originalTitle: ROLL_NO_21_PATTERN }"));
-  assert.ok(backend.includes("{ aliases: ROLL_NO_21_PATTERN }"));
-  assert.ok(backend.split("approvedCartoonFilter(").length >= 10);
+  assert.ok(catalog.includes(String.raw`const ROLL_NO_21_PATTERN = /roll[\s._-]*no\.?[\s._-]*21/i;`));
+  assert.ok(catalog.includes("function baseApprovedFilter(extra, yearFilter)"));
+  assert.ok(catalog.includes("{ title: ROLL_NO_21_PATTERN }"));
+  assert.ok(catalog.includes("{ originalTitle: ROLL_NO_21_PATTERN }"));
+  assert.ok(catalog.includes("{ aliases: ROLL_NO_21_PATTERN }"));
+  assert.ok(backend.includes("approvedCartoonMovieFilter"));
+  assert.ok(backend.includes("approvedCartoonSeriesFilter"));
+  assert.equal(backend.includes("approvedCartoonFilter("), false);
 });
 
 test("Kids Mode stays in the shared home UI and navigation", async () => {
