@@ -213,9 +213,113 @@ animeSeriesSchema.index({ trendScore: -1, trendUpdatedAt: -1 });
 animeSeriesSchema.index({ airedFrom: -1, releaseYear: -1, score: -1, rank: 1, popularity: 1 });
 animeSeriesSchema.index({ title: 'text', titleEnglish: 'text', titleJapanese: 'text' });
 
+const cartoonMovieSchema = new mongoose.Schema({
+  tmdbId: { type: Number, required: true, min: 1, unique: true },
+  imdbId: { type: String, default: null, trim: true, lowercase: true },
+  title: { type: String, required: true, trim: true, maxlength: 240 },
+  originalTitle: { type: String, default: '', trim: true, maxlength: 240 },
+  aliases: { type: [String], default: [] },
+  overview: { type: String, default: '', maxlength: 5000 },
+  posterUrl: { type: String, default: null },
+  backdropUrl: { type: String, default: null },
+  releaseDate: { type: String, default: '' },
+  releaseYear: { type: Number, default: null },
+  runtime: { type: Number, min: 0, default: null },
+  genres: { type: [String], default: [] },
+  keywords: { type: [String], default: [] },
+  originalLanguage: { type: String, default: '' },
+  country: { type: [String], default: [] },
+  certification: { type: String, default: '' },
+  minimumAge: { type: Number, min: 0, max: 18, default: null },
+  contentWarnings: { type: [String], default: [] },
+  kidsApproved: { type: Boolean, default: false, index: true },
+  voteAverage: { type: Number, min: 0, max: 10, default: 0 },
+  voteCount: { type: Number, min: 0, default: 0 },
+  popularity: { type: Number, min: 0, default: 0 },
+  featured: { type: Boolean, default: false },
+  hot: { type: Boolean, default: false },
+  popular: { type: Boolean, default: false },
+  playbackStatus: { type: String, enum: ['unverified', 'verified', 'unavailable'], default: 'unverified' },
+  metadataSource: { type: String, default: 'Situla curated offline data' },
+  sourceUrl: { type: String, default: '' },
+  trendScore: { type: Number, min: 0, default: 0 },
+  trendUpdatedAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+cartoonMovieSchema.index({ kidsApproved: 1, featured: -1, popularity: -1, voteAverage: -1 });
+cartoonMovieSchema.index({ kidsApproved: 1, releaseDate: -1, popularity: -1 });
+cartoonMovieSchema.index({ title: 'text', originalTitle: 'text', aliases: 'text' });
+
+const cartoonSeasonSummarySchema = new mongoose.Schema({
+  seasonNumber: { type: Number, required: true, min: 0 },
+  name: { type: String, default: '' },
+  overview: { type: String, default: '', maxlength: 2000 },
+  airDate: { type: String, default: '' },
+  posterUrl: { type: String, default: null },
+  episodeCount: { type: Number, min: 0, default: 0 }
+}, { _id: false, strict: true });
+
+const cartoonSeriesSchema = new mongoose.Schema({
+  tmdbId: { type: Number, required: true, min: 1, unique: true },
+  title: { type: String, required: true, trim: true, maxlength: 240 },
+  originalTitle: { type: String, default: '', trim: true, maxlength: 240 },
+  aliases: { type: [String], default: [] },
+  overview: { type: String, default: '', maxlength: 5000 },
+  posterUrl: { type: String, default: null },
+  backdropUrl: { type: String, default: null },
+  firstAirDate: { type: String, default: '' },
+  lastAirDate: { type: String, default: '' },
+  releaseYear: { type: Number, default: null },
+  genres: { type: [String], default: [] },
+  keywords: { type: [String], default: [] },
+  originalLanguage: { type: String, default: '' },
+  country: { type: [String], default: [] },
+  networks: { type: [String], default: [] },
+  certification: { type: String, default: '' },
+  minimumAge: { type: Number, min: 0, max: 18, default: null },
+  contentWarnings: { type: [String], default: [] },
+  kidsApproved: { type: Boolean, default: false, index: true },
+  voteAverage: { type: Number, min: 0, max: 10, default: 0 },
+  voteCount: { type: Number, min: 0, default: 0 },
+  popularity: { type: Number, min: 0, default: 0 },
+  status: { type: String, default: '' },
+  numberOfSeasons: { type: Number, min: 0, default: 0 },
+  numberOfEpisodes: { type: Number, min: 0, default: 0 },
+  seasons: { type: [cartoonSeasonSummarySchema], default: [] },
+  featured: { type: Boolean, default: false },
+  hot: { type: Boolean, default: false },
+  popular: { type: Boolean, default: false },
+  playbackStatus: { type: String, enum: ['unverified', 'verified', 'unavailable'], default: 'unverified' },
+  metadataSource: { type: String, default: 'Situla curated offline data' },
+  sourceUrl: { type: String, default: '' },
+  trendScore: { type: Number, min: 0, default: 0 },
+  trendUpdatedAt: { type: Date, default: null }
+}, { timestamps: true, versionKey: false, strict: true });
+cartoonSeriesSchema.index({ kidsApproved: 1, featured: -1, popularity: -1, voteAverage: -1 });
+cartoonSeriesSchema.index({ kidsApproved: 1, firstAirDate: -1, popularity: -1 });
+cartoonSeriesSchema.index({ title: 'text', originalTitle: 'text', aliases: 'text' });
+
+const cartoonEpisodeSchema = new mongoose.Schema({
+  seriesTmdbId: { type: Number, required: true, min: 1 },
+  seasonNumber: { type: Number, required: true, min: 0 },
+  episodeNumber: { type: Number, required: true, min: 1 },
+  tmdbEpisodeId: { type: Number, default: null, min: 1 },
+  name: { type: String, required: true, trim: true, maxlength: 240 },
+  overview: { type: String, default: '', maxlength: 3000 },
+  airDate: { type: String, default: '' },
+  runtime: { type: Number, min: 0, default: null },
+  stillUrl: { type: String, default: null },
+  voteAverage: { type: Number, min: 0, max: 10, default: 0 },
+  kidsApproved: { type: Boolean, default: false }
+}, { timestamps: true, versionKey: false, strict: true });
+cartoonEpisodeSchema.index({ seriesTmdbId: 1, seasonNumber: 1, episodeNumber: 1 }, { unique: true });
+cartoonEpisodeSchema.index({ seriesTmdbId: 1, kidsApproved: 1, seasonNumber: 1, episodeNumber: 1 });
+
 export const Movie = mongoose.models.Movie || mongoose.model('Movie', movieSchema);
 export const TvSeries = mongoose.models.TvSeries || mongoose.model('TvSeries', tvSeriesSchema);
 export const AnimeSeries = mongoose.models.AnimeSeries || mongoose.model('AnimeSeries', animeSeriesSchema);
+export const CartoonMovie = mongoose.models.CartoonMovie || mongoose.model('CartoonMovie', cartoonMovieSchema);
+export const CartoonSeries = mongoose.models.CartoonSeries || mongoose.model('CartoonSeries', cartoonSeriesSchema);
+export const CartoonEpisode = mongoose.models.CartoonEpisode || mongoose.model('CartoonEpisode', cartoonEpisodeSchema);
 
 
 const userSchema = new mongoose.Schema({
@@ -238,7 +342,9 @@ const userSchema = new mongoose.Schema({
     durationMonths: { type: Number, min: 1, max: 24, default: null },
     activatedBy: { type: mongoose.Schema.Types.ObjectId, default: null }
   },
-  lastLoginAt: { type: Date, default: null }
+  lastLoginAt: { type: Date, default: null },
+  kidsMode: { type: Boolean, default: false },
+  kidsModePinHash: { type: String, default: null, select: false }
 }, { timestamps: true, versionKey: false, strict: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ googleSub: 1 }, { unique: true, partialFilterExpression: { googleSub: { $type: 'string' } } });
@@ -264,7 +370,9 @@ const guestSessionSchema = new mongoose.Schema({
   tokenHash: { type: String, required: true, unique: true },
   ipHash: { type: String, required: true },
   guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', required: true },
-  expiresAt: { type: Date, required: true }
+  expiresAt: { type: Date, required: true },
+  kidsMode: { type: Boolean, default: false },
+  kidsModePinHash: { type: String, default: null, select: false }
 }, { timestamps: true, versionKey: false, strict: true });
 guestSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 guestSessionSchema.index({ ipHash: 1, expiresAt: 1 });
@@ -285,7 +393,7 @@ const playbackSessionSchema = new mongoose.Schema({
   ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', default: null },
-  mediaType: { type: String, enum: ['movie', 'tv', 'anime'], required: true },
+  mediaType: { type: String, enum: ['movie', 'tv', 'anime', 'cartoon_movie', 'cartoon_tv'], required: true },
   mediaId: { type: String, required: true },
   season: { type: Number, default: null },
   episode: { type: Number, default: null },
