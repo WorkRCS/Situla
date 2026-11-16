@@ -142,7 +142,7 @@ export function SiteSidebar({
           <span className="site-sidebar-section-label">DISCOVER</span>
           {discoverItems.map((item) => {
             const Icon = item.icon;
-            const selected = active ? active === item.id : isNavActive(pathname, item.href);
+            const selected = (active ? active === item.id : false) || isNavActive(pathname, item.href);
             return (
               <span className="site-sidebar-nav-item" key={item.id}>
                 <Link
@@ -167,7 +167,7 @@ export function SiteSidebar({
           <span className="site-sidebar-section-label">YOUR SPACE</span>
           {personalItems.map((item) => {
             const Icon = item.icon;
-            const selected = active ? active === item.id : isNavActive(pathname, item.href);
+            const selected = (active ? active === item.id : false) || isNavActive(pathname, item.href);
             return (
               <span className="site-sidebar-nav-item" key={item.id}>
                 <Link
