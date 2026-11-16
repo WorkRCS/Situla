@@ -1096,7 +1096,7 @@ const HOME_MOVIE_DISCOVERY_SORT = {
   _id: 1
 };
 
-const ROLL_NO_21_PATTERN = /roll[\\s._-]*no\\.?[\\s._-]*21/i;
+const ROLL_NO_21_PATTERN = /roll[\s._-]*no\.?[\s._-]*21/i;
 
 function approvedCartoonFilter(extra = {}) {
   return {
