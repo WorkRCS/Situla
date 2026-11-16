@@ -1,13 +1,14 @@
 import mongoose from 'mongoose';
-import { Movie, TvSeries, AnimeSeries, User, AuthSession, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead, UpcomingItem, UpcomingWaitlist, UpcomingRead } from './models.js';
+import { Movie, TvSeries, AnimeSeries, CartoonMovie, CartoonSeries, CartoonEpisode, User, AuthSession, GuestAccess, GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession, MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead, UpcomingItem, UpcomingWaitlist, UpcomingRead } from './models.js';
 
 let connectionPromise;
 let indexesPromise;
 let authSessionExpiryIndexMigrationPromise;
 
 const INDEXED_MODELS = [
-  Movie, TvSeries, AnimeSeries, User, AuthSession, GuestAccess,
-  GuestSession, UsageState, PlaybackSession, AuthRateLimit, ActivitySession,
+  Movie, TvSeries, AnimeSeries, CartoonMovie, CartoonSeries, CartoonEpisode,
+  User, AuthSession, GuestAccess, GuestSession, UsageState, PlaybackSession,
+  AuthRateLimit, ActivitySession,
   MembershipEvent, PaymentTransaction, AdminAuditLog, Announcement, AnnouncementRead,
   UpcomingItem, UpcomingWaitlist, UpcomingRead
 ];
