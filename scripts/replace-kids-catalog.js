@@ -1,5 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { connectDatabase } from "../src/db.js";
 import { CartoonMovie, CartoonSeries, CartoonEpisode } from "../src/models.js";
 
@@ -14,7 +16,7 @@ const MOTU_PATLU = Object.freeze({
   voteCount: 15
 });
 
-const ROLL_NO_21_PATTERN = /roll[\\s._-]*no\\.?[\\s._-]*21/i;
+const ROLL_NO_21_PATTERN = /roll[\s._-]*no\.?[\s._-]*21/i;
 const ROLL_NO_21_FILTER = {
   $or: [
     { title: ROLL_NO_21_PATTERN },
@@ -25,20 +27,20 @@ const ROLL_NO_21_FILTER = {
 
 function stripHtml(value) {
   return String(value || "")
-    .replace(/<\\/p>\\s*<p[^>]*>/gi, "\\n\\n")
-    .replace(/<br\\s*\\/?>/gi, "\\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
     .slice(0, 5000);
 }
 
 function validDate(value) {
-  return /^\\d{4}-\\d{2}-\\d{2}$/.test(String(value || "")) ? String(value) : "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) ? String(value) : "";
 }
 
 function validHttps(value) {
@@ -141,7 +143,7 @@ async function fetchMotuPatlu() {
     originalLanguage: "hi",
     country: ["India"],
     networks: [String(show.network?.name || show.webChannel?.name || "Nickelodeon").trim()],
-    certification: "TV-Y",
+    certification: "",
     minimumAge: null,
     contentWarnings: [],
     kidsApproved: true,
@@ -219,7 +221,7 @@ export async function replaceKidsCatalog() {
   return summary;
 }
 
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   replaceKidsCatalog()
     .catch((error) => {
       console.error("Kids catalogue migration failed:", error.message);
