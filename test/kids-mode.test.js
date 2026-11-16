@@ -4,15 +4,24 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Kids Mode has one password-free ON/OFF switch", async () => {
+test("Kids Mode has one password-free icon-only red/green switch", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const css = await read("../app/globals.css");
   const backend = await read("../src/app.js");
   const models = await read("../src/models.js");
 
+  assert.ok(app.includes('className="header-kids-mode-icon"'));
+  assert.ok(app.includes("<Baby size={19} />"));
   assert.ok(app.includes('role="switch"'));
-  assert.ok(app.includes("aria-checked={kidsMode}"));
+  assert.ok(app.includes('aria-checked={kidsMode}'));
+  assert.ok(app.includes('aria-label="Kids Mode"'));
   assert.ok(app.includes("onClick={() => changeKidsMode(!kidsMode)}"));
-  assert.ok(app.includes("Only approved cartoon content"));
+  assert.ok(!app.includes("Only approved cartoon content"));
+  assert.ok(!app.includes("header-kids-mode-copy"));
+  assert.ok(!app.includes("header-kids-mode-description"));
+  assert.ok(!app.includes("header-kids-mode-status"));
+  assert.ok(css.includes("background:#d63c3c;"));
+  assert.ok(css.includes("background:#209b65;"));
   assert.ok(!/kidsPin|Parent PIN|type="password"|saveKidsModePin/.test(app));
   assert.ok(!backend.includes("/api/kids-mode/pin"));
   assert.ok(!backend.includes("verifyPassword('situla-kids-pin:"));
