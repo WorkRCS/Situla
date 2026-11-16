@@ -20,7 +20,7 @@ export const SITE_NAV_ITEMS = [
 ];
 
 export const SITE_KIDS_NAV_ITEMS = [
-  { id: "home", href: "/cartoons", label: "Home", icon: House },
+  { id: "home", href: "/", label: "Home", icon: House },
   { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: Baby },
   { id: "saved", href: "/saved", label: "My List", icon: Bookmark },
   { id: "settings", href: "/settings", label: "Settings", icon: Settings }
