@@ -344,7 +344,6 @@ const userSchema = new mongoose.Schema({
   },
   lastLoginAt: { type: Date, default: null },
   kidsMode: { type: Boolean, default: false },
-  kidsModePinHash: { type: String, default: null, select: false }
 }, { timestamps: true, versionKey: false, strict: true });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ googleSub: 1 }, { unique: true, partialFilterExpression: { googleSub: { $type: 'string' } } });
@@ -372,7 +371,6 @@ const guestSessionSchema = new mongoose.Schema({
   guestAccessId: { type: mongoose.Schema.Types.ObjectId, ref: 'GuestAccess', required: true },
   expiresAt: { type: Date, required: true },
   kidsMode: { type: Boolean, default: false },
-  kidsModePinHash: { type: String, default: null, select: false }
 }, { timestamps: true, versionKey: false, strict: true });
 guestSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 guestSessionSchema.index({ ipHash: 1, expiresAt: 1 });
