@@ -1785,13 +1785,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     {demoSignedIn && accountUser?.planId === "premium" && <BadgeCheck size={16} aria-label="Verified Premium member" />}
                   </div>
                   <div className="header-popover-divider" />
-                  <section className="header-kids-mode" aria-label="Kids Mode controls">
+                  <section className="header-kids-mode" aria-label="Kids Mode toggle">
                     <div className="header-kids-mode-control">
-                      <span className="header-kids-mode-icon"><Baby size={16} /></span>
-                      <span className="header-kids-mode-copy">
-                        <strong>Kids Mode</strong>
-                        <small>Only approved cartoon content</small>
-                      </span>
+                      <span className="header-kids-mode-icon" aria-hidden="true"><Baby size={19} /></span>
                       <button
                         type="button"
                         className={"header-kids-mode-switch" + (kidsMode ? " is-on" : "")}
@@ -1803,11 +1799,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         onClick={() => changeKidsMode(!kidsMode)}
                       >
                         <span className="header-kids-mode-switch-track"><span /></span>
-                        <span className="header-kids-mode-status">{kidsMode ? "ON" : "OFF"}</span>
                       </button>
                     </div>
-                    <p className="header-kids-mode-description">Turn on to show cartoons only. Switch off to return to Movies, TV and Anime.</p>
-                    {kidsModeError && <p className="header-kids-mode-message" role="status">{kidsModeError}</p>}
+                    <span className="sr-only" role="status">{kidsModeError}</span>
                   </section>
                   <div className="header-popover-divider" />
                   {demoSignedIn ? (
