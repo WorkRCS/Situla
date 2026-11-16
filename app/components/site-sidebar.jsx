@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, Film, House, PanelLeftClose, PanelLeftOpen, PlayCircle,
-  Settings, ShieldCheck, Tv
+  Settings, ShieldCheck, Tv, Baby
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -19,10 +19,19 @@ export const SITE_NAV_ITEMS = [
   { id: "settings", href: "/settings", label: "Settings", icon: Settings }
 ];
 
+export const SITE_KIDS_NAV_ITEMS = [
+  { id: "home", href: "/cartoons", label: "Home", icon: House },
+  { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: Baby },
+  { id: "saved", href: "/saved", label: "My List", icon: Bookmark },
+  { id: "settings", href: "/settings", label: "Settings", icon: Settings }
+];
+
 // Profile is intentionally omitted from navigation; it remains in the header account menu.
 export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS
   .filter((item) => item.id !== "profile")
   .map((item) => item.id === "tv" ? { ...item, label: "TV" } : item);
+
+export const SITE_KIDS_MOBILE_NAV_ITEMS = SITE_KIDS_NAV_ITEMS;
 
 function isNavActive(pathname, href) {
   if (href === "/") return pathname === "/";
@@ -65,7 +74,8 @@ export function SiteSidebar({
   upcomingHasUnread,
   continueItems,
   onResume,
-  onCollapsedChange
+  onCollapsedChange,
+  kidsMode = false
 }) {
   const pathname = usePathname() || "/";
   const [statusUnread, setStatusUnread] = useState(false);
@@ -102,6 +112,9 @@ export function SiteSidebar({
   }, [upcomingHasUnread]);
 
   const showUpcomingLive = typeof upcomingHasUnread === "boolean" ? upcomingHasUnread : statusUnread;
+  const navItems = kidsMode ? SITE_KIDS_NAV_ITEMS : SITE_NAV_ITEMS;
+  const discoverItems = kidsMode ? navItems.slice(0, 2) : navItems.slice(0, 5);
+  const personalItems = kidsMode ? navItems.slice(2) : navItems.slice(5);
   return (
     <aside className={"home-sidebar site-sidebar" + (collapsed ? " is-collapsed" : "")} aria-label="Main navigation">
       <div className="site-sidebar-heading">
@@ -127,7 +140,7 @@ export function SiteSidebar({
       <nav className="home-sidebar-nav site-sidebar-navigation" aria-label="Primary navigation">
         <div className="site-sidebar-nav-group">
           <span className="site-sidebar-section-label">DISCOVER</span>
-          {SITE_NAV_ITEMS.slice(0, 5).map((item) => {
+          {discoverItems.map((item) => {
             const Icon = item.icon;
             const selected = active ? active === item.id : isNavActive(pathname, item.href);
             return (
@@ -152,7 +165,7 @@ export function SiteSidebar({
         <div className="site-sidebar-nav-group site-sidebar-nav-group-secondary">
           <span className="home-sidebar-divider" aria-hidden="true" />
           <span className="site-sidebar-section-label">YOUR SPACE</span>
-          {SITE_NAV_ITEMS.slice(5).map((item) => {
+          {personalItems.map((item) => {
             const Icon = item.icon;
             const selected = active ? active === item.id : isNavActive(pathname, item.href);
             return (
@@ -189,7 +202,7 @@ export function SiteWorkspace({ children }) {
       <SiteSidebar onCollapsedChange={setSidebarCollapsed} />
       <div className="site-workspace-main">{children}</div>
       <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
-        {SITE_MOBILE_NAV_ITEMS.map((item) => {
+        {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const Icon = item.icon;
           const selected = isNavActive(pathname, item.href);
           return (
