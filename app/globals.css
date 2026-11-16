@@ -8616,10 +8616,12 @@ body:has(.login-page) .site-footer { display:none !important; }
 /* Minimal icon + red/green Kids Mode toggle in the account popover. */
 .header-kids-mode { padding:10px 2px; }
 .header-kids-mode-control { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.header-kids-mode-label-group { display:flex; min-width:0; align-items:center; gap:10px; }
 .header-kids-mode-icon {
-  display:grid; width:34px; height:34px; place-items:center; border:1px solid rgba(255,255,255,.1);
-  border-radius:11px; background:rgba(255,255,255,.045); color:#f3c86f;
+  display:grid; width:24px; height:24px; flex:none; place-items:center;
+  border:0; border-radius:0; background:transparent; color:#f3c86f;
 }
+.header-kids-mode-label { color:#f2f3f6; font-size:13px; font-weight:750; letter-spacing:.01em; }
 .header-kids-mode-switch {
   display:inline-flex; width:50px; height:32px; align-items:center; justify-content:center; padding:3px;
   border:1px solid rgba(220,60,60,.7); border-radius:999px; background:rgba(220,60,60,.12);
