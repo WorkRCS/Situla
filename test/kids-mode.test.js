@@ -4,22 +4,30 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Kids Mode accepts only 4–8 digit parent PINs", async () => {
+test("Kids Mode has one password-free ON/OFF switch", async () => {
+  const app = await read("../app/components/situla-app.jsx");
   const backend = await read("../src/app.js");
-  const frontend = await read("../app/components/situla-app.jsx");
+  const models = await read("../src/models.js");
 
-  assert.ok(backend.includes(String.raw`if (!/^\d{4,8}$/.test(pin))`));
-  assert.ok(frontend.includes(String.raw`if (!/^\d{4,8}$/.test(pin))`));
-  assert.ok(frontend.includes(String.raw`event.target.value.replace(/\D/g, "").slice(0, 8)`));
+  assert.ok(app.includes('role="switch"'));
+  assert.ok(app.includes("aria-checked={kidsMode}"));
+  assert.ok(app.includes("onClick={() => changeKidsMode(!kidsMode)}"));
+  assert.ok(app.includes("Only approved cartoon content"));
+  assert.ok(!/kidsPin|Parent PIN|type="password"|saveKidsModePin/.test(app));
+  assert.ok(!backend.includes("/api/kids-mode/pin"));
+  assert.ok(!backend.includes("kidsModePinHash"));
+  assert.ok(!models.includes("kidsModePinHash"));
 });
 
-test("Kids Mode PIN changes and exit require the stored parent PIN", async () => {
+test("Kids Mode API saves either toggle state without a PIN", async () => {
   const backend = await read("../src/app.js");
+  const route = backend.slice(backend.indexOf("app.post('/api/kids-mode'"), backend.indexOf("async function readSharePosterBytes"));
 
-  assert.ok(backend.includes("verifyPassword('situla-kids-pin:' + currentPin, document.kidsModePinHash)"));
-  assert.ok(backend.includes("verifyPassword('situla-kids-pin:' + pin, document.kidsModePinHash)"));
-  assert.ok(backend.includes("kids-mode-pin-setup:"));
-  assert.ok(backend.includes("kids-mode-exit:"));
+  assert.ok(route.includes("typeof body.enabled !== 'boolean'"));
+  assert.ok(route.includes("document.kidsMode = body.enabled"));
+  assert.ok(route.includes("await document.save()"));
+  assert.ok(!route.includes("body.pin"));
+  assert.ok(!route.includes("verifyPassword"));
 });
 
 test("Kids Mode restricts adult catalogs and playback to approved cartoons", async () => {
