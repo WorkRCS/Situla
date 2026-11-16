@@ -43,3 +43,12 @@ test("Cartoon catalogue and season guides expose only Kids-approved records", as
   assert.match(backend, /app\.get\('\/api\/cartoons\/series'[\s\S]*?const filter = \{ kidsApproved: true \}/);
   assert.match(backend, /app\.get\('\/api\/cartoons\/series\/:tmdbId\/seasons\/:seasonNumber'[\s\S]*?kidsApproved: true/);
 });
+
+
+test("Workspace navigation receives Kids Mode state instead of reading an undefined variable", async () => {
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+
+  assert.match(sidebar, /export function SiteWorkspace\(\{ children, kidsMode = false \}\)/);
+  assert.match(sidebar, /<SiteSidebar onCollapsedChange=\{setSidebarCollapsed\} kidsMode=\{kidsMode\} \/>/);
+  assert.match(sidebar, /\(kidsMode \? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS\)/);
+});
