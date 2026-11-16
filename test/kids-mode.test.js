@@ -19,15 +19,30 @@ test("Kids Mode has one password-free ON/OFF switch", async () => {
   assert.ok(!models.includes("kidsModePinHash"));
 });
 
-test("Kids Mode API saves either toggle state without a PIN", async () => {
+test("Kids Mode API stores just the toggle and clears all old PIN hashes", async () => {
   const backend = await read("../src/app.js");
   const route = backend.slice(backend.indexOf("app.post('/api/kids-mode'"), backend.indexOf("async function readSharePosterBytes"));
 
-  assert.ok(route.includes("typeof body.enabled !== 'boolean'"));
-  assert.ok(route.includes("document.kidsMode = body.enabled"));
-  assert.ok(route.includes("await document.save()"));
+  assert.ok(backend.includes("async function removeLegacyKidsModePinData()"));
+  assert.ok(backend.includes("User.collection.updateMany("));
+  assert.ok(backend.includes("GuestSession.collection.updateMany("));
+  assert.ok(route.includes("$set: { kidsMode: body.enabled }"));
+  assert.ok(route.includes("$unset: { kidsModePinHash: "" }"));
   assert.ok(!route.includes("body.pin"));
   assert.ok(!route.includes("verifyPassword"));
+});
+
+test("Kids Mode switch is optimistic, avoids route navigation, and keeps both home views mounted", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const handler = app.slice(app.indexOf("async function changeKidsMode"), app.indexOf("useEffect(() => {\n    if (!kidsModeReady || kidsMode) return undefined;"));
+  const home = app.slice(app.indexOf('<div className="home-main-column">'), app.indexOf("</div>\n          </>", app.indexOf('<div className="home-main-column">')));
+
+  assert.ok(handler.includes("setKidsMode(Boolean(enabled))"));
+  assert.ok(!handler.includes("router.replace"));
+  assert.ok(home.includes('<div className="home-mode-panel" hidden={kidsMode}'));
+  assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsMode}'));
+  assert.ok(app.includes('if (!kidsModeReady || kidsMode || tab !== "home") return undefined;'));
+  assert.ok(!app.includes("setHomeSeriesReady(false);"));
 });
 
 test("Kids Mode restricts adult catalogs and playback to approved cartoons", async () => {
