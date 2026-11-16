@@ -21,7 +21,10 @@ const APP_VIEWS = Object.freeze({
 function PersistentSitulaAppContent({ children }) {
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
-  const normalizedPath = pathname.replace(/\\/+$/, "") || "/";
+  let normalizedPath = pathname;
+  while (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
   const view = APP_VIEWS[normalizedPath];
 
   if (!view) return children;
