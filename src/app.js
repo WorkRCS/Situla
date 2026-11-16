@@ -91,10 +91,8 @@ function kidsModeEnabled(principal) {
 }
 
 async function kidsModePrincipalDocument(principal) {
-  if (principal.ownerType === 'user') {
-    return User.findById(principal.ownerId).select('+kidsModePinHash');
-  }
-  return GuestSession.findById(principal.guestSession?._id).select('+kidsModePinHash');
+  if (principal.ownerType === 'user') return User.findById(principal.ownerId);
+  return GuestSession.findById(principal.guestSession?._id);
 }
 
 async function enforceAdultCatalogBoundary(c, next) {
@@ -127,43 +125,12 @@ app.get('/api/kids-mode', async (c) => {
   try {
     await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
-    const document = await kidsModePrincipalDocument(principal);
     return c.json({
       enabled: kidsModeEnabled(principal),
-      pinConfigured: Boolean(document?.kidsModePinHash),
       viewer: principal.ownerType
     });
   } catch (error) {
     return apiError(c, error, 'Kids Mode settings are unavailable.');
-  }
-});
-
-app.post('/api/kids-mode/pin', async (c) => {
-  const originFailure = requireSameOrigin(c);
-  if (originFailure) return originFailure;
-  try {
-    await connectDatabase();
-    const principal = await resolvePlaybackPrincipal(c);
-    const principalKey = String(principal.ownerId);
-    if (!await enforceRateLimit('kids-mode-pin-setup:' + principal.ownerType + ':' + principalKey, 5, 15 * 60)) {
-      return c.json({ error: 'Too many PIN changes. Try again in 15 minutes.', code: 'KIDS_PIN_RATE_LIMITED' }, 429);
-    }
-    const body = await c.req.json().catch(() => ({}));
-    const pin = String(body.pin || '');
-    const currentPin = String(body.currentPin || '');
-    if (!/^\d{4,8}$/.test(pin)) {
-      return c.json({ error: 'Parent PIN must contain 4 to 8 digits.', code: 'KIDS_PIN_INVALID' }, 400);
-    }
-    const document = await kidsModePrincipalDocument(principal);
-    if (!document) return c.json({ error: 'Account session not found.', code: 'SESSION_NOT_FOUND' }, 404);
-    if (document.kidsModePinHash && !await verifyPassword('situla-kids-pin:' + currentPin, document.kidsModePinHash)) {
-      return c.json({ error: 'Current parent PIN is incorrect.', code: 'KIDS_PIN_INCORRECT' }, 403);
-    }
-    document.kidsModePinHash = await hashPassword('situla-kids-pin:' + pin);
-    await document.save();
-    return c.json({ saved: true, pinConfigured: true });
-  } catch (error) {
-    return apiError(c, error, 'Parent PIN could not be saved.');
   }
 });
 
@@ -173,29 +140,15 @@ app.post('/api/kids-mode', async (c) => {
   try {
     await connectDatabase();
     const principal = await resolvePlaybackPrincipal(c);
-    const principalKey = String(principal.ownerId);
     const body = await c.req.json().catch(() => ({}));
     if (typeof body.enabled !== 'boolean') {
       return c.json({ error: 'Choose whether Kids Mode should be enabled.', code: 'KIDS_MODE_INVALID' }, 400);
     }
     const document = await kidsModePrincipalDocument(principal);
     if (!document) return c.json({ error: 'Account session not found.', code: 'SESSION_NOT_FOUND' }, 404);
-    if (body.enabled) {
-      if (!document.kidsModePinHash) {
-        return c.json({ error: 'Set a parent PIN before enabling Kids Mode.', code: 'KIDS_PIN_REQUIRED' }, 409);
-      }
-    } else {
-      if (!await enforceRateLimit('kids-mode-exit:' + principal.ownerType + ':' + principalKey, 5, 15 * 60)) {
-        return c.json({ error: 'Too many PIN attempts. Try again later.', code: 'KIDS_PIN_RATE_LIMITED' }, 429);
-      }
-      const pin = String(body.pin || '');
-      if (!document.kidsModePinHash || !await verifyPassword('situla-kids-pin:' + pin, document.kidsModePinHash)) {
-        return c.json({ error: 'Parent PIN is incorrect.', code: 'KIDS_PIN_INCORRECT' }, 403);
-      }
-    }
     document.kidsMode = body.enabled;
     await document.save();
-    return c.json({ enabled: Boolean(document.kidsMode), pinConfigured: Boolean(document.kidsModePinHash) });
+    return c.json({ enabled: Boolean(document.kidsMode) });
   } catch (error) {
     return apiError(c, error, 'Kids Mode could not be updated.');
   }
