@@ -839,11 +839,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [accountUser, setAccountUser] = useState(null);
   const [kidsMode, setKidsMode] = useState(false);
   const [kidsModeReady, setKidsModeReady] = useState(false);
-  const [kidsPinConfigured, setKidsPinConfigured] = useState(false);
-  const [kidsPinSetup, setKidsPinSetup] = useState("");
-  const [kidsPinCurrent, setKidsPinCurrent] = useState("");
-  const [kidsPinError, setKidsPinError] = useState("");
   const [kidsModeBusy, setKidsModeBusy] = useState(false);
+  const [kidsModeError, setKidsModeError] = useState("");
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const demoSignedIn = Boolean(accountUser);
@@ -859,12 +856,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (!response.ok) throw new Error(payload.error || "Kids Mode settings are unavailable.");
         if (active) {
           setKidsMode(Boolean(payload.enabled));
-          setKidsPinConfigured(Boolean(payload.pinConfigured));
         }
       } catch {
         if (active) {
           setKidsMode(false);
-          setKidsPinConfigured(false);
         }
       } finally {
         if (active) setKidsModeReady(true);
@@ -887,59 +882,22 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     router.replace("/");
   }, [kidsModeReady, kidsMode, kidsOnlyView, router]);
 
-  async function saveKidsModePin() {
-    setKidsPinError("");
-    const pin = String(kidsPinSetup || "");
-    if (!/^\d{4,8}$/.test(pin)) {
-      setKidsPinError("Parent PIN must contain 4 to 8 digits.");
-      return;
-    }
-    setKidsModeBusy(true);
-    try {
-      const response = await fetch("/api/kids-mode/pin", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Parent PIN could not be saved.");
-      setKidsPinConfigured(true);
-      setKidsPinSetup("");
-      setKidsPinError("Parent PIN saved. Kids Mode is ready to turn on.");
-    } catch (error) {
-      setKidsPinError(error.message || "Parent PIN could not be saved.");
-    } finally {
-      setKidsModeBusy(false);
-    }
-  }
-
   async function changeKidsMode(enabled) {
-    setKidsPinError("");
-    if (!enabled && !kidsPinCurrent) {
-      setKidsPinError("Enter the parent PIN to exit Kids Mode.");
-      return;
-    }
+    setKidsModeError("");
     setKidsModeBusy(true);
     try {
       const response = await fetch("/api/kids-mode", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(enabled
-          ? { enabled: true }
-          : { enabled: false, pin: kidsPinCurrent })
+        body: JSON.stringify({ enabled })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Kids Mode could not be updated.");
       setKidsMode(Boolean(payload.enabled));
-      setKidsPinConfigured(Boolean(payload.pinConfigured));
-      setKidsPinCurrent("");
-      setKidsPinError("");
-      setAccountOpen(false);
-      router.replace(payload.enabled ? "/cartoons" : "/");
+      router.replace("/");
     } catch (error) {
-      setKidsPinError(error.message || "Kids Mode could not be updated.");
+      setKidsModeError(error.message || "Kids Mode could not be updated.");
     } finally {
       setKidsModeBusy(false);
     }
@@ -1824,53 +1782,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   </div>
                   <div className="header-popover-divider" />
                   <section className="header-kids-mode" aria-label="Kids Mode controls">
-                    <div className="header-kids-mode-heading">
+                    <div className="header-kids-mode-control">
                       <span className="header-kids-mode-icon"><Baby size={16} /></span>
-                      <span><strong>Kids Mode</strong><small>Only approved cartoon content</small></span>
-                      <span className={"header-kids-mode-status" + (kidsMode ? " is-on" : "")}>{kidsMode ? "ON" : "OFF"}</span>
-                    </div>
-                    {!kidsPinConfigured && !kidsMode && (
-                      <div className="header-kids-mode-setup">
-                        <p>Set a parent PIN before turning Kids Mode on.</p>
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          autoComplete="new-password"
-                          maxLength={8}
-                          value={kidsPinSetup}
-                          onChange={(event) => setKidsPinSetup(event.target.value.replace(/\D/g, "").slice(0, 8))}
-                          placeholder="Create 4–8 digit PIN"
-                          aria-label="Create parent PIN"
-                        />
-                        <button type="button" disabled={kidsModeBusy} onClick={saveKidsModePin}>
-                          {kidsModeBusy ? "Saving…" : "Save parent PIN"}
-                        </button>
-                      </div>
-                    )}
-                    {kidsPinConfigured && !kidsMode && (
-                      <button type="button" className="header-kids-mode-toggle" role="switch" aria-checked={false} disabled={kidsModeBusy} onClick={() => changeKidsMode(true)}>
-                        {kidsModeBusy ? "Turning on…" : "Turn on Kids Mode"}
+                      <span className="header-kids-mode-copy">
+                        <strong>Kids Mode</strong>
+                        <small>Only approved cartoon content</small>
+                      </span>
+                      <button
+                        type="button"
+                        className={"header-kids-mode-switch" + (kidsMode ? " is-on" : "")}
+                        role="switch"
+                        aria-checked={kidsMode}
+                        aria-label="Kids Mode"
+                        disabled={kidsModeBusy || !kidsModeReady}
+                        onClick={() => changeKidsMode(!kidsMode)}
+                      >
+                        <span className="header-kids-mode-switch-track"><span /></span>
+                        <span className="header-kids-mode-status">{kidsModeBusy ? "…" : kidsMode ? "ON" : "OFF"}</span>
                       </button>
-                    )}
-                    {kidsMode && (
-                      <div className="header-kids-mode-exit">
-                        <p>Movies, TV and Anime are hidden while Kids Mode is active.</p>
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          autoComplete="current-password"
-                          maxLength={8}
-                          value={kidsPinCurrent}
-                          onChange={(event) => setKidsPinCurrent(event.target.value.replace(/\D/g, "").slice(0, 8))}
-                          placeholder="Parent PIN to exit"
-                          aria-label="Parent PIN to exit Kids Mode"
-                        />
-                        <button type="button" disabled={kidsModeBusy} onClick={() => changeKidsMode(false)}>
-                          {kidsModeBusy ? "Checking…" : "Exit Kids Mode"}
-                        </button>
-                      </div>
-                    )}
-                    {kidsPinError && <p className="header-kids-mode-message" role="status">{kidsPinError}</p>}
+                    </div>
+                    <p className="header-kids-mode-description">Turn on to show cartoons only. Switch off to return to Movies, TV and Anime.</p>
+                    {kidsModeError && <p className="header-kids-mode-message" role="status">{kidsModeError}</p>}
                   </section>
                   <div className="header-popover-divider" />
                   {demoSignedIn ? (
