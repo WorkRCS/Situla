@@ -78,9 +78,10 @@ test("permanent cleanup still requires an explicit confirmation flag", () => {
 test("cleanup targets only the five requested top-level media collections", async () => {
   const script = await read("../scripts/delete-movies-before-2000.js");
   for (const model of ["Movie", "TvSeries", "AnimeSeries", "CartoonMovie", "CartoonSeries"]) {
-    assert.match(script, new RegExp(model + "\\.countDocuments\\("));
-    assert.match(script, new RegExp(model + "\\.deleteMany\\("));
+    assert.match(script, new RegExp('name: "' + model + '",\\s*model: ' + model + ','));
   }
+  assert.match(script, /target\\.model\\.countDocuments\\(target\\.filter\\)/);
+  assert.match(script, /item\\.model\\.deleteMany\\(item\\.filter\\)/);
   assert.doesNotMatch(script, /CartoonEpisode|User|GuestSession|WatchHistory/);
   assert.match(script, /if \(!confirm\)[\s\S]*?DRY RUN ONLY/);
 });
