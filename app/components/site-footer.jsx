@@ -4,15 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const COPYRIGHT_EMAIL = "an0-my1@proton.me";
+const APP_ROUTE_PATHS = new Set([
+  "/", "/movies", "/tv", "/anime", "/upcoming", "/search", "/saved", "/settings",
+  "/cartoons", "/cartoons/movies", "/cartoons/tv"
+]);
 
-export default function SiteFooter() {
+export default function SiteFooter({ inApp = false }) {
   const pathname = usePathname();
+  let normalizedPath = pathname || "/";
+  while (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+  const isAppRoute = APP_ROUTE_PATHS.has(normalizedPath);
 
-  // Keep immersive playback pages free of page chrome and scroll traps.
-  if (pathname === "/watch" || pathname?.startsWith("/watch/")) return null;
+  // App-route footers live inside the right-hand scroll pane. Other routes
+  // retain the root-layout footer; immersive playback remains chrome-free.
+  if (inApp !== isAppRoute || normalizedPath === "/watch" || normalizedPath.startsWith("/watch/")) return null;
 
   return (
-    <footer className="site-footer" aria-label="Situla site information">
+    <footer className={"site-footer" + (inApp ? " site-footer-app" : "")} aria-label="Situla site information">
       <div className="site-footer-inner">
         <div className="site-footer-top">
           <Link className="site-footer-brand" href="/" aria-label="Situla home">

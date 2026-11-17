@@ -71,3 +71,50 @@ test("Cartoon Movies and TV listings omit their heading, sort controls and genre
   assert.ok(source.includes("listingSentinelRef"));
   assert.ok(source.includes('limit: "5"'));
 });
+
+
+test("app pages keep the shared footer inside the right content scroll frame", async () => {
+  const [app, footer, rootLayout, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/site-footer.jsx"),
+    read("../app/layout.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.ok(app.includes('import SiteFooter from "./site-footer.jsx";'));
+  assert.ok(app.includes("<SiteFooter inApp />"));
+  assert.equal(app.split("<SiteFooter inApp />").length - 1, 2);
+  assert.ok(footer.includes("if (inApp !== isAppRoute"));
+  assert.ok(footer.includes('className={"site-footer" + (inApp ? " site-footer-app" : "")}'));
+  assert.ok(rootLayout.includes("<SiteFooter />"));
+  assert.ok(css.includes(".site-footer-app {"));
+  assert.ok(css.includes("body:has(.bottom-nav) .site-footer.site-footer-app"));
+  assert.ok(css.includes(".home-main-column > .site-footer-app"));
+  assert.ok(css.includes(".app-view-main-column > .site-footer-app"));
+});
+
+test("Cartoon listings use the same top frame spacing as Movies and keep hero atmosphere Home-only", async () => {
+  const [app, cartoons, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/globals.css")
+  ]);
+  assert.ok(app.includes('tab === "movies" ? "movies-catalog-page"'));
+  assert.ok(app.includes('["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) ? "cartoons-catalog-page"'));
+  const baseStart = css.indexOf(".cartoons-catalog-page {");
+  const baseRule = css.slice(baseStart, css.indexOf("}", baseStart));
+  const mobileMediaStart = css.indexOf("@media (max-width:767px)", baseStart);
+  const mobileStart = css.indexOf(".cartoons-catalog-page {", mobileMediaStart);
+  const mobileRule = css.slice(mobileStart, css.indexOf("}", mobileStart));
+  assert.ok(baseRule.includes("padding-top:0 !important;"));
+  assert.ok(mobileRule.includes("padding-top:0 !important;"));
+  assert.ok(!baseRule.includes("padding-bottom:"));
+  assert.ok(!mobileRule.includes("padding-bottom:"));
+  const kidsHomeStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
+  const kidsHomeEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsHomeStart);
+  const kidsHome = cartoons.slice(kidsHomeStart, kidsHomeEnd);
+  assert.ok(kidsHome.includes('className="home-hero-atmosphere"'));
+  const listingStart = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"');
+  assert.ok(listingStart >= 0);
+  assert.ok(!cartoons.slice(listingStart).includes("home-hero-atmosphere"));
+});

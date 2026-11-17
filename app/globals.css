@@ -8656,8 +8656,8 @@ body:has(.login-page) .site-footer { display:none !important; }
 
 /* Cartoon catalogues share the existing Movies/TV page grid and responsive framing. */
 .cartoons-catalog-page {
-  padding-top:clamp(8px,1vw,14px) !important;
-  padding-bottom:clamp(28px,4vw,54px);
+  /* Use the exact same top edge and scroll frame as Movies/TV listings. */
+  padding-top:0 !important;
 }
 .cartoons-catalog-page .cartoons-listing-catalog {
   width:100%;
@@ -8775,9 +8775,8 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 @media (max-width:767px) {
   .cartoons-catalog-page {
-    padding-top:8px !important;
-    padding-bottom:calc(92px + env(safe-area-inset-bottom));
-  }
+  padding-top:0 !important;
+}
   .cartoons-catalog-page .cartoons-listing-catalog > .section-heading {
     align-items:flex-start;
     margin-bottom:15px;
@@ -8908,4 +8907,30 @@ body:has(.login-page) .site-footer { display:none !important; }
 .cartoons-home-catalog > .cartoons-home-feed {
   margin-top:clamp(20px,2.5vw,32px);
   padding-top:0;
+}
+
+
+/* App-route footer belongs to the same right-hand scroll pane as its page.
+   This keeps it reachable above the fixed mobile dock and inside the desktop frame. */
+.site-footer-app {
+  width:100%;
+  max-width:none;
+  margin:clamp(34px,4vw,52px) 0 0;
+  padding:clamp(22px,2.8vw,32px) 0 18px;
+  background:transparent;
+}
+.site-footer-app .site-footer-inner {
+  width:100%;
+  max-width:none;
+}
+.site-footer-app .site-footer-top { gap:18px; }
+body:has(.bottom-nav) .site-footer.site-footer-app {
+  margin-bottom:0 !important;
+}
+@media (max-width:767px) {
+  .home-main-column > .site-footer-app,
+  .app-view-main-column > .site-footer-app {
+    margin-top:30px;
+    padding:22px 0 16px;
+  }
 }
