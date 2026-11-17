@@ -386,8 +386,10 @@ function movieFromMeta(meta, tmdbId) {
   const year = readCartoonYear(releaseDate) || parseYearFromText(meta?.releaseInfo) || parseYearFromText(meta?.year);
   const genres = Array.isArray(meta?.genres) ? meta.genres.map((item) => cleanText(item, 80)).filter(Boolean) : [];
   const pinnedFranchise = MOTU_PATLU_TITLE.test(title) || /crayon[\s-]*shin|shin[\s-]*chan/i.test(title);
+  const runtime = parseRuntime(meta?.runtime);
+  const voteAverage = Math.max(0, Math.min(10, parseNumber(meta?.imdbRating || meta?.rating)));
   if (!imdbId || !tmdbId || !title || overview.length < 60 || !toHttps(meta?.poster) ||
-      !isCartoonYearAllowed(year) || isAdultMetadata(meta)) return null;
+      !isCartoonYearAllowed(year) || isAdultMetadata(meta) || !runtime || !voteAverage) return null;
   if (!isChildrenAnimation({ genres, rating: meta?.certification || meta?.contentRating || "", pinned: pinnedFranchise })) return null;
   const originalLanguage = parseLanguage(meta?.language || meta?.original_language);
   const audioLanguages = [];
@@ -410,7 +412,7 @@ function movieFromMeta(meta, tmdbId) {
     backdropUrl: toHttps(meta.background),
     releaseDate,
     releaseYear: year,
-    runtime: parseRuntime(meta.runtime),
+    runtime,
     genres,
     keywords: [...new Set([...genres, ...(Array.isArray(meta.tags) ? meta.tags : [])].map((item) => cleanText(item, 80)).filter(Boolean))],
     originalLanguage,
@@ -421,7 +423,7 @@ function movieFromMeta(meta, tmdbId) {
     minimumAge: null,
     contentWarnings: [],
     kidsApproved: true,
-    voteAverage: Math.max(0, Math.min(10, parseNumber(meta.imdbRating || meta.rating))),
+    voteAverage,
     voteCount: parseNumber(meta.imdbVotes || meta.votes),
     popularity: parseNumber(meta.popularity),
     featured: false,
@@ -459,8 +461,9 @@ function createSeriesRecord(show, meta, tmdbId, episodeData) {
     ...(Array.isArray(meta?.dubLanguages) ? meta.dubLanguages.map(parseLanguage).filter(Boolean) : []),
     ...(pin?.dubLanguages || [])
   ])];
+  const voteAverage = Math.max(0, Math.min(10, parseNumber(show.rating?.average || meta?.imdbRating || meta?.rating)));
   if (!tmdbId || !title || overview.length < 50 || !isCartoonYearAllowed(year) ||
-      !episodeData.numberOfEpisodes) return null;
+      !episodeData.numberOfEpisodes || !voteAverage) return null;
   if (!isChildrenAnimation({
     genres,
     type: show.type,
@@ -496,7 +499,7 @@ function createSeriesRecord(show, meta, tmdbId, episodeData) {
     minimumAge: null,
     contentWarnings: [],
     kidsApproved: true,
-    voteAverage: Math.max(0, Math.min(10, parseNumber(show.rating?.average || meta?.imdbRating || meta?.rating))),
+    voteAverage,
     voteCount: parseNumber(meta?.imdbVotes || meta?.votes),
     popularity: parseNumber(show.weight || meta?.popularity),
     status: cleanText(show.status || "", 60),
