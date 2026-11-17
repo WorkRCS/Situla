@@ -31,7 +31,7 @@ test("shared desktop sidebar has clear workspace groups and a restrained active 
   assert.match(css, /@media \(min-width:1101px\)/);
 });
 
-test("server route and mutation requests expose distinct loading states", async () => {
+test("route navigation and user-triggered server requests share one top progress bar", async () => {
   const layout = await read("../app/layout.jsx");
   const routeProgress = await read("../app/components/route-progress.jsx");
   const activityLoader = await read("../app/components/server-activity-loader.jsx");
@@ -39,21 +39,25 @@ test("server route and mutation requests expose distinct loading states", async 
   const css = await read("../app/globals.css");
 
   assert.ok(layout.includes("<RouteProgress />"));
-  assert.ok(layout.includes("<ServerActivityLoader />"));
+  assert.equal(layout.includes("<ServerActivityLoader />"), false);
   assert.ok(routeProgress.includes('wrapHistoryMethod("pushState", true)'));
   assert.ok(routeProgress.includes('wrapHistoryMethod("replaceState", false)'));
-  assert.ok(routeProgress.includes("Loading page from Situla server"));
-  assert.ok(activityLoader.includes('["POST", "PUT", "PATCH", "DELETE"]'));
-  assert.ok(activityLoader.includes('requestMethod === "GET"'));
-  assert.ok(activityLoader.includes("Date.now() - userActionAt <= 850"));
-  assert.ok(activityLoader.includes('"/api/upcoming/status"'));
-  assert.ok(activityLoader.includes('"/api/presence"'));
-  assert.ok(activityLoader.includes('"/api/playback/heartbeat"'));
-  assert.ok(activityLoader.includes('"/api/playback/stop"'));
+  assert.ok(routeProgress.includes("Loading page and server request"));
+  assert.ok(routeProgress.includes("isUserTriggeredServerRequest"));
+  assert.ok(routeProgress.includes("window.fetch = trackedFetch"));
+  assert.ok(routeProgress.includes('["POST", "PUT", "PATCH", "DELETE"]'));
+  assert.ok(routeProgress.includes('requestMethod === "GET"'));
+  assert.ok(routeProgress.includes("Date.now() - userActionAt <= 850"));
+  assert.ok(routeProgress.includes('"/api/upcoming/status"'));
+  assert.ok(routeProgress.includes('"/api/presence"'));
+  assert.ok(routeProgress.includes('"/api/playback/heartbeat"'));
+  assert.ok(routeProgress.includes('"/api/playback/stop"'));
+  assert.match(activityLoader, /return null/);
   assert.ok(serverBoundary.includes("SERVER RESPONSE"));
   assert.ok(serverBoundary.includes("Loading verified content from Situla"));
-  assert.ok(css.includes(".site-server-activity"));
+  assert.equal(css.includes(".site-server-activity"), false);
   assert.ok(css.includes(".site-server-page-loading"));
+  assert.match(css, /\.site-route-progress \{[\s\S]*?height:3px/);
 });
 
 test("TV and Anime use a compact title context while the Movie watch header remains unchanged", async () => {
