@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { shuffleCartoonCatalog } from "../src/cartoon-catalog.js";
 
+const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
 test("mixed Cartoon catalogue shuffle is stable for pagination and changes with a new refresh seed", () => {
   const items = [
     { mediaType: "cartoon_movie", tmdbId: 1, title: "Movie 1" },
