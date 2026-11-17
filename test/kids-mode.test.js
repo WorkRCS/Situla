@@ -53,8 +53,8 @@ test("Kids Mode switch is optimistic, avoids route navigation, and keeps both ho
   assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
   assert.ok(home.includes("Preparing your home feed"));
   assert.ok(home.includes("typeof payload.enabled !== \"boolean\""));
-  assert.ok(app.includes('className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView}'));
-  assert.ok(app.includes('className="kids-mode-panel" hidden={!kidsMode || kidsOnlyView}'));
+  assert.ok(app.includes('className="app-view-mode-panel" hidden={!kidsModeReady || (kidsMode && !kidsOnlyView)}'));
+  assert.ok(app.includes('className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode || kidsOnlyView}'));
   assert.ok(app.includes('if (!kidsModeReady || kidsMode || tab !== "home") return undefined;'));
   assert.ok(!app.includes("setHomeSeriesReady(false);"));
 });
@@ -261,8 +261,8 @@ test("the root Home view switches between Normal mixed discovery and Kids mixed 
 
   assert.match(root, /view="home"/);
   assert.ok(router.includes('"/": "home"'));
-  assert.ok(app.includes('<div className="home-mode-panel" hidden={kidsMode}'));
-  assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsMode}'));
+  assert.ok(app.includes('<div className="home-mode-panel" hidden={!kidsModeReady || kidsMode}'));
+  assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
   assert.ok(app.includes('<CartoonsCatalog view="kidsHome" kidsMode={kidsMode}'));
   assert.ok(app.includes('const isDiscover = (tab === "home" && genre === "All") || tab === "movies";'));
 });

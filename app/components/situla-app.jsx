@@ -1848,7 +1848,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     }, { rootMargin: "900px 0px" });
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [tab, kidsModeReady, kidsMode, hasMoreMovies, hasMoreTv, hasMoreAnime, loading, loadingMore, moviesPage, tvPage, animePage, movies.length, tvShows.length, animeShows.length]);
+  }, [tab, kidsModeReady, kidsMode, loading, loadingMore, moviesPage, tvPage, animePage, movies.length, tvShows.length, animeShows.length, moviesTotal, tvTotal, animeTotal]);
 
   function removeHistoryItem(key) {
     const next = watchHistory.filter((item) => item.key !== key);
