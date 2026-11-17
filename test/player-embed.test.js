@@ -124,14 +124,18 @@ test("both Movie providers use Situla gold controls without a mute override", ()
 });
 
 
-test("Situla homepage hero rotates through mixed media discovery every three seconds", async () => {
-  const app = await read("../app/components/situla-app.jsx");
+test("Situla homepage hero keeps mixed-media refresh selection and uses manual three-card navigation", async () => {
+  const [app, hero] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/three-card-hero.jsx")
+  ]);
   assert.match(app, /setHeroMovies\(homeMoviePicks\)/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(app, /homeHeroItems\[heroIndex % Math\.max\(1, homeHeroItems\.length\)\]/);
-  assert.match(app, /Previous featured title/);
-  assert.match(app, /Next featured title/);
-  assert.match(app, /onMouseEnter=\{\(\) => setHeroPaused\(true\)\}/);
+  assert.match(app, /<ThreeCardHero/);
+  assert.doesNotMatch(app, /setInterval\([\s\S]*?\}, 3000\)|setHeroPaused/);
+  assert.match(hero, /Previous featured title/);
+  assert.match(hero, /Next featured title/);
+  assert.match(hero, /\[-2, -1, 0, 1, 2\]/);
 });
 
 test("catalog pages do not render aggregate movie, series, saved-list or history counts", async () => {
@@ -189,19 +193,26 @@ test("Situla Home renders a Hero followed by one vertical mixed Discover More gr
   assert.match(css, /#f7d58b/);
   assert.doesNotMatch(css, /#55b8ff|#69c7ff|#2388ee/);
   assert.match(css, /\.home-hero-atmosphere/);
-  assert.match(css, /filter:blur\(82px\) saturate\(1\.7\)/);
+  assert.match(css, /filter:blur\(46px\) saturate\(1\.45\)/);
+  assert.match(css, /filter:blur\(22px\) saturate\(1\.28\)/);
+  assert.match(css, /\.home-hero-deck-track\.is-next/);
 });
 
-test("Home hero auto-advances and keeps manual previous/next controls without preview rails", async () => {
-  const app = await read("../app/components/situla-app.jsx");
-  const cartoons = await read("../app/components/cartoons-catalog.jsx");
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(app, /aria-label="Previous featured title"/);
-  assert.match(app, /aria-label="Next featured title"/);
+test("Home heroes are manual-only three-card carousels with no preview rails or autoplay", async () => {
+  const [app, cartoons, hero] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/three-card-hero.jsx")
+  ]);
+  assert.match(app, /<ThreeCardHero/);
+  assert.match(cartoons, /<ThreeCardHero/);
+  assert.doesNotMatch(app, /setHeroPaused|setInterval\([\s\S]*?\}, 3000\)/);
+  assert.doesNotMatch(cartoons, /heroPaused|setInterval\s*\(/);
+  assert.match(hero, /Previous featured title/);
+  assert.match(hero, /Next featured title/);
+  assert.match(hero, /\[-2, -1, 0, 1, 2\]/);
+  assert.doesNotMatch(hero, /setInterval\s*\(/);
   assert.doesNotMatch(app, /home-hero-peeks|previewIndex/);
-  assert.match(cartoons, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(cartoons, /onPrevious=\{\(\) => setHeroIndex/);
-  assert.match(cartoons, /onNext=\{\(\) => setHeroIndex/);
 });
 
 
@@ -223,20 +234,24 @@ test("watch history renders an accessible progress meter inside each history car
   assert.match(headless, /ui-card/);
 });
 
-test("home and catalog spotlights refresh and rotate across all media types", async () => {
+test("Home content refreshes remain dynamic while catalog listing pages are hero-free", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
   assert.match(app, /chooseFreshSpotlight\(homeHeroItems, "situla:spotlight:home", "heroId"\)/);
-  assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
-  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
-  assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
   assert.match(app, /mixHomeSpotlight\(\{/);
   assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "60" \}\)/);
   assert.doesNotMatch(app, /new URLSearchParams\(\{ page: "1", limit: "36", random: "true" \}\)/);
-  assert.match(app, /loadSeries\("tv"/);
-  assert.match(app, /loadSeries\("anime"/);
-  assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(app, /setCatalogSpotlightItems\(items\)/);
-  assert.match(app, /\}, 10000\)/);
+  assert.match(app, /loadSeries\("tv"\)/);
+  assert.match(app, /loadSeries\("anime"\)/);
+  assert.match(app, /setHeroMovies\(homeMoviePicks\)/);
+  assert.match(app, /random=true/);
+  assert.match(app, /excludeQuery/);
+  assert.match(cartoons, /fetch\("\/api\/cartoons\/home\?seed="/);
+  assert.match(cartoons, /setSort\("random"\)/);
+  assert.match(cartoons, /situla:kids:home-spotlight:v1/);
+  assert.doesNotMatch(app, /CatalogSpotlight|catalogSpotlight/);
+  assert.doesNotMatch(app, /setInterval\([\s\S]*?\}, 3000\)|\}, 10000\)/);
+  assert.doesNotMatch(cartoons, /setInterval\s*\(/);
 });
 
 test("Situla header keeps the logo with the name, and the theme switch is removed", async () => {
@@ -282,10 +297,13 @@ test("React UI stack uses Headless UI and local shadcn primitives without import
 });
 
 
-test("catalog spotlight component is declared at module scope for every catalogue route", async () => {
+test("shared three-card Home hero is declared at module scope and catalogue routes omit spotlight", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.ok(app.indexOf("function CatalogSpotlight") < app.indexOf("function MovieShelf"));
-  assert.match(app, /function CatalogSpotlight\([\s\S]*?return \([\s\S]*?catalog-spotlight/);
+  const hero = await read("../app/components/three-card-hero.jsx");
+  assert.ok(app.indexOf('import ThreeCardHero from "./three-card-hero.jsx"') >= 0);
+  assert.ok(hero.indexOf("export default function ThreeCardHero") >= 0);
+  assert.match(hero, /home-hero-deck/);
+  assert.doesNotMatch(app, /function CatalogSpotlight|<CatalogSpotlight|catalogSpotlight/);
 });
 
 test("AnimeSeries declares its unique MAL index only once", async () => {

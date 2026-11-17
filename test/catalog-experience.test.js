@@ -105,8 +105,9 @@ test("catalog loading is bounded and off-screen image/grid work is deferred", as
   assert.match(app, /decoding="async"/);
   assert.match(css, /\.catalog-grid > \* \{[\s\S]*?content-visibility:auto/);
   assert.match(css, /prefers-reduced-motion:reduce/);
-  assert.match(app, /document\.visibilityState !== "visible"/);
-  assert.match(app, /\}, 10000\)/);
+  assert.doesNotMatch(app, /document\.visibilityState !== "visible" \|\| isScrollingRef\.current/);
+  assert.doesNotMatch(app, /\}, 10000\)/);
+  assert.doesNotMatch(app, /CatalogSpotlight|catalogSpotlight/);
 });
 
 test("one seed command runs the full catalogue ingestion and public-signal refresh pipeline", async () => {

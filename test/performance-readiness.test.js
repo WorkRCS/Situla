@@ -33,7 +33,7 @@ test("global page scrolling is native and moving chrome avoids live blur filters
   assert.ok(performanceStyles.includes("backdrop-filter:none !important"));
   assert.ok(performanceStyles.includes(".bottom-nav"));
   assert.match(app, /window\.addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
-  assert.equal((app.match(/document\.visibilityState !== "visible" \|\| isScrollingRef\.current/g) || []).length, 2);
+  assert.equal((app.match(/document\.visibilityState !== "visible" \|\| isScrollingRef\.current/g) || []).length, 0);
   assert.match(app, /window\.removeEventListener\("scroll", onScroll\)/);
 });
 
