@@ -315,7 +315,8 @@ test("Anime catalog has canonical MAL IDs and all catalogue imports run through 
   assert.equal(new Set(MANUAL_ANIME_CATALOG.map((item) => item.malId)).size, MANUAL_ANIME_CATALOG.length);
   assert.ok(MANUAL_ANIME_CATALOG.every((item) => Number.isSafeInteger(item.malId) && item.malId > 0 && ["TV", "ONA"].includes(item.type)));
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.match(runner, /seedOfflineCatalog/);
   assert.match(runner, /seedMovieAdditions/);
   assert.match(runner, /seedTvSeries/);
