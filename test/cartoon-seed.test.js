@@ -51,3 +51,20 @@ test("Hot, Popular and Featured badges are based on public score/popularity valu
   assert.equal(records.find((item) => item.tmdbId === 2).popular, false);
   assert.equal(records.find((item) => item.tmdbId === 2).hot, false);
 });
+
+test("keyless Cartoon seed defines exact targets, date cutoff, and insert-only scope", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const script = await readFile(new URL("../scripts/seed-cartoons.js", import.meta.url), "utf8");
+  const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.match(script, /const TARGET_MOVIES = 200/);
+  assert.match(script, /const TARGET_SERIES = 300/);
+  assert.match(script, /isCartoonYearAllowed\(year\)/);
+  assert.match(script, /fetchCinemetaMeta\("series"/);
+  assert.match(script, /TVMAZE \+ "\/lookup\/shows\?imdb="/);
+  assert.match(script, /CartoonMovie\.insertMany\(movies/);
+  assert.match(script, /CartoonSeries\.insertMany\(series/);
+  assert.match(script, /CartoonEpisode\.insertMany\(newEpisodes/);
+  assert.doesNotMatch(script, /Movie\.insertMany|TvSeries\.insertMany|AnimeSeries\.insertMany|updateOne|findOneAndUpdate|deleteMany/);
+  assert.match(script, /Preflight incomplete\. No database rows were inserted/);
+});
