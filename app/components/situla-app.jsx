@@ -2153,7 +2153,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 getTitle={(item) => item.heroTitle || "Untitled"}
                 ariaLabel="Movies, TV series and anime spotlight"
                 onPaletteChange={reportNormalHeroPalette}
-                renderCenter={(heroItem, onCenterImageLoad) => {}
+                renderCenter={(heroItem, onCenterImageLoad) => {
                   const navigationKey = heroItem.mediaType === "movie"
                     ? "movie:" + heroItem.imdbId
                     : heroItem.mediaType + ":" + String(heroItem.mediaType === "tv" ? heroItem.tmdbId : heroItem.malId);
