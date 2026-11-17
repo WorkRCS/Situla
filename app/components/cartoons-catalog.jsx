@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Baby, Bookmark, Check, Film, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
+import { formatRuntimeDuration } from "../../src/media-time.js";
 
 function formatYear(value) {
   const year = Number(value);
@@ -58,10 +59,10 @@ export function CartoonCard({
   const [sharePreparing, setSharePreparing] = useState(false);
 
   const meta = isMovie
-    ? [year || "Movie", item.runtime > 0 ? item.runtime + " min" : ""].filter(Boolean).join(" · ")
+    ? [year || "Movie", item.runtime > 0 ? formatRuntimeDuration(item.runtime) : ""].filter(Boolean).join(" · ")
     : [
         year || "TV series",
-        item.runtime > 0 ? item.runtime + " min / ep" : "",
+        item.runtime > 0 ? formatRuntimeDuration(item.runtime) + " / ep" : "",
         item.numberOfSeasons > 0 ? item.numberOfSeasons + " seasons" : "",
         item.numberOfEpisodes > 0 ? item.numberOfEpisodes + " eps" : ""
       ].filter(Boolean).join(" · ");
@@ -429,7 +430,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
         </div>
       </div>
       <div className="catalog-toolbar catalog-toolbar-sort-only">
-        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}>{mixedView && <option value="random">Random mix</option>}<option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
+        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="random">{mixedView ? "Random mix" : "Random"}</option><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
       </div>
       {!!genres.length && (
         <div className="home-genre-row">
