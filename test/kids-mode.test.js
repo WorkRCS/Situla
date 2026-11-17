@@ -89,7 +89,8 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
   assert.ok(app.includes('const kidsOnlyView = ["home", "cartoons",'));
   assert.ok(!app.includes('router.replace("/")'));
   assert.ok(app.includes('const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;'));
-  assert.ok(app.includes('<CartoonsCatalog view="cartoons" />'));
+  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" />'));
+  assert.ok(app.includes("<CartoonsCatalog view={tab} />"));
   assert.ok(app.includes("kidsMode={kidsMode}"));
   assert.ok(sidebar.includes('{ id: "home", href: "/", label: "Home", icon: House }'));
   assert.ok(sidebar.includes("export function SiteWorkspace({ children, kidsMode = false })"));
@@ -110,4 +111,9 @@ test("Kids Mode cards use the same TV poster, card size, rating and metadata sty
   assert.ok(cartoons.includes("featuredSeriesList"));
   assert.ok(cartoons.includes("hotSeries"));
   assert.ok(cartoons.includes("popularSeries"));
+  assert.ok(cartoons.includes('const homeView = view === "kidsHome";'));
+  assert.ok(cartoons.includes('const mixedView = view === "cartoons";'));
+  assert.ok(cartoons.includes('"/api/cartoons/catalog"'));
+  assert.ok(cartoons.includes('value="random"'));
+  assert.ok(cartoons.includes("Load more"));
 });

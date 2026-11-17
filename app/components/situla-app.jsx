@@ -2291,7 +2291,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
             <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
-              <CartoonsCatalog view="cartoons" />
+              <CartoonsCatalog view="kidsHome" />
             </div>
           </div>
         )}

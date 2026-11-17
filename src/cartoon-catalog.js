@@ -54,3 +54,23 @@ export function isPost2000CartoonSeries(item = {}) {
   const year = date ? readYear(date) : Number(item.releaseYear);
   return Number.isInteger(year) && year >= MIN_CARTOON_YEAR;
 }
+
+
+function cartoonShuffleScore(seed, item) {
+  const identity = String(seed) + ":" + String(item?.mediaType || "") + ":" + String(item?.tmdbId || "");
+  let hash = 2166136261;
+  for (let index = 0; index < identity.length; index += 1) {
+    hash ^= identity.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Stable mixed ordering for one page session; a new seed on refresh changes the order. */
+export function shuffleCartoonCatalog(items = [], seed = "") {
+  return [...(Array.isArray(items) ? items : [])].sort((a, b) =>
+    cartoonShuffleScore(seed, a) - cartoonShuffleScore(seed, b) ||
+    String(a?.mediaType || "").localeCompare(String(b?.mediaType || "")) ||
+    Number(a?.tmdbId || 0) - Number(b?.tmdbId || 0)
+  );
+}

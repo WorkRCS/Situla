@@ -127,22 +127,36 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("All");
-  const [sort, setSort] = useState("popular");
+  const [sort, setSort] = useState(view === "cartoons" ? "random" : "popular");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [shuffleSeed, setShuffleSeed] = useState("");
+  const [loadMoreError, setLoadMoreError] = useState("");
   const [error, setError] = useState("");
 
-  const homeView = view === "cartoons";
+  const homeView = view === "kidsHome";
+  const mixedView = view === "cartoons";
   const movieView = view === "cartoonMovies";
   const kind = movieView ? "movie" : "series";
-  const endpoint = movieView ? "/api/cartoons/movies" : "/api/cartoons/series";
-  const pageTitle = movieView ? "Cartoon Movies" : "Cartoon TV Series";
+  const endpoint = mixedView ? "/api/cartoons/catalog" : movieView ? "/api/cartoons/movies" : "/api/cartoons/series";
+  const pageTitle = mixedView ? "Cartoons" : movieView ? "Cartoon Movies" : "Cartoon TV Series";
 
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       setLoading(true);
       setError("");
+      setLoadMoreError("");
+      setPage(1);
+      setHasMore(false);
+      setTotal(0);
+      setShuffleSeed("");
+      if (!homeView) setItems([]);
+      if (homeView) setHome(null);
       try {
         if (homeView) {
           const response = await fetch("/api/cartoons/home", {
@@ -161,8 +175,13 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(payload.error || pageTitle + " is unavailable.");
           if (!controller.signal.aborted) {
-            setItems(Array.isArray(payload.items) ? payload.items : []);
+            const nextItems = Array.isArray(payload.items) ? payload.items : [];
+            setItems(nextItems);
             setGenres(Array.isArray(payload.genres) ? payload.genres : []);
+            setTotal(Number(payload.pagination?.total) || nextItems.length);
+            setPage(1);
+            setHasMore(Number(payload.pagination?.totalPages) > 1);
+            setShuffleSeed(String(payload.shuffleSeed || ""));
           }
         }
       } catch (requestError) {
@@ -171,12 +190,44 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
         if (!controller.signal.aborted) setLoading(false);
       }
     }
-    const timer = window.setTimeout(load, homeView ? 0 : 120);
+    const timer = window.setTimeout(load, homeView ? 0 : 100);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
   }, [homeView, endpoint, sort, query, selectedGenre, pageTitle]);
+
+  useEffect(() => {
+    setSort(mixedView ? "random" : "popular");
+  }, [view]);
+
+  async function loadMore() {
+    if (!hasMore || loadingMore) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    setLoadMoreError("");
+    try {
+      const params = new URLSearchParams({ page: String(nextPage), limit: "48", sort });
+      if (query.trim()) params.set("q", query.trim());
+      if (selectedGenre !== "All") params.set("genre", selectedGenre);
+      if (mixedView && shuffleSeed) params.set("seed", shuffleSeed);
+      const response = await fetch(endpoint + "?" + params.toString(), {
+        cache: "no-store", credentials: "same-origin"
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "More cartoons could not be loaded.");
+      const nextItems = Array.isArray(payload.items) ? payload.items : [];
+      setItems((current) => [...current, ...nextItems]);
+      setPage(nextPage);
+      setTotal(Number(payload.pagination?.total) || total);
+      setHasMore(nextPage < Number(payload.pagination?.totalPages || 0));
+      if (payload.shuffleSeed) setShuffleSeed(String(payload.shuffleSeed));
+    } catch (requestError) {
+      setLoadMoreError(requestError.message || "More cartoons could not be loaded.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   const sortedHome = useMemo(() => {
     if (!home) return null;
@@ -226,13 +277,14 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
     <section className="pb-8" aria-label={pageTitle}>
       <div className="section-heading shelf-heading">
         <div>
-          <span>SITULA KIDS · APPROVED CATALOGUE</span>
+          <span>{mixedView ? "SITULA KIDS · MIXED FAMILY CATALOGUE" : "SITULA KIDS · APPROVED CATALOGUE"}</span>
           <h1>{pageTitle}</h1>
+          {mixedView && <p className="series-card-meta">{total ? total + " approved movies & series" : "Movies and TV series in one collection"}</p>}
         </div>
       </div>
       <div className="catalog-toolbar">
         <label className="catalog-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"Search " + pageTitle.toLowerCase()} aria-label={"Search " + pageTitle} /></label>
-        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
+        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}>{mixedView && <option value="random">Random mix</option>}<option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
       </div>
       {!!genres.length && (
         <div className="home-genre-row">
@@ -241,9 +293,23 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
       )}
       {error && <p className="catalog-load-more-error" role="alert">{error}</p>}
       {items.length ? (
-        <div className="catalog-grid">
-          {items.map((item) => <CartoonCard key={item.tmdbId} item={item} kind={kind} />)}
-        </div>
+        <>
+          <div className="catalog-grid">
+            {items.map((item) => {
+              const itemKind = item.mediaType === "cartoon_movie" ? "movie" : mixedView ? "series" : kind;
+              return <CartoonCard key={itemKind + ":" + item.tmdbId} item={item} kind={itemKind} />;
+            })}
+          </div>
+          {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalogue…</p>}
+          {hasMore && !loading && (
+            <div className="catalog-load-more">
+              <button type="button" className="ghost-button catalog-load-more-button" onClick={loadMore} disabled={loadingMore} aria-busy={loadingMore}>
+                {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading…</> : <>Load more {mixedView ? "cartoons" : movieView ? "movies" : "series"} <ArrowUpRight size={15} /></>}
+              </button>
+              {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+            </div>
+          )}
+        </>
       ) : (
         <div className="catalog-empty-state"><Baby size={28} /><h2>No approved titles found</h2><p>Try a different genre or search term.</p></div>
       )}

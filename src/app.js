@@ -23,7 +23,7 @@ import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './s
 import adminRouter from './admin.js';
 import upcomingRouter from './upcoming.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
-import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter } from './cartoon-catalog.js';
+import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog } from './cartoon-catalog.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
 import { normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from './media-image.js';
@@ -1259,6 +1259,66 @@ app.get('/api/cartoons/home', async (c) => {
     });
   } catch (error) {
     return apiError(c, error, 'Cartoon home is temporarily unavailable.');
+  }
+});
+
+app.get('/api/cartoons/catalog', async (c) => {
+  try {
+    await connectDatabase();
+    const { page, limit } = pageOptions(c, 48, 48);
+    const query = safeText(c.req.query('q'));
+    const genre = safeText(c.req.query('genre'));
+    const sortKey = String(c.req.query('sort') || 'random');
+    const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
+    const movieFilter = approvedCartoonMovieFilter();
+    const seriesFilter = approvedCartoonSeriesFilter();
+
+    for (const filter of [movieFilter, seriesFilter]) {
+      if (genre) filter.genres = genre;
+      if (numericId) filter.tmdbId = numericId;
+      else if (query) filter.$text = { $search: query };
+    }
+
+    const [movieRows, seriesRows, movieGenres, seriesGenres] = await Promise.all([
+      CartoonMovie.find(movieFilter).lean(),
+      CartoonSeries.find(seriesFilter).lean(),
+      CartoonMovie.distinct('genres', approvedCartoonMovieFilter()),
+      CartoonSeries.distinct('genres', approvedCartoonSeriesFilter())
+    ]);
+
+    let items = [
+      ...movieRows.map(cartoonMovieDto),
+      ...seriesRows.map((item) => cartoonSeriesDto(item))
+    ];
+    let shuffleSeed = null;
+
+    if (sortKey === 'random') {
+      shuffleSeed = String(c.req.query('seed') || randomUUID());
+      items = shuffleCartoonCatalog(items, shuffleSeed);
+    } else if (sortKey === 'newest') {
+      items.sort((a, b) => String(b.releaseDate || b.firstAirDate || '').localeCompare(String(a.releaseDate || a.firstAirDate || '')));
+    } else if (sortKey === 'rating') {
+      items.sort((a, b) => (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+        (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0));
+    } else if (sortKey === 'az') {
+      items.sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+    } else {
+      items.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) ||
+        Number(Boolean(b.hot)) - Number(Boolean(a.hot)) ||
+        Number(Boolean(b.popular)) - Number(Boolean(a.popular)) ||
+        (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
+        (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0));
+    }
+
+    const total = items.length;
+    return c.json({
+      items: items.slice((page - 1) * limit, page * limit),
+      genres: [...new Set([...movieGenres, ...seriesGenres].filter(Boolean))].sort(),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      shuffleSeed
+    });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon catalog is temporarily unavailable.');
   }
 });
 
