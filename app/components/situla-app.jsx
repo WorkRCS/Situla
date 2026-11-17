@@ -853,6 +853,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const kidsModeRequestId = useRef(0);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [homeFeedCount, setHomeFeedCount] = useState(5);
+  const homeFeedSentinelRef = useRef(null);
+  const catalogLoadSentinelRef = useRef(null);
   const demoSignedIn = Boolean(accountUser);
   const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
   const kidsOnlyView = ["home", "cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
@@ -871,14 +874,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       try {
         const response = await fetch("/api/kids-mode", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Kids Mode settings are unavailable.");
+        if (!response.ok || typeof payload.enabled !== "boolean") {
+          throw new Error(payload.error || "Kids Mode settings are unavailable.");
+        }
         if (active && requestId === kidsModeRequestId.current) {
           setKidsMode(Boolean(payload.enabled));
+          setKidsModeReady(true);
         }
       } catch {
-        // Keep the last confirmed mode on temporary network or API errors.
-      } finally {
-        if (active && requestId === kidsModeRequestId.current) setKidsModeReady(true);
+        // Fail closed on first load so Normal content never flashes before the
+        // server confirms whether the account is in Kids Mode. Focus retries.
       }
     }
     loadKidsMode();
@@ -887,6 +892,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     window.addEventListener("situla:auth-change", refresh);
     return () => {
       active = false;
+      kidsModeRequestId.current += 1;
       window.removeEventListener("focus", refresh);
       window.removeEventListener("situla:auth-change", refresh);
     };
@@ -1336,7 +1342,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const controller = new AbortController();
 
     async function loadSeries(mediaType) {
-      const params = new URLSearchParams({ page: "1", limit: "36" });
+      const params = new URLSearchParams({ page: "1", limit: "60" });
       const endpoint = (mediaType === "tv" ? "/api/tv?" : "/api/anime?") + params.toString();
       const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]);
       const response = await fetch(endpoint, { cache: "no-store", signal });
@@ -1365,14 +1371,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     return () => controller.abort();
   }, [tab, kidsModeReady, kidsMode]);
 
-  const homeHeroItems = useMemo(
+  const homeBrowseItems = useMemo(
     () => mixHomeSpotlight({
       movies: heroMovies,
       tv: homeTvShows.map((item) => toHomeSpotlight(item, "tv")).filter(Boolean),
       anime: homeAnimeShows.map((item) => toHomeSpotlight(item, "anime")).filter(Boolean)
-    }).slice(0, 20),
+    }),
     [heroMovies, homeTvShows, homeAnimeShows]
   );
+  const homeHeroItems = useMemo(() => homeBrowseItems.slice(0, 20), [homeBrowseItems]);
+
+  useEffect(() => {
+    setHomeFeedCount(5);
+  }, [homeBrowseItems]);
 
   const premiumCatalog = accountUser?.planId === "premium";
   const homeCollections = useMemo(() => buildHomeCollections({
@@ -1704,7 +1715,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     try {
       if (tab === "home" || tab === "movies" || tab === "search") {
         const nextPage = moviesPage + 1;
-        const params = new URLSearchParams({ page: String(nextPage), limit: "10" });
+        const params = new URLSearchParams({ page: String(nextPage), limit: "5" });
         if (tab === "search" && query.trim()) params.set("q", query.trim());
         if (tab === "home" && genre !== "All") {
           const selected = categoryShelves.find((item) => item.name === genre);
@@ -1742,7 +1753,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const nextPage = tvPage + 1;
         const params = new URLSearchParams({
           page: String(nextPage),
-          limit: "10",
+          limit: "5",
           random: "true",
           exclude: tvShows.map((item) => item.tmdbId).filter((id) => Number.isSafeInteger(Number(id)) && Number(id) > 0).join(",")
         });
@@ -1813,6 +1824,31 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       setLoadingMore(false);
     }
   }
+
+  useEffect(() => {
+    const sentinel = homeFeedSentinelRef.current;
+    if (tab !== "home" || kidsMode || !kidsModeReady || !sentinel || homeFeedCount >= homeBrowseItems.length) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setHomeFeedCount((current) => Math.min(homeBrowseItems.length, current + 5));
+      }
+    }, { rootMargin: "750px 0px" });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [tab, kidsMode, kidsModeReady, homeFeedCount, homeBrowseItems.length]);
+
+  useEffect(() => {
+    const canLoadMore = tab === "tv" ? hasMoreTv
+      : tab === "anime" ? hasMoreAnime
+        : (tab === "home" || tab === "movies") ? hasMoreMovies : false;
+    const sentinel = catalogLoadSentinelRef.current;
+    if (!sentinel || !canLoadMore || loading || loadingMore || loadMoreLock.current) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting) && !loadMoreLock.current) void loadMore();
+    }, { rootMargin: "900px 0px" });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [tab, kidsModeReady, kidsMode, hasMoreMovies, hasMoreTv, hasMoreAnime, loading, loadingMore, moviesPage, tvPage, animePage, movies.length, tvShows.length, animeShows.length]);
 
   function removeHistoryItem(key) {
     const next = watchHistory.filter((item) => item.key !== key);
@@ -2166,7 +2202,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
         {tab === "home" && (
           <div className="home-main-column">
-            <div className="home-mode-panel" hidden={kidsMode} aria-hidden={kidsMode}>
+            {!kidsModeReady && (
+              <section className="home-mode-loading" role="status" aria-label="Preparing your home feed">
+                <div className="hero-skeleton"><div className="skeleton-hero-copy"><div className="skeleton-line short" /><div className="skeleton-line hero-title" /><div className="skeleton-line wide" /><div className="skeleton-hero-button" /></div></div>
+                <SkeletonShelf title="Preparing your feed" />
+              </section>
+            )}
+            <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
             {featured ? (
               <section
                 className="hero-card home-hero-card"
@@ -2422,7 +2464,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     key={category.key}
                     title={category.name}
                     eyebrow="EXPLORE BY GENRE"
-                    description="A focused genre collection, without repeating titles from the other shelves."
+                    description="A focused genre collection, with titles selected from the live catalogue."
                     variant="genre"
                     movies={category.items}
                     onOpen={openHomeMovie}
@@ -2436,26 +2478,40 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <MovieShelf title={genre + " movies"} eyebrow="DATABASE GENRE RESULTS" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
             )}
+            {genre === "All" && homeBrowseItems.length > 0 && (
+              <section className="home-scroll-feed" aria-label="More movies, TV series and anime">
+                <div className="section-heading shelf-heading">
+                  <div><span>MORE FROM THE CATALOGUE</span><h2>Keep discovering</h2><p className="home-collection-description">A mixed feed of real movies, TV series and anime from the live catalogue.</p></div>
+                </div>
+                <div className="catalog-grid">
+                  {homeBrowseItems.slice(0, homeFeedCount).map((item) => item.mediaType === "movie" ? (
+                    <MovieCard key={item.heroId} movie={item} onOpen={openHomeMovie} onSave={toggleSaved}
+                      saved={savedIds.has(savedMediaKey(item, "movie"))} navigating={pendingHomeNavigation === movieNavigationKey(item)}
+                      onPreload={prefetchHomeMovie} />
+                  ) : (
+                    <SeriesCard key={item.heroId} item={item} kind={item.mediaType} onOpen={openHomeSeries} onSave={toggleSaved}
+                      saved={savedIds.has(savedMediaKey(item, item.mediaType))} navigating={pendingHomeNavigation === seriesNavigationKey(item, item.mediaType)}
+                      onPreload={prefetchHomeSeries} />
+                  ))}
+                </div>
+                {homeFeedCount < homeBrowseItems.length && (
+                  <div ref={homeFeedSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">
+                    <span className="catalog-infinite-hint">Scroll to load 5 more titles</span>
+                  </div>
+                )}
+              </section>
+            )}
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {hasMoreMovies && !loading && (
-              <div className="catalog-load-more">
-                <button
-                  type="button"
-                  className="ghost-button catalog-load-more-button"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  aria-busy={loadingMore}
-                >
-                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading movies…</> : <>Load more movies <BootstrapIcon icon="arrow-right" size={16} /></>}
-                </button>
-                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+              <div ref={catalogLoadSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">
+                {loadingMore ? "Loading 5 more movies…" : loadMoreError ? <p className="catalog-load-more-error" role="alert">{loadMoreError} <button type="button" className="catalog-retry-link" onClick={() => { setLoadMoreError(""); void loadMore(); }}>Retry</button></p> : <span className="catalog-infinite-hint">Scroll to load 5 more movies</span>}
               </div>
             )}
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
-            <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
+            <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
               <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
             </div>
           </div>
@@ -2463,7 +2519,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
         {tab !== "home" && (
           <div className="app-view-main-column">
-            <div className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView} aria-hidden={kidsMode && !kidsOnlyView}>
+            <div className="app-view-mode-panel" hidden={!kidsModeReady || (kidsMode && !kidsOnlyView)} aria-hidden={!kidsModeReady || (kidsMode && !kidsOnlyView)}>
         {["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) && (
           <CartoonsCatalog view={tab} kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
         )}
@@ -2485,7 +2541,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No movies published yet</p><p className="mt-2 text-xs">Movies in the Situla catalog will appear here.</p></div>
             )}
-            {hasMoreMovies && !loading && <div className="mt-7 flex justify-center"><button type="button" className="ghost-button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? "Loading…" : "Load more movies"} <BootstrapIcon icon="arrow-right" size={16} /></button></div>}
+            {hasMoreMovies && !loading && <div ref={catalogLoadSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">{loadingMore ? "Loading 5 more movies…" : loadMoreError ? <p role="alert">{loadMoreError} <button type="button" className="catalog-retry-link" onClick={() => { setLoadMoreError(""); void loadMore(); }}>Retry</button></p> : <span className="catalog-infinite-hint">Scroll to load 5 more movies</span>}</div>}
           </section>
         )}
 
@@ -2506,20 +2562,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No TV series published yet</p><p className="mt-2 text-xs">Add curated TV series with TMDB IDs to the database.</p></div>
             )}
-            {hasMoreTv && !loading && (
-              <div className="catalog-load-more">
-                <button
-                  type="button"
-                  className="ghost-button catalog-load-more-button"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  aria-busy={loadingMore}
-                >
-                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading TV series…</> : <>Load more TV series <BootstrapIcon icon="arrow-right" size={16} /></>}
-                </button>
-                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
-              </div>
-            )}
+            {hasMoreTv && !loading && <div ref={catalogLoadSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">{loadingMore ? "Loading 5 more TV series…" : loadMoreError ? <p role="alert">{loadMoreError} <button type="button" className="catalog-retry-link" onClick={() => { setLoadMoreError(""); void loadMore(); }}>Retry</button></p> : <span className="catalog-infinite-hint">Scroll to load 5 more TV series</span>}</div>}
           </section>
         )}
 
@@ -2540,20 +2583,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : (
               <div className="empty-panel"><Icon name="film" size={30} /><p className="mt-3 font-bold text-white">No anime published yet</p><p className="mt-2 text-xs">Add curated anime records to the database.</p></div>
             )}
-            {hasMoreAnime && !loading && (
-              <div className="catalog-load-more">
-                <button
-                  type="button"
-                  className="ghost-button catalog-load-more-button"
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  aria-busy={loadingMore}
-                >
-                  {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading anime…</> : <>Load more anime <BootstrapIcon icon="arrow-right" size={16} /></>}
-                </button>
-                {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
-              </div>
-            )}
+            {hasMoreAnime && !loading && <div ref={catalogLoadSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">{loadingMore ? "Loading 5 more anime…" : loadMoreError ? <p role="alert">{loadMoreError} <button type="button" className="catalog-retry-link" onClick={() => { setLoadMoreError(""); void loadMore(); }}>Retry</button></p> : <span className="catalog-infinite-hint">Scroll to load 5 more anime</span>}</div>}
           </section>
         )}
 
@@ -2726,7 +2756,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
             </div>
-            <div className="kids-mode-panel" hidden={!kidsMode || kidsOnlyView} aria-hidden={!kidsMode || kidsOnlyView}>
+            <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode || kidsOnlyView} aria-hidden={!kidsModeReady || !kidsMode || kidsOnlyView}>
               <CartoonsCatalog view="cartoons" />
             </div>
 

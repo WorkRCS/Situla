@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Baby, Bookmark, Check, Film, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { formatRuntimeDuration } from "../../src/media-time.js";
@@ -235,6 +235,9 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   const [error, setError] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroPaused, setHeroPaused] = useState(false);
+  const [homeFeedCount, setHomeFeedCount] = useState(5);
+  const listingSentinelRef = useRef(null);
+  const homeFeedSentinelRef = useRef(null);
 
   const homeView = view === "kidsHome";
   const mixedView = view === "cartoons";
@@ -265,7 +268,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           if (!response.ok) throw new Error(payload.error || "Cartoon catalog is unavailable.");
           if (!controller.signal.aborted) setHome(payload);
         } else {
-          const params = new URLSearchParams({ page: "1", limit: "48", sort });
+          const params = new URLSearchParams({ page: "1", limit: "5", sort });
           if (sort === "random") params.set("seed", createCartoonRefreshSeed());
           if (selectedGenre !== "All") params.set("genre", selectedGenre);
           const response = await fetch(endpoint + "?" + params.toString(), {
@@ -300,13 +303,13 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     setSort("random");
   }, [view]);
 
-  async function loadMore() {
-    if (!hasMore || loadingMore) return;
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || loadMoreError) return;
     const nextPage = page + 1;
     setLoadingMore(true);
     setLoadMoreError("");
     try {
-      const params = new URLSearchParams({ page: String(nextPage), limit: "48", sort });
+      const params = new URLSearchParams({ page: String(nextPage), limit: "5", sort });
       if (selectedGenre !== "All") params.set("genre", selectedGenre);
       if (sort === "random" && shuffleSeed) params.set("seed", shuffleSeed);
       const response = await fetch(endpoint + "?" + params.toString(), {
@@ -315,7 +318,15 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "More cartoons could not be loaded.");
       const nextItems = Array.isArray(payload.items) ? payload.items : [];
-      setItems((current) => [...current, ...nextItems]);
+      setItems((current) => {
+        const seen = new Set(current.map((item) => String(item.mediaType || kind) + ":" + String(item.tmdbId)));
+        return [...current, ...nextItems.filter((item) => {
+          const key = String(item.mediaType || kind) + ":" + String(item.tmdbId);
+          if (!item.tmdbId || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })];
+      });
       setPage(nextPage);
       setTotal(Number(payload.pagination?.total) || total);
       setHasMore(nextPage < Number(payload.pagination?.totalPages || 0));
@@ -325,27 +336,31 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     } finally {
       setLoadingMore(false);
     }
-  }
+  }, [hasMore, loadingMore, loadMoreError, page, sort, selectedGenre, shuffleSeed, endpoint, total, kind]);
 
   const sortedHome = useMemo(() => {
     if (!home) return null;
     const series = publicOrder(home.series);
     const movies = publicOrder(home.movies);
+    const fillShelf = (matched, source) =>
+      (matched.length >= Math.min(5, source.length) ? matched : source).slice(0, 12);
     return {
       series,
       movies,
       featuredSeries: series.find((item) => item.featured) || series[0] || null,
       featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
-      featuredSeriesList: series.filter((item) => item.featured).slice(0, 12),
-      hotSeries: series.filter((item) => item.hot || Number(item.trendScore) > 0).slice(0, 12),
-      popularSeries: series.filter((item) => item.popular).slice(0, 12),
-      featuredMovies: movies.filter((item) => item.featured).slice(0, 12),
-      hotMovies: movies.filter((item) => item.hot || Number(item.trendScore) > 0).slice(0, 12),
-      popularMovies: movies.filter((item) => item.popular).slice(0, 12)
+      // When public badges are sparse, use ranked catalogue records as shelf
+      // fallbacks instead of rendering one- or two-card home sections.
+      featuredSeriesList: fillShelf(series.filter((item) => item.featured), series),
+      hotSeries: fillShelf(series.filter((item) => item.hot || Number(item.trendScore) > 0), series),
+      popularSeries: fillShelf(series.filter((item) => item.popular), series),
+      featuredMovies: fillShelf(movies.filter((item) => item.featured), movies),
+      hotMovies: fillShelf(movies.filter((item) => item.hot || Number(item.trendScore) > 0), movies),
+      popularMovies: fillShelf(movies.filter((item) => item.popular), movies)
     };
   }, [home]);
 
-  const cartoonHeroItems = useMemo(() => {
+  const cartoonFeedItems = useMemo(() => {
     const series = sortedHome?.series || [];
     const movies = sortedHome?.movies || [];
     const mixed = [];
@@ -353,8 +368,14 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
       if (series[index]) mixed.push(series[index]);
       if (movies[index]) mixed.push(movies[index]);
     }
-    return mixed.slice(0, 24);
+    return mixed;
   }, [sortedHome]);
+
+  const cartoonHeroItems = useMemo(() => cartoonFeedItems.slice(0, 24), [cartoonFeedItems]);
+
+  useEffect(() => {
+    setHomeFeedCount(5);
+  }, [home]);
 
   useEffect(() => {
     if (!cartoonHeroItems.length) {
@@ -383,6 +404,28 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     return () => window.clearInterval(timer);
   }, [homeView, cartoonHeroItems.length, heroPaused]);
 
+  useEffect(() => {
+    const sentinel = listingSentinelRef.current;
+    if (!sentinel || !hasMore || loading || loadingMore || loadMoreError) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+    }, { rootMargin: "850px 0px" });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMoreError, loadMore]);
+
+  useEffect(() => {
+    const sentinel = homeFeedSentinelRef.current;
+    if (!homeView || !sentinel || homeFeedCount >= cartoonFeedItems.length) return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setHomeFeedCount((current) => Math.min(cartoonFeedItems.length, current + 5));
+      }
+    }, { rootMargin: "750px 0px" });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [homeView, homeFeedCount, cartoonFeedItems.length]);
+
   if (loading && !homeView && !items.length) {
     return <section className="catalog-page-state"><span className="inline-loading-spinner" /><p>Loading approved cartoons…</p></section>;
   }
@@ -410,6 +453,29 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
         <CartoonShelf title="Featured movies" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredMovies} kind="movie" variant="featured" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
         <CartoonShelf title="Hot cartoon movies" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotMovies} kind="movie" variant="hot" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
         <CartoonShelf title="Popular cartoon movies" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" variant="popular" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        {cartoonFeedItems.length > 0 && (
+          <section className="home-scroll-feed cartoons-home-feed" aria-label="More cartoons to explore">
+            <div className="section-heading shelf-heading">
+              <div><span>KEEP EXPLORING</span><h2>More cartoons to discover</h2><p className="home-collection-description">A mixed collection of approved cartoon movies and TV series.</p></div>
+            </div>
+            <div className="catalog-grid">
+              {cartoonFeedItems.slice(0, homeFeedCount).map((item) => {
+                const itemKind = item.mediaType === "cartoon_movie" ? "movie" : "series";
+                const mediaType = itemKind === "movie" ? "cartoon_movie" : "cartoon_tv";
+                return <CartoonCard key={mediaType + ":" + item.tmdbId}
+                  item={item} kind={itemKind}
+                  saved={Boolean(isSaved?.(item, mediaType))}
+                  onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare}
+                />;
+              })}
+            </div>
+            {homeFeedCount < cartoonFeedItems.length && (
+              <div ref={homeFeedSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">
+                <span className="catalog-infinite-hint">Scroll to discover 5 more cartoons</span>
+              </div>
+            )}
+          </section>
+        )}
         {sortedHome && !sortedHome.movies.length && !sortedHome.series.length && (
           <div className="catalog-empty-state"><Baby size={28} /><h2>No approved cartoons yet</h2><p>Only reviewed family-friendly titles are shown in Kids Mode.</p></div>
         )}
@@ -420,24 +486,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
 
   return (
     <section className="pb-8 cartoons-listing-catalog" aria-label={pageTitle}>
-      {!mixedView && (
-        <>
-          <div className="section-heading shelf-heading">
-            <div>
-              <span>{kidsMode ? "SITULA KIDS · APPROVED CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</span>
-              <h1>{pageTitle}</h1>
-            </div>
-          </div>
-          <div className="catalog-toolbar catalog-toolbar-sort-only">
-            <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="random">Random</option><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
-          </div>
-          {!!genres.length && (
-            <div className="home-genre-row">
-              {["All", ...genres].map((genre) => <button type="button" key={genre} onClick={() => setSelectedGenre(genre)} className={"genre-chip" + (selectedGenre === genre ? " active" : "")} aria-pressed={selectedGenre === genre}>{genre}</button>)}
-            </div>
-          )}
-        </>
-      )}
+
       {error && <p className="catalog-load-more-error" role="alert">{error}</p>}
       {items.length ? (
         <>
@@ -454,11 +503,10 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           </div>
           {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalogue…</p>}
           {hasMore && !loading && (
-            <div className="catalog-load-more">
-              <button type="button" className="ghost-button catalog-load-more-button" onClick={loadMore} disabled={loadingMore} aria-busy={loadingMore}>
-                {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading…</> : <>Load more {mixedView ? "cartoons" : movieView ? "movies" : "series"} <ArrowUpRight size={15} /></>}
-              </button>
-              {loadMoreError && <p className="catalog-load-more-error" role="alert">{loadMoreError}</p>}
+            <div ref={listingSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">
+              {loadingMore ? <><span className="catalog-load-spinner" aria-hidden="true" /> Loading 5 more titles…</>
+                : loadMoreError ? <p className="catalog-load-more-error" role="alert">{loadMoreError} <button type="button" className="catalog-retry-link" onClick={() => { setLoadMoreError(""); void loadMore(); }}>Retry</button></p>
+                : <span className="catalog-infinite-hint">Scroll to discover 5 more {mixedView ? "cartoons" : movieView ? "movies" : "series"}</span>}
             </div>
           )}
         </>

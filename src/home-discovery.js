@@ -128,7 +128,9 @@ export function buildHomeCollections({
   categories = []
 } = {}, { premiumCatalog = false } = {}) {
   const used = new Set();
-  for (const item of [...spotlightItems, featured]) {
+  // Reserve only the lead spotlight picks. Later shelves may reuse a title
+  // in a different editorial context rather than becoming sparse or empty.
+  for (const item of [...spotlightItems.slice(0, 5), featured]) {
     const key = homeMediaKey(item);
     if (key) used.add(key);
   }

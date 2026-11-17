@@ -49,8 +49,10 @@ test("Kids Mode switch is optimistic, avoids route navigation, and keeps both ho
 
   assert.ok(handler.includes("setKidsMode(Boolean(enabled))"));
   assert.ok(!handler.includes("router.replace"));
-  assert.ok(home.includes('<div className="home-mode-panel" hidden={kidsMode}'));
-  assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsMode}'));
+  assert.ok(home.includes('<div className="home-mode-panel" hidden={!kidsModeReady || kidsMode}'));
+  assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
+  assert.ok(home.includes("Preparing your home feed"));
+  assert.ok(home.includes("typeof payload.enabled !== \"boolean\""));
   assert.ok(app.includes('className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView}'));
   assert.ok(app.includes('className="kids-mode-panel" hidden={!kidsMode || kidsOnlyView}'));
   assert.ok(app.includes('if (!kidsModeReady || kidsMode || tab !== "home") return undefined;'));
@@ -118,8 +120,10 @@ test("Kids Mode cards use the same TV poster, card size, rating and metadata sty
   assert.ok(cartoons.includes('const homeView = view === "kidsHome";'));
   assert.ok(cartoons.includes('const mixedView = view === "cartoons";'));
   assert.ok(cartoons.includes('"/api/cartoons/catalog"'));
-  assert.ok(cartoons.includes('value="random"'));
-  assert.ok(cartoons.includes("Load more"));
+  assert.equal(cartoons.includes("catalog-toolbar-sort-only"), false);
+  assert.equal(cartoons.includes("SITULA KIDS · APPROVED CATALOGUE"), false);
+  assert.ok(cartoons.includes("Scroll to discover 5 more cartoons"));
+  assert.ok(cartoons.includes('limit: "5"'));
 });
 
 
@@ -181,8 +185,12 @@ test("Cartoon listing pages use the same responsive catalogue frame and Movie/TV
   assert.ok(app.includes('CartoonsCatalog view={tab} kidsMode={kidsMode}'));
   assert.ok(catalog.includes('kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"'));
   assert.ok(catalog.includes('className="pb-8 cartoons-listing-catalog"'));
-  assert.ok(catalog.includes('className="catalog-toolbar catalog-toolbar-sort-only"'));
-  assert.ok(css.includes(".cartoons-catalog-page .catalog-toolbar-sort-only"));
+  assert.equal(catalog.includes("catalog-toolbar-sort-only"), false);
+  assert.equal(catalog.includes("SITULA KIDS · APPROVED CATALOGUE"), false);
+  assert.equal(catalog.includes("Random</option>"), false);
+  assert.ok(catalog.includes("listingSentinelRef"));
+  assert.ok(catalog.includes('limit: "5"'));
+  assert.ok(css.includes(".catalog-infinite-sentinel"));
   assert.ok(css.includes("@media (max-width:767px)"));
   for (const token of ["series-detail-page", "tv-detail-page", "series-detail-hero", "series-detail-layout", "series-detail-panel", "episode-guide-grid"]) {
     assert.ok(detail.includes(token), "Cartoon detail uses shared TV detail class " + token);

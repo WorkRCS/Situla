@@ -8820,3 +8820,42 @@ body:has(.login-page) .site-footer { display:none !important; }
   max-width:none;
   margin-inline:0;
 }
+
+
+/* Scroll-led discovery: small, steady batches without manual load buttons. */
+.catalog-infinite-sentinel {
+  display:flex;
+  min-height:58px;
+  width:100%;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:18px 12px;
+  color:#969cac;
+  font-size:11px;
+  font-weight:750;
+  text-align:center;
+}
+.catalog-infinite-hint { color:#858c9d; letter-spacing:.015em; }
+.catalog-retry-link {
+  margin-left:7px;
+  border:0;
+  background:transparent;
+  color:#efc36f;
+  font:inherit;
+  font-weight:900;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.home-scroll-feed { margin-top:clamp(25px,3vw,42px); }
+.home-scroll-feed .catalog-grid { margin-top:17px; }
+.cartoons-home-feed { padding-top:clamp(16px,2vw,24px); }
+.home-mode-loading { width:100%; min-height:65vh; padding-top:14px; }
+.home-mode-loading .hero-skeleton { margin-bottom:22px; }
+.cartoons-listing-catalog { padding-top:0; }
+.cartoons-home-catalog > .catalog-spotlight { margin-bottom:clamp(20px,3vw,36px); }
+@media (max-width:767px) {
+  .home-scroll-feed { margin-top:23px; }
+  .home-scroll-feed .catalog-grid { gap:12px 9px; }
+  .catalog-infinite-sentinel { min-height:52px; }
+}

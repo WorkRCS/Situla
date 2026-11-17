@@ -145,7 +145,7 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(tvRoute.includes("{ tmdbId }"));
   assert.ok(animeRoute.includes("{ malId }"));
 
-  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "36" })'));
+  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "60" })'));
   assert.ok(app.includes('fetch(endpoint, { cache: "no-store", signal })'));
   assert.ok(!app.includes('new URLSearchParams({ page: "1", limit: "36", random: "true" })'));
   assert.ok(app.includes("spotlightItems: homeHeroItems"));
@@ -201,4 +201,20 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(collectionPanelStyle.includes("box-shadow:none"));
   assert.ok(cssRuleBody(".home-collection-television").includes("border-top:0"));
   assert.ok(landingCss.includes(".home-movie-shelf {\n  padding-top:0;\n  border-top:0;"));
+});
+
+
+test("home discovery reserves only lead spotlights so later shelves still have room", () => {
+  const movies = Array.from({ length: 18 }, (_, index) => ({ imdbId: "tt" + String(7100000 + index), title: "Movie " + index, popularity: 100 - index }));
+  const tv = Array.from({ length: 24 }, (_, index) => ({ tmdbId: index + 1, title: "TV " + index, voteCount: 500 - index }));
+  const anime = Array.from({ length: 24 }, (_, index) => ({ malId: index + 1, title: "Anime " + index, scoredBy: 400 - index }));
+  const spotlightItems = [
+    ...movies.slice(0, 12).map((item) => toHomeSpotlight(item, "movie")),
+    ...tv.slice(0, 8).map((item) => toHomeSpotlight(item, "tv"))
+  ];
+  const collections = buildHomeCollections({ spotlightItems, movies, tv, anime });
+  assert.ok(collections.popularSeriesItems.length > 0);
+  assert.ok(collections.topTvShows.length > 0);
+  assert.ok(collections.topAnimeShows.length > 0);
+  assert.ok(collections.movieItems.length > 0);
 });

@@ -1135,7 +1135,7 @@ const MOVIE_CATEGORIES = [
   { key: 'horror', name: 'Horror' }
 ];
 
-const HOME_DISCOVERY_LIMIT = 36;
+const HOME_DISCOVERY_LIMIT = 60;
 const HOME_MOVIE_DISCOVERY_SORT = {
   trendScore: -1,
   voteVelocity7d: -1,
@@ -1318,11 +1318,11 @@ app.get('/api/cartoons/home', async (c) => {
     const movies = shuffleCartoonCatalog(
       applyCartoonPublicBadges(movieRows, badgeIndex.movies).map(cartoonMovieDto),
       shuffleSeed + ':movies'
-    ).slice(0, 24);
+    ).slice(0, 60);
     const series = shuffleCartoonCatalog(
       applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => cartoonSeriesDto(item)),
       shuffleSeed + ':series'
-    ).slice(0, 30);
+    ).slice(0, 60);
     return c.json({
       featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
       featuredSeries: series.find((item) => item.featured) || series[0] || null,
