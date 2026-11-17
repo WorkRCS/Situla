@@ -102,7 +102,7 @@ test("catalog cache runs after Kids Mode and account access boundaries", async (
   const boundaryRegistration = api.indexOf("]) app.use(path, enforceAdultCatalogBoundary);");
   const cacheRegistration = api.indexOf("app.use('/api/*', catalogResponseCache);");
   assert.ok(boundaryRegistration >= 0 && cacheRegistration > boundaryRegistration);
-  const premiumAccess = api.slice(api.indexOf("async function getPremiumCatalogAccess"), api.indexOf("function pageOptions"));
+  const premiumAccess = api.slice(api.indexOf("async function getPremiumCatalogAccess"), api.indexOf("async function findNewestFeedPage"));
   assert.match(premiumAccess, /c\.get\('situlaPrincipal'\)/);
   assert.match(premiumAccess, /getWatchPolicy\(principal\.user \|\| null\)/);
 });
