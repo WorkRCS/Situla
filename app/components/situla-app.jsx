@@ -837,6 +837,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchHasMore, setSearchHasMore] = useState(false);
   const [searchPage, setSearchPage] = useState(1);
   const [searchLoadingMore, setSearchLoadingMore] = useState(false);
+  const searchRequestVersion = useRef(0);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountUser, setAccountUser] = useState(null);
   const [kidsMode, setKidsMode] = useState(false);
@@ -1084,6 +1085,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setSearchHasMore(false);
     setSearchPage(1);
     setSearchError("");
+    setSuggestionsLoading(false);
+    setSearchLoadingMore(false);
   }, [kidsModeReady, kidsMode]);
 
   useEffect(() => {
@@ -1120,13 +1123,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [kidsModeReady, kidsMode, searchOpen, searchType]);
 
   useEffect(() => {
-    if (!kidsModeReady || !searchOpen) return;
+    if (!kidsModeReady || !searchOpen) return undefined;
+    const requestVersion = ++searchRequestVersion.current;
+    const isCurrentRequest = () => requestVersion === searchRequestVersion.current;
     const value = searchInput.trim();
     if (kidsMode) {
       if (value.length === 1) {
         setSuggestions([]);
         setSuggestionsLoading(false);
-        setSearchError("");
+        setSearchError('');
         setSearchHasMore(false);
         setSearchPage(1);
         return undefined;
@@ -1134,85 +1139,95 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const controller = new AbortController();
       const timer = window.setTimeout(async () => {
         setSuggestionsLoading(true);
-        setSearchError("");
-        const params = new URLSearchParams({ page: "1", limit: "20" });
-        if (value.length >= 2) params.set("q", value);
-        if (searchYear !== "all") params.set("year", searchYear);
+        setSearchError('');
+        const params = new URLSearchParams({ page: '1', limit: '20' });
+        if (value.length >= 2) params.set('q', value);
+        if (searchYear !== 'all') params.set('year', searchYear);
         try {
-          const response = await fetch("/api/cartoons/search?" + params.toString(), {
-            cache: "no-store", credentials: "same-origin",
+          const response = await fetch('/api/cartoons/search?' + params.toString(), {
+            cache: 'no-store', credentials: 'same-origin',
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)])
           });
           const payload = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(payload.error || "Cartoon search is unavailable.");
-          if (!controller.signal.aborted) {
-            setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+          if (!response.ok) throw new Error(payload.error || 'Cartoon search is unavailable.');
+          if (!controller.signal.aborted && isCurrentRequest()) {
+            const results = Array.isArray(payload.items) ? payload.items : [];
+            setSuggestions(results.filter((item) => ['cartoon_movie', 'cartoon_tv'].includes(item?.mediaType)));
             setSearchHasMore(payload.hasMore === true);
             setSearchPage(Number(payload.pagination?.page) || 1);
             setSearchYears(Array.isArray(payload.years) ? payload.years.map(Number).filter(Number.isInteger) : []);
             setSearchDateRange(payload.dateRange || null);
           }
         } catch (error) {
-          if (!controller.signal.aborted) {
-            setSearchError(error.message || "Cartoon search is unavailable.");
+          if (!controller.signal.aborted && isCurrentRequest()) {
+            setSuggestions([]);
+            setSearchError(error.message || 'Cartoon search is unavailable.');
             setSearchHasMore(false);
           }
         } finally {
-          if (!controller.signal.aborted) setSuggestionsLoading(false);
+          if (!controller.signal.aborted && isCurrentRequest()) setSuggestionsLoading(false);
         }
       }, value.length >= 2 ? 160 : 0);
-      return () => { window.clearTimeout(timer); controller.abort(); };
+      return () => {
+        window.clearTimeout(timer);
+        controller.abort();
+        if (isCurrentRequest()) searchRequestVersion.current += 1;
+      };
     }
     if (value.length > 0 && value.length < 3) {
       setSuggestions([]);
       setSuggestionsLoading(false);
-      setSearchError("");
+      setSearchError('');
       setSearchHasMore(false);
       setSearchPage(1);
-      return;
+      return undefined;
     }
-    const hasFilters = searchType !== "all" || searchYear !== "all";
+    const hasFilters = searchType !== 'all' || searchYear !== 'all';
     if (!value && !hasFilters) {
       setSuggestions([]);
       setSuggestionsLoading(false);
-      setSearchError("");
+      setSearchError('');
       setSearchHasMore(false);
       setSearchPage(1);
-      return;
+      return undefined;
     }
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setSuggestionsLoading(true);
-      setSearchError("");
-      const params = new URLSearchParams({ page: "1", limit: "20", type: searchType });
-      if (value.length >= 3) params.set("q", value);
-      if (searchYear !== "all") params.set("year", searchYear);
+      setSearchError('');
+      const params = new URLSearchParams({ page: '1', limit: '20', type: searchType });
+      if (value.length >= 3) params.set('q', value);
+      if (searchYear !== 'all') params.set('year', searchYear);
       try {
-        const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
-        const response = await fetch("/api/search?" + params.toString(), { cache: "no-store", signal });
+        const response = await fetch('/api/search?' + params.toString(), {
+          cache: 'no-store', credentials: 'same-origin',
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)])
+        });
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Search is temporarily unavailable. Please retry.");
-        if (!controller.signal.aborted) {
-          setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+        if (!response.ok) throw new Error(payload.error || 'Search is temporarily unavailable. Please retry.');
+        if (!controller.signal.aborted && isCurrentRequest()) {
+          const results = Array.isArray(payload.items) ? payload.items : [];
+          setSuggestions(results.filter((item) => ['movie', 'tv', 'anime'].includes(item?.mediaType)));
           setSearchHasMore(payload.hasMore === true);
           setSearchPage(Number(payload.page) || 1);
         }
       } catch {
-        if (!controller.signal.aborted) {
-          setSearchError("Search could not load right now. Check your connection and try again.");
+        if (!controller.signal.aborted && isCurrentRequest()) {
+          setSuggestions([]);
+          setSearchError('Search could not load right now. Check your connection and try again.');
           setSearchHasMore(false);
         }
       } finally {
-        if (!controller.signal.aborted) setSuggestionsLoading(false);
+        if (!controller.signal.aborted && isCurrentRequest()) setSuggestionsLoading(false);
       }
     }, value.length >= 3 ? 180 : 0);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
+      if (isCurrentRequest()) searchRequestVersion.current += 1;
     };
   }, [searchInput, searchOpen, searchType, searchYear, kidsModeReady, kidsMode]);
-
   useEffect(() => {
     if (!kidsModeReady || kidsMode) { setLoading(false); return undefined; }
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
@@ -1501,33 +1516,39 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   async function loadMoreSearch() {
     if (searchLoadingMore || !searchHasMore) return;
+    const requestVersion = searchRequestVersion.current;
+    const requestKidsMode = kidsMode;
     const nextPage = searchPage + 1;
     const value = searchInput.trim();
-    const params = new URLSearchParams({ page: String(nextPage), limit: "20" });
-    if (kidsMode) {
-      if (value.length >= 2) params.set("q", value);
-      if (searchYear !== "all") params.set("year", searchYear);
+    const params = new URLSearchParams({ page: String(nextPage), limit: '20' });
+    if (requestKidsMode) {
+      if (value.length >= 2) params.set('q', value);
+      if (searchYear !== 'all') params.set('year', searchYear);
     } else {
-      params.set("type", searchType);
-      if (value.length >= 3) params.set("q", value);
-      if (searchYear !== "all") params.set("year", searchYear);
+      params.set('type', searchType);
+      if (value.length >= 3) params.set('q', value);
+      if (searchYear !== 'all') params.set('year', searchYear);
     }
     setSearchLoadingMore(true);
-    setSearchError("");
+    setSearchError('');
     try {
-      const response = await fetch((kidsMode ? "/api/cartoons/search?" : "/api/search?") + params.toString(), {
-        cache: "no-store", credentials: "same-origin",
+      const response = await fetch((requestKidsMode ? '/api/cartoons/search?' : '/api/search?') + params.toString(), {
+        cache: 'no-store', credentials: 'same-origin',
         signal: AbortSignal.timeout(20_000)
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "More search results are unavailable.");
-      const nextItems = Array.isArray(payload.items) ? payload.items : [];
+      if (!response.ok) throw new Error(payload.error || 'More search results are unavailable.');
+      if (requestVersion !== searchRequestVersion.current) return;
+      const returnedItems = Array.isArray(payload.items) ? payload.items : [];
+      const nextItems = returnedItems.filter((item) => requestKidsMode
+        ? ['cartoon_movie', 'cartoon_tv'].includes(item?.mediaType)
+        : ['movie', 'tv', 'anime'].includes(item?.mediaType));
       setSuggestions((current) => {
-        const identity = (item) => item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
-          ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
-        const ids = new Set(current.map((item) => item.mediaType + ":" + String(identity(item))));
+        const identity = (item) => item.mediaType === 'tv' || item.mediaType === 'cartoon_tv' || item.mediaType === 'cartoon_movie'
+          ? item.tmdbId : item.mediaType === 'anime' ? item.malId : item.imdbId;
+        const ids = new Set(current.map((item) => item.mediaType + ':' + String(identity(item))));
         return [...current, ...nextItems.filter((item) => {
-          const id = item.mediaType + ":" + String(identity(item));
+          const id = item.mediaType + ':' + String(identity(item));
           if (ids.has(id)) return false;
           ids.add(id);
           return true;
@@ -1535,33 +1556,42 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       });
       setSearchPage(Number(payload.pagination?.page || payload.page) || nextPage);
       setSearchHasMore(payload.hasMore === true || Number(payload.pagination?.page) < Number(payload.pagination?.totalPages));
-      if (kidsMode) {
+      if (requestKidsMode) {
         setSearchYears(Array.isArray(payload.years) ? payload.years.map(Number).filter(Number.isInteger) : searchYears);
         setSearchDateRange(payload.dateRange || searchDateRange);
       }
     } catch {
-      setSearchError("More results could not load. Your current results are still available.");
+      if (requestVersion === searchRequestVersion.current) {
+        setSearchError('More results could not load. Your current results are still available.');
+      }
     } finally {
-      setSearchLoadingMore(false);
+      if (requestVersion === searchRequestVersion.current) setSearchLoadingMore(false);
     }
   }
 
   function openSearchResult(item) {
+    if (!((kidsMode && ['cartoon_movie', 'cartoon_tv'].includes(item?.mediaType)) ||
+        (!kidsMode && ['movie', 'tv', 'anime'].includes(item?.mediaType)))) {
+      setSearchError(kidsMode
+        ? 'Only approved cartoon movies and TV series can be opened in Kids Mode.'
+        : 'This title does not belong to the current search catalogue.');
+      return;
+    }
     setSearchOpen(false);
-    if (item.mediaType === "cartoon_movie") {
+    if (item.mediaType === 'cartoon_movie') {
       const tmdbId = Number(item.tmdbId);
-      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push("/cartoons/watch/movie/" + tmdbId);
-      else setSearchError("This cartoon movie has an invalid TMDB ID.");
+      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push('/cartoons/watch/movie/' + tmdbId);
+      else setSearchError('This cartoon movie has an invalid TMDB ID.');
       return;
     }
-    if (item.mediaType === "cartoon_tv") {
+    if (item.mediaType === 'cartoon_tv') {
       const tmdbId = Number(item.tmdbId);
-      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push("/cartoons/tv/" + tmdbId);
-      else setSearchError("This cartoon series has an invalid TMDB ID.");
+      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push('/cartoons/tv/' + tmdbId);
+      else setSearchError('This cartoon series has an invalid TMDB ID.');
       return;
     }
-    if (item.mediaType === "tv") return openTvSeries(item);
-    if (item.mediaType === "anime") return openAnimeSeries(item);
+    if (item.mediaType === 'tv') return openTvSeries(item);
+    if (item.mediaType === 'anime') return openAnimeSeries(item);
     return openMovie(item);
   }
 
@@ -2009,7 +2039,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 aria-label="Search catalogue by title"
               />
               {searchInput && (
-                <button type="button" onClick={() => { setSearchInput(""); setSuggestions([]); setSearchError(""); }} aria-label="Clear search">
+                <button type="button" onClick={() => { setSearchInput(""); setSuggestions([]); setSearchError(""); setSearchHasMore(false); setSearchPage(1); setSearchLoadingMore(false); }} aria-label="Clear search">
                   <BootstrapIcon icon="x-lg" size={16} />
                 </button>
               )}

@@ -226,3 +226,21 @@ test("Kids Home spotlight mixes cartoons and auto-rotates like the normal home h
   assert.match(cartoons, /Previous featured cartoon/);
   assert.match(cartoons, /Next featured cartoon/);
 });
+
+
+test("Kids search is mode-isolated and rejects stale or non-Cartoon results", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const backend = await read("../src/app.js");
+  assert.ok(app.includes("fetch('/api/cartoons/search?' + params.toString()"));
+  assert.ok(app.includes("fetch('/api/search?' + params.toString()"));
+  assert.ok(app.includes("searchRequestVersion.current"));
+  assert.ok(app.includes("requestVersion !== searchRequestVersion.current"));
+  assert.ok(app.includes("['cartoon_movie', 'cartoon_tv'].includes(item?.mediaType)"));
+  assert.ok(app.includes("['movie', 'tv', 'anime'].includes(item?.mediaType)"));
+  assert.ok(app.includes("Only approved cartoon movies and TV series can be opened in Kids Mode."));
+  const route = backend.slice(backend.indexOf("app.get('/api/cartoons/search'"), backend.indexOf("app.get('/api/movies/discover'"));
+  assert.ok(route.includes("findMatches(CartoonMovie"));
+  assert.ok(route.includes("findMatches(CartoonSeries"));
+  assert.equal(route.includes("findMatches(Movie"), false);
+  assert.equal(route.includes("findMatches(TvSeries"), false);
+});

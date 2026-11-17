@@ -25,6 +25,7 @@ import upcomingRouter from './upcoming.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog, cartoonDatabaseDateRange } from './cartoon-catalog.js';
 import { deriveCartoonBadges } from './cartoon-seed.js';
+import { buildCartoonSearchAlternatives } from './cartoon-search.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { buildSearchYearOptions } from './search-year-options.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
@@ -1533,38 +1534,49 @@ app.get('/api/cartoons/search', async (c) => {
   const query = safeText(c.req.query('q'));
   const yearText = String(c.req.query('year') || '').trim();
   const year = yearText ? Number(yearText) : null;
-  if (yearText && (!/^\\d{4}$/.test(yearText) || !Number.isInteger(year) || year < 2000 || year > 2099)) {
+  if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) || year < 2000 || year > 2099)) {
     return c.json({ error: 'Choose a valid Cartoon release year.', items: [] }, 400);
   }
   if (query.length === 1) return c.json({ items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, hasMore: false });
   try {
     await connectDatabase();
     const { page, limit } = pageOptions(c, 20, 48);
+    const offset = (page - 1) * limit;
     const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
     const movieFilter = approvedCartoonMovieFilter();
     const seriesFilter = approvedCartoonSeriesFilter();
-    if (numericId) {
-      movieFilter.tmdbId = numericId;
-      seriesFilter.tmdbId = numericId;
-    } else if (query.length >= 2) {
-      movieFilter.$text = { $search: query };
-      seriesFilter.$text = { $search: query };
-    }
     if (year !== null) {
       movieFilter.$and.push({ $or: [{ releaseYear: year }, { releaseDate: { $regex: '^' + year } }] });
       seriesFilter.$and.push({ $or: [{ releaseYear: year }, { firstAirDate: { $regex: '^' + year } }] });
     }
-    const movieSort = query.length >= 2 && !numericId
-      ? { score: { $meta: 'textScore' }, releaseDate: -1, popularity: -1 }
-      : { releaseDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 };
-    const seriesSort = query.length >= 2 && !numericId
-      ? { score: { $meta: 'textScore' }, firstAirDate: -1, popularity: -1 }
-      : { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 };
-    const [movieRows, seriesRows, movieTotal, seriesTotal, movieDates, seriesDates, badgeIndex] = await Promise.all([
-      CartoonMovie.find(movieFilter).sort(movieSort).lean(),
-      CartoonSeries.find(seriesFilter).sort(seriesSort).lean(),
-      CartoonMovie.countDocuments(movieFilter),
-      CartoonSeries.countDocuments(seriesFilter),
+
+    const findMatches = async (Model, filter, dateSort) => {
+      if (numericId !== null) {
+        return Model.find({ ...filter, tmdbId: numericId }).sort(dateSort).lean();
+      }
+      if (!query) return Model.find(filter).sort(dateSort).lean();
+
+      const textTask = Model.find({ ...filter, $text: { $search: query } })
+        .sort({ score: { $meta: 'textScore' }, ...dateSort }).lean();
+      const partialTask = Model.find({
+        ...filter,
+        $or: buildCartoonSearchAlternatives(query, ['title', 'originalTitle', 'aliases'])
+      }).sort(dateSort).lean();
+      const batches = await Promise.allSettled([textTask, partialTask]);
+      const successful = batches.filter((batch) => batch.status === 'fulfilled').map((batch) => batch.value);
+      if (!successful.length) {
+        throw batches.find((batch) => batch.status === 'rejected')?.reason || new Error('Cartoon search query failed.');
+      }
+      const recordsById = new Map();
+      for (const records of successful) {
+        for (const record of records) recordsById.set(String(record._id), record);
+      }
+      return [...recordsById.values()];
+    };
+
+    const [movieRows, seriesRows, movieDates, seriesDates, badgeIndex] = await Promise.all([
+      findMatches(CartoonMovie, movieFilter, { releaseDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 }),
+      findMatches(CartoonSeries, seriesFilter, { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 }),
       CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate').lean(),
       CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean(),
       getCartoonPublicBadgeIndex()
@@ -1574,14 +1586,19 @@ app.get('/api/cartoons/search', async (c) => {
       ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map((item) => ({ ...cartoonMovieDto(item), searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '') })),
       ...applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => ({ ...cartoonSeriesDto(item), searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '') }))
     ];
-    combined.sort((a, b) =>
-      String(b.searchDate || '').localeCompare(String(a.searchDate || '')) ||
-      (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
-      (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
-      String(a.title || '').localeCompare(String(b.title || ''))
-    );
-    const total = movieTotal + seriesTotal;
-    const items = combined.slice((page - 1) * limit, page * limit).map(({ searchDate, ...item }) => item);
+    if (query) {
+      const ranked = rankSearchResults(combined, query);
+      combined.splice(0, combined.length, ...ranked);
+    } else {
+      combined.sort((a, b) =>
+        String(b.searchDate || '').localeCompare(String(a.searchDate || '')) ||
+        (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
+        (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+        String(a.title || '').localeCompare(String(b.title || ''))
+      );
+    }
+    const total = combined.length;
+    const items = combined.slice(offset, offset + limit).map(({ searchDate, ...item }) => item);
     const totalPages = Math.ceil(total / limit);
     return c.json({ items, dateRange, years: dateRange.years, pagination: { page, limit, total, totalPages }, hasMore: page < totalPages });
   } catch (error) {
