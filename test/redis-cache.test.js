@@ -186,3 +186,40 @@ test('stale public catalog responses are served when a database read fails', asy
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { items: [{ mediaType: 'anime', malId: 5114 }] });
 });
+
+
+test('simultaneous identical cache misses share one downstream catalogue request', async () => {
+  const redis = {
+    get: async () => null,
+    set: async () => 'OK'
+  };
+  const app = new Hono();
+  let calls = 0;
+  let releaseFirst;
+  let markStarted;
+  const started = new Promise((resolve) => { markStarted = resolve; });
+  const gate = new Promise((resolve) => { releaseFirst = resolve; });
+
+  app.use('/api/*', createCatalogResponseCache({ getRedis: () => redis }));
+  app.get('/api/tv', async (c) => {
+    calls += 1;
+    markStarted();
+    await gate;
+    return c.json({ items: [{ tmdbId: 1399 }] });
+  });
+
+  const firstPromise = app.request('/api/tv?page=1');
+  await started;
+  const secondPromise = app.request('/api/tv?page=1');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  releaseFirst();
+
+  const [first, second] = await Promise.all([firstPromise, secondPromise]);
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(first.headers.get('x-situla-cache'), 'MISS');
+  assert.equal(second.headers.get('x-situla-cache'), 'COALESCED');
+  assert.deepEqual(await first.json(), { items: [{ tmdbId: 1399 }] });
+  assert.deepEqual(await second.json(), { items: [{ tmdbId: 1399 }] });
+  assert.equal(calls, 1);
+});

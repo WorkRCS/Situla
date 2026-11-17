@@ -110,6 +110,7 @@ export function createCatalogResponseCache({
   maxCacheBytes = DEFAULT_MAX_CACHE_BYTES
 } = {}) {
   const memoryCache = new Map();
+  const inFlight = new Map();
   let memoryBytes = 0;
 
   function readMemory(key, now) {
@@ -204,35 +205,60 @@ export function createCatalogResponseCache({
       }
     }
 
-    await next();
-    const response = c.res;
-    if (response?.status >= 500 && staleCandidate && staleCandidate.staleUntil > Date.now()) {
-      return serveCached(c, staleCandidate, 'STALE');
-    }
-
-    const contentType = response?.headers?.get('content-type') || '';
-    if (!response || response.status !== 200 || !contentType.includes('application/json')) {
-      c.header('X-Situla-Cache', redis ? 'MISS' : 'BYPASS');
-      return;
-    }
-
-    try {
-      const body = await response.clone().text();
-      const bytes = Buffer.byteLength(body, 'utf8');
-      if (bytes <= maxCacheBytes) {
-        const freshUntil = Date.now() + cacheTtlSeconds * 1000;
-        const staleUntil = freshUntil + STALE_WINDOW_SECONDS * 1000;
-        writeMemory(key, body, freshUntil, staleUntil, bytes);
-        if (redis) {
-          // Cache writes never delay successful API responses.
-          void redis.set(key, { status: 200, body, freshUntil, staleUntil }, {
-            ex: cacheTtlSeconds + STALE_WINDOW_SECONDS
-          }).catch(() => {});
-        }
+    // Coalesce simultaneous misses for the same safe cache key. One request
+    // does the database work; waiters reuse its serialized JSON response.
+    const pending = inFlight.get(key);
+    if (pending) {
+      const shared = await withinTimeout(pending, 12_000).catch(() => null);
+      if (shared && shared.staleUntil > Date.now()) {
+        writeMemory(key, shared.body, shared.freshUntil, shared.staleUntil, Buffer.byteLength(shared.body, 'utf8'));
+        return serveCached(c, shared, 'COALESCED', 'memory');
       }
-      c.header('X-Situla-Cache', redis ? 'MISS' : 'BYPASS');
-    } catch {
-      c.header('X-Situla-Cache', 'WRITE_FAILED');
+    }
+
+    let resolveFlight;
+    const flight = new Promise((resolve) => { resolveFlight = resolve; });
+    inFlight.set(key, flight);
+    try {
+      await next();
+      const response = c.res;
+      if (response?.status >= 500 && staleCandidate && staleCandidate.staleUntil > Date.now()) {
+        resolveFlight(staleCandidate);
+        return serveCached(c, staleCandidate, 'STALE');
+      }
+
+      const contentType = response?.headers?.get('content-type') || '';
+      if (!response || response.status !== 200 || !contentType.includes('application/json')) {
+        c.header('X-Situla-Cache', redis ? 'MISS' : 'BYPASS');
+        return;
+      }
+
+      try {
+        const body = await response.clone().text();
+        const bytes = Buffer.byteLength(body, 'utf8');
+        if (bytes <= maxCacheBytes) {
+          const freshUntil = Date.now() + cacheTtlSeconds * 1000;
+          const staleUntil = freshUntil + STALE_WINDOW_SECONDS * 1000;
+          const entry = { status: 200, body, freshUntil, staleUntil };
+          writeMemory(key, body, freshUntil, staleUntil, bytes);
+          resolveFlight(entry);
+          if (redis) {
+            // Cache writes never delay successful API responses.
+            void redis.set(key, entry, {
+              ex: cacheTtlSeconds + STALE_WINDOW_SECONDS
+            }).catch(() => {});
+          }
+        } else {
+          resolveFlight(null);
+        }
+        c.header('X-Situla-Cache', redis ? 'MISS' : 'BYPASS');
+      } catch {
+        resolveFlight(null);
+        c.header('X-Situla-Cache', 'WRITE_FAILED');
+      }
+    } finally {
+      resolveFlight(null);
+      if (inFlight.get(key) === flight) inFlight.delete(key);
     }
   };
 }
