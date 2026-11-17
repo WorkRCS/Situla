@@ -12,10 +12,10 @@ test("all catalog routes share one persistent Situla app shell", async () => {
   assert.ok(layout.includes("<PersistentSitulaApp>{children}</PersistentSitulaApp>"));
   assert.ok(router.includes("usePathname"));
   assert.ok(router.includes("useSearchParams"));
-  assert.ok(router.includes('"/": "cartoons"'));
+  assert.ok(router.includes('"/": "home"'));
   assert.ok(router.includes('"/cartoons": "cartoons"'));
   const rootPage = await read("../app/page.jsx");
-  assert.match(rootPage, /view="cartoons"/);
+  assert.match(rootPage, /view="home"/);
   assert.ok(router.includes('"/movies": "movies"'));
   assert.ok(router.includes('"/tv": "tv"'));
   assert.ok(router.includes('"/anime": "anime"'));

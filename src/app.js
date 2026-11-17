@@ -1538,6 +1538,7 @@ app.get('/api/cartoons/search', async (c) => {
     return c.json({ error: 'Choose a valid Cartoon release year.', items: [] }, 400);
   }
   if (query.length === 1) return c.json({ items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, hasMore: false });
+
   try {
     await connectDatabase();
     const { page, limit } = pageOptions(c, 20, 48);
@@ -1550,42 +1551,48 @@ app.get('/api/cartoons/search', async (c) => {
       seriesFilter.$and.push({ $or: [{ releaseYear: year }, { firstAirDate: { $regex: '^' + year } }] });
     }
 
-    const findMatches = async (Model, filter, dateSort) => {
+    const findMatches = (Model, filter, dateSort) => {
       if (numericId !== null) {
         return Model.find({ ...filter, tmdbId: numericId }).sort(dateSort).lean();
       }
-      if (!query) return Model.find(filter).sort(dateSort).lean();
-
-      const textTask = Model.find({ ...filter, $text: { $search: query } })
-        .sort({ score: { $meta: 'textScore' }, ...dateSort }).lean();
-      const partialTask = Model.find({
+      if (!query) {
+        return Model.find(filter).sort(dateSort).lean();
+      }
+      return Model.find({
         ...filter,
         $or: buildCartoonSearchAlternatives(query, ['title', 'originalTitle', 'aliases'])
       }).sort(dateSort).lean();
-      const batches = await Promise.allSettled([textTask, partialTask]);
-      const successful = batches.filter((batch) => batch.status === 'fulfilled').map((batch) => batch.value);
-      if (!successful.length) {
-        throw batches.find((batch) => batch.status === 'rejected')?.reason || new Error('Cartoon search query failed.');
-      }
-      const recordsById = new Map();
-      for (const records of successful) {
-        for (const record of records) recordsById.set(String(record._id), record);
-      }
-      return [...recordsById.values()];
     };
 
-    const [movieRows, seriesRows, movieDates, seriesDates, badgeIndex] = await Promise.all([
+    const [movieRows, seriesRows] = await Promise.all([
       findMatches(CartoonMovie, movieFilter, { releaseDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 }),
-      findMatches(CartoonSeries, seriesFilter, { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 }),
+      findMatches(CartoonSeries, seriesFilter, { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 })
+    ]);
+
+    // These values enrich the UI but are not required to return valid search matches.
+    const [movieDatesResult, seriesDatesResult, badgeIndexResult] = await Promise.allSettled([
       CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate').lean(),
       CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean(),
       getCartoonPublicBadgeIndex()
     ]);
+    const movieDates = movieDatesResult.status === 'fulfilled' ? movieDatesResult.value : movieRows;
+    const seriesDates = seriesDatesResult.status === 'fulfilled' ? seriesDatesResult.value : seriesRows;
+    const badgeIndex = badgeIndexResult.status === 'fulfilled'
+      ? badgeIndexResult.value
+      : { movies: new Map(), series: new Map() };
+
     const dateRange = cartoonDatabaseDateRange(movieDates, seriesDates);
     const combined = [
-      ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map((item) => ({ ...cartoonMovieDto(item), searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '') })),
-      ...applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => ({ ...cartoonSeriesDto(item), searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '') }))
+      ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map((item) => ({
+        ...cartoonMovieDto(item),
+        searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '')
+      })),
+      ...applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => ({
+        ...cartoonSeriesDto(item),
+        searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '')
+      }))
     ];
+
     if (query) {
       const ranked = rankSearchResults(combined, query);
       combined.splice(0, combined.length, ...ranked);
@@ -1597,11 +1604,19 @@ app.get('/api/cartoons/search', async (c) => {
         String(a.title || '').localeCompare(String(b.title || ''))
       );
     }
+
     const total = combined.length;
     const items = combined.slice(offset, offset + limit).map(({ searchDate, ...item }) => item);
     const totalPages = Math.ceil(total / limit);
-    return c.json({ items, dateRange, years: dateRange.years, pagination: { page, limit, total, totalPages }, hasMore: page < totalPages });
+    return c.json({
+      items,
+      dateRange,
+      years: dateRange.years,
+      pagination: { page, limit, total, totalPages },
+      hasMore: page < totalPages
+    });
   } catch (error) {
+    console.error('Cartoon catalogue search failed:', error?.message || 'Unknown error');
     return apiError(c, error, 'Cartoon search is temporarily unavailable.');
   }
 });

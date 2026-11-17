@@ -57,6 +57,9 @@ test("Kids search API uses tolerant matching but only queries the two approved C
   const backend = await read("../src/app.js");
   const route = backend.slice(backend.indexOf("app.get('/api/cartoons/search'"), backend.indexOf("app.get('/api/movies/discover'"));
   assert.ok(route.includes("buildCartoonSearchAlternatives(query, ['title', 'originalTitle', 'aliases'])"));
+  assert.equal(route.includes("$text"), false);
+  assert.ok(route.includes("Promise.allSettled"));
+  assert.ok(route.includes("badgeIndexResult.status === 'fulfilled'"));
   assert.ok(route.includes("findMatches(CartoonMovie"));
   assert.ok(route.includes("findMatches(CartoonSeries"));
   assert.ok(route.includes("approvedCartoonMovieFilter()"));

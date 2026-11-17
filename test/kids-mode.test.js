@@ -244,3 +244,17 @@ test("Kids search is mode-isolated and rejects stale or non-Cartoon results", as
   assert.equal(route.includes("findMatches(Movie"), false);
   assert.equal(route.includes("findMatches(TvSeries"), false);
 });
+
+
+test("the root Home view switches between Normal mixed discovery and Kids mixed Cartoons", async () => {
+  const root = await read("../app/page.jsx");
+  const router = await read("../app/components/persistent-situla-app.jsx");
+  const app = await read("../app/components/situla-app.jsx");
+
+  assert.match(root, /view="home"/);
+  assert.ok(router.includes('"/": "home"'));
+  assert.ok(app.includes('<div className="home-mode-panel" hidden={kidsMode}'));
+  assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsMode}'));
+  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" kidsMode={kidsMode}'));
+  assert.ok(app.includes('const isDiscover = (tab === "home" && genre === "All") || tab === "movies";'));
+});
