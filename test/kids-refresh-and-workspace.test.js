@@ -61,11 +61,13 @@ test("runtime metadata uses the same hour-minute-second formatter", async () => 
   }
 });
 
-test("mixed Cartoons landing hides its heading, counts, sort controls and genre chips", async () => {
+test("Cartoon Movies and TV listings omit their heading, sort controls and genre chips", async () => {
   const source = await read("../app/components/cartoons-catalog.jsx");
-  assert.ok(source.includes("{!mixedView && ("));
-  assert.ok(source.includes('className="section-heading shelf-heading"'));
-  assert.ok(source.includes('className="catalog-toolbar catalog-toolbar-sort-only"'));
-  assert.ok(source.includes('className="home-genre-row"'));
+  assert.equal(source.includes("catalog-toolbar-sort-only"), false);
+  assert.equal(source.includes("SITULA KIDS · APPROVED CATALOGUE"), false);
+  assert.equal(source.includes("Random</option>"), false);
+  assert.ok(source.includes('className="cartoons-listing-catalog"'));
   assert.ok(source.includes('className="catalog-grid"'));
+  assert.ok(source.includes("listingSentinelRef"));
+  assert.ok(source.includes('limit: "5"'));
 });

@@ -213,7 +213,7 @@ test("home and catalog spotlights refresh and rotate across all media types", as
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:tv", "tmdbId"\)/);
   assert.match(app, /chooseFreshSpotlight\(items, "situla:spotlight:anime", "malId"\)/);
   assert.match(app, /mixHomeSpotlight\(\{/);
-  assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "36" \}\)/);
+  assert.match(app, /new URLSearchParams\(\{ page: "1", limit: "60" \}\)/);
   assert.doesNotMatch(app, /new URLSearchParams\(\{ page: "1", limit: "36", random: "true" \}\)/);
   assert.match(app, /loadSeries\("tv"/);
   assert.match(app, /loadSeries\("anime"/);
@@ -243,7 +243,7 @@ test("mobile navigation is attached to the viewport and catalog grids are compac
   assert.match(css, /transform:none !important/);
   assert.match(css, /\.catalog-grid \{[\s\S]*?repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /@media \(min-width:600px\) and \(max-width:1100px\)[\s\S]*?repeat\(4,minmax\(0,1fr\)\)/);
-  assert.equal((app.match(/className="catalog-grid"/g) || []).length, 5);
+  assert.equal((app.match(/className="catalog-grid"/g) || []).length, 6);
 });
 
 test("React UI stack uses Headless UI and local shadcn primitives without importing Svelte Bits UI", async () => {
@@ -459,8 +459,10 @@ test("catalog load-more failures remain visible and can be retried without losin
   assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional movies were returned/);
   assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional TV series were returned/);
   assert.match(app, /if \(!nextItems\.length\) throw new Error\("No additional Anime titles were returned/);
-  assert.equal((app.match(/catalog-load-more-error/g) || []).length, 3);
-  assert.equal((app.match(/aria-busy=\{loadingMore\}/g) || []).length, 3);
+  assert.equal((app.match(/catalog-load-more-error/g) || []).length, 1);
+  assert.equal((app.match(/ref=\{catalogLoadSentinelRef\}/g) || []).length, 4);
+  assert.equal((app.match(/aria-busy=\{loadingMore\}/g) || []).length, 0);
+  assert.equal((app.match(/limit: "5"/g) || []).length, 2);
   assert.match(app, /loadMoreLock\.current = false/);
   assert.match(css, /\.catalog-load-more-error/);
   assert.match(css, /\.catalog-load-spinner/);

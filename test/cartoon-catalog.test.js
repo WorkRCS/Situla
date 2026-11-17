@@ -38,7 +38,7 @@ test("mixed Cartoon catalogue API is separate from the Kids Home landing view", 
   assert.ok(component.includes('"/api/cartoons/catalog"'));
   assert.ok(component.includes("fillShelf"));
   assert.ok(component.includes("cartoonFeedItems"));
-  assert.ok(component.includes("homeFeedCount + 5"));
+  assert.ok(component.includes("current + 5"));
   assert.ok(component.includes('limit: "5"'));
   assert.equal(component.includes("catalog-toolbar-sort-only"), false);
 });

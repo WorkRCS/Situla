@@ -52,7 +52,7 @@ test("Kids Mode switch is optimistic, avoids route navigation, and keeps both ho
   assert.ok(home.includes('<div className="home-mode-panel" hidden={!kidsModeReady || kidsMode}'));
   assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
   assert.ok(home.includes("Preparing your home feed"));
-  assert.ok(home.includes("typeof payload.enabled !== \"boolean\""));
+  assert.ok(app.includes("typeof payload.enabled !== \"boolean\""));
   assert.ok(app.includes('className="app-view-mode-panel" hidden={!kidsModeReady || (kidsMode && !kidsOnlyView)}'));
   assert.ok(app.includes('className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode || kidsOnlyView}'));
   assert.ok(app.includes('if (!kidsModeReady || kidsMode || tab !== "home") return undefined;'));
@@ -135,7 +135,8 @@ test("Cartoons reuse the header search and expose Movie-style badge, Save and Sh
   assert.ok(!cartoons.includes("catalog-search"));
   assert.ok(!cartoons.includes("setQuery"));
   assert.ok(!cartoons.includes("Search size={16}"));
-  assert.ok(cartoons.includes("catalog-toolbar-sort-only"));
+  assert.equal(cartoons.includes("catalog-toolbar-sort-only"), false);
+  assert.equal(cartoons.includes("Random</option>"), false);
   assert.ok(app.includes('className="header-search search-box header-search-trigger"'));
   assert.ok(app.includes('onClick={() => setSearchOpen(true)}'));
   assert.ok(cartoons.includes('catalog-badge-" + catalogBadge.kind'));
