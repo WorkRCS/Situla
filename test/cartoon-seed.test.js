@@ -72,5 +72,8 @@ test("keyless Cartoon seed defines exact targets, date cutoff, and insert-only s
   assert.match(script, /CartoonSeries\.insertMany\(series/);
   assert.match(script, /CartoonEpisode\.insertMany\(newEpisodes/);
   assert.doesNotMatch(script, /(^|[^A-Za-z])Movie\.insertMany|(^|[^A-Za-z])TvSeries\.insertMany|(^|[^A-Za-z])AnimeSeries\.insertMany|updateOne|findOneAndUpdate|deleteMany/);
-  assert.match(script, /Preflight incomplete\. No database rows were inserted/);
+  assert.match(script, /Preflight target not fully met\. Inserting every available validated record/);
+  assert.match(script, /process\.argv\.includes\("--strict"\)/);
+  assert.match(script, /CartoonMovie\.insertMany\(movies/);
+  assert.match(script, /CartoonSeries\.insertMany\(series/);
 });

@@ -852,12 +852,23 @@ export async function seedCartoonCatalog() {
     episodeRows: episodes.length
   });
 
-  if (movies.length < movieNeed || series.length < seriesNeed) {
-    throw new Error(
-      "Preflight incomplete. No database rows were inserted. Need " + movieNeed +
-      " new movies and " + seriesNeed + " new series, but found " + movies.length +
-      " and " + series.length + ". The generated/cache files remain available for a safe rerun."
-    );
+  const preflightIncomplete = movies.length < movieNeed || series.length < seriesNeed;
+  if (preflightIncomplete) {
+    const summary = {
+      availableMovies: movies.length,
+      requestedMovies: movieNeed,
+      availableSeries: series.length,
+      requestedSeries: seriesNeed
+    };
+    if (process.argv.includes("--strict")) {
+      throw new Error("Strict preflight incomplete; no database rows were inserted: " + JSON.stringify(summary));
+    }
+    console.warn("Preflight target not fully met. Inserting every available validated record:", JSON.stringify(summary));
+  }
+
+  if (!movies.length && !series.length) {
+    console.warn("No new validated Cartoon records were available. Database was not modified.");
+    return { moviesInserted: 0, seriesInserted: 0, episodesInserted: 0, partial: preflightIncomplete };
   }
 
   if (DRY_RUN) {
