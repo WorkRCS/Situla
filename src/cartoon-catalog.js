@@ -74,3 +74,28 @@ export function shuffleCartoonCatalog(items = [], seed = "") {
     Number(a?.tmdbId || 0) - Number(b?.tmdbId || 0)
   );
 }
+
+
+function cartoonDateParts(dateValue, yearValue) {
+  const date = String(dateValue || "").trim();
+  const match = date.match(/^(\\d{4})(?:-(\\d{2})-(\\d{2}))?/);
+  const year = Number(yearValue) || (match ? Number(match[1]) : 0);
+  if (!Number.isInteger(year) || year < MIN_CARTOON_YEAR) return null;
+  return { year, date: match ? match[0] : String(year) + "-01-01" };
+}
+
+export function cartoonDatabaseDateRange(movies = [], series = []) {
+  const entries = [
+    ...(Array.isArray(movies) ? movies : []).map((item) => cartoonDateParts(item?.releaseDate, item?.releaseYear)),
+    ...(Array.isArray(series) ? series : []).map((item) => cartoonDateParts(item?.firstAirDate, item?.releaseYear))
+  ].filter(Boolean);
+  const years = [...new Set(entries.map((item) => item.year))].sort((a, b) => b - a);
+  const dates = entries.map((item) => item.date).sort();
+  return {
+    oldestDate: dates[0] || null,
+    newestDate: dates.at(-1) || null,
+    oldestYear: years.length ? years.at(-1) : null,
+    newestYear: years[0] || null,
+    years
+  };
+}

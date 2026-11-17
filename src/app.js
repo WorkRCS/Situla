@@ -23,7 +23,7 @@ import { buildSearchYearFilter, escapeSearchRegex, rankSearchResults } from './s
 import adminRouter from './admin.js';
 import upcomingRouter from './upcoming.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
-import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog } from './cartoon-catalog.js';
+import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog, cartoonDatabaseDateRange } from './cartoon-catalog.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
 import { normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from './media-image.js';
@@ -1433,25 +1433,58 @@ app.get('/api/cartoons/series/:tmdbId/seasons/:seasonNumber', async (c) => {
 
 app.get('/api/cartoons/search', async (c) => {
   const query = safeText(c.req.query('q'));
-  if (query.length < 2) return c.json({ items: [] });
+  const yearText = String(c.req.query('year') || '').trim();
+  const year = yearText ? Number(yearText) : null;
+  if (yearText && (!/^\\d{4}$/.test(yearText) || !Number.isInteger(year) || year < 2000 || year > 2099)) {
+    return c.json({ error: 'Choose a valid Cartoon release year.', items: [] }, 400);
+  }
+  if (query.length === 1) return c.json({ items: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, hasMore: false });
   try {
     await connectDatabase();
+    const { page, limit } = pageOptions(c, 20, 48);
     const numericId = /^[0-9]{1,12}$/.test(query) ? Number(query) : null;
-    const movieFilter = numericId
-      ? approvedCartoonMovieFilter({ tmdbId: numericId })
-      : { ...approvedCartoonMovieFilter(), $text: { $search: query } };
-    const seriesFilter = numericId
-      ? approvedCartoonSeriesFilter({ tmdbId: numericId })
-      : { ...approvedCartoonSeriesFilter(), $text: { $search: query } };
-    const [movies, series] = await Promise.all([
-      CartoonMovie.find(movieFilter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean(),
-      CartoonSeries.find(seriesFilter).sort(numericId ? {} : { score: { $meta: 'textScore' }, popularity: -1 }).limit(20).lean()
+    const movieFilter = approvedCartoonMovieFilter();
+    const seriesFilter = approvedCartoonSeriesFilter();
+    if (numericId) {
+      movieFilter.tmdbId = numericId;
+      seriesFilter.tmdbId = numericId;
+    } else if (query.length >= 2) {
+      movieFilter.$text = { $search: query };
+      seriesFilter.$text = { $search: query };
+    }
+    if (year !== null) {
+      movieFilter.$and.push({ $or: [{ releaseYear: year }, { releaseDate: { $regex: '^' + year } }] });
+      seriesFilter.$and.push({ $or: [{ releaseYear: year }, { firstAirDate: { $regex: '^' + year } }] });
+    }
+    const movieSort = query.length >= 2 && !numericId
+      ? { score: { $meta: 'textScore' }, releaseDate: -1, popularity: -1 }
+      : { releaseDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 };
+    const seriesSort = query.length >= 2 && !numericId
+      ? { score: { $meta: 'textScore' }, firstAirDate: -1, popularity: -1 }
+      : { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 };
+    const [movieRows, seriesRows, movieTotal, seriesTotal, movieDates, seriesDates] = await Promise.all([
+      CartoonMovie.find(movieFilter).sort(movieSort).lean(),
+      CartoonSeries.find(seriesFilter).sort(seriesSort).lean(),
+      CartoonMovie.countDocuments(movieFilter),
+      CartoonSeries.countDocuments(seriesFilter),
+      CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate').lean(),
+      CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean()
     ]);
-    const items = [
-      ...movies.map(cartoonMovieDto),
-      ...series.map((item) => cartoonSeriesDto(item))
-    ].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 30);
-    return c.json({ items });
+    const dateRange = cartoonDatabaseDateRange(movieDates, seriesDates);
+    const combined = [
+      ...movieRows.map((item) => ({ ...cartoonMovieDto(item), searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '') })),
+      ...seriesRows.map((item) => ({ ...cartoonSeriesDto(item), searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '') }))
+    ];
+    combined.sort((a, b) =>
+      String(b.searchDate || '').localeCompare(String(a.searchDate || '')) ||
+      (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
+      (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+      String(a.title || '').localeCompare(String(b.title || ''))
+    );
+    const total = movieTotal + seriesTotal;
+    const items = combined.slice((page - 1) * limit, page * limit).map(({ searchDate, ...item }) => item);
+    const totalPages = Math.ceil(total / limit);
+    return c.json({ items, dateRange, years: dateRange.years, pagination: { page, limit, total, totalPages }, hasMore: page < totalPages });
   } catch (error) {
     return apiError(c, error, 'Cartoon search is temporarily unavailable.');
   }

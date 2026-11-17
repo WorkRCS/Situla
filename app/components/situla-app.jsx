@@ -831,6 +831,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchType, setSearchType] = useState("all");
   const [searchYear, setSearchYear] = useState("all");
+  const [searchYears, setSearchYears] = useState([]);
+  const [searchDateRange, setSearchDateRange] = useState(null);
   const [searchError, setSearchError] = useState("");
   const [searchHasMore, setSearchHasMore] = useState(false);
   const [searchPage, setSearchPage] = useState(1);
@@ -1076,7 +1078,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (!kidsModeReady || !searchOpen) return;
     const value = searchInput.trim();
     if (kidsMode) {
-      if (value.length < 2) {
+      if (value.length === 1) {
         setSuggestions([]);
         setSuggestionsLoading(false);
         setSearchError("");
@@ -1088,21 +1090,32 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const timer = window.setTimeout(async () => {
         setSuggestionsLoading(true);
         setSearchError("");
+        const params = new URLSearchParams({ page: "1", limit: "20" });
+        if (value.length >= 2) params.set("q", value);
+        if (searchYear !== "all") params.set("year", searchYear);
         try {
-          const response = await fetch("/api/cartoons/search?q=" + encodeURIComponent(value), {
-            cache: "no-store",
-            credentials: "same-origin",
+          const response = await fetch("/api/cartoons/search?" + params.toString(), {
+            cache: "no-store", credentials: "same-origin",
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)])
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(payload.error || "Cartoon search is unavailable.");
-          if (!controller.signal.aborted) setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+          if (!controller.signal.aborted) {
+            setSuggestions(Array.isArray(payload.items) ? payload.items : []);
+            setSearchHasMore(payload.hasMore === true);
+            setSearchPage(Number(payload.pagination?.page) || 1);
+            setSearchYears(Array.isArray(payload.years) ? payload.years.map(Number).filter(Number.isInteger) : []);
+            setSearchDateRange(payload.dateRange || null);
+          }
         } catch (error) {
-          if (!controller.signal.aborted) setSearchError(error.message || "Cartoon search is unavailable.");
+          if (!controller.signal.aborted) {
+            setSearchError(error.message || "Cartoon search is unavailable.");
+            setSearchHasMore(false);
+          }
         } finally {
           if (!controller.signal.aborted) setSuggestionsLoading(false);
         }
-      }, 160);
+      }, value.length >= 2 ? 160 : 0);
       return () => { window.clearTimeout(timer); controller.abort(); };
     }
     if (value.length > 0 && value.length < 3) {
@@ -1442,40 +1455,45 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [router]);
 
   async function loadMoreSearch() {
-    if (kidsMode || searchLoadingMore || !searchHasMore) return;
+    if (searchLoadingMore || !searchHasMore) return;
     const nextPage = searchPage + 1;
     const value = searchInput.trim();
-    const params = new URLSearchParams({ page: String(nextPage), limit: "20", type: searchType });
-    if (value.length >= 3) params.set("q", value);
-    if (searchYear !== "all") params.set("year", searchYear);
+    const params = new URLSearchParams({ page: String(nextPage), limit: "20" });
+    if (kidsMode) {
+      if (value.length >= 2) params.set("q", value);
+      if (searchYear !== "all") params.set("year", searchYear);
+    } else {
+      params.set("type", searchType);
+      if (value.length >= 3) params.set("q", value);
+      if (searchYear !== "all") params.set("year", searchYear);
+    }
     setSearchLoadingMore(true);
     setSearchError("");
     try {
-      const response = await fetch(kidsMode
-        ? "/api/cartoons/search?q=" + encodeURIComponent(value)
-        : "/api/search?" + params.toString(), {
-        cache: "no-store",
-        credentials: "same-origin",
+      const response = await fetch((kidsMode ? "/api/cartoons/search?" : "/api/search?") + params.toString(), {
+        cache: "no-store", credentials: "same-origin",
         signal: AbortSignal.timeout(20_000)
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "More search results are unavailable.");
       const nextItems = Array.isArray(payload.items) ? payload.items : [];
       setSuggestions((current) => {
-        const ids = new Set(current.map((item) => item.mediaType + ":" + String(
-          item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId
-        )));
+        const identity = (item) => item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
+          ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+        const ids = new Set(current.map((item) => item.mediaType + ":" + String(identity(item))));
         return [...current, ...nextItems.filter((item) => {
-          const id = item.mediaType + ":" + String(
-            item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId
-          );
+          const id = item.mediaType + ":" + String(identity(item));
           if (ids.has(id)) return false;
           ids.add(id);
           return true;
         })];
       });
-      setSearchPage(Number(payload.page) || nextPage);
-      setSearchHasMore(payload.hasMore === true);
+      setSearchPage(Number(payload.pagination?.page || payload.page) || nextPage);
+      setSearchHasMore(payload.hasMore === true || Number(payload.pagination?.page) < Number(payload.pagination?.totalPages));
+      if (kidsMode) {
+        setSearchYears(Array.isArray(payload.years) ? payload.years.map(Number).filter(Number.isInteger) : searchYears);
+        setSearchDateRange(payload.dateRange || searchDateRange);
+      }
     } catch {
       setSearchError("More results could not load. Your current results are still available.");
     } finally {
@@ -1485,6 +1503,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   function openSearchResult(item) {
     setSearchOpen(false);
+    if (item.mediaType === "cartoon_movie") {
+      const tmdbId = Number(item.tmdbId);
+      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push("/cartoons/watch/movie/" + tmdbId);
+      else setSearchError("This cartoon movie has an invalid TMDB ID.");
+      return;
+    }
+    if (item.mediaType === "cartoon_tv") {
+      const tmdbId = Number(item.tmdbId);
+      if (Number.isSafeInteger(tmdbId) && tmdbId > 0) router.push("/cartoons/tv/" + tmdbId);
+      else setSearchError("This cartoon series has an invalid TMDB ID.");
+      return;
+    }
     if (item.mediaType === "tv") return openTvSeries(item);
     if (item.mediaType === "anime") return openAnimeSeries(item);
     return openMovie(item);
@@ -1876,9 +1906,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
             <div className="search-dialog-heading">
               <div>
-                <span>SMART CATALOG SEARCH</span>
-                <h2 id="search-dialog-title">Find your next watch</h2>
-                <p>Movies, TV series and Anime · sorted by release date</p>
+                <span>{kidsMode ? "SITULA KIDS · APPROVED CARTOONS" : "SMART CATALOG SEARCH"}</span>
+                <h2 id="search-dialog-title">{kidsMode ? "Find a cartoon" : "Find your next watch"}</h2>
+                <p>{kidsMode ? "Search approved cartoon movies and TV series only." : "Movies, TV series and Anime · sorted by release date"}</p>
               </div>
               <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
                 <BootstrapIcon icon="x-lg" size={19} />
@@ -1903,37 +1933,40 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               )}
             </label>
             <div className="search-filter-row">
-              <div className="search-type-filters" role="group" aria-label="Filter by media type">
-                {[
-                  { value: "all", label: "All" },
-                  { value: "movie", label: "Movies" },
-                  { value: "tv", label: "TV series" },
-                  { value: "anime", label: "Anime" }
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    className={"search-type-button" + (searchType === filter.value ? " active" : "")}
-                    aria-pressed={searchType === filter.value}
-                    onClick={() => setSearchType(filter.value)}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
+              {!kidsMode && (
+                <div className="search-type-filters" role="group" aria-label="Filter by media type">
+                  {[
+                    { value: "all", label: "All" },
+                    { value: "movie", label: "Movies" },
+                    { value: "tv", label: "TV series" },
+                    { value: "anime", label: "Anime" }
+                  ].map((filter) => (
+                    <button key={filter.value} type="button"
+                      className={"search-type-button" + (searchType === filter.value ? " active" : "")}
+                      aria-pressed={searchType === filter.value} onClick={() => setSearchType(filter.value)}>
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <label className="search-year-filter">
                 <span>Release year</span>
-                <select value={searchYear} onChange={(event) => setSearchYear(event.target.value)} aria-label="Filter by release year">
+                <select value={searchYear} onChange={(event) => setSearchYear(event.target.value)} aria-label={kidsMode ? "Filter cartoons by database release year" : "Filter by release year"}>
                   <option value="all">All years</option>
-                  {Array.from({ length: Math.max(0, new Date().getFullYear() - 1869) }, (_, index) => new Date().getFullYear() - index)
+                  {(kidsMode ? searchYears : Array.from({ length: Math.max(0, new Date().getFullYear() - 1869) }, (_, index) => new Date().getFullYear() - index))
                     .map((year) => <option key={year} value={String(year)}>{year}</option>)}
                 </select>
               </label>
             </div>
+            {kidsMode && searchDateRange && (
+              <p className="search-results-caption" aria-label="Cartoon catalogue release date range">
+                Database dates: {searchDateRange.oldestDate || searchDateRange.oldestYear || "—"} – {searchDateRange.newestDate || searchDateRange.newestYear || "—"}
+              </p>
+            )}
 
-            {searchInput.trim().length > 0 && searchInput.trim().length < 3 ? (
-              <div className="suggestion-empty">Enter at least 3 characters to start smart search.</div>
-            ) : !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
+            {searchInput.trim().length > 0 && searchInput.trim().length < (kidsMode ? 2 : 3) ? (
+              <div className="suggestion-empty">{kidsMode ? "Enter at least 2 characters to search cartoons." : "Enter at least 3 characters to start smart search."}</div>
+            ) : !kidsMode && !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
               <div className="suggestion-empty">Type 3 or more characters, or choose a catalog or release year to browse the newest titles.</div>
             ) : suggestionsLoading ? (
               <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
@@ -1942,14 +1975,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             ) : suggestions.length ? (
               <>
                 <div className="search-results-caption">
-                  {suggestions.length} results shown · {searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
+                  {suggestions.length} results shown · {kidsMode ? "Approved cartoons" : searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
                   {searchYear !== "all" ? " · " + searchYear : ""}
-                  {searchInput.trim().length >= 3 ? " · Smart relevance + newest first" : " · Newest first"}
+                  {kidsMode ? " · Database release dates" : searchInput.trim().length >= 3 ? " · Smart relevance + newest first" : " · Newest first"}
                 </div>
                 <div className="search-results-list" role="listbox" aria-label="Search results">
                   {suggestions.map((item) => {
-                    const identity = item.mediaType === "tv" ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+                    const identity = item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
+                      ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
                     const date = item.releaseDate || item.firstAirDate || item.airedFrom || (item.releaseYear ? String(item.releaseYear) : "Release date unavailable");
+                    const mediaLabel = item.mediaType === "cartoon_movie" ? "CARTOON MOVIE" : item.mediaType === "cartoon_tv" ? "CARTOON SERIES" : String(item.mediaType || "movie").toUpperCase();
                     return (
                       <button
                         key={item.mediaType + ":" + identity}
@@ -1964,7 +1999,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                           : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
                         <span className="suggestion-title">
                           <strong>{item.titleEnglish || item.title}</strong>
-                          <small>{String(item.mediaType || "movie").toUpperCase()} · {date}</small>
+                          <small>{mediaLabel} · {date}</small>
                         </span>
                         <BootstrapIcon icon="play-fill" size={16} />
                       </button>
