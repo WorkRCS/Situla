@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { SiteWorkspace } from "../../../../../components/site-sidebar.jsx";
 import SeriesMediaPlayer from "../../../../../components/media-player";
 import { normalizeAnimePlayerRoute } from "../../../../../../src/anime-player-route.js";
 
@@ -18,5 +17,5 @@ export default async function AnimeEpisodePage({ params }) {
   const { malId, episode, audio } = await params;
   const route = normalizeAnimePlayerRoute(malId, episode, audio);
   if (!route) notFound();
-  return <SiteWorkspace><SeriesMediaPlayer kind="anime" malId={route.malId} episode={route.episode} audio={route.audio} /></SiteWorkspace>;
+  return <SeriesMediaPlayer kind="anime" malId={route.malId} episode={route.episode} audio={route.audio} />;
 }

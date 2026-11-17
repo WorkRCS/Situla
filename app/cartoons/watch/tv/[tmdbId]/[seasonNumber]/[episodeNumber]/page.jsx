@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { SiteWorkspace } from "../../../../../../components/site-sidebar.jsx";
 import CartoonMediaPlayer from "../../../../../../components/cartoon-media-player.jsx";
 
 function positiveInteger(value, allowZero = false) {
@@ -20,9 +19,5 @@ export default async function CartoonEpisodeWatchPage({ params }) {
   const season = positiveInteger(seasonNumber, true);
   const episode = positiveInteger(episodeNumber);
   if (!id || season === null || !episode) notFound();
-  return (
-    <SiteWorkspace>
-      <CartoonMediaPlayer type="tv" tmdbId={id} seasonNumber={season} episodeNumber={episode} />
-    </SiteWorkspace>
-  );
+  return <CartoonMediaPlayer type="tv" tmdbId={id} seasonNumber={season} episodeNumber={episode} />;
 }

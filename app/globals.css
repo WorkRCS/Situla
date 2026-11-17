@@ -8814,41 +8814,9 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 
 
-/* Keep the shared workspace navigation visible beside/above fullscreen player pages. */
+/* Nested app shells fill their workspace without another width constraint. */
 .site-workspace-main > .app-shell {
   width:100%;
   max-width:none;
   margin-inline:0;
-}
-@media (min-width:768px) {
-  .site-workspace:has(.watch-screen) .watch-screen {
-    left:var(--site-sidebar-column,68px) !important;
-    right:0 !important;
-    width:calc(100vw - var(--site-sidebar-column,68px)) !important;
-    max-width:calc(100vw - var(--site-sidebar-column,68px)) !important;
-  }
-  .site-workspace:has(.watch-screen) .site-workspace-mobile-nav {
-    z-index:120 !important;
-  }
-}
-@media (min-width:1101px) {
-  .site-workspace.is-sidebar-collapsed:has(.watch-screen) .watch-screen {
-    left:72px !important;
-    width:calc(100vw - 72px) !important;
-    max-width:calc(100vw - 72px) !important;
-  }
-}
-@media (max-width:767px) {
-  .site-workspace:has(.watch-screen) {
-    padding-bottom:var(--site-dock-clearance,92px) !important;
-  }
-  .site-workspace:has(.watch-screen) .watch-screen {
-    left:0 !important;
-    right:0 !important;
-    width:100vw !important;
-    max-width:100vw !important;
-  }
-  .site-workspace:has(.watch-screen) .site-workspace-mobile-nav {
-    z-index:120 !important;
-  }
 }

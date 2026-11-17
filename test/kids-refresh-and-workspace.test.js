@@ -20,25 +20,32 @@ test("Kids Home and every Cartoon catalogue request a fresh stable shuffle", asy
   assert.ok(backend.includes("sortKey === 'random'"));
 });
 
-test("normal and Cartoon player routes keep the shared workspace sidebar and mobile navigation", async () => {
-  const paths = [
+test("all five normal and Cartoon watch routes render without sidebar or navigation bars", async () => {
+  const playerPaths = [
     "../app/watch/[imdbId]/page.jsx",
     "../app/watch/tv/[tmdbId]/[season]/[episode]/page.jsx",
     "../app/watch/anime/[malId]/[episode]/[audio]/page.jsx",
     "../app/cartoons/watch/movie/[tmdbId]/page.jsx",
-    "../app/cartoons/watch/tv/[tmdbId]/[seasonNumber]/[episodeNumber]/page.jsx",
+    "../app/cartoons/watch/tv/[tmdbId]/[seasonNumber]/[episodeNumber]/page.jsx"
+  ];
+  for (const path of playerPaths) {
+    const page = await read(path);
+    assert.doesNotMatch(page, /SiteWorkspace|SiteSidebar|site-workspace-mobile-nav|bottom-nav/, path + " must not mount global navigation");
+  }
+
+  const detailPaths = [
     "../app/tv/[tmdbId]/page.jsx",
     "../app/cartoons/tv/[tmdbId]/page.jsx"
   ];
-  for (const path of paths) {
+  for (const path of detailPaths) {
     const page = await read(path);
-    assert.ok(page.includes("SiteWorkspace"), path + " must mount SiteWorkspace");
+    assert.ok(page.includes("SiteWorkspace"), path + " must keep shared navigation");
   }
+
   const css = await read("../app/globals.css");
-  assert.ok(css.includes(".site-workspace:has(.watch-screen) .watch-screen"));
-  assert.ok(css.includes("left:var(--site-sidebar-column,68px) !important"));
-  assert.ok(css.includes("z-index:120 !important"));
-  assert.ok(css.includes(".site-workspace:has(.watch-screen) .site-workspace-mobile-nav"));
+  assert.equal(css.includes(".site-workspace:has(.watch-screen)"), false);
+  assert.equal(css.includes(".site-workspace.is-sidebar-collapsed:has(.watch-screen)"), false);
+  assert.match(css, /\.watch-screen\s*\{\s*position:fixed;\s*inset:0;/);
 });
 
 test("runtime metadata uses the same hour-minute-second formatter", async () => {
