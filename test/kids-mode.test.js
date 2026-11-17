@@ -102,27 +102,27 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
   assert.ok(sidebar.includes('fetch("/api/kids-mode"'));
 });
 
-test("Kids Mode cards use the same TV poster, card size, rating and metadata styles", async () => {
-  const app = await read("../app/components/situla-app.jsx");
+test("Kids Home keeps its hero and only one vertical mixed Discover More feed", async () => {
   const cartoons = await read("../app/components/cartoons-catalog.jsx");
+  const homeStart = cartoons.indexOf("if (homeView) {");
+  const homeEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', homeStart);
+  const kidsHome = cartoons.slice(homeStart, homeEnd);
 
-  assert.ok(app.includes('className={"movie-card series-card series-card-" + kind'));
-  assert.ok(app.includes('className="movie-poster"'));
-  assert.ok(app.includes('className="rating-pill"'));
-  assert.ok(app.includes('className="series-card-meta"'));
   assert.ok(cartoons.includes('className={"movie-card series-card series-card-tv"'));
   assert.ok(cartoons.includes('className="movie-poster"'));
   assert.ok(cartoons.includes('className="rating-pill"'));
   assert.ok(cartoons.includes('className="series-card-meta"'));
-  assert.ok(cartoons.includes("featuredSeriesList"));
-  assert.ok(cartoons.includes("hotSeries"));
-  assert.ok(cartoons.includes("popularSeries"));
+  assert.ok(kidsHome.includes("<CartoonSpotlight"));
+  assert.ok(kidsHome.includes('className="home-hero-atmosphere"'));
+  assert.ok(kidsHome.includes('className="home-scroll-feed cartoons-home-feed"'));
+  assert.ok(kidsHome.includes("<h2>Discover More</h2>"));
+  assert.ok(kidsHome.includes("cartoonFeedItems.slice(0, homeFeedCount)"));
+  assert.ok(kidsHome.includes("homeFeedSentinelRef"));
+  assert.ok(kidsHome.includes("Scroll to load 5 more cartoons"));
+  assert.equal(kidsHome.includes("<CartoonShelf"), false);
+  assert.equal(kidsHome.includes("media-row"), false);
   assert.ok(cartoons.includes('const homeView = view === "kidsHome";'));
   assert.ok(cartoons.includes('const mixedView = view === "cartoons";'));
-  assert.ok(cartoons.includes('"/api/cartoons/catalog"'));
-  assert.equal(cartoons.includes("catalog-toolbar-sort-only"), false);
-  assert.equal(cartoons.includes("SITULA KIDS · APPROVED CATALOGUE"), false);
-  assert.ok(cartoons.includes("Scroll to discover 5 more cartoons"));
   assert.ok(cartoons.includes('limit: "5"'));
 });
 

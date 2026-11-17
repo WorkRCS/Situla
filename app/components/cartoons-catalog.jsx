@@ -437,6 +437,11 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     const featured = cartoonHeroItems[heroIndex] || sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
       <section className="pb-8 cartoons-home-catalog" aria-label="Cartoons catalog">
+        {featured && (featured.backdropUrl || featured.posterUrl) && (
+          <div className="home-hero-atmosphere" aria-hidden="true">
+            <img src={featured.backdropUrl || featured.posterUrl} alt="" decoding="async" />
+          </div>
+        )}
         <CartoonSpotlight
           item={featured}
           kidsMode={kidsMode}
@@ -447,16 +452,14 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           onPrevious={() => setHeroIndex((current) => (current - 1 + cartoonHeroItems.length) % cartoonHeroItems.length)}
           onNext={() => setHeroIndex((current) => (current + 1) % cartoonHeroItems.length)}
         />
-        <CartoonShelf title="Featured TV series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" variant="featured" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
-        <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" variant="hot" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
-        <CartoonShelf title="Popular cartoon series" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularSeries} kind="series" variant="popular" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
-        <CartoonShelf title="Featured movies" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredMovies} kind="movie" variant="featured" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
-        <CartoonShelf title="Hot cartoon movies" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotMovies} kind="movie" variant="hot" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
-        <CartoonShelf title="Popular cartoon movies" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" variant="popular" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
         {cartoonFeedItems.length > 0 && (
-          <section className="home-scroll-feed cartoons-home-feed" aria-label="More cartoons to explore">
+          <section className="home-scroll-feed cartoons-home-feed" aria-label="Discover more approved cartoons">
             <div className="section-heading shelf-heading">
-              <div><span>KEEP EXPLORING</span><h2>More cartoons to discover</h2><p className="home-collection-description">A mixed collection of approved cartoon movies and TV series.</p></div>
+              <div>
+                <span>DISCOVER MORE</span>
+                <h2>Discover More</h2>
+                <p className="home-collection-description">A mixed feed of approved cartoon movies and TV series.</p>
+              </div>
             </div>
             <div className="catalog-grid">
               {cartoonFeedItems.slice(0, homeFeedCount).map((item) => {
@@ -471,7 +474,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
             </div>
             {homeFeedCount < cartoonFeedItems.length && (
               <div ref={homeFeedSentinelRef} className="catalog-infinite-sentinel" aria-live="polite">
-                <span className="catalog-infinite-hint">Scroll to discover 5 more cartoons</span>
+                <span className="catalog-infinite-hint">Scroll to load 5 more cartoons</span>
               </div>
             )}
           </section>

@@ -8859,3 +8859,53 @@ body:has(.login-page) .site-footer { display:none !important; }
   .home-scroll-feed .catalog-grid { gap:12px 9px; }
   .catalog-infinite-sentinel { min-height:52px; }
 }
+
+
+/* Home is intentionally reduced to the hero and one vertical mixed discovery grid.
+   A blurred live hero artwork supplies the page-wide colour atmosphere in both modes. */
+.home-mode-panel,
+.cartoons-home-catalog {
+  position:relative;
+  isolation:isolate;
+}
+.home-mode-panel > .home-hero-atmosphere,
+.cartoons-home-catalog > .home-hero-atmosphere {
+  position:absolute;
+  z-index:0;
+  inset:-10px -4vw 0;
+  overflow:hidden;
+  pointer-events:none;
+  border-radius:24px;
+  opacity:.56;
+}
+.home-hero-atmosphere img {
+  position:absolute;
+  inset:-12%;
+  display:block;
+  width:124%;
+  height:124%;
+  object-fit:cover;
+  filter:blur(82px) saturate(1.7) contrast(1.08);
+  transform:scale(1.08);
+  opacity:.72;
+}
+.home-hero-atmosphere::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(5,6,10,.34) 0%,rgba(5,6,10,.66) 48%,rgba(5,6,10,.94) 100%),
+    radial-gradient(ellipse at 50% 8%,rgba(8,10,15,.04),rgba(5,6,10,.56) 78%);
+}
+.home-mode-panel > :not(.home-hero-atmosphere),
+.cartoons-home-catalog > :not(.home-hero-atmosphere) {
+  position:relative;
+  z-index:1;
+}
+.home-mode-panel > .home-scroll-feed {
+  margin-top:clamp(22px,2.8vw,36px);
+}
+.cartoons-home-catalog > .cartoons-home-feed {
+  margin-top:clamp(20px,2.5vw,32px);
+  padding-top:0;
+}

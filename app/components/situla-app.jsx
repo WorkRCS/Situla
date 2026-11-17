@@ -2209,6 +2209,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </section>
             )}
             <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
+              {featured && (featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster) && (
+                <div className="home-hero-atmosphere" aria-hidden="true">
+                  <img
+                    src={featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster}
+                    alt=""
+                    decoding="async"
+                  />
+                </div>
+              )}
             {featured ? (
               <section
                 className="hero-card home-hero-card"
@@ -2292,196 +2301,25 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     </div>
                   )}
                 </div>
-                {homeHeroItems.length > 1 && (
-                  <div className="home-hero-peeks" aria-label="More featured titles">
-                    {[1, 2].filter((offset) => homeHeroItems.length > offset).map((offset) => {
-                      const previewIndex = (heroIndex + offset) % homeHeroItems.length;
-                      const preview = homeHeroItems[previewIndex];
-                      const previewImage = preview.heroPoster || preview.posterUrl || preview.heroImage;
-                      return (
-                        <button
-                          key={preview.heroId}
-                          type="button"
-                          className="home-hero-peek"
-                          onClick={() => setHeroIndex(previewIndex)}
-                          aria-label={"Feature " + preview.heroTitle}
-                          aria-pressed={false}
-                        >
-                          {previewImage
-                            ? <img src={optimizeTmdbImageUrl(previewImage, "w185")} alt="" loading="lazy" decoding="async" />
-                            : <span><BootstrapIcon icon={preview.mediaType === "tv" ? "tv-fill" : preview.mediaType === "anime" ? "play-fill" : "film"} size={20} /></span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+
               </section>
             ) : loading || !homeSeriesReady ? (
               <>
                 <div className="hero-skeleton"><div className="skeleton-hero-copy"><div className="skeleton-line short" /><div className="skeleton-line hero-title" /><div className="skeleton-line wide" /><div className="skeleton-line medium" /><div className="skeleton-hero-button" /></div></div>
-                <SkeletonShelf title="Trending now" />
-                <SkeletonShelf title="Popular on Situla" />
               </>
             ) : (
               <div className="empty-panel"><Icon name="film" size={32} /><p className="mt-3 font-bold text-white">Your catalog is getting ready</p><p className="mt-2 text-xs">{error || "Approved titles from the Situla API will appear here."}</p></div>
             )}
 
-            {allGenres.length > 1 && (
-              <div className="home-genre-row" aria-label="Browse movie genres">
-                {allGenres.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setGenre(item)}
-                    className={"genre-chip" + (genre === item ? " active" : "")}
-                    aria-pressed={genre === item}
-                  >
-                    {item === "All" ? "Trending" : item}
-                  </button>
-                ))}
-              </div>
-            )}
 
-            <HomeMixedShelf
-              items={homeHeroItems}
-              activeHeroId={homeHeroItems[heroIndex]?.heroId}
-              onMovieOpen={openHomeMovie}
-              onSeriesOpen={openHomeSeries}
-              onSave={toggleSaved}
-              savedIds={savedIds}
-              pendingNavigation={pendingHomeNavigation}
-              onMoviePreload={prefetchHomeMovie}
-              onSeriesPreload={prefetchHomeSeries}
-            />
-
-            {!kidsMode && <section className="home-discovery" aria-label="Explore Situla">
-              <div className="home-section-intro">
-                <div>
-                  <span>ONE PLACE. MANY WORLDS.</span>
-                  <h2>Find your next favourite</h2>
-                </div>
-                <p>Pick a path and let the story begin.</p>
-              </div>
-              <div className="home-discovery-grid">
-                <Link href="/movies" className="discovery-card discovery-movies" onClick={() => setPendingHomeNavigation("route:movies")} aria-busy={pendingHomeNavigation === "route:movies"}>
-                  <span className="discovery-symbol"><Icon name="film" size={25} /></span>
-                  <span className="discovery-copy"><strong>Movies</strong><small>Big-screen stories, anytime</small></span>
-                  {pendingHomeNavigation === "route:movies" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
-                </Link>
-                <Link href="/tv" className="discovery-card discovery-tv" onClick={() => setPendingHomeNavigation("route:tv")} aria-busy={pendingHomeNavigation === "route:tv"}>
-                  <span className="discovery-symbol"><Icon name="tv" size={25} /></span>
-                  <span className="discovery-copy"><strong>TV series</strong><small>Stories that keep unfolding</small></span>
-                  {pendingHomeNavigation === "route:tv" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
-                </Link>
-                <Link href="/anime" className="discovery-card discovery-anime" onClick={() => setPendingHomeNavigation("route:anime")} aria-busy={pendingHomeNavigation === "route:anime"}>
-                  <span className="discovery-symbol"><Icon name="play" size={25} /></span>
-                  <span className="discovery-copy"><strong>Anime</strong><small>Step into another world</small></span>
-                  {pendingHomeNavigation === "route:anime" ? <span className="inline-loading-spinner" /> : <BootstrapIcon icon="arrow-up-right" size={19} />}
-                </Link>
-              </div>
-            </section>}
-
-
-
-            {!homeSeriesReady ? (
-              <>
-                <SkeletonShelf title="Popular series" />
-                <SkeletonShelf title="Audience favourites" />
-                <SkeletonShelf title="Top TV series" />
-                <SkeletonShelf title="Top anime series" />
-              </>
-            ) : (
-              <>
-                <MixedSeriesShelf
-                  title="Popular series"
-                  eyebrow="RECORDED VOTE COUNTS"
-                  description="Series ordered by the audience vote totals stored with each catalogue record."
-                  variant="popular"
-                  items={popularSeriesItems}
-                  onOpen={openHomeSeries}
-                  onSave={toggleSaved}
-                  savedIds={savedIds}
-                  pendingNavigation={pendingHomeNavigation}
-                  onPreload={prefetchHomeSeries}
-                />
-                <MixedSeriesShelf
-                  title="Audience favourites"
-                  eyebrow="PROVIDER RATING DATA"
-                  description="A separate collection ranked by each title’s recorded rating and vote count."
-                  variant="rated"
-                  items={favoriteSeriesItems}
-                  onOpen={openHomeSeries}
-                  onSave={toggleSaved}
-                  savedIds={savedIds}
-                  pendingNavigation={pendingHomeNavigation}
-                  onPreload={prefetchHomeSeries}
-                />
-                <SeriesShelf
-                  title={premiumCatalog ? "Latest TV series" : "Top TV series"}
-                  eyebrow={premiumCatalog ? "NEWEST BY FIRST AIR DATE" : "DATABASE POPULARITY"}
-                  description="TV series ordered by the popularity values stored in the catalogue."
-                  variant="television"
-                  items={topTvShows}
-                  kind="tv"
-                  onOpen={openHomeTvSeries}
-                  onSave={toggleSaved}
-                  savedIds={savedIds}
-                  pendingNavigation={pendingHomeNavigation}
-                  onPreload={prefetchHomeSeries}
-                />
-                <SeriesShelf
-                  title={premiumCatalog ? "Latest anime series" : "Top anime series"}
-                  eyebrow={premiumCatalog ? "NEWEST BY AIR DATE" : "DATABASE RANKING"}
-                  description="Anime titles ordered by their stored provider rank, without repeating earlier collections."
-                  variant="anime"
-                  items={topAnimeShows}
-                  kind="anime"
-                  onOpen={openHomeAnimeSeries}
-                  onSave={toggleSaved}
-                  savedIds={savedIds}
-                  pendingNavigation={pendingHomeNavigation}
-                  onPreload={prefetchHomeSeries}
-                />
-              </>
-            )}
-
-            {genre === "All" ? (
-              <>
-                <MovieShelf
-                  title="Movies to discover"
-                  eyebrow="FRESH PICKS FROM THE CATALOG"
-                  description="A separate movie collection, with titles already featured above removed."
-                  variant="discover"
-                  movies={homeMovieItems}
-                  onOpen={openHomeMovie}
-                  onSave={toggleSaved}
-                  savedIds={savedIds}
-                  pendingNavigation={pendingHomeNavigation}
-                  onPreload={prefetchHomeMovie}
-                />
-                {homeCategoryShelves.map((category) => (
-                  <MovieShelf
-                    key={category.key}
-                    title={category.name}
-                    eyebrow="EXPLORE BY GENRE"
-                    description="A focused genre collection, with titles selected from the live catalogue."
-                    variant="genre"
-                    movies={category.items}
-                    onOpen={openHomeMovie}
-                    onSave={toggleSaved}
-                    savedIds={savedIds}
-                    pendingNavigation={pendingHomeNavigation}
-                    onPreload={prefetchHomeMovie}
-                  />
-                ))}
-              </>
-            ) : (
-              <MovieShelf title={genre + " movies"} eyebrow="DATABASE GENRE RESULTS" movies={filteredMovies} onOpen={openMovie} onSave={toggleSaved} savedIds={savedIds} />
-            )}
-            {genre === "All" && homeBrowseItems.length > 0 && (
-              <section className="home-scroll-feed" aria-label="More movies, TV series and anime">
+            {homeBrowseItems.length > 0 && (
+              <section className="home-scroll-feed" aria-label="Discover more movies, TV series and anime">
                 <div className="section-heading shelf-heading">
-                  <div><span>MORE FROM THE CATALOGUE</span><h2>Keep discovering</h2><p className="home-collection-description">A mixed feed of real movies, TV series and anime from the live catalogue.</p></div>
+                  <div>
+                    <span>DISCOVER MORE</span>
+                    <h2>Discover More</h2>
+                    <p className="home-collection-description">A continuously mixed selection of movies, TV series and anime from Situla’s catalogue.</p>
+                  </div>
                 </div>
                 <div className="catalog-grid">
                   {homeBrowseItems.slice(0, homeFeedCount).map((item) => item.mediaType === "movie" ? (
@@ -2501,6 +2339,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 )}
               </section>
             )}
+
             {loading && movies.length > 0 && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalog…</p>}
             {error && movies.length === 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}
             {error && movies.length > 0 && <p className="mt-4 text-center text-xs text-rose-300">{error}</p>}

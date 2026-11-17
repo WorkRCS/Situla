@@ -135,7 +135,6 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   const tvRoute = await readFile(new URL("../app/tv/[tmdbId]/page.jsx", import.meta.url), "utf8");
   const animeRoute = await readFile(new URL("../app/anime/[malId]/page.jsx", import.meta.url), "utf8");
 
-  assert.ok(app.includes('import { buildHomeCollections, homeMediaRoute, mixHomeSpotlight, toHomeSpotlight }'));
   assert.ok(app.includes("onOpen?.(movie);"));
   assert.ok(app.includes("onOpen?.(item, kind);"));
   assert.ok(!app.includes("navigate: false"));
@@ -145,21 +144,26 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(tvRoute.includes("{ tmdbId }"));
   assert.ok(animeRoute.includes("{ malId }"));
 
-  assert.ok(app.includes('new URLSearchParams({ page: "1", limit: "60" })'));
+  const homeStart = app.indexOf('<div className="home-mode-panel"');
+  const homeEnd = app.indexOf('<div className="kids-mode-panel"', homeStart);
+  const normalHome = app.slice(homeStart, homeEnd);
+  assert.ok(normalHome.includes('className="hero-card home-hero-card"'));
+  assert.ok(normalHome.includes('className="home-scroll-feed"'));
+  assert.ok(normalHome.includes("<h2>Discover More</h2>"));
+  assert.ok(normalHome.includes("homeFeedSentinelRef"));
+  assert.ok(normalHome.includes("homeBrowseItems.slice(0, homeFeedCount)"));
+  assert.ok(normalHome.includes('className="home-hero-atmosphere"'));
+  assert.equal(normalHome.includes("HomeMixedShelf"), false);
+  assert.equal(normalHome.includes("MixedSeriesShelf"), false);
+  assert.equal(normalHome.includes("<SeriesShelf"), false);
+  assert.equal(normalHome.includes("<MovieShelf"), false);
+  assert.equal(normalHome.includes("home-genre-row"), false);
+  assert.equal(normalHome.includes("home-discovery"), false);
+  assert.equal(normalHome.includes("home-hero-peeks"), false);
+
+  assert.ok(app.includes("new URLSearchParams({ page: \"1\", limit: \"60\" })"));
   assert.ok(app.includes('fetch(endpoint, { cache: "no-store", signal })'));
   assert.ok(!app.includes('new URLSearchParams({ page: "1", limit: "36", random: "true" })'));
-  assert.ok(app.includes("spotlightItems: homeHeroItems"));
-  assert.ok(app.includes('activeHeroId={homeHeroItems[heroIndex]?.heroId}'));
-  assert.ok(app.includes("const trendingItems = items.filter((item) => item.heroId !== activeHeroId);"));
-  assert.ok(!app.includes('className="spotlight-strip"'));
-  assert.ok(!app.includes("homeFreshMoviesRequested"));
-  assert.ok(app.includes("LIVE DATABASE · MOVIES · TV · ANIME"));
-  assert.ok(app.includes("RECORDED VOTE COUNTS"));
-  assert.ok(app.includes("PROVIDER RATING DATA"));
-  assert.ok(app.includes('variant="popular"'));
-  assert.ok(app.includes('variant="rated"'));
-  assert.ok(app.includes('variant="television"'));
-  assert.ok(app.includes('variant="anime"'));
 
   const discoveryStart = api.indexOf("app.get('/api/movies/discover'");
   const discoveryEnd = api.indexOf("app.get('/api/search'", discoveryStart);
@@ -170,37 +174,11 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(!discovery.includes("$sample"));
   assert.ok(discovery.includes("Movie.countDocuments"));
 
-  assert.ok(css.includes(".home-collection-popular"));
-  assert.ok(css.includes(".home-collection-rated"));
-  assert.ok(css.includes(".home-collection-television"));
-  assert.ok(css.includes(".home-collection-anime"));
-  assert.ok(css.includes(".home-collection-genre"));
-
-  const landingCssStart = css.indexOf("/* Landing page collections: keep shelves");
-  assert.ok(landingCssStart >= 0);
-  const landingCss = css.slice(landingCssStart);
-  const cssRuleBody = (selector) => {
-    const selectorStart = landingCss.indexOf(selector);
-    if (selectorStart < 0) return "";
-    const openingBrace = landingCss.indexOf("{", selectorStart);
-    const closingBrace = landingCss.indexOf("}", openingBrace);
-    return openingBrace >= 0 && closingBrace >= 0
-      ? landingCss.slice(openingBrace + 1, closingBrace)
-      : "";
-  };
-  const mixedShelfStyle = cssRuleBody(".home-mixed-shelf");
-  assert.ok(mixedShelfStyle.includes("background:transparent"));
-  assert.ok(mixedShelfStyle.includes("border:0"));
-  assert.ok(mixedShelfStyle.includes("box-shadow:none"));
-  assert.ok(!mixedShelfStyle.includes("linear-gradient"));
-  assert.ok(!mixedShelfStyle.includes("radial-gradient"));
-
-  const collectionPanelStyle = cssRuleBody(".home-collection-popular,");
-  assert.ok(collectionPanelStyle.includes("background:transparent"));
-  assert.ok(collectionPanelStyle.includes("border:0"));
-  assert.ok(collectionPanelStyle.includes("box-shadow:none"));
-  assert.ok(cssRuleBody(".home-collection-television").includes("border-top:0"));
-  assert.ok(landingCss.includes(".home-movie-shelf {\n  padding-top:0;\n  border-top:0;"));
+  assert.ok(css.includes(".home-hero-atmosphere"));
+  assert.ok(css.includes("filter:blur(82px) saturate(1.7)"));
+  assert.ok(css.includes(".home-scroll-feed .catalog-grid"));
+  assert.ok(css.includes(".home-mode-panel > .home-scroll-feed"));
+  assert.ok(css.includes(".cartoons-home-catalog > .cartoons-home-feed"));
 });
 
 
