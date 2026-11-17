@@ -112,7 +112,9 @@ test("Movies grid refreshes with random discovery and paginates by IMDb ID witho
   const app = await readFile(new URL("../app/components/situla-app.jsx", import.meta.url), "utf8");
   const api = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
   assert.match(app, /const isDiscover = \(tab === "home" && genre === "All"\) \|\| tab === "movies"/);
-  assert.match(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
+  assert.doesNotMatch(app, /chooseFreshSpotlight\(uniqueHeroMovies, "situla:spotlight:movies"\)/);
+  assert.doesNotMatch(app, /CatalogSpotlight|catalogSpotlight/);
+  assert.match(app, /setHeroMovies\(homeMoviePicks\)/);
   assert.match(app, /params\.set\("random", "true"\)/);
   assert.match(app, /params\.set\("exclude", movies\.map\(\(item\) => item\.imdbId\)/);
   assert.match(app, /current\.map\(\(item\) => String\(item\.imdbId/);
