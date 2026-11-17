@@ -80,17 +80,19 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 
-test("premium homepage keeps TV and Anime shelves in newest-first database order", async () => {
+test("premium and standard plans share the same vertical mixed Home discovery layout", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const homeDiscovery = await read("../src/home-discovery.js");
-  assert.match(app, /const premiumCatalog = accountUser\?\.planId === "premium"/);
-  assert.match(app, /const homeCollections = useMemo\(\(\) => buildHomeCollections\(\{/);
+  const homeStart = app.indexOf('<div className="home-mode-panel"');
+  const homeEnd = app.indexOf('<div className="kids-mode-panel"', homeStart);
+  const normalHome = app.slice(homeStart, homeEnd);
+
   assert.match(homeDiscovery, /const topTvShows = takeUniqueHomeItems\([\s\S]*?premiumCatalog\s*\?\s*\(a, b\) => homeReleaseDate\(b\) - homeReleaseDate\(a\)/);
   assert.match(homeDiscovery, /const topAnimeShows = takeUniqueHomeItems\([\s\S]*?premiumCatalog\s*\?\s*\(a, b\) => homeReleaseDate\(b\) - homeReleaseDate\(a\)/);
-  assert.match(app, /title=\{premiumCatalog \? "Latest TV series" : "Top TV series"\}/);
-  assert.match(app, /title=\{premiumCatalog \? "Latest anime series" : "Top anime series"\}/);
-  assert.match(app, /items=\{topTvShows\}/);
-  assert.match(app, /items=\{topAnimeShows\}/);
+  assert.match(normalHome, /className="home-scroll-feed"/);
+  assert.match(normalHome, /homeBrowseItems\.slice\(0, homeFeedCount\)/);
+  assert.match(normalHome, /<h2>Discover More<\/h2>/);
+  assert.doesNotMatch(normalHome, /<SeriesShelf|<MovieShelf|<MixedSeriesShelf|home-mixed-shelf|home-genre-row/);
 });
 
 test("catalog loading is bounded and off-screen image/grid work is deferred", async () => {

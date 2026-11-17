@@ -163,28 +163,45 @@ test("landing page exposes primary navigation and cinematic responsive hero styl
 });
 
 
-test("Situla landing keeps the original gold palette and uses a distinct discovery layout", async () => {
+test("Situla Home renders a Hero followed by one vertical mixed Discover More grid", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
   const css = await read("../app/globals.css");
+  const normalStart = app.indexOf('<div className="home-mode-panel"');
+  const normalEnd = app.indexOf('<div className="kids-mode-panel"', normalStart);
+  const normalHome = app.slice(normalStart, normalEnd);
+  const kidsStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
+  const kidsEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsStart);
+  const kidsHome = cartoons.slice(kidsStart, kidsEnd);
 
   assert.match(app, /className=\{\(tab === "home" \? "home-page-layout"/);
-  assert.match(app, /className="home-discovery"/);
-  assert.match(app, /className="discovery-card discovery-movies"/);
-  assert.match(app, /className="discovery-card discovery-tv"/);
-  assert.match(app, /className="discovery-card discovery-anime"/);
-  assert.match(app, /className="netflix-shelf home-mixed-shelf"/);
+  assert.match(normalHome, /className="hero-card home-hero-card"/);
+  assert.match(normalHome, /className="home-scroll-feed"/);
+  assert.match(normalHome, /<h2>Discover More<\/h2>/);
+  assert.match(normalHome, /homeBrowseItems\.slice\(0, homeFeedCount\)/);
+  assert.doesNotMatch(normalHome, /HomeMixedShelf|MixedSeriesShelf|<SeriesShelf|<MovieShelf|home-genre-row|home-discovery|home-hero-peeks/);
+  assert.match(kidsHome, /<CartoonSpotlight/);
+  assert.match(kidsHome, /className="home-scroll-feed cartoons-home-feed"/);
+  assert.match(kidsHome, /<h2>Discover More<\/h2>/);
+  assert.match(kidsHome, /cartoonFeedItems\.slice\(0, homeFeedCount\)/);
+  assert.doesNotMatch(kidsHome, /<CartoonShelf|media-row/);
   assert.match(css, /--accent:#e8b65b/);
   assert.match(css, /#f7d58b/);
   assert.doesNotMatch(css, /#55b8ff|#69c7ff|#2388ee/);
-  assert.match(css, /\.home-discovery-grid/);
-  assert.match(css, /\.spotlight-chip\.active/);
+  assert.match(css, /\.home-hero-atmosphere/);
+  assert.match(css, /filter:blur\(82px\) saturate\(1\.7\)/);
 });
 
-test("home page auto-advances and lets visitors select a spotlight title", async () => {
+test("Home hero auto-advances and keeps manual previous/next controls without preview rails", async () => {
   const app = await read("../app/components/situla-app.jsx");
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
   assert.match(app, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(app, /onClick=\{\(\) => setHeroIndex\(previewIndex\)\}/);
-  assert.match(app, /aria-pressed=\{false\}/);
+  assert.match(app, /aria-label="Previous featured title"/);
+  assert.match(app, /aria-label="Next featured title"/);
+  assert.doesNotMatch(app, /home-hero-peeks|previewIndex/);
+  assert.match(cartoons, /setInterval\([\s\S]*?\}, 3000\)/);
+  assert.match(cartoons, /onPrevious=\{\(\) => setHeroIndex/);
+  assert.match(cartoons, /onNext=\{\(\) => setHeroIndex/);
 });
 
 
@@ -342,16 +359,23 @@ test("Watch pages delegate episode selection to the embedded iframe player", asy
   assert.ok(playerUrls.includes('url.searchParams.set("nextEpisodeButton", "true")'));
 });
 
-test("home page omits personal watch-history shelves and shows catalog discovery sections", async () => {
+test("Home contains no horizontal shelves: Normal and Kids modes each use one vertical feed", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  assert.doesNotMatch(app, /title="Continue watching"/);
-  assert.doesNotMatch(app, /title="Recently opened"/);
-  assert.match(app, /title="Popular series"/);
-  assert.match(app, /title="Audience favourites"/);
-  assert.match(app, /title=\{premiumCatalog \? "Latest TV series" : "Top TV series"\}/);
-  assert.match(app, /title=\{premiumCatalog \? "Latest anime series" : "Top anime series"\}/);
-  assert.match(app, /homeCategoryShelves\.map\(\(category\)/);
-  assert.match(app, /title=\{category\.name\}/);
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
+  const normalStart = app.indexOf('<div className="home-mode-panel"');
+  const normalEnd = app.indexOf('<div className="kids-mode-panel"', normalStart);
+  const normalHome = app.slice(normalStart, normalEnd);
+  const kidsStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
+  const kidsEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsStart);
+  const kidsHome = cartoons.slice(kidsStart, kidsEnd);
+
+  assert.doesNotMatch(normalHome, /title="Continue watching"|title="Recently opened"/);
+  assert.match(normalHome, /<h2>Discover More<\/h2>/);
+  assert.match(normalHome, /homeBrowseItems\.slice\(0, homeFeedCount\)/);
+  assert.doesNotMatch(normalHome, /title="Popular series"|title="Audience favourites"|homeCategoryShelves\.map/);
+  assert.match(kidsHome, /<h2>Discover More<\/h2>/);
+  assert.match(kidsHome, /cartoonFeedItems\.slice\(0, homeFeedCount\)/);
+  assert.doesNotMatch(kidsHome, /<CartoonShelf|media-row/);
 });
 
 test("home series use ranked catalog feeds and mix favorite series across TV and anime", async () => {
