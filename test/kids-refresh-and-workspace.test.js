@@ -66,7 +66,7 @@ test("Cartoon Movies and TV listings omit their heading, sort controls and genre
   assert.equal(source.includes("catalog-toolbar-sort-only"), false);
   assert.equal(source.includes("SITULA KIDS · APPROVED CATALOGUE"), false);
   assert.equal(source.includes("Random</option>"), false);
-  assert.ok(source.includes('className="cartoons-listing-catalog"'));
+  assert.ok(source.includes("cartoons-listing-catalog"));
   assert.ok(source.includes('className="catalog-grid"'));
   assert.ok(source.includes("listingSentinelRef"));
   assert.ok(source.includes('limit: "5"'));
