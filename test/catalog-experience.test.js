@@ -112,7 +112,8 @@ test("one seed command runs the full catalogue ingestion and public-signal refre
   const runner = await read("../scripts/seed.js");
   const refresh = await read("../scripts/refresh-catalog-market-data.js");
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.match(runner, /seedOfflineCatalog/);
   assert.match(runner, /seedMovieAdditions/);
   assert.match(runner, /seedTvSeries/);
