@@ -265,19 +265,20 @@ function pinnedForShow(show) {
 }
 
 function isTvMazeCandidate(show) {
-  const pin = pinnedForShow(show);
   const year = parseYearFromText(show.premiered);
   if (!isCartoonYearAllowed(year)) return false;
   const genres = Array.isArray(show.genres) ? show.genres : [];
   const animationType = String(show.type || "").toLowerCase() === "animation";
   const animationGenre = genres.some((genre) => normalizeCartoonText(genre) === "animation");
   if (!animationType && !animationGenre) return false;
-  return isChildrenAnimation({
-    genres,
-    type: animationType ? "Animation" : "",
-    rating: show.rating?.certification || "",
-    pinned: Boolean(pin)
-  });
+
+  // Discovery is deliberately broader than approval. TVmaze often labels a
+  // children's cartoon only as "Animation"; Cinemeta's genres/certification
+  // are checked later by createSeriesRecord before the record can be inserted.
+  return !genres.some((genre) =>
+    ["adult", "erotica", "porn", "pornographic", "hentai", "gore", "horror"]
+      .includes(normalizeCartoonText(genre))
+  );
 }
 
 async function discoverTvMazeShows() {
@@ -463,7 +464,7 @@ function createSeriesRecord(show, meta, tmdbId, episodeData) {
   ])];
   const voteAverage = Math.max(0, Math.min(10, parseNumber(show.rating?.average || meta?.imdbRating || meta?.rating)));
   if (!tmdbId || !title || overview.length < 50 || !isCartoonYearAllowed(year) ||
-      !episodeData.numberOfEpisodes || !voteAverage) return null;
+      !episodeData.numberOfEpisodes || !voteAverage || isAdultMetadata(meta)) return null;
   if (!isChildrenAnimation({
     genres,
     type: show.type,
@@ -515,6 +516,154 @@ function createSeriesRecord(show, meta, tmdbId, episodeData) {
     trendScore: 0,
     trendUpdatedAt: null
   };
+}
+
+function createCinemetaSeriesRecord(meta, catalogItem, tmdbId) {
+  const imdbId = extractImdbId(meta?.imdb_id || meta?.id || catalogItem?.imdbId);
+  const title = cleanText(meta?.name || meta?.title || catalogItem?.name, 240);
+  const originalTitle = cleanText(meta?.original_name || meta?.originalTitle || title, 240);
+  const overview = cleanText(meta?.description || meta?.overview || catalogItem?.description || "", 5000);
+  const releaseInfo = String(meta?.releaseInfo || catalogItem?.releaseInfo || "").trim();
+  const firstAirDate = parseDate(meta?.released || meta?.firstAirDate) ||
+    (parseYearFromText(releaseInfo) ? String(parseYearFromText(releaseInfo)) : "");
+  const lastYearMatch = releaseInfo.match(/^\d{4}\s*-\s*(\d{4})$/);
+  const lastAirDate = parseDate(meta?.lastAirDate) || (lastYearMatch ? lastYearMatch[1] : "");
+  const year = readCartoonYear(firstAirDate) || parseYearFromText(releaseInfo) ||
+    parseYearFromText(meta?.year);
+  const genres = [...new Set([
+    ...(Array.isArray(meta?.genres) ? meta.genres : []),
+    ...(Array.isArray(catalogItem?.genres) ? catalogItem.genres : [])
+  ].map((item) => cleanText(item, 80)).filter(Boolean))];
+  const posterUrl = toHttps(meta?.poster || catalogItem?.poster);
+  const voteAverage = Math.max(0, Math.min(10, parseNumber(meta?.imdbRating || meta?.rating || catalogItem?.imdbRating)));
+  const videos = (Array.isArray(meta?.videos) ? meta.videos : []).map((video) => ({
+    season: video?.season,
+    number: video?.episode ?? video?.number,
+    name: video?.name || video?.title,
+    airdate: String(video?.released || video?.firstAired || "").slice(0, 10),
+    summary: video?.overview || video?.description || "",
+    runtime: parseRuntime(video?.runtime),
+    thumbnail: toHttps(video?.thumbnail),
+    rating: video?.rating
+  }));
+  const episodeData = buildCartoonEpisodeData(Number(tmdbId), videos, posterUrl);
+  const certification = cleanText(
+    meta?.certification || meta?.contentRating || meta?.ratings?.[0]?.value || "", 40
+  );
+  const originalLanguage = parseLanguage(meta?.language || meta?.original_language);
+  const audioLanguages = [];
+  for (const value of [originalLanguage, ...(Array.isArray(meta?.languages) ? meta.languages : []),
+    ...(Array.isArray(meta?.audioLanguages) ? meta.audioLanguages : [])]) {
+    const language = parseLanguage(value);
+    if (language && !audioLanguages.includes(language)) audioLanguages.push(language);
+  }
+  const countryValues = Array.isArray(meta?.country) ? meta.country : [meta?.country].filter(Boolean);
+  const country = countryValues.map((item) => cleanText(item, 80)).filter(Boolean);
+  const networks = (Array.isArray(meta?.networks) ? meta.networks : [meta?.network].filter(Boolean))
+    .map((item) => cleanText(typeof item === "string" ? item : item?.name, 100)).filter(Boolean);
+  if (!imdbId || !tmdbId || !title || overview.length < 50 || !posterUrl ||
+      !isCartoonYearAllowed(year) || !episodeData.numberOfEpisodes || !voteAverage ||
+      isAdultMetadata(meta)) return null;
+  if (!genres.some((genre) => normalizeCartoonText(genre) === "animation")) return null;
+  if (!isChildrenAnimation({ genres, type: "Animation", rating: certification })) return null;
+
+  return {
+    tmdbId: Number(tmdbId),
+    title,
+    originalTitle,
+    aliases: [],
+    overview,
+    posterUrl,
+    backdropUrl: toHttps(meta?.background),
+    firstAirDate,
+    lastAirDate,
+    releaseYear: year,
+    genres,
+    keywords: [...new Set([...genres, ...(Array.isArray(meta?.tags) ? meta.tags : [])]
+      .map((item) => cleanText(item, 80)).filter(Boolean))],
+    originalLanguage,
+    audioLanguages,
+    dubLanguages: [...new Set(Array.isArray(meta?.dubLanguages)
+      ? meta.dubLanguages.map(parseLanguage).filter(Boolean) : [])],
+    country,
+    networks,
+    certification,
+    minimumAge: null,
+    contentWarnings: [],
+    kidsApproved: true,
+    voteAverage,
+    voteCount: parseNumber(meta?.imdbVotes || meta?.votes || catalogItem?.imdbVotes),
+    popularity: parseNumber(meta?.popularity || catalogItem?.popularity),
+    status: /-\s*$/.test(releaseInfo) ? "Running" : (lastAirDate ? "Ended" : ""),
+    numberOfSeasons: episodeData.numberOfSeasons,
+    numberOfEpisodes: episodeData.numberOfEpisodes,
+    seasons: episodeData.seasons,
+    featured: false,
+    hot: false,
+    popular: false,
+    playbackStatus: "unverified",
+    metadataSource: "Cinemeta keyless series metadata; TMDB ID matched via Cinemeta/Wikidata/StreamX",
+    sourceUrl: CINEMETA + "/meta/series/" + imdbId + ".json",
+    trendScore: 0,
+    trendUpdatedAt: null
+  };
+}
+
+async function buildCinemetaSeriesRecords(existingIds, needed) {
+  if (needed <= 0) return { records: [], episodes: [] };
+  console.log("\\n[4/4] Expanding series discovery through public Cinemeta catalogs…");
+  const candidates = await discoverCinemeta("series", ["Animation", "Family"], SERIES_SEARCH_TERMS);
+  console.log("Cinemeta animated series candidate IDs:", candidates.length);
+
+  const metaRows = await mapLimit(candidates, 8, async (candidate) => ({
+    candidate,
+    imdbId: candidate.imdbId,
+    meta: await fetchCinemetaMeta("series", candidate.imdbId)
+  }));
+  const usableMeta = metaRows.filter((item) => item.meta);
+  const unresolved = usableMeta.filter((item) => !Number(item.meta?.moviedb_id));
+  const wikidata = await resolveWikidataIds(unresolved.map((item) => ({ imdbId: item.imdbId })), "series");
+  const streamxRows = await mapLimit(unresolved.filter((item) => !wikidata.has(item.imdbId)), 8, async (item) => ({
+    imdbId: item.imdbId,
+    tmdbId: await resolveStreamxId("series", item.imdbId)
+  }));
+  const streamx = new Map(streamxRows.filter((item) => item.tmdbId).map((item) => [item.imdbId, item.tmdbId]));
+  const ranked = usableMeta.map((item) => ({
+    ...item,
+    tmdbId: Number(item.meta?.moviedb_id) || wikidata.get(item.imdbId) || streamx.get(item.imdbId) || null
+  })).filter((item) => item.tmdbId && !existingIds.has(Number(item.tmdbId)));
+
+  ranked.sort((a, b) => {
+    const aVotes = parseNumber(a.meta?.imdbVotes || a.meta?.votes);
+    const bVotes = parseNumber(b.meta?.imdbVotes || b.meta?.votes);
+    if (aVotes !== bVotes) return bVotes - aVotes;
+    return parseNumber(b.meta?.imdbRating) - parseNumber(a.meta?.imdbRating);
+  });
+
+  const records = [];
+  const episodes = [];
+  const seenTmdb = new Set(existingIds);
+  for (const item of ranked) {
+    if (records.length >= needed) break;
+    if (seenTmdb.has(Number(item.tmdbId))) continue;
+    const record = createCinemetaSeriesRecord(item.meta, item.candidate, Number(item.tmdbId));
+    if (!record) continue;
+    seenTmdb.add(Number(record.tmdbId));
+    records.push(record);
+    const videos = (Array.isArray(item.meta?.videos) ? item.meta.videos : []).map((video) => ({
+      season: video?.season,
+      number: video?.episode ?? video?.number,
+      name: video?.name || video?.title,
+      airdate: String(video?.released || video?.firstAired || "").slice(0, 10),
+      summary: video?.overview || video?.description || "",
+      runtime: parseRuntime(video?.runtime),
+      thumbnail: toHttps(video?.thumbnail),
+      rating: video?.rating
+    }));
+    const episodeData = buildCartoonEpisodeData(Number(item.tmdbId), videos, record.posterUrl);
+    episodes.push(...episodeData.episodes);
+  }
+  return { records, episodes };
 }
 
 function isShinchanHindiTitle(title) {
@@ -601,9 +750,20 @@ async function buildSeriesRecords(existingIds, needed) {
     episodes.push(...episodeData.episodes);
   }
   const unique = [...new Map(output.map((item) => [item.tmdbId, item])).values()];
-  const badges = deriveCartoonBadges(unique);
+  const combinedEpisodes = [...episodes];
+  const knownIds = new Set([...existingIds, ...unique.map((item) => Number(item.tmdbId))]);
+  if (unique.length < needed) {
+    const fallback = await buildCinemetaSeriesRecords(knownIds, needed - unique.length);
+    for (const record of fallback.records) {
+      if (knownIds.has(Number(record.tmdbId))) continue;
+      knownIds.add(Number(record.tmdbId));
+      unique.push(record);
+    }
+    combinedEpisodes.push(...fallback.episodes);
+  }
+  const badges = deriveCartoonBadges(unique).slice(0, needed);
   const finalIds = new Set(badges.map((item) => item.tmdbId));
-  return { records: badges, episodes: episodes.filter((item) => finalIds.has(item.seriesTmdbId)) };
+  return { records: badges, episodes: combinedEpisodes.filter((item) => finalIds.has(item.seriesTmdbId)) };
 }
 
 async function writeGeneratedFiles(movies, series, episodes) {
