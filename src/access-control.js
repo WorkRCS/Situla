@@ -37,6 +37,7 @@ export async function resolvePlaybackPrincipal(c) {
     throw error;
   }
   const ipHash = keyedHash('guest-ip:' + ip);
+  const now = new Date();
   let access = await GuestAccess.findOne({ ipHash });
   if (!access) {
     try {
@@ -47,7 +48,13 @@ export async function resolvePlaybackPrincipal(c) {
     }
   }
   if (!access) throw new Error('Guest access record could not be initialized.');
-  await GuestAccess.updateOne({ _id: access._id }, { $set: { lastSeenAt: new Date() } });
+  const lastSeenAt = access.lastSeenAt ? new Date(access.lastSeenAt).getTime() : 0;
+  if (!lastSeenAt || now.getTime() - lastSeenAt >= 60_000) {
+    await GuestAccess.updateOne(
+      { _id: access._id, lastSeenAt: access.lastSeenAt },
+      { $set: { lastSeenAt: now } }
+    );
+  }
 
   const guestToken = getCookie(c, GUEST_COOKIE);
   let guestSession = guestToken ? await GuestSession.findOne({
@@ -72,16 +79,17 @@ export async function resolvePlaybackPrincipal(c) {
 
 async function ensureUsageState(principal) {
   const filter = { ownerType: principal.ownerType, ownerId: principal.ownerId };
-  let state = await UsageState.findOne(filter);
-  if (!state) {
-    try {
-      state = await UsageState.create({ ...filter, usedSeconds: 0, cooldownUntil: null, cycleStartedAt: new Date() });
-    } catch (error) {
-      if (error?.code !== 11000) throw error;
-      state = await UsageState.findOne(filter);
-    }
+  try {
+    return await UsageState.findOneAndUpdate(
+      filter,
+      { $setOnInsert: { ...filter, usedSeconds: 0, cooldownUntil: null, cycleStartedAt: new Date() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  } catch (error) {
+    // A concurrent first request may win the unique ownerType/ownerId insert.
+    if (error?.code !== 11000) throw error;
+    return UsageState.findOne(filter);
   }
-  return state;
 }
 
 export async function readAccessStatus(principal, now = new Date()) {
@@ -201,13 +209,6 @@ export async function startPlaybackSession(principal, media, now = new Date()) {
     },
     { $set: { status: 'expired', isPlaying: false, endedAt: now, expiresAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) } }
   );
-  const active = await PlaybackSession.findOne({ ownerType: principal.ownerType, ownerId: principal.ownerId, status: 'active' });
-  if (active) {
-    const error = new Error('A watch session is already active for this account or guest IP.');
-    error.status = 409;
-    error.code = 'PLAYBACK_ALREADY_ACTIVE';
-    throw error;
-  }
   try {
     const session = await PlaybackSession.create({
       ownerType: principal.ownerType,

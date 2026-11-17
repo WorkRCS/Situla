@@ -46,6 +46,14 @@ export function getCatalogCachePolicy(method, requestUrl) {
   const hasYear = Number(url.searchParams.get('year') || 0) > 0;
 
   if (path === '/api/movies/discover') return { ttl: 90, premiumAware: true, kind: 'movie-discovery' };
+  if (path === '/api/cartoons/home') return { ttl: 60, premiumAware: false, kind: 'cartoon-home' };
+  if (path === '/api/cartoons/catalog') return { ttl: url.searchParams.get('sort') === 'random' ? 20 : 45, premiumAware: false, kind: 'cartoon-catalog' };
+  if (path === '/api/cartoons/movies') return { ttl: url.searchParams.get('sort') === 'random' ? 20 : 45, premiumAware: false, kind: 'cartoon-movies' };
+  if (path === '/api/cartoons/series') return { ttl: url.searchParams.get('sort') === 'random' ? 20 : 45, premiumAware: false, kind: 'cartoon-series' };
+  if (path === '/api/cartoons/search') return { ttl: 15, premiumAware: false, kind: 'cartoon-search' };
+  if (/^\/api\/cartoons\/movies\/[0-9]{1,12}$/.test(path)) return { ttl: 300, premiumAware: false, kind: 'cartoon-movie-detail' };
+  if (/^\/api\/cartoons\/series\/[0-9]{1,12}\/seasons\/[0-9]{1,4}$/.test(path)) return { ttl: 300, premiumAware: false, kind: 'cartoon-season-detail' };
+  if (/^\/api\/cartoons\/series\/[0-9]{1,12}$/.test(path)) return { ttl: 300, premiumAware: false, kind: 'cartoon-series-detail' };
   if (path === '/api/movies') return { ttl: random ? 25 : 60, premiumAware: !hasQuery && !hasYear, kind: 'movie-list' };
   if (path === '/api/tv') return { ttl: random ? 25 : 60, premiumAware: !hasQuery, kind: 'tv-list' };
   if (path === '/api/anime') return { ttl: random ? 25 : 60, premiumAware: !hasQuery, kind: 'anime-list' };

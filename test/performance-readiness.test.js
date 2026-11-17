@@ -95,3 +95,32 @@ test("home series shelves are chunked and memoized cards receive stable callback
   assert.match(app, /items\.slice\(0, 10\)\.map\(\(item, index\)/);
   assert.doesNotMatch(app, /items\.slice\(0, (?:16|20)\)\.map\(\(item\)/);
 });
+
+
+test("catalog cache runs after Kids Mode and account access boundaries", async () => {
+  const api = await read("../src/app.js");
+  const boundaryRegistration = api.indexOf("]) app.use(path, enforceAdultCatalogBoundary);");
+  const cacheRegistration = api.indexOf("app.use('/api/*', catalogResponseCache);");
+  assert.ok(boundaryRegistration >= 0 && cacheRegistration > boundaryRegistration);
+  const premiumAccess = api.slice(api.indexOf("async function getPremiumCatalogAccess"), api.indexOf("function pageOptions"));
+  assert.match(premiumAccess, /c\.get\('situlaPrincipal'\)/);
+  assert.match(premiumAccess, /getWatchPolicy\(principal\.user \|\| null\)/);
+});
+
+test("cartoon public catalogue reads and search metadata are cached instead of repeatedly rescanned", async () => {
+  const cache = await read("../src/redis-cache.js");
+  const api = await read("../src/app.js");
+  for (const path of [
+    "/api/cartoons/home", "/api/cartoons/catalog", "/api/cartoons/movies",
+    "/api/cartoons/series", "/api/cartoons/search"
+  ]) assert.ok(cache.includes(path), path);
+  assert.match(cache, /cartoon-movie-detail/);
+  assert.match(cache, /cartoon-season-detail/);
+  assert.match(cache, /cartoon-series-detail/);
+  const badgeCache = api.slice(api.indexOf("async function getCartoonPublicBadgeIndex"), api.indexOf("function applyCartoonPublicBadges"));
+  assert.match(badgeCache, /movieDates/);
+  assert.match(badgeCache, /seriesDates/);
+  const cartoonSearch = api.slice(api.indexOf("app.get('/api/cartoons/search'"), api.indexOf("app.get('/api/movies/discover'"));
+  assert.equal(cartoonSearch.includes("CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate')"), false);
+  assert.equal(cartoonSearch.includes("CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate')"), false);
+});

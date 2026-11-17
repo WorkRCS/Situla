@@ -41,3 +41,17 @@ test("an invalid login cookie is rejected instead of silently creating a guest p
     GuestAccess.findOne = originalGuestFindOne;
   }
 });
+
+
+test("guest access activity writes are throttled and playback ownership uses its unique active index", async () => {
+  const source = await (await import("node:fs/promises")).readFile(new URL("../src/access-control.js", import.meta.url), "utf8");
+  const principal = source.slice(source.indexOf("export async function resolvePlaybackPrincipal"), source.indexOf("async function ensureUsageState"));
+  const start = source.slice(source.indexOf("export async function startPlaybackSession"), source.indexOf("export async function heartbeatPlaybackSession"));
+  const usage = source.slice(source.indexOf("async function ensureUsageState"), source.indexOf("export async function readAccessStatus"));
+  assert.match(principal, /now\.getTime\(\) - lastSeenAt >= 60_000/);
+  assert.match(usage, /findOneAndUpdate\([\s\S]*upsert: true/);
+  assert.doesNotMatch(usage, /UsageState\.create/);
+  assert.doesNotMatch(start, /PlaybackSession\.findOne\(/);
+  assert.match(start, /PlaybackSession\.create\(/);
+  assert.match(start, /error\?\.code === 11000/);
+});

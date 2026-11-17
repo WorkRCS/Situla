@@ -86,8 +86,6 @@ app.use('/api/*', createRequestConcurrencyGuard({
   maxQueued: 48,
   queueTimeoutMs: 800
 }));
-app.use('/api/*', catalogResponseCache);
-
 function kidsModeEnabled(principal) {
   return principal?.ownerType === 'user'
     ? Boolean(principal.user?.kidsMode)
@@ -207,6 +205,10 @@ for (const path of [
   '/api/search', '/api/search/*',
   '/api/upcoming', '/api/upcoming/*'
 ]) app.use(path, enforceAdultCatalogBoundary);
+
+// Cache only after account and Kids Mode boundaries have been verified.
+// A cache hit must never bypass an account's current content restrictions.
+app.use('/api/*', catalogResponseCache);
 
 app.get('/api/kids-mode', async (c) => {
   try {
@@ -421,6 +423,17 @@ async function getMemoizedCatalogAccess(sessionToken) {
 
 async function getPremiumCatalogAccess(c) {
   if (c.get('premiumCatalogAccessResolved')) return c.get('premiumCatalogAccess');
+
+  const principal = c.get('situlaPrincipal');
+  if (principal) {
+    const access = principal.ownerType === 'user' &&
+      getWatchPolicy(principal.user || null).planId === 'premium'
+      ? { plan: 'premium' }
+      : null;
+    c.set('premiumCatalogAccessResolved', true);
+    c.set('premiumCatalogAccess', access);
+    return access;
+  }
 
   const sessionToken = getCookie(c, SESSION_COOKIE);
   // Anonymous traffic stays on the public feed and never opens a database connection for cache lookup.
@@ -1165,7 +1178,12 @@ async function getCartoonPublicBadgeIndex() {
       Number(item.tmdbId),
       { featured: item.featured === true, hot: item.hot === true, popular: item.popular === true }
     ]));
-    const value = { movies: toIndex(movieMetrics), series: toIndex(seriesMetrics) };
+    const value = {
+      movies: toIndex(movieMetrics),
+      series: toIndex(seriesMetrics),
+      movieDates: movieMetrics.map(({ releaseYear, releaseDate }) => ({ releaseYear, releaseDate })),
+      seriesDates: seriesMetrics.map(({ releaseYear, firstAirDate }) => ({ releaseYear, firstAirDate }))
+    };
     cartoonBadgeCache = {
       expiresAt: Date.now() + CARTOON_BADGE_CACHE_TTL_MS,
       value,
@@ -1570,18 +1588,15 @@ app.get('/api/cartoons/search', async (c) => {
     ]);
 
     // These values enrich the UI but are not required to return valid search matches.
-    const [movieDatesResult, seriesDatesResult, badgeIndexResult] = await Promise.allSettled([
-      CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate').lean(),
-      CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean(),
-      getCartoonPublicBadgeIndex()
-    ]);
-    const movieDates = movieDatesResult.status === 'fulfilled' ? movieDatesResult.value : movieRows;
-    const seriesDates = seriesDatesResult.status === 'fulfilled' ? seriesDatesResult.value : seriesRows;
+    const [badgeIndexResult] = await Promise.allSettled([getCartoonPublicBadgeIndex()]);
     const badgeIndex = badgeIndexResult.status === 'fulfilled'
       ? badgeIndexResult.value
-      : { movies: new Map(), series: new Map() };
+      : { movies: new Map(), series: new Map(), movieDates: movieRows, seriesDates: seriesRows };
 
-    const dateRange = cartoonDatabaseDateRange(movieDates, seriesDates);
+    const dateRange = cartoonDatabaseDateRange(
+      badgeIndex.movieDates || movieRows,
+      badgeIndex.seriesDates || seriesRows
+    );
     const combined = [
       ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map((item) => ({
         ...cartoonMovieDto(item),

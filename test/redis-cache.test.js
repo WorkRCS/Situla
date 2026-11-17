@@ -18,7 +18,15 @@ test('catalog cache allowlist covers landing, movie, TV, anime, A-to-Z search an
     '/api/tv/1399/seasons/1',
     '/api/anime?page=1',
     '/api/anime/5114',
-    '/api/search?q=naruto'
+    '/api/search?q=naruto',
+    '/api/cartoons/home',
+    '/api/cartoons/catalog?page=1',
+    '/api/cartoons/movies?page=1',
+    '/api/cartoons/series?page=1',
+    '/api/cartoons/search?q=spider',
+    '/api/cartoons/movies/123',
+    '/api/cartoons/series/123',
+    '/api/cartoons/series/123/seasons/1'
   ];
   for (const path of paths) assert.ok(getCatalogCachePolicy('GET', 'https://situla.example' + path), path);
   for (const path of ['/api/auth/me', '/api/admin/users', '/api/presence', '/api/access/status', '/api/playback/start']) {
@@ -34,6 +42,12 @@ test('cache policy varies TTL and premium scope by route and query', () => {
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/tv?q=lost').premiumAware, false);
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/tv?random=true').ttl, 25);
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/movies/tt0133093').ttl, 300);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/home').ttl, 60);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/search?q=spider').ttl, 15);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/movies/123').ttl, 300);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/series/123/seasons/1').ttl, 300);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/upcoming').premiumAware, undefined);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/announcements').premiumAware, undefined);
 });
 
 test('canonical cache key ignores parameter order but preserves filters and premium variant', () => {
