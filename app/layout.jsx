@@ -3,7 +3,6 @@ import "./globals.css";
 import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
 import RouteProgress from "./components/route-progress.jsx";
-import ServerActivityLoader from "./components/server-activity-loader.jsx";
 import PersistentSitulaApp from "./components/persistent-situla-app.jsx";
 
 
@@ -33,7 +32,6 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <RouteProgress />
-        <ServerActivityLoader />
         <PersistentSitulaApp>{children}</PersistentSitulaApp>
         <PresenceTracker />
         <SiteFooter />

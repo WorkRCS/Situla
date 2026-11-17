@@ -916,6 +916,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPalettes, setHeroPalettes] = useState({ normal: "", kids: "" });
+  const reportNormalHeroPalette = useCallback((rgb) => {
+    setHeroPalettes((current) => ({ ...current, normal: rgb || "" }));
+  }, []);
+  const reportKidsHeroPalette = useCallback((rgb) => {
+    setHeroPalettes((current) => ({ ...current, kids: rgb || "" }));
+  }, []);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -1834,13 +1841,15 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
   const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;
+  const activeHeroPalette = tab === "home" ? heroPalettes[kidsMode ? "kids" : "normal"] : "";
+  const appShellStyle = activeHeroPalette ? { "--home-hero-rgb": activeHeroPalette } : undefined;
 
   useEffect(() => {
     if (tab === "home" && featured) prefetchHomeSpotlight(featured);
   }, [tab, featured?.heroId]);
 
   return (
-    <main className="app-shell">
+    <main className={"app-shell" + (activeHeroPalette ? " has-home-hero-palette" : "")} style={appShellStyle}>
       <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
         <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
           <Link href="/" className="brand-lockup" aria-label="Situla home">
@@ -2143,7 +2152,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 }}
                 getTitle={(item) => item.heroTitle || "Untitled"}
                 ariaLabel="Movies, TV series and anime spotlight"
-                renderCenter={(heroItem) => {
+                onPaletteChange={reportNormalHeroPalette}
+                renderCenter={(heroItem, onCenterImageLoad) => {}
                   const navigationKey = heroItem.mediaType === "movie"
                     ? "movie:" + heroItem.imdbId
                     : heroItem.mediaType + ":" + String(heroItem.mediaType === "tv" ? heroItem.tmdbId : heroItem.malId);
@@ -2152,10 +2162,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                       {(heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl) && (
                         <img
                           className="hero-image"
+                          crossOrigin="anonymous"
                           src={heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl}
                           alt=""
                           fetchPriority="high"
                           decoding="async"
+                          onLoad={onCenterImageLoad}
                           onError={(event) => {
                             const fallback = heroItem.heroPoster || heroItem.posterUrl || heroItem.posterFallbackUrl;
                             if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
@@ -2262,7 +2274,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             
             </div>
             <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
-              <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
+              <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} onHeroPaletteChange={reportKidsHeroPalette} />
             </div>
             <SiteFooter inApp />
           </div>

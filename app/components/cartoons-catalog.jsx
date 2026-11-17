@@ -166,7 +166,7 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
+function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true, onPaletteChange }) {
   const current = items?.[index] || items?.[0] || null;
   if (!current) return null;
 
@@ -175,13 +175,14 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
       items={items}
       index={index}
       onIndexChange={onIndexChange}
+      onPaletteChange={onPaletteChange}
       getImage={(item) => {
         const image = item.backdropUrl || item.posterUrl;
         return image ? optimizeTmdbImageUrl(image, "w342") : "";
       }}
       getTitle={(item) => item.title || "Untitled cartoon"}
       ariaLabel="Approved cartoons spotlight"
-      renderCenter={(item) => {
+      renderCenter={(item, onCenterImageLoad) => {
         const isMovie = item.mediaType === "cartoon_movie";
         const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
         const href = isMovie
@@ -192,7 +193,7 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
 
         return (
           <section className="hero-card home-hero-card cartoons-home-hero" aria-label="Cartoon spotlight">
-            {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
+            {imageUrl && <img className="hero-image" crossOrigin="anonymous" src={imageUrl} alt="" fetchPriority="high" decoding="async" onLoad={onCenterImageLoad} />}
             <div className="hero-content">
               <div className="hero-eyebrow"><span className="hero-live-dot" /> {kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</div>
               <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>
@@ -215,7 +216,7 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
   );
 }
 
-export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, isSaved, onSave, onShare, onPrepareShare }) {
+export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, isSaved, onSave, onShare, onPrepareShare, onHeroPaletteChange }) {
   const [home, setHome] = useState(null);
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
@@ -430,6 +431,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           items={cartoonHeroItems}
           index={heroIndex}
           onIndexChange={setHeroIndex}
+          onPaletteChange={onHeroPaletteChange}
           kidsMode={kidsMode}
         />
         {cartoonFeedItems.length > 0 && (

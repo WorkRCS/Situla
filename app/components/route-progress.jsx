@@ -3,43 +3,132 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
+const IGNORED_MUTATIONS = new Set([
+  "/api/presence",
+  "/api/playback/heartbeat",
+  "/api/playback/stop"
+]);
+
+function isUserTriggeredServerRequest(input, init, userActionAt) {
+  if (typeof window === "undefined") return false;
+
+  const requestUrl = typeof input === "string"
+    ? input
+    : input && typeof input.url === "string"
+      ? input.url
+      : String(input || "");
+  const requestMethod = String(
+    init?.method || (typeof Request !== "undefined" && input instanceof Request ? input.method : "GET")
+  ).toUpperCase();
+  const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(requestMethod);
+  const isRecentUserRead = requestMethod === "GET" &&
+    userActionAt > 0 && Date.now() - userActionAt <= 850;
+
+  if (!isMutation && !isRecentUserRead) return false;
+
+  try {
+    const url = new URL(requestUrl, window.location.href);
+    return url.origin === window.location.origin &&
+      url.pathname.startsWith("/api/") &&
+      url.pathname !== "/api/upcoming/status" &&
+      !IGNORED_MUTATIONS.has(url.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export default function RouteProgress() {
   const pathname = usePathname() || "/";
   const pendingRef = useRef(null);
+  const activeRequestsRef = useRef(0);
+  const userActionAtRef = useRef(0);
   const doneTimerRef = useRef(null);
   const startTimerRef = useRef(null);
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    function start(target, deferStateUpdate = false) {
-      const current = pendingRef.current;
-      if (current && current.pathname === target.pathname &&
-          current.search === target.search && !current.finishing) return;
+    const originalFetch = window.fetch;
+
+    function clearDoneTimer() {
       if (doneTimerRef.current) {
         window.clearTimeout(doneTimerRef.current);
         doneTimerRef.current = null;
       }
+    }
+
+    function scheduleProgress(pending, deferStateUpdate = false, delay = 0) {
+      const showProgress = () => {
+        startTimerRef.current = null;
+        if (pendingRef.current !== pending) return;
+        pending.shown = true;
+        setVisible(true);
+        setProgress((value) => Math.max(value, 12));
+      };
+
+      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
+      if (deferStateUpdate || delay > 0) {
+        startTimerRef.current = window.setTimeout(showProgress, delay);
+      } else {
+        showProgress();
+      }
+    }
+
+    function startRoute(target, deferStateUpdate = false) {
+      const current = pendingRef.current;
+      if (current && current.pathname === target.pathname &&
+          current.search === target.search && !current.finishing) {
+        current.routeExpected = true;
+        return;
+      }
+
+      clearDoneTimer();
       const pending = {
         pathname: target.pathname,
         search: target.search,
         startedAt: Date.now(),
         matchedAt: 0,
+        routeExpected: true,
         finishing: false
       };
       pendingRef.current = pending;
+      setProgress(12);
+      scheduleProgress(pending, deferStateUpdate);
+    }
 
-      const showProgress = () => {
-        startTimerRef.current = null;
-        if (pendingRef.current !== pending) return;
-        setVisible(true);
-        setProgress((value) => Math.max(value, 12));
+    function startServerRequest() {
+      activeRequestsRef.current += 1;
+      const current = pendingRef.current;
+      if (current && !current.finishing) return;
+
+      clearDoneTimer();
+      const currentUrl = new URL(window.location.href);
+      const pending = {
+        pathname: currentUrl.pathname,
+        search: currentUrl.search,
+        startedAt: Date.now(),
+        matchedAt: Date.now(),
+        routeExpected: false,
+        finishing: false
       };
-      if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (deferStateUpdate) {
-        startTimerRef.current = window.setTimeout(showProgress, 0);
-      } else {
-        showProgress();
+      pendingRef.current = pending;
+      setProgress(12);
+      // Very short API calls should not flash a progress indicator.
+      scheduleProgress(pending, false, 120);
+    }
+
+    function finishServerRequest() {
+      activeRequestsRef.current = Math.max(0, activeRequestsRef.current - 1);
+      const pending = pendingRef.current;
+      if (activeRequestsRef.current === 0 && pending && !pending.routeExpected &&
+          !pending.finishing && !pending.shown) {
+        // A fast API response finishes before the display threshold; discard
+        // it instead of flashing the bar after the response has arrived.
+        if (startTimerRef.current) {
+          window.clearTimeout(startTimerRef.current);
+          startTimerRef.current = null;
+        }
+        pendingRef.current = null;
       }
     }
 
@@ -61,11 +150,28 @@ export default function RouteProgress() {
       if (target.origin !== window.location.origin) return;
       if (target.pathname === window.location.pathname &&
           target.search === window.location.search) return;
-      start(target);
+      startRoute(target);
     }
 
     function onPopState() {
-      start(new URL(window.location.href));
+      startRoute(new URL(window.location.href));
+    }
+
+    function markUserAction() {
+      userActionAtRef.current = Date.now();
+    }
+
+    async function trackedFetch(input, init) {
+      if (!isUserTriggeredServerRequest(input, init, userActionAtRef.current)) {
+        return originalFetch.apply(this, arguments);
+      }
+
+      startServerRequest();
+      try {
+        return await originalFetch.apply(this, arguments);
+      } finally {
+        finishServerRequest();
+      }
     }
 
     function wrapHistoryMethod(method, trackSearch) {
@@ -81,9 +187,9 @@ export default function RouteProgress() {
         const changed = target && target.origin === currentUrl.origin &&
           (target.pathname !== currentUrl.pathname || (trackSearch && target.search !== currentUrl.search));
         const result = original.apply(this, arguments);
-        // Next.js can call history methods from useInsertionEffect. Deferring
-        // React state updates avoids scheduling work from that effect.
-        if (changed) start(target, true);
+        // Next.js can call history methods from useInsertionEffect. Defer state
+        // updates so router transitions never schedule React work in that effect.
+        if (changed) startRoute(target, true);
         return result;
       }
       window.history[method] = wrappedHistoryMethod;
@@ -97,14 +203,25 @@ export default function RouteProgress() {
     const restorePushState = wrapHistoryMethod("pushState", true);
     const restoreReplaceState = wrapHistoryMethod("replaceState", false);
     document.addEventListener("click", onDocumentClick, true);
+    document.addEventListener("pointerdown", markUserAction, true);
+    document.addEventListener("keydown", markUserAction, true);
+    document.addEventListener("submit", markUserAction, true);
+    window.addEventListener("wheel", markUserAction, { capture: true, passive: true });
+    window.addEventListener("touchstart", markUserAction, { capture: true, passive: true });
     window.addEventListener("popstate", onPopState);
+    window.fetch = trackedFetch;
+
     return () => {
       document.removeEventListener("click", onDocumentClick, true);
+      document.removeEventListener("pointerdown", markUserAction, true);
+      document.removeEventListener("keydown", markUserAction, true);
+      document.removeEventListener("submit", markUserAction, true);
+      window.removeEventListener("wheel", markUserAction, true);
+      window.removeEventListener("touchstart", markUserAction, true);
       window.removeEventListener("popstate", onPopState);
-      restorePushState();
-      restoreReplaceState();
+      if (window.fetch === trackedFetch) window.fetch = originalFetch;
       if (startTimerRef.current) window.clearTimeout(startTimerRef.current);
-      if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
+      clearDoneTimer();
     };
   }, []);
 
@@ -119,41 +236,42 @@ export default function RouteProgress() {
         window.location.search === pending.search;
       const routeCommitted = pathname === pending.pathname;
 
-      if (urlMatches && routeCommitted) {
+      let routeReady = !pending.routeExpected;
+      if (pending.routeExpected && urlMatches && routeCommitted) {
         if (!pending.matchedAt) pending.matchedAt = Date.now();
-        if (Date.now() - pending.matchedAt >= 180) {
-          pending.finishing = true;
-          setProgress(100);
-          doneTimerRef.current = window.setTimeout(() => {
-            if (pendingRef.current === pending) {
-              pendingRef.current = null;
-              setVisible(false);
-              setProgress(0);
-            }
-            doneTimerRef.current = null;
-          }, 220);
-          return;
-        }
-      } else {
+        routeReady = Date.now() - pending.matchedAt >= 180;
+      } else if (pending.routeExpected) {
         pending.matchedAt = 0;
       }
 
+      const serverReady = activeRequestsRef.current === 0;
+      if (routeReady && serverReady) {
+        finishPending(pending);
+        return;
+      }
+
+      // A stalled request or route must not leave the bar stuck forever.
       if (elapsed >= 30_000) {
-        pending.finishing = true;
-        setProgress(100);
-        doneTimerRef.current = window.setTimeout(() => {
-          if (pendingRef.current === pending) {
-            pendingRef.current = null;
-            setVisible(false);
-            setProgress(0);
-          }
-          doneTimerRef.current = null;
-        }, 180);
+        finishPending(pending, 180);
         return;
       }
 
       setProgress((value) => Math.min(92, value + (value < 30 ? 7 : value < 70 ? 3 : 1)));
     }, 100);
+
+    function finishPending(pending, hideDelay = 220) {
+      if (pending.finishing) return;
+      pending.finishing = true;
+      setProgress(100);
+      doneTimerRef.current = window.setTimeout(() => {
+        if (pendingRef.current === pending) {
+          pendingRef.current = null;
+          setVisible(false);
+          setProgress(0);
+        }
+        doneTimerRef.current = null;
+      }, hideDelay);
+    }
 
     return () => window.clearInterval(interval);
   }, [visible, pathname]);
@@ -162,7 +280,7 @@ export default function RouteProgress() {
     <div
       className={"site-route-progress" + (visible ? " is-visible" : "")}
       role="progressbar"
-      aria-label="Loading page from Situla server"
+      aria-label="Loading page and server request"
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={visible ? progress : 0}
