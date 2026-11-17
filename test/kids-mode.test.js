@@ -124,18 +124,18 @@ test("Cartoon detail and watch routes mount the dedicated components", async () 
   const movie = await read("../app/cartoons/watch/movie/[tmdbId]/page.jsx");
   const episode = await read("../app/cartoons/watch/tv/[tmdbId]/[seasonNumber]/[episodeNumber]/page.jsx");
   const player = await read("../app/components/cartoon-media-player.jsx");
-  assert.match(series, /<CartoonSeriesDetail tmdbId=\\{id\\} \/>/);
-  assert.match(movie, /<CartoonMediaPlayer type="movie" tmdbId=\\{id\\} \/>/);
+  assert.match(series, /<CartoonSeriesDetail tmdbId=\{id\} \/>/);
+  assert.match(movie, /<CartoonMediaPlayer type="movie" tmdbId=\{id\} \/>/);
   assert.match(episode, /<CartoonMediaPlayer type="tv"/);
   assert.match(player, /iframeUrl && sessionId && !error/);
-  assert.match(player, /cartoonMoviePlaybackUrl\\(tmdbId, resume\\)/);
-  assert.match(player, /cartoonTvPlaybackUrl\\(tmdbId, seasonNumber, episodeNumber, resume\\)/);
+  assert.match(player, /cartoonMoviePlaybackUrl\(tmdbId, resume\)/);
+  assert.match(player, /cartoonTvPlaybackUrl\(tmdbId, seasonNumber, episodeNumber, resume\)/);
 });
 
 test("Kids Home spotlight mixes cartoons and auto-rotates like the normal home hero", async () => {
   const cartoons = await read("../app/components/cartoons-catalog.jsx");
   assert.match(cartoons, /cartoonHeroItems/);
-  assert.match(cartoons, /setInterval\\([\\s\\S]*?\\}, 3000\\)/);
+  assert.match(cartoons, /setInterval\([\s\S]*?\}, 3000\)/);
   assert.match(cartoons, /Previous featured cartoon/);
   assert.match(cartoons, /Next featured cartoon/);
 });
