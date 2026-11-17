@@ -53,3 +53,12 @@ test("runtime metadata uses the same hour-minute-second formatter", async () => 
     assert.ok(source.includes(token), path + " must use the shared runtime formatter");
   }
 });
+
+test("mixed Cartoons landing hides its heading, counts, sort controls and genre chips", async () => {
+  const source = await read("../app/components/cartoons-catalog.jsx");
+  assert.ok(source.includes("{!mixedView && ("));
+  assert.ok(source.includes('className="section-heading shelf-heading"'));
+  assert.ok(source.includes('className="catalog-toolbar catalog-toolbar-sort-only"'));
+  assert.ok(source.includes('className="home-genre-row"'));
+  assert.ok(source.includes('className="catalog-grid"'));
+});

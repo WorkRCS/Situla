@@ -420,22 +420,23 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
 
   return (
     <section className="pb-8 cartoons-listing-catalog" aria-label={pageTitle}>
-      <div className="section-heading shelf-heading">
-        <div>
-          <span>{kidsMode
-            ? mixedView ? "SITULA KIDS · MIXED FAMILY CATALOGUE" : "SITULA KIDS · APPROVED CATALOGUE"
-            : mixedView ? "SITULA · MIXED CARTOON CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</span>
-          <h1>{pageTitle}</h1>
-          {mixedView && <p className="series-card-meta">{total ? total + " approved movies & series" : "Movies and TV series in one collection"}</p>}
-        </div>
-      </div>
-      <div className="catalog-toolbar catalog-toolbar-sort-only">
-        <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="random">{mixedView ? "Random mix" : "Random"}</option><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
-      </div>
-      {!!genres.length && (
-        <div className="home-genre-row">
-          {["All", ...genres].map((genre) => <button type="button" key={genre} onClick={() => setSelectedGenre(genre)} className={"genre-chip" + (selectedGenre === genre ? " active" : "")} aria-pressed={selectedGenre === genre}>{genre}</button>)}
-        </div>
+      {!mixedView && (
+        <>
+          <div className="section-heading shelf-heading">
+            <div>
+              <span>{kidsMode ? "SITULA KIDS · APPROVED CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</span>
+              <h1>{pageTitle}</h1>
+            </div>
+          </div>
+          <div className="catalog-toolbar catalog-toolbar-sort-only">
+            <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="random">Random</option><option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
+          </div>
+          {!!genres.length && (
+            <div className="home-genre-row">
+              {["All", ...genres].map((genre) => <button type="button" key={genre} onClick={() => setSelectedGenre(genre)} className={"genre-chip" + (selectedGenre === genre ? " active" : "")} aria-pressed={selectedGenre === genre}>{genre}</button>)}
+            </div>
+          )}
+        </>
       )}
       {error && <p className="catalog-load-more-error" role="alert">{error}</p>}
       {items.length ? (
