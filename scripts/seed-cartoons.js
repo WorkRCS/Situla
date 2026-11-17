@@ -626,17 +626,23 @@ export async function seedCartoonCatalog() {
   await mkdir(CACHE_DIR, { recursive: true });
   await connectDatabase();
 
-  const [existingMovieRows, existingSeriesRows] = await Promise.all([
+  const [allMovieRows, allSeriesRows, approvedMovieRows, approvedSeriesRows] = await Promise.all([
+    CartoonMovie.find().select("tmdbId").lean(),
+    CartoonSeries.find().select("tmdbId").lean(),
     CartoonMovie.find(approvedCartoonMovieFilter()).select("tmdbId").lean(),
     CartoonSeries.find(approvedCartoonSeriesFilter()).select("tmdbId").lean()
   ]);
-  const existingMovieIds = new Set(existingMovieRows.map((item) => Number(item.tmdbId)));
-  const existingSeriesIds = new Set(existingSeriesRows.map((item) => Number(item.tmdbId)));
-  const movieNeed = Math.max(0, TARGET_MOVIES - existingMovieIds.size);
-  const seriesNeed = Math.max(0, TARGET_SERIES - existingSeriesIds.size);
+  // Exclude every stored ID from discovery, but count only Kids-approved 2000+ rows toward targets.
+  const existingMovieIds = new Set(allMovieRows.map((item) => Number(item.tmdbId)));
+  const existingSeriesIds = new Set(allSeriesRows.map((item) => Number(item.tmdbId)));
+  const approvedMovieCount = approvedMovieRows.length;
+  const approvedSeriesCount = approvedSeriesRows.length;
+  const movieNeed = Math.max(0, TARGET_MOVIES - approvedMovieCount);
+  const seriesNeed = Math.max(0, TARGET_SERIES - approvedSeriesCount);
 
   console.log("Situla Cartoon seed — no provider API keys required.");
-  console.log("Existing approved post-2000 records:", { movies: existingMovieIds.size, series: existingSeriesIds.size });
+  console.log("Existing stored records:", { movies: existingMovieIds.size, series: existingSeriesIds.size });
+  console.log("Existing approved post-2000 records:", { movies: approvedMovieCount, series: approvedSeriesCount });
   console.log("New records requested:", { movies: movieNeed, series: seriesNeed });
   if (!movieNeed && !seriesNeed) {
     console.log("Target totals are already present; no records were changed.");
@@ -653,8 +659,8 @@ export async function seedCartoonCatalog() {
 
   console.log("Generated files:", JSON.stringify(fileSummary));
   console.log("Preflight:", {
-    movies: movies.length + existingMovieIds.size, targetMovies: TARGET_MOVIES,
-    series: series.length + existingSeriesIds.size, targetSeries: TARGET_SERIES,
+    movies: movies.length + approvedMovieCount, targetMovies: TARGET_MOVIES,
+    series: series.length + approvedSeriesCount, targetSeries: TARGET_SERIES,
     episodeRows: episodes.length
   });
 
