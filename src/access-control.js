@@ -1,5 +1,5 @@
 import { getCookie, setCookie } from 'hono/cookie';
-import { randomToken, hashToken, keyedHash, getClientIp, GUEST_COOKIE, getAuthenticatedSession, getSuspendedSession } from './auth.js';
+import { randomToken, hashToken, keyedHash, getClientIp, SESSION_COOKIE, GUEST_COOKIE, getAuthenticatedSession, getSuspendedSession } from './auth.js';
 import { GuestAccess, GuestSession, UsageState, PlaybackSession } from './models.js';
 import { getWatchPolicy, getAccessSnapshot } from './membership-policy.js';
 
@@ -8,6 +8,9 @@ const ACTIVE_SESSION_LEASE_MS = 90 * 1000;
 const GUEST_SESSION_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 export async function resolvePlaybackPrincipal(c) {
+  // A supplied login cookie represents an explicit account session. Never
+  // downgrade that request to guest access when the session is stale/revoked.
+  const loginToken = getCookie(c, SESSION_COOKIE);
   const authenticated = await getAuthenticatedSession(c);
   if (authenticated) {
     return { ownerType: 'user', ownerId: authenticated.user._id, user: authenticated.user, session: authenticated.session };
@@ -18,6 +21,12 @@ export async function resolvePlaybackPrincipal(c) {
     error.status = 403;
     error.code = 'ACCOUNT_SUSPENDED';
     error.suspendedUntil = suspended.user.suspendedUntil || null;
+    throw error;
+  }
+  if (loginToken) {
+    const error = new Error('Your sign-in session is no longer valid. Please sign in again.');
+    error.status = 401;
+    error.code = 'AUTH_SESSION_INVALID';
     throw error;
   }
   const ip = getClientIp(c);

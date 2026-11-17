@@ -476,3 +476,12 @@ test("Cartoon Movie and TV embeds use the configured VidBolt TMDB routes", async
   assert.equal(episode.origin + episode.pathname, "https://vidbolt.pro/tv/23456/2/7");
   assert.equal(episode.searchParams.get("nextEpisodeButton"), "true");
 });
+
+test("Cartoon playback APIs retain same-origin credentials and never call account logout", async () => {
+  const cartoonPlayer = await read("../app/components/cartoon-media-player.jsx");
+  for (const endpoint of ["/api/playback/start", "/api/playback/heartbeat", "/api/playback/stop"]) {
+    const escaped = endpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(cartoonPlayer, new RegExp('fetch\\("' + escaped + '"[\\s\\S]*?credentials: "same-origin"'));
+  }
+  assert.doesNotMatch(cartoonPlayer, /\/api\/auth\/logout|revokeCurrentSession|clearAuthCookies/);
+});

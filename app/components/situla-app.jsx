@@ -17,6 +17,11 @@ import CartoonsCatalog, { CartoonCard } from "./cartoons-catalog.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { formatRuntimeDuration } from "../../src/media-time.js";
+import {
+  getCachedAccountUser,
+  resolveAccountUserRefresh,
+  setCachedAccountUser
+} from "../../src/client-account-session.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
 import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
@@ -839,7 +844,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchLoadingMore, setSearchLoadingMore] = useState(false);
   const searchRequestVersion = useRef(0);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [accountUser, setAccountUser] = useState(null);
+  const [accountUser, setAccountUser] = useState(() => getCachedAccountUser());
+  const accountSyncVersion = useRef(0);
   const [kidsMode, setKidsMode] = useState(false);
   const [kidsModeReady, setKidsModeReady] = useState(false);
   const [kidsModeBusy, setKidsModeBusy] = useState(false);
@@ -994,12 +1000,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   useEffect(() => {
     let active = true;
     async function syncServerAccount() {
+      const requestVersion = ++accountSyncVersion.current;
       try {
         const response = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
         const payload = await response.json().catch(() => ({}));
-        if (active) setAccountUser(response.ok && payload.user ? payload.user : null);
+        if (active && requestVersion === accountSyncVersion.current) {
+          const nextUser = resolveAccountUserRefresh(response, payload, getCachedAccountUser());
+          setCachedAccountUser(nextUser);
+          setAccountUser(nextUser);
+        }
       } catch {
-        if (active) setAccountUser(null);
+        // A temporary network/API failure is not proof that the member signed out.
       }
     }
     syncServerAccount();
@@ -1007,6 +1018,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     window.addEventListener("situla:auth-change", syncServerAccount);
     return () => {
       active = false;
+      accountSyncVersion.current += 1;
       window.removeEventListener("focus", syncServerAccount);
       window.removeEventListener("situla:auth-change", syncServerAccount);
     };
@@ -1978,13 +1990,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         </button>
                       )}
                       <button type="button" className="header-popover-action is-danger" role="menuitem" onClick={async () => {
-                        await fetch("/api/auth/logout", {
+                        accountSyncVersion.current += 1;
+                        const response = await fetch("/api/auth/logout", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           credentials: "same-origin",
                           body: "{}"
                         }).catch(() => null);
-                        setAccountUser(null);
+                        if (response?.ok) {
+                          setCachedAccountUser(null);
+                          setAccountUser(null);
+                        }
                         setAccountOpen(false);
                         window.dispatchEvent(new Event("situla:auth-change"));
                         router.push("/login");
