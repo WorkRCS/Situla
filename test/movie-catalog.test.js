@@ -131,7 +131,8 @@ test("Movie importer uses public Cinemeta, validates before insert, and is orche
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   const workflow = await readFile(new URL("../.github/workflows/catalogue-seed.yml", import.meta.url), "utf8");
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.equal(pkg.scripts["check:movies"], "node --test test/movie-catalog.test.js");
   assert.match(runner, /seedMovieAdditions/);
   assert.match(script, /https:\/\/v3-cinemeta\.strem\.io/);
