@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import SitulaApp from "../../../../../../components/situla-app";
+import CartoonMediaPlayer from "../../../../../../components/cartoon-media-player.jsx";
 
 function positiveInteger(value, allowZero = false) {
   const raw = String(value ?? "").trim();
@@ -20,13 +20,6 @@ export default async function CartoonEpisodeWatchPage({ params }) {
   const episode = positiveInteger(episodeNumber);
   if (!id || season === null || !episode) notFound();
   return (
-    <SitulaApp
-      key={"cartoon-tv-player-" + id + "-" + season + "-" + episode}
-      view="cartoonWatch"
-      cartoonType="tv"
-      tmdbId={id}
-      seasonNumber={season}
-      episodeNumber={episode}
-    />
+    <CartoonMediaPlayer type="tv" tmdbId={id} seasonNumber={season} episodeNumber={episode} />
   );
 }

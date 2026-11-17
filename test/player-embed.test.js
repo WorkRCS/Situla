@@ -465,3 +465,14 @@ test("catalog load-more failures remain visible and can be retried without losin
   assert.match(css, /\.catalog-load-more-error/);
   assert.match(css, /\.catalog-load-spinner/);
 });
+
+
+test("Cartoon Movie and TV embeds use the configured VidBolt TMDB routes", async () => {
+  const { cartoonMoviePlaybackUrl, cartoonTvPlaybackUrl } = await import("../src/player-urls.js");
+  const movie = new URL(cartoonMoviePlaybackUrl("12345"));
+  const episode = new URL(cartoonTvPlaybackUrl("23456", 2, 7));
+  assert.equal(movie.origin + movie.pathname, "https://vidbolt.pro/movie/12345");
+  assert.equal(movie.searchParams.get("theme"), "e8b65b");
+  assert.equal(episode.origin + episode.pathname, "https://vidbolt.pro/tv/23456/2/7");
+  assert.equal(episode.searchParams.get("nextEpisodeButton"), "true");
+});

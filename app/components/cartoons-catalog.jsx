@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Baby, Film, Search, Star, Tv, ArrowUpRight, Sparkles } from "lucide-react";
+import { Baby, Film, Search, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 
 function formatYear(value) {
@@ -90,7 +90,7 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ item }) {
+function CartoonSpotlight({ item, onPause, onResume, onPrevious, onNext, index = 0, total = 0 }) {
   if (!item) return null;
   const isMovie = item.mediaType === "cartoon_movie";
   const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
@@ -101,11 +101,21 @@ function CartoonSpotlight({ item }) {
   const imageUrl = image ? optimizeTmdbImageUrl(image, item.backdropUrl ? "w780" : "w342") : "";
 
   return (
-    <section className="hero-card catalog-spotlight" key={item.tmdbId}>
+    <section
+      className="hero-card catalog-spotlight"
+      key={item.mediaType + ":" + item.tmdbId}
+      onMouseEnter={onPause}
+      onMouseLeave={onResume}
+      onFocusCapture={onPause}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) onResume?.();
+      }}
+      aria-label="Cartoon spotlight"
+    >
       {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
       <div className="hero-content">
         <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA KIDS · FAMILY CATALOGUE</div>
-        <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : "POPULAR CARTOON"}</p>
+        <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>
         <h2 className="hero-title">{item.title}</h2>
         <div className="hero-meta">
           {year && <span>{year}</span>}
@@ -113,10 +123,22 @@ function CartoonSpotlight({ item }) {
           {item.minimumAge != null && <span>{Number(item.minimumAge)}+</span>}
           {(item.genres || []).slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
         </div>
-        <p className="hero-description">{item.overview || "Discover this family-friendly animated series on Situla."}</p>
+        <p className="hero-description">{item.overview || "Discover this family-friendly animated title on Situla."}</p>
         <div className="hero-actions">
           <Link href={href} className="gold-button"><Film size={16} /> {isMovie ? "Watch movie" : "Explore series"}</Link>
         </div>
+        {total > 1 && (
+          <div className="hero-carousel-footer">
+            <span className="hero-carousel-label">DISCOVER ANOTHER CARTOON · {index + 1}/{total}</span>
+            <div className="hero-carousel-controls">
+              <button type="button" className="hero-arrow" onClick={onPrevious} aria-label="Previous featured cartoon"><ChevronLeft size={16} /></button>
+              <span className="hero-progress-track" aria-hidden="true">
+                <span className="hero-progress-fill" key={item.mediaType + ":" + item.tmdbId} />
+              </span>
+              <button type="button" className="hero-arrow" onClick={onNext} aria-label="Next featured cartoon"><ChevronRight size={16} /></button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -137,6 +159,8 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
   const [shuffleSeed, setShuffleSeed] = useState("");
   const [loadMoreError, setLoadMoreError] = useState("");
   const [error, setError] = useState("");
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
 
   const homeView = view === "kidsHome";
   const mixedView = view === "cartoons";
@@ -247,6 +271,32 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
     };
   }, [home]);
 
+  const cartoonHeroItems = useMemo(() => {
+    const series = sortedHome?.series || [];
+    const movies = sortedHome?.movies || [];
+    const mixed = [];
+    for (let index = 0; index < Math.max(series.length, movies.length); index += 1) {
+      if (series[index]) mixed.push(series[index]);
+      if (movies[index]) mixed.push(movies[index]);
+    }
+    return mixed.slice(0, 24);
+  }, [sortedHome]);
+
+  useEffect(() => {
+    setHeroIndex(0);
+  }, [cartoonHeroItems]);
+
+  useEffect(() => {
+    if (!homeView || cartoonHeroItems.length < 2 || heroPaused) return undefined;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        setHeroIndex((current) => (current + 1) % cartoonHeroItems.length);
+      }
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [homeView, cartoonHeroItems.length, heroPaused]);
+
   if (loading && !homeView && !items.length) {
     return <section className="catalog-page-state"><span className="inline-loading-spinner" /><p>Loading approved cartoons…</p></section>;
   }
@@ -255,10 +305,18 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
   }
 
   if (homeView) {
-    const featured = sortedHome?.featuredSeries || sortedHome?.featuredMovie;
+    const featured = cartoonHeroItems[heroIndex] || sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
       <section className="pb-8" aria-label="Cartoons catalog">
-        <CartoonSpotlight item={featured} />
+        <CartoonSpotlight
+          item={featured}
+          index={heroIndex}
+          total={cartoonHeroItems.length}
+          onPause={() => setHeroPaused(true)}
+          onResume={() => setHeroPaused(false)}
+          onPrevious={() => setHeroIndex((current) => (current - 1 + cartoonHeroItems.length) % cartoonHeroItems.length)}
+          onNext={() => setHeroIndex((current) => (current + 1) % cartoonHeroItems.length)}
+        />
         <CartoonShelf title="Featured TV series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" variant="featured" moreHref="/cartoons/tv" />
         <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" variant="hot" moreHref="/cartoons/tv" />
         <CartoonShelf title="Popular cartoon series" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularSeries} kind="series" variant="popular" moreHref="/cartoons/tv" />

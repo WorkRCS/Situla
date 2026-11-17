@@ -261,8 +261,8 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
           {item.voteAverage > 0 && <span className="cartoon-player-rating"><Star size={14} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
         </header>
       )}
-      {iframeUrl && !error && (
-        <section className="cartoon-player-frame-wrap" aria-label="VidBolt cartoon player">
+      {iframeUrl && sessionId && !error && (
+        <section className="cartoon-player-frame-wrap" aria-label="Verified VidBolt cartoon player">
           <iframe
             ref={iframeRef}
             src={iframeUrl}
@@ -273,7 +273,7 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
           />
         </section>
       )}
-      {playbackReady && !sessionId && !error && <p className="cartoon-player-state">Verifying playback access…</p>}
+      {playbackReady && !sessionId && !error && <p className="cartoon-player-state">Verifying playback access before opening the player…</p>}
       {item?.overview && <p className="cartoon-player-overview">{item.overview}</p>}
       {!isMovie && episode && <div className="cartoon-player-episode-note">Season {seasonNumber} · Episode {episodeNumber}{episode.airDate ? " · " + episode.airDate : ""}</div>}
       {currentTime > 0 && duration > 0 && (

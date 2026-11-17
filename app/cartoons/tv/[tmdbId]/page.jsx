@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import SitulaApp from "../../../components/situla-app";
+import CartoonSeriesDetail from "../../../components/cartoon-series-detail.jsx";
 
 function normalizeTmdbId(value) {
   const raw = String(value ?? "").trim();
@@ -22,5 +22,5 @@ export default async function CartoonSeriesPage({ params }) {
   const { tmdbId } = await params;
   const id = normalizeTmdbId(tmdbId);
   if (!id) notFound();
-  return <SitulaApp key={"cartoon-series-" + id} view="cartoonSeries" tmdbId={id} />;
+  return <CartoonSeriesDetail tmdbId={id} />;
 }

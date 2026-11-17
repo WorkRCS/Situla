@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import SitulaApp from "../../../../components/situla-app";
+import CartoonMediaPlayer from "../../../../components/cartoon-media-player.jsx";
 
 function normalizeTmdbId(value) {
   const raw = String(value ?? "").trim();
@@ -17,5 +17,5 @@ export default async function CartoonMovieWatchPage({ params }) {
   const { tmdbId } = await params;
   const id = normalizeTmdbId(tmdbId);
   if (!id) notFound();
-  return <SitulaApp key={"cartoon-movie-player-" + id} view="cartoonWatch" cartoonType="movie" tmdbId={id} />;
+  return <CartoonMediaPlayer type="movie" tmdbId={id} />;
 }
