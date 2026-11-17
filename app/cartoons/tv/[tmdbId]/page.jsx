@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import CartoonSeriesDetail from "../../../components/cartoon-series-detail.jsx";
+import { SiteWorkspace } from "../../../components/site-sidebar.jsx";
 
 function normalizeTmdbId(value) {
   const raw = String(value ?? "").trim();
@@ -22,5 +23,5 @@ export default async function CartoonSeriesPage({ params }) {
   const { tmdbId } = await params;
   const id = normalizeTmdbId(tmdbId);
   if (!id) notFound();
-  return <CartoonSeriesDetail tmdbId={id} />;
+  return <SiteWorkspace><CartoonSeriesDetail tmdbId={id} /></SiteWorkspace>;
 }

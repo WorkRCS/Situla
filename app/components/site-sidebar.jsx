@@ -22,6 +22,8 @@ export const SITE_NAV_ITEMS = [
 export const SITE_KIDS_NAV_ITEMS = [
   { id: "home", href: "/", label: "Home", icon: House },
   { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: Baby },
+  { id: "cartoonMovies", href: "/cartoons/movies", label: "Cartoon Movies", icon: Film },
+  { id: "cartoonTv", href: "/cartoons/tv", label: "TV Series", icon: Tv },
   { id: "saved", href: "/saved", label: "My List", icon: Bookmark },
   { id: "settings", href: "/settings", label: "Settings", icon: Settings }
 ];
@@ -36,6 +38,13 @@ export const SITE_KIDS_MOBILE_NAV_ITEMS = SITE_KIDS_NAV_ITEMS;
 function isNavActive(pathname, href) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+function isMostSpecificNavActive(pathname, item, items) {
+  if (!isNavActive(pathname, item.href)) return false;
+  return !items.some((candidate) => candidate.href !== item.href &&
+    candidate.href.startsWith(item.href + "/") &&
+    isNavActive(pathname, candidate.href));
 }
 
 function ContinueWatching({ items = [], onResume }) {
@@ -113,8 +122,9 @@ export function SiteSidebar({
 
   const showUpcomingLive = typeof upcomingHasUnread === "boolean" ? upcomingHasUnread : statusUnread;
   const navItems = kidsMode ? SITE_KIDS_NAV_ITEMS : SITE_NAV_ITEMS;
-  const discoverItems = kidsMode ? navItems.slice(0, 2) : navItems.slice(0, 5);
-  const personalItems = kidsMode ? navItems.slice(2) : navItems.slice(5);
+  const activeItem = navItems.some((item) => item.id === active) ? active : null;
+  const discoverItems = kidsMode ? navItems.slice(0, 4) : navItems.slice(0, 5);
+  const personalItems = kidsMode ? navItems.slice(4) : navItems.slice(5);
   return (
     <aside className={"home-sidebar site-sidebar" + (collapsed ? " is-collapsed" : "")} aria-label="Main navigation">
       <div className="site-sidebar-heading">
@@ -142,7 +152,9 @@ export function SiteSidebar({
           <span className="site-sidebar-section-label">DISCOVER</span>
           {discoverItems.map((item) => {
             const Icon = item.icon;
-            const selected = (active ? active === item.id : false) || isNavActive(pathname, item.href);
+            const selected = activeItem
+              ? activeItem === item.id
+              : isMostSpecificNavActive(pathname, item, navItems);
             return (
               <span className="site-sidebar-nav-item" key={item.id}>
                 <Link
@@ -167,7 +179,9 @@ export function SiteSidebar({
           <span className="site-sidebar-section-label">YOUR SPACE</span>
           {personalItems.map((item) => {
             const Icon = item.icon;
-            const selected = (active ? active === item.id : false) || isNavActive(pathname, item.href);
+            const selected = activeItem
+              ? activeItem === item.id
+              : isMostSpecificNavActive(pathname, item, navItems);
             return (
               <span className="site-sidebar-nav-item" key={item.id}>
                 <Link
@@ -194,17 +208,38 @@ export function SiteSidebar({
   );
 }
 
-export function SiteWorkspace({ children, kidsMode = false }) {
+export function SiteWorkspace({ children, kidsMode }) {
   const pathname = usePathname() || "/";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [serverKidsMode, setServerKidsMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof kidsMode === "boolean") {
+      setServerKidsMode(kidsMode);
+      return undefined;
+    }
+    const controller = new AbortController();
+    fetch("/api/kids-mode", {
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal
+    }).then(async (response) => {
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && !controller.signal.aborted) setServerKidsMode(Boolean(payload.enabled));
+    }).catch(() => {});
+    return () => controller.abort();
+  }, [kidsMode]);
+
+  const activeKidsMode = typeof kidsMode === "boolean" ? kidsMode : serverKidsMode;
   return (
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
-      <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={kidsMode} />
+      <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={activeKidsMode} />
       <div className="site-workspace-main">{children}</div>
       <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
-        {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
+        {(activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const Icon = item.icon;
-          const selected = isNavActive(pathname, item.href);
+          const mobileItems = activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS;
+          const selected = isMostSpecificNavActive(pathname, item, mobileItems);
           return (
             <Link
               key={item.id}

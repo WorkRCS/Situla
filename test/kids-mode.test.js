@@ -93,7 +93,10 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
   assert.ok(app.includes('<CartoonsCatalog view={tab} isSaved={isCartoonSaved}'));
   assert.ok(app.includes("kidsMode={kidsMode}"));
   assert.ok(sidebar.includes('{ id: "home", href: "/", label: "Home", icon: House }'));
-  assert.ok(sidebar.includes("export function SiteWorkspace({ children, kidsMode = false })"));
+  assert.ok(sidebar.includes('{ id: "cartoonMovies", href: "/cartoons/movies", label: "Cartoon Movies", icon: Film }'));
+  assert.ok(sidebar.includes('{ id: "cartoonTv", href: "/cartoons/tv", label: "TV Series", icon: Tv }'));
+  assert.ok(sidebar.includes("export function SiteWorkspace({ children, kidsMode })"));
+  assert.ok(sidebar.includes('fetch("/api/kids-mode"'));
 });
 
 test("Kids Mode cards use the same TV poster, card size, rating and metadata styles", async () => {
@@ -151,12 +154,68 @@ test("Cartoon detail and watch routes mount the dedicated components", async () 
   const movie = await read("../app/cartoons/watch/movie/[tmdbId]/page.jsx");
   const episode = await read("../app/cartoons/watch/tv/[tmdbId]/[seasonNumber]/[episodeNumber]/page.jsx");
   const player = await read("../app/components/cartoon-media-player.jsx");
-  assert.match(series, /<CartoonSeriesDetail tmdbId=\{id\} \/>/);
+  assert.match(series, /<SiteWorkspace><CartoonSeriesDetail tmdbId=\{id\} \/><\/SiteWorkspace>/);
   assert.match(movie, /<CartoonMediaPlayer type="movie" tmdbId=\{id\} \/>/);
   assert.match(episode, /<CartoonMediaPlayer type="tv"/);
   assert.match(player, /iframeUrl && sessionId && !error/);
   assert.match(player, /cartoonMoviePlaybackUrl\(tmdbId, resume\)/);
   assert.match(player, /cartoonTvPlaybackUrl\(tmdbId, seasonNumber, episodeNumber, resume\)/);
+});
+
+test("Cartoon listing pages use the same responsive catalogue frame and Movie/TV detail/player templates", async () => {
+  const [app, catalog, detail, player, css, cartoonsPage, moviesPage, tvPage] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/cartoon-series-detail.jsx"),
+    read("../app/components/cartoon-media-player.jsx"),
+    read("../app/globals.css"),
+    read("../app/cartoons/page.jsx"),
+    read("../app/cartoons/movies/page.jsx"),
+    read("../app/cartoons/tv/page.jsx")
+  ]);
+  assert.ok(app.includes('"cartoons-catalog-page"'));
+  assert.match(cartoonsPage, /view="cartoons"/);
+  assert.match(moviesPage, /view="cartoonMovies"/);
+  assert.match(tvPage, /view="cartoonTv"/);
+  assert.ok(app.includes('CartoonsCatalog view={tab} kidsMode={kidsMode}'));
+  assert.ok(catalog.includes('kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"'));
+  assert.ok(catalog.includes('className="pb-8 cartoons-listing-catalog"'));
+  assert.ok(catalog.includes('className="catalog-toolbar catalog-toolbar-sort-only"'));
+  assert.ok(css.includes(".cartoons-catalog-page .catalog-toolbar-sort-only"));
+  assert.ok(css.includes("@media (max-width:767px)"));
+  for (const token of ["series-detail-page", "tv-detail-page", "series-detail-hero", "series-detail-layout", "series-detail-panel", "episode-guide-grid"]) {
+    assert.ok(detail.includes(token), "Cartoon detail uses shared TV detail class " + token);
+  }
+  for (const token of ["watch-screen", "series-watch-screen", "series-watch-frame", "series-watch-context", "watch-topbar"]) {
+    assert.ok(player.includes(token), "Cartoon player uses shared Movie/TV player class " + token);
+  }
+  assert.ok(player.includes("iframeUrl && sessionId && !error"));
+  assert.ok(detail.includes("/api/cartoons/series/"));
+  assert.ok(detail.includes("fetch(\"/api/kids-mode\""));
+  assert.ok(detail.includes('kidsMode ? "SITULA KIDS · CARTOON TV SERIES" : "SITULA · CARTOON TV SERIES"'));
+  assert.ok(detail.includes("setEpisodeNumber"));
+  assert.ok(detail.includes("Play episode"));
+  assert.ok(detail.includes("Verified episode guide unavailable"));
+  assert.ok(detail.includes("!hasEpisodeGuide"));
+});
+
+test("Normal and Kids search year selectors come from database date ranges only", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const backend = await read("../src/app.js");
+  const helper = await read("../src/search-year-options.js");
+
+  assert.ok(app.includes('/api/search/filters?type='));
+  assert.ok(app.includes('searchYears.map((year) => <option'));
+  assert.ok(!app.includes('new Date().getFullYear() - 1869'));
+  assert.ok(app.includes('setSearchType("all")'));
+  assert.ok(app.includes('setSearchYear("all")'));
+  assert.ok(backend.includes("app.get('/api/search/filters'"));
+  assert.ok(backend.includes("catalog.Model.distinct('releaseYear'"));
+  assert.ok(backend.includes("catalog.Model.distinct(catalog.dateField"));
+  assert.ok(backend.includes("buildSearchYearOptions(values)"));
+  assert.ok(backend.includes("'/api/search/*'"));
+  assert.ok(backend.includes("(!/^\\d{4}$/.test(yearText)"));
+  assert.ok(helper.includes("const sorted = [...years].sort((a, b) => b - a)"));
 });
 
 test("Kids Home spotlight mixes cartoons and auto-rotates like the normal home hero", async () => {

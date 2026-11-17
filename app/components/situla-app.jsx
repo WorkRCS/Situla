@@ -1075,6 +1075,51 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [tab, storageReady]);
 
   useEffect(() => {
+    if (!kidsModeReady) return;
+    setSearchType("all");
+    setSearchYear("all");
+    setSearchYears([]);
+    setSearchDateRange(null);
+    setSuggestions([]);
+    setSearchHasMore(false);
+    setSearchPage(1);
+    setSearchError("");
+  }, [kidsModeReady, kidsMode]);
+
+  useEffect(() => {
+    if (!kidsModeReady || !searchOpen || kidsMode) return undefined;
+    const controller = new AbortController();
+    async function loadNormalSearchYears() {
+      try {
+        const response = await fetch("/api/search/filters?type=" + encodeURIComponent(searchType), {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Search filters are unavailable.");
+        if (controller.signal.aborted) return;
+        const years = Array.isArray(payload.years)
+          ? payload.years.map(Number).filter((year) => Number.isInteger(year))
+          : [];
+        setSearchYears(years);
+        setSearchDateRange({
+          oldestYear: payload.oldestYear ?? (years.length ? years[years.length - 1] : null),
+          newestYear: payload.newestYear ?? (years.length ? years[0] : null)
+        });
+        setSearchYear((current) => current !== "all" && !years.includes(Number(current)) ? "all" : current);
+      } catch {
+        if (!controller.signal.aborted) {
+          setSearchYears([]);
+          setSearchDateRange(null);
+        }
+      }
+    }
+    loadNormalSearchYears();
+    return () => controller.abort();
+  }, [kidsModeReady, kidsMode, searchOpen, searchType]);
+
+  useEffect(() => {
     if (!kidsModeReady || !searchOpen) return;
     const value = searchInput.trim();
     if (kidsMode) {
@@ -1812,9 +1857,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <strong>SITULA</strong>
               <small>{({
                 home: "DISCOVER STORIES",
-                cartoons: "KIDS · CARTOONS",
-                cartoonMovies: "CARTOON MOVIES",
-                cartoonTv: "CARTOON SERIES",
+                cartoons: kidsMode ? "KIDS · CARTOONS" : "CARTOON COLLECTION",
+                cartoonMovies: kidsMode ? "KIDS · MOVIES" : "CARTOON MOVIES",
+                cartoonTv: kidsMode ? "KIDS · TV SERIES" : "CARTOON TV SERIES",
                 movies: "MOVIE COLLECTION",
                 tv: "TV SERIES",
                 anime: "ANIME COLLECTION",
@@ -1990,14 +2035,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <span>Release year</span>
                 <select value={searchYear} onChange={(event) => setSearchYear(event.target.value)} aria-label={kidsMode ? "Filter cartoons by database release year" : "Filter by release year"}>
                   <option value="all">All years</option>
-                  {(kidsMode ? searchYears : Array.from({ length: Math.max(0, new Date().getFullYear() - 1869) }, (_, index) => new Date().getFullYear() - index))
-                    .map((year) => <option key={year} value={String(year)}>{year}</option>)}
+                  {searchYears.map((year) => <option key={year} value={String(year)}>{year}</option>)}
+                  {searchYears.length === 0 && <option value="" disabled>{searchDateRange ? "No database years available" : "Loading database years…"}</option>}
                 </select>
               </label>
             </div>
-            {kidsMode && searchDateRange && (
-              <p className="search-results-caption" aria-label="Cartoon catalogue release date range">
-                Database dates: {searchDateRange.oldestDate || searchDateRange.oldestYear || "—"} – {searchDateRange.newestDate || searchDateRange.newestYear || "—"}
+            {searchDateRange && (
+              <p className="search-results-caption" aria-label={kidsMode ? "Cartoon catalogue release date range" : "Catalogue release year range"}>
+                {kidsMode ? "Database dates:" : "Database years:"} {kidsMode
+                  ? (searchDateRange.oldestDate || searchDateRange.oldestYear || "—") + " – " + (searchDateRange.newestDate || searchDateRange.newestYear || "—")
+                  : (searchDateRange.oldestYear || "—") + " – " + (searchDateRange.newestYear || "—")}
               </p>
             )}
 
@@ -2061,7 +2108,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         document.body
       )}
 
-      <div className={(tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : "")) + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
+      <div className={(tab === "home" ? "home-page-layout" : "app-view-layout catalog-page-layout mx-auto max-w-[1600px] px-4 pt-5 md:px-8 md:pt-8 " + (tab === "movies" ? "movies-catalog-page" : tab === "tv" ? "tv-catalog-page" : tab === "anime" ? "anime-catalog-page" : ["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) ? "cartoons-catalog-page" : "")) + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
         <SiteSidebar
           active={navigationTab}
           upcomingHasUnread={kidsMode ? false : upcomingHasUnread}
@@ -2363,7 +2410,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
             <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
-              <CartoonsCatalog view="kidsHome" isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
+              <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
             </div>
           </div>
         )}
@@ -2372,7 +2419,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <div className="app-view-main-column">
             <div className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView} aria-hidden={kidsMode && !kidsOnlyView}>
         {["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) && (
-          <CartoonsCatalog view={tab} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
+          <CartoonsCatalog view={tab} kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
         )}
 
         {tab === "movies" && (

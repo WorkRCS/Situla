@@ -8651,3 +8651,164 @@ body:has(.login-page) .site-footer { display:none !important; }
 /* Preserve the normal catalog DOM on non-home tabs while Kids Mode is active. */
 .app-view-mode-panel { display:contents; }
 .app-view-mode-panel[hidden] { display:none !important; }
+
+
+
+/* Cartoon catalogues share the existing Movies/TV page grid and responsive framing. */
+.cartoons-catalog-page {
+  padding-top:clamp(8px,1vw,14px) !important;
+  padding-bottom:clamp(28px,4vw,54px);
+}
+.cartoons-catalog-page .cartoons-listing-catalog {
+  width:100%;
+  min-width:0;
+  padding-bottom:clamp(24px,3vw,42px);
+}
+.cartoons-catalog-page .cartoons-listing-catalog > .section-heading {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:clamp(16px,2vw,23px);
+}
+.cartoons-catalog-page .cartoons-listing-catalog > .section-heading h1 {
+  margin:4px 0 0;
+  color:#fff;
+  font-size:clamp(25px,3vw,36px);
+  font-weight:950;
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+.cartoons-catalog-page .catalog-toolbar-sort-only {
+  display:flex;
+  width:100%;
+  justify-content:flex-end;
+  align-items:center;
+  margin:0 0 17px;
+}
+.cartoons-catalog-page .catalog-sort {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#9297a7;
+  font-size:11px;
+  font-weight:800;
+}
+.cartoons-catalog-page .catalog-sort select {
+  min-width:148px;
+  min-height:40px;
+  padding:8px 34px 8px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;
+  background:#151923;
+  color:#f5f6f8;
+  font:inherit;
+  font-size:12px;
+  outline:none;
+}
+.cartoons-catalog-page .catalog-sort select:focus-visible {
+  border-color:rgba(232,182,91,.7);
+  box-shadow:0 0 0 3px rgba(232,182,91,.12);
+}
+.cartoons-catalog-page .home-genre-row {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:8px;
+  max-width:100%;
+  margin:0 0 19px;
+  padding:2px 1px 8px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+}
+.cartoons-catalog-page .home-genre-row .genre-chip {
+  flex:none;
+  min-height:34px;
+  padding:7px 12px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:999px;
+  background:rgba(21,24,33,.8);
+  color:#b8bbc6;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.cartoons-catalog-page .home-genre-row .genre-chip.active {
+  border-color:rgba(232,182,91,.55);
+  background:rgba(232,182,91,.12);
+  color:#f1c978;
+}
+.cartoons-catalog-page .catalog-grid {
+  width:100%;
+  min-width:0;
+}
+.cartoons-catalog-page .catalog-grid .movie-card {
+  align-self:stretch;
+  min-width:0;
+}
+.cartoons-catalog-page .catalog-page-state,
+.cartoons-catalog-page .catalog-empty-state {
+  width:100%;
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:28px 18px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:18px;
+  background:rgba(17,19,27,.72);
+  color:#9297a7;
+  text-align:center;
+}
+.cartoons-catalog-page .catalog-empty-state h2 {
+  margin:2px 0 0;
+  color:#f5f5f7;
+  font-size:16px;
+  font-weight:900;
+}
+.cartoons-catalog-page .catalog-empty-state p {
+  max-width:480px;
+  font-size:12px;
+  line-height:1.6;
+}
+@media (max-width:767px) {
+  .cartoons-catalog-page {
+    padding-top:8px !important;
+    padding-bottom:calc(92px + env(safe-area-inset-bottom));
+  }
+  .cartoons-catalog-page .cartoons-listing-catalog > .section-heading {
+    align-items:flex-start;
+    margin-bottom:15px;
+  }
+  .cartoons-catalog-page .catalog-toolbar-sort-only {
+    justify-content:flex-start;
+    margin-bottom:13px;
+  }
+  .cartoons-catalog-page .catalog-sort {
+    width:100%;
+    justify-content:space-between;
+  }
+  .cartoons-catalog-page .catalog-sort select {
+    flex:1;
+    max-width:220px;
+    min-width:0;
+    min-height:42px;
+  }
+  .cartoons-catalog-page .home-genre-row {
+    margin-inline:-2px;
+    padding-bottom:9px;
+  }
+  .cartoons-catalog-page .catalog-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:clamp(12px,3.2vw,16px);
+  }
+}
+@media (max-width:360px) {
+  .cartoons-catalog-page .catalog-grid { gap:10px; }
+  .cartoons-catalog-page .cartoons-listing-catalog > .section-heading h1 { font-size:23px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cartoons-catalog-page * { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+}

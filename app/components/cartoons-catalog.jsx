@@ -157,7 +157,7 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ item, onPause, onResume, onPrevious, onNext, index = 0, total = 0 }) {
+function CartoonSpotlight({ item, kidsMode = true, onPause, onResume, onPrevious, onNext, index = 0, total = 0 }) {
   if (!item) return null;
   const isMovie = item.mediaType === "cartoon_movie";
   const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
@@ -181,7 +181,7 @@ function CartoonSpotlight({ item, onPause, onResume, onPrevious, onNext, index =
     >
       {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
       <div className="hero-content">
-        <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA KIDS · FAMILY CATALOGUE</div>
+        <div className="hero-eyebrow"><span className="hero-live-dot" /> {kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</div>
         <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>
         <h2 className="hero-title">{item.title}</h2>
         <div className="hero-meta">
@@ -211,7 +211,7 @@ function CartoonSpotlight({ item, onPause, onResume, onPrevious, onNext, index =
   );
 }
 
-export default function CartoonsCatalog({ view = "cartoons", isSaved, onSave, onShare, onPrepareShare }) {
+export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, isSaved, onSave, onShare, onPrepareShare }) {
   const [home, setHome] = useState(null);
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
@@ -371,9 +371,10 @@ export default function CartoonsCatalog({ view = "cartoons", isSaved, onSave, on
   if (homeView) {
     const featured = cartoonHeroItems[heroIndex] || sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
-      <section className="pb-8" aria-label="Cartoons catalog">
+      <section className="pb-8 cartoons-home-catalog" aria-label="Cartoons catalog">
         <CartoonSpotlight
           item={featured}
+          kidsMode={kidsMode}
           index={heroIndex}
           total={cartoonHeroItems.length}
           onPause={() => setHeroPaused(true)}
@@ -396,10 +397,12 @@ export default function CartoonsCatalog({ view = "cartoons", isSaved, onSave, on
   }
 
   return (
-    <section className="pb-8" aria-label={pageTitle}>
+    <section className="pb-8 cartoons-listing-catalog" aria-label={pageTitle}>
       <div className="section-heading shelf-heading">
         <div>
-          <span>{mixedView ? "SITULA KIDS · MIXED FAMILY CATALOGUE" : "SITULA KIDS · APPROVED CATALOGUE"}</span>
+          <span>{kidsMode
+            ? mixedView ? "SITULA KIDS · MIXED FAMILY CATALOGUE" : "SITULA KIDS · APPROVED CATALOGUE"
+            : mixedView ? "SITULA · MIXED CARTOON CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</span>
           <h1>{pageTitle}</h1>
           {mixedView && <p className="series-card-meta">{total ? total + " approved movies & series" : "Movies and TV series in one collection"}</p>}
         </div>

@@ -26,6 +26,7 @@ import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog, cartoonDatabaseDateRange } from './cartoon-catalog.js';
 import { deriveCartoonBadges } from './cartoon-seed.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
+import { buildSearchYearOptions } from './search-year-options.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
 import { normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from './media-image.js';
 import {
@@ -120,21 +121,23 @@ async function enforceAdultCatalogBoundary(c, next) {
   // Reject malformed and empty lookups before opening MongoDB. This preserves
   // predictable 4xx/empty responses during a database outage and avoids
   // spending a connection on searches that cannot return catalog records.
-  if (pathname === '/api/search' && method === 'GET') {
-    const query = safeText(c.req.query('q'));
+  if ((pathname === '/api/search' || pathname === '/api/search/filters') && method === 'GET') {
     const selectedType = String(c.req.query('type') || 'all').toLowerCase();
     const allowedTypes = new Set(['all', 'movie', 'tv', 'anime']);
     if (!allowedTypes.has(selectedType)) {
       return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
     }
-    const yearText = String(c.req.query('year') || '').trim();
-    const year = yearText ? Number(yearText) : null;
-    if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
-        year < 1870 || year > new Date().getFullYear())) {
-      return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
-    }
-    if ((query && query.length < 3) || (!query && selectedType === 'all' && year === null)) {
-      return c.json({ items: [] });
+    if (pathname === '/api/search') {
+      const query = safeText(c.req.query('q'));
+      const yearText = String(c.req.query('year') || '').trim();
+      const year = yearText ? Number(yearText) : null;
+      if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
+          year < 1870 || year > new Date().getFullYear())) {
+        return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
+      }
+      if ((query && query.length < 3) || (!query && selectedType === 'all' && year === null)) {
+        return c.json({ items: [] });
+      }
     }
   }
 
@@ -200,7 +203,7 @@ for (const path of [
   '/api/movies', '/api/movies/*',
   '/api/tv', '/api/tv/*',
   '/api/anime', '/api/anime/*',
-  '/api/search',
+  '/api/search', '/api/search/*',
   '/api/upcoming', '/api/upcoming/*'
 ]) app.use(path, enforceAdultCatalogBoundary);
 
@@ -1681,6 +1684,44 @@ app.get('/api/movies/discover', async (c) => {
   } catch (error) {
     console.error('Movie discovery feed failed:', error.message);
     return c.json({ error: 'Movie discovery is temporarily unavailable.' }, 503);
+  }
+});
+
+app.get('/api/search/filters', async (c) => {
+  const selectedType = String(c.req.query('type') || 'all').toLowerCase();
+  const catalogs = [
+    {
+      type: 'movie',
+      Model: Movie,
+      dateField: 'releaseDate',
+      baseFilter: { imdbId: IMDB_ID, adult: { $ne: true } }
+    },
+    {
+      type: 'tv',
+      Model: TvSeries,
+      dateField: 'firstAirDate',
+      baseFilter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } }
+    },
+    {
+      type: 'anime',
+      Model: AnimeSeries,
+      dateField: 'airedFrom',
+      baseFilter: { type: { $in: ['TV', 'ONA'] } }
+    }
+  ].filter((catalog) => selectedType === 'all' || catalog.type === selectedType);
+
+  try {
+    await connectDatabase();
+    const values = await Promise.all(catalogs.map(async (catalog) => {
+      const [releaseYears, releaseDates] = await Promise.all([
+        catalog.Model.distinct('releaseYear', catalog.baseFilter),
+        catalog.Model.distinct(catalog.dateField, catalog.baseFilter)
+      ]);
+      return [...releaseYears, ...releaseDates];
+    }));
+    return c.json(buildSearchYearOptions(values));
+  } catch (error) {
+    return apiError(c, error, 'Search filters are temporarily unavailable.');
   }
 });
 

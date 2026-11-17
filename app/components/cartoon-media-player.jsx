@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Baby, AlertTriangle, PlayCircle, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   cartoonMoviePlaybackUrl,
   cartoonTvPlaybackUrl,
@@ -46,6 +45,7 @@ async function stopSession(sessionId) {
 }
 
 export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episodeNumber }) {
+  const router = useRouter();
   const iframeRef = useRef(null);
   const sessionRef = useRef("");
   const playingRef = useRef(false);
@@ -240,44 +240,64 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
 
   const title = item?.title || "Cartoon";
   const detailHref = isMovie ? "/cartoons/movies" : "/cartoons/tv/" + tmdbId;
-  const episodeLabel = !isMovie && episode ? " · S" + seasonNumber + " E" + episodeNumber + " — " + episode.name : "";
+  const episodeLabel = !isMovie && episode
+    ? " · S" + seasonNumber + " E" + episodeNumber + " — " + episode.name
+    : "";
+  const playerUrl = iframeUrl && sessionId && !error ? iframeUrl : null;
 
-  if (loading) return <main className="cartoon-player-page"><div className="cartoon-player-state"><span className="inline-loading-spinner" /><p>Checking approved cartoon metadata…</p></div></main>;
+  function backToDetail() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.replace(detailHref);
+  }
 
   return (
-    <main className="cartoon-player-page">
-      <div className="cartoon-player-topbar">
-        <Link href={detailHref} className="cartoon-back-link"><ArrowLeft size={15} /> {isMovie ? "Cartoon Movies" : "Series & episodes"}</Link>
-        <span className="cartoon-player-kids"><Baby size={14} /> SITULA KIDS</span>
-      </div>
-      {error && (
-        <div className="cartoon-player-error" role="alert">
-          <AlertTriangle size={18} /><span>{error}</span>
+    <main className={"watch-screen" + (isMovie ? "" : " series-watch-screen")}>
+      {playerUrl ? (
+        <iframe
+          ref={iframeRef}
+          key={playerUrl}
+          className={"watch-frame" + (isMovie ? "" : " series-watch-frame")}
+          src={playerUrl}
+          title={title + (isMovie ? " cartoon movie player" : " · S" + seasonNumber + " E" + episodeNumber)}
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      ) : (
+        <div className="player-message">
+          <div className="player-message-card">
+            <div className="player-message-mark">S</div>
+            <h1>{loading ? "Preparing playback" : error ? "Playback unavailable" : "Checking watch access"}</h1>
+            <p>{error || (loading
+              ? "Loading approved cartoon details…"
+              : "Verifying your watch allowance before opening the player…")}</p>
+            <button type="button" className="gold-button" onClick={backToDetail}>Back to Situla</button>
+          </div>
         </div>
       )}
-      {item && (
-        <header className="cartoon-player-heading">
-          <div><h1>{title}{episodeLabel}</h1><p>{item.minimumAge != null ? "Age " + item.minimumAge + "+" : "Age suitability reviewed"}{item.genres?.length ? " · " + item.genres.slice(0, 3).join(" · ") : ""}</p></div>
-          {item.voteAverage > 0 && <span className="cartoon-player-rating"><Star size={14} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
+      {isMovie ? (
+        <header className="watch-topbar">
+          <button type="button" onClick={backToDetail} className="watch-control" aria-label="Back to Cartoon Movies">
+            <i className="bi bi-arrow-left" aria-hidden="true" />
+          </button>
+          <div className="watch-title">
+            <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA PLAYER · CARTOON MOVIE</p>
+            <h1 className="truncate text-sm font-bold">{title}</h1>
+          </div>
         </header>
-      )}
-      {iframeUrl && sessionId && !error && (
-        <section className="cartoon-player-frame-wrap" aria-label="Verified VidBolt cartoon player">
-          <iframe
-            ref={iframeRef}
-            src={iframeUrl}
-            title={title + " VidBolt player"}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </section>
-      )}
-      {playbackReady && !sessionId && !error && <p className="cartoon-player-state">Verifying playback access before opening the player…</p>}
-      {item?.overview && <p className="cartoon-player-overview">{item.overview}</p>}
-      {!isMovie && episode && <div className="cartoon-player-episode-note">Season {seasonNumber} · Episode {episodeNumber}{episode.airDate ? " · " + episode.airDate : ""}</div>}
-      {currentTime > 0 && duration > 0 && (
-        <p className="cartoon-player-progress">Continue watching · {Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")} / {Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</p>
+      ) : (
+        <div className="series-watch-context" role="group" aria-label="Cartoon episode player information">
+          <button type="button" onClick={backToDetail} className="watch-control" aria-label="Back to Cartoon Series">
+            <i className="bi bi-arrow-left" aria-hidden="true" />
+          </button>
+          <div className="watch-title">
+            <p className="text-[9px] font-extrabold tracking-[.2em] text-[#f0c471]">SITULA · CARTOON TV PLAYER</p>
+            <h1 className="truncate text-sm font-bold">{title}{episodeLabel}</h1>
+          </div>
+        </div>
       )}
     </main>
   );
