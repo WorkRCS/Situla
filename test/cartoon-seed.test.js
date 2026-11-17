@@ -60,7 +60,10 @@ test("keyless Cartoon seed defines exact targets, date cutoff, and insert-only s
   assert.match(script, /const TARGET_MOVIES = 200/);
   assert.match(script, /const TARGET_SERIES = 300/);
   assert.match(script, /isCartoonYearAllowed\(year\)/);
-  assert.match(script, /fetchCinemetaMeta\("series"/);\n  assert.match(script, /buildCinemetaSeriesRecords/);\n  assert.match(script, /Cinemeta animated series candidate IDs/);\n  assert.match(script, /isAdultMetadata\(meta\)/);
+  assert.match(script, /fetchCinemetaMeta\("series"/);
+  assert.match(script, /buildCinemetaSeriesRecords/);
+  assert.match(script, /Cinemeta animated series candidate IDs/);
+  assert.match(script, /isAdultMetadata\(meta\)/);
   assert.match(script, /TVMAZE \+ "\/lookup\/shows\?imdb="/);
   assert.match(script, /CartoonMovie\.insertMany\(movies/);
   assert.match(script, /CartoonSeries\.insertMany\(series/);
