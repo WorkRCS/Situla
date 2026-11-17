@@ -547,6 +547,25 @@ function createCinemetaSeriesRecord(meta, catalogItem, tmdbId) {
     rating: video?.rating
   }));
   const episodeData = buildCartoonEpisodeData(Number(tmdbId), videos, posterUrl);
+  const sourceSeasons = Array.isArray(meta?.seasons) ? meta.seasons : [];
+  const seasonSummaries = episodeData.seasons.length
+    ? episodeData.seasons
+    : sourceSeasons.map((season) => {
+      const seasonNumber = Number(typeof season === "object" ? season.seasonNumber ?? season.number : season);
+      if (!Number.isSafeInteger(seasonNumber) || seasonNumber < 0) return null;
+      return {
+        seasonNumber,
+        name: season?.name || (seasonNumber === 0 ? "Specials" : "Season " + seasonNumber),
+        overview: cleanText(season?.overview || "", 2000),
+        airDate: parseDate(season?.airDate || season?.released || ""),
+        posterUrl: toHttps(season?.posterUrl || season?.poster) || posterUrl,
+        episodeCount: Math.max(0, parseNumber(season?.episodeCount || season?.episodes))
+      };
+    }).filter(Boolean);
+  const numberOfSeasons = episodeData.numberOfSeasons ||
+    Math.max(0, parseNumber(meta?.numberOfSeasons)) || seasonSummaries.length;
+  const numberOfEpisodes = episodeData.numberOfEpisodes ||
+    Math.max(0, parseNumber(meta?.numberOfEpisodes || meta?.episodeCount || catalogItem?.episodeCount));
   const certification = cleanText(
     meta?.certification || meta?.contentRating || meta?.ratings?.[0]?.value || "", 40
   );
@@ -562,8 +581,7 @@ function createCinemetaSeriesRecord(meta, catalogItem, tmdbId) {
   const networks = (Array.isArray(meta?.networks) ? meta.networks : [meta?.network].filter(Boolean))
     .map((item) => cleanText(typeof item === "string" ? item : item?.name, 100)).filter(Boolean);
   if (!imdbId || !tmdbId || !title || overview.length < 50 || !posterUrl ||
-      !isCartoonYearAllowed(year) || !episodeData.numberOfEpisodes || !voteAverage ||
-      isAdultMetadata(meta)) return null;
+      !isCartoonYearAllowed(year) || isAdultMetadata(meta)) return null;
   if (!genres.some((genre) => normalizeCartoonText(genre) === "animation")) return null;
   if (!isChildrenAnimation({ genres, type: "Animation", rating: certification })) return null;
 
@@ -595,9 +613,9 @@ function createCinemetaSeriesRecord(meta, catalogItem, tmdbId) {
     voteCount: parseNumber(meta?.imdbVotes || meta?.votes || catalogItem?.imdbVotes),
     popularity: parseNumber(meta?.popularity || catalogItem?.popularity),
     status: /-\s*$/.test(releaseInfo) ? "Running" : (lastAirDate ? "Ended" : ""),
-    numberOfSeasons: episodeData.numberOfSeasons,
-    numberOfEpisodes: episodeData.numberOfEpisodes,
-    seasons: episodeData.seasons,
+    numberOfSeasons,
+    numberOfEpisodes,
+    seasons: seasonSummaries,
     featured: false,
     hot: false,
     popular: false,
@@ -640,8 +658,13 @@ async function buildCinemetaSeriesRecords(existingIds, needed) {
     return parseNumber(b.meta?.imdbRating) - parseNumber(a.meta?.imdbRating);
   });
 
+  console.log("Cinemeta series metadata / TMDB-matched candidates:", {
+    withMetadata: usableMeta.length,
+    withTmdbId: ranked.length
+  });
   const records = [];
   const episodes = [];
+  let recordsWithoutEpisodeGuide = 0;
   const seenTmdb = new Set(existingIds);
   for (const item of ranked) {
     if (records.length >= needed) break;
@@ -650,6 +673,7 @@ async function buildCinemetaSeriesRecords(existingIds, needed) {
     if (!record) continue;
     seenTmdb.add(Number(record.tmdbId));
     records.push(record);
+    if (!record.numberOfEpisodes) recordsWithoutEpisodeGuide += 1;
     const videos = (Array.isArray(item.meta?.videos) ? item.meta.videos : []).map((video) => ({
       season: video?.season,
       number: video?.episode ?? video?.number,
@@ -663,6 +687,10 @@ async function buildCinemetaSeriesRecords(existingIds, needed) {
     const episodeData = buildCartoonEpisodeData(Number(item.tmdbId), videos, record.posterUrl);
     episodes.push(...episodeData.episodes);
   }
+  console.log("Cinemeta series accepted / without episode guides:", {
+    accepted: records.length,
+    withoutEpisodeGuide: recordsWithoutEpisodeGuide
+  });
   return { records, episodes };
 }
 
