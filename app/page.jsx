@@ -1,7 +1,7 @@
 import SitulaApp from "./components/situla-app";
 
-export const metadata = { title: "Discover" };
+export const metadata = { title: "Cartoons" };
 
 export default function HomePage() {
-  return <SitulaApp key="home" view="home" />;
+  return <SitulaApp key="cartoons-home" view="cartoons" />;
 }

@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import SitulaApp from "./situla-app.jsx";
 
 const APP_VIEWS = Object.freeze({
-  "/": "home",
+  "/": "cartoons",
   "/movies": "movies",
   "/tv": "tv",
   "/anime": "anime",

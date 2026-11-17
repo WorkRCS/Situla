@@ -813,7 +813,7 @@ const NAV_ITEMS = [
 ];
 
 const KIDS_NAV_ITEMS = [
-  { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: "kids" },
+  { id: "home", href: "/", label: "Home", icon: "home" },
   { id: "cartoonMovies", href: "/cartoons/movies", label: "Movies", icon: "film" },
   { id: "cartoonTv", href: "/cartoons/tv", label: "TV Series", icon: "tv" },
   { id: "saved", href: "/saved", label: "My List", icon: "saved" },
@@ -849,7 +849,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const demoSignedIn = Boolean(accountUser);
   const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
   const kidsOnlyView = ["home", "cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
-  const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;
+  const navigationTab = (kidsMode && !kidsOnlyView) || tab === "cartoons" ? "home" : tab;
 
   useEffect(() => {
     const nextQuery = String(initialQuery || "").slice(0, 120);

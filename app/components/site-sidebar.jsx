@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import {
   Bookmark, CalendarDays, Film, House, PanelLeftClose, PanelLeftOpen, PlayCircle,
-  Settings, ShieldCheck, Tv, Baby
+  Settings, ShieldCheck, Tv
 } from "lucide-react";
 
 export const SITE_NAV_ITEMS = [
@@ -21,7 +21,6 @@ export const SITE_NAV_ITEMS = [
 
 export const SITE_KIDS_NAV_ITEMS = [
   { id: "home", href: "/", label: "Home", icon: House },
-  { id: "cartoons", href: "/cartoons", label: "Cartoons", icon: Baby },
   { id: "cartoonMovies", href: "/cartoons/movies", label: "Cartoon Movies", icon: Film },
   { id: "cartoonTv", href: "/cartoons/tv", label: "TV Series", icon: Tv },
   { id: "saved", href: "/saved", label: "My List", icon: Bookmark },
@@ -123,8 +122,8 @@ export function SiteSidebar({
   const showUpcomingLive = typeof upcomingHasUnread === "boolean" ? upcomingHasUnread : statusUnread;
   const navItems = kidsMode ? SITE_KIDS_NAV_ITEMS : SITE_NAV_ITEMS;
   const activeItem = navItems.some((item) => item.id === active) ? active : null;
-  const discoverItems = kidsMode ? navItems.slice(0, 4) : navItems.slice(0, 5);
-  const personalItems = kidsMode ? navItems.slice(4) : navItems.slice(5);
+  const discoverItems = kidsMode ? navItems.slice(0, 3) : navItems.slice(0, 5);
+  const personalItems = kidsMode ? navItems.slice(3) : navItems.slice(5);
   return (
     <aside className={"home-sidebar site-sidebar" + (collapsed ? " is-collapsed" : "")} aria-label="Main navigation">
       <div className="site-sidebar-heading">
