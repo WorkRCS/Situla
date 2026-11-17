@@ -19,3 +19,7 @@ android/.gradle/
 android/**/build/
 android/.idea/
 *.iml
+
+# Generated cartoon seed files and local cache
+data/.cartoon-seed-cache/
+data/cartoon-*.generated.json
