@@ -286,9 +286,14 @@ async function discoverTvMazeShows() {
   }
 
   for (const pin of PINNED_SERIES) {
-    if (!pin.tvmazeId) continue;
     try {
-      const show = await tvmazeJson("show-" + pin.tvmazeId, TVMAZE + "/shows/" + pin.tvmazeId);
+      const lookupUrl = pin.tvmazeId
+        ? TVMAZE + "/shows/" + pin.tvmazeId
+        : TVMAZE + "/lookup/shows?imdb=" + encodeURIComponent(pin.imdbId);
+      const show = await tvmazeJson(
+        "pinned-show-" + (pin.tvmazeId || pin.imdbId),
+        lookupUrl
+      );
       if (show?.id) candidates.set(Number(show.id), show);
     } catch (error) {
       console.warn("Pinned TVmaze lookup failed:", pin.title, error.message);
@@ -415,55 +420,67 @@ function movieFromMeta(meta, tmdbId) {
   };
 }
 
-function createSeriesRecord(show, tmdbId, episodeData) {
+function createSeriesRecord(show, meta, tmdbId, episodeData) {
   const pin = pinnedForShow(show);
   const imdbId = extractImdbId(show.externals?.imdb) || pin?.imdbId || "";
-  const title = cleanText(show.name || pin?.title, 240);
-  const overview = cleanText(show.summary || "", 5000);
-  const firstAirDate = parseDate(show.premiered);
-  const lastAirDate = parseDate(show.ended);
-  const year = readCartoonYear(firstAirDate) || parseYearFromText(show.premiered);
-  const genres = (Array.isArray(show.genres) ? show.genres : []).map((item) => cleanText(item, 80)).filter(Boolean);
-  const originalLanguage = parseLanguage(show.language || pin?.originalLanguage);
-  const audioLanguages = originalLanguage ? [originalLanguage] : [];
-  for (const language of pin?.audioLanguages || []) if (!audioLanguages.includes(language)) audioLanguages.push(language);
+  const title = cleanText(show.name || meta?.name || pin?.title, 240);
+  const originalTitle = cleanText(meta?.original_name || meta?.originalTitle || title, 240);
+  const overview = cleanText(show.summary || meta?.description || meta?.overview || "", 5000);
+  const firstAirDate = parseDate(show.premiered || meta?.released);
+  const lastAirDate = parseDate(show.ended || "");
+  const year = readCartoonYear(firstAirDate) || parseYearFromText(meta?.releaseInfo) || parseYearFromText(meta?.year);
+  const genres = [...new Set([
+    ...(Array.isArray(show.genres) ? show.genres : []),
+    ...(Array.isArray(meta?.genres) ? meta.genres : [])
+  ].map((item) => cleanText(item, 80)).filter(Boolean))];
+  const originalLanguage = parseLanguage(show.language || meta?.language || pin?.originalLanguage);
+  const audioLanguages = [];
+  for (const value of [originalLanguage, ...(Array.isArray(meta?.languages) ? meta.languages : []),
+    ...(Array.isArray(meta?.audioLanguages) ? meta.audioLanguages : []), ...(pin?.audioLanguages || [])]) {
+    const language = parseLanguage(value);
+    if (language && !audioLanguages.includes(language)) audioLanguages.push(language);
+  }
   const dubLanguages = [...new Set(pin?.dubLanguages || [])];
-  if (!tmdbId || !title || overview.length < 50 || !isCartoonYearAllowed(year)) return null;
+  if (!tmdbId || !title || overview.length < 50 || !isCartoonYearAllowed(year) ||
+      !episodeData.numberOfEpisodes) return null;
   if (!isChildrenAnimation({
     genres,
     type: show.type,
-    rating: show.rating?.certification || "",
+    rating: show.rating?.certification || meta?.certification || meta?.contentRating || "",
     pinned: Boolean(pin)
   })) return null;
-  const posterUrl = toHttps(show.image?.original || show.image?.medium);
+  const posterUrl = toHttps(show.image?.original || show.image?.medium || meta?.poster);
   if (!posterUrl) return null;
   const numberOfSeasons = episodeData.numberOfSeasons;
   const numberOfEpisodes = episodeData.numberOfEpisodes;
+  const country = show.network?.country?.name
+    ? [cleanText(show.network.country.name, 80)]
+    : (Array.isArray(meta?.country) ? meta.country.map((item) => cleanText(item, 80)).filter(Boolean) : []);
   return {
     tmdbId,
     title,
-    originalTitle: title,
+    originalTitle,
     aliases: [],
     overview,
     posterUrl,
-    backdropUrl: null,
+    backdropUrl: toHttps(meta?.background || meta?.backdrop),
     firstAirDate,
     lastAirDate,
     releaseYear: year,
     genres,
-    keywords: [...new Set(genres)],
+    keywords: [...new Set([...genres, ...(Array.isArray(meta?.tags) ? meta.tags : [])].map((item) => cleanText(item, 80)).filter(Boolean))],
     originalLanguage,
     audioLanguages,
     dubLanguages,
-    country: show.network?.country?.name ? [cleanText(show.network.country.name, 80)] : [],
+    country,
     networks: [show.network?.name || show.webChannel?.name].filter(Boolean).map((item) => cleanText(item, 100)),
-    certification: cleanText(show.rating?.certification || "", 40),
+    certification: cleanText(show.rating?.certification || meta?.certification || meta?.contentRating || "", 40),
     minimumAge: null,
     contentWarnings: [],
     kidsApproved: true,
-    voteAverage: Math.max(0, Math.min(10, parseNumber(show.rating?.average))),
-    voteCount: 0,
-    popularity: parseNumber(show.weight),
+    voteAverage: Math.max(0, Math.min(10, parseNumber(show.rating?.average || meta?.imdbRating || meta?.rating))),
+    voteCount: parseNumber(meta?.imdbVotes || meta?.votes),
+    popularity: parseNumber(show.weight || meta?.popularity),
     status: cleanText(show.status || "", 60),
     numberOfSeasons,
     numberOfEpisodes,
@@ -472,7 +489,7 @@ function createSeriesRecord(show, tmdbId, episodeData) {
     hot: false,
     popular: false,
     playbackStatus: "unverified",
-    metadataSource: "TVmaze (CC BY-SA); TMDB ID matched via Wikidata/StreamX",
+    metadataSource: "TVmaze (CC BY-SA) + Cinemeta keyless metadata; TMDB ID matched via Wikidata/StreamX",
     sourceUrl: show.url || (imdbId ? "https://www.imdb.com/title/" + imdbId + "/" : ""),
     trendScore: 0,
     trendUpdatedAt: null
@@ -520,16 +537,21 @@ async function buildSeriesRecords(existingIds, needed) {
     if (imdbId) uniqueByImdb.set(imdbId, show);
   }
   const candidates = [...uniqueByImdb.entries()].map(([imdbId, show]) => ({ imdbId, show, pin: pinnedForShow(show) }));
-  const missingTmdb = candidates.filter((item) => !item.pin?.tmdbId);
+  const metaRows = await mapLimit(candidates, 8, async (item) => ({
+    ...item,
+    meta: await fetchCinemetaMeta("series", item.imdbId)
+  }));
+  const missingTmdb = metaRows.filter((item) => !item.pin?.tmdbId && !Number(item.meta?.moviedb_id));
   const wikidata = await resolveWikidataIds(missingTmdb.map((item) => ({ imdbId: item.imdbId })), "series");
   const streamxRows = await mapLimit(missingTmdb.filter((item) => !wikidata.has(item.imdbId)), 8, async (item) => ({
     imdbId: item.imdbId,
     tmdbId: await resolveStreamxId("series", item.imdbId)
   }));
   const streamx = new Map(streamxRows.filter((item) => item.tmdbId).map((item) => [item.imdbId, item.tmdbId]));
-  const ranked = candidates.map((item) => ({
+  const ranked = metaRows.map((item) => ({
     ...item,
-    tmdbId: Number(item.pin?.tmdbId) || wikidata.get(item.imdbId) || streamx.get(item.imdbId) || null
+    tmdbId: Number(item.pin?.tmdbId || item.meta?.moviedb_id) ||
+      wikidata.get(item.imdbId) || streamx.get(item.imdbId) || null
   })).filter((item) => item.tmdbId && !existingIds.has(Number(item.tmdbId)));
 
   ranked.sort((a, b) => {
@@ -551,7 +573,7 @@ async function buildSeriesRecords(existingIds, needed) {
     let episodeData = buildCartoonEpisodeData(
       item.tmdbId, episodeRows, detail.image?.original || detail.image?.medium
     );
-    const record = createSeriesRecord(detail, Number(item.tmdbId), episodeData);
+    const record = createSeriesRecord(detail, item.meta, Number(item.tmdbId), episodeData);
     if (!record) continue;
     seenTmdb.add(Number(record.tmdbId));
     output.push(record);
