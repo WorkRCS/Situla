@@ -1313,16 +1313,22 @@ app.get('/api/cartoons/home', async (c) => {
       CartoonSeries.countDocuments(seriesFilter),
       getCartoonPublicBadgeIndex()
     ]);
-    const movies = applyCartoonPublicBadges(movieRows, badgeIndex.movies)
-      .sort(compareCartoonPublicOrder).slice(0, 24);
-    const series = applyCartoonPublicBadges(seriesRows, badgeIndex.series)
-      .sort(compareCartoonPublicOrder).slice(0, 30);
+    const shuffleSeed = String(c.req.query('seed') || randomUUID());
+    const movies = shuffleCartoonCatalog(
+      applyCartoonPublicBadges(movieRows, badgeIndex.movies).map(cartoonMovieDto),
+      shuffleSeed + ':movies'
+    ).slice(0, 24);
+    const series = shuffleCartoonCatalog(
+      applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => cartoonSeriesDto(item)),
+      shuffleSeed + ':series'
+    ).slice(0, 30);
     return c.json({
       featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
       featuredSeries: series.find((item) => item.featured) || series[0] || null,
-      movies: movies.map(cartoonMovieDto),
-      series: series.map((item) => cartoonSeriesDto(item)),
-      totals: { movies: movieTotal, series: seriesTotal }
+      movies,
+      series,
+      totals: { movies: movieTotal, series: seriesTotal },
+      shuffleSeed
     });
   } catch (error) {
     return apiError(c, error, 'Cartoon home is temporarily unavailable.');
@@ -1406,8 +1412,12 @@ app.get('/api/cartoons/movies', async (c) => {
       CartoonMovie.distinct('genres', approvedCartoonMovieFilter()),
       getCartoonPublicBadgeIndex()
     ]);
-    const allItems = applyCartoonPublicBadges(rows, badgeIndex.movies);
-    if (sortKey === 'newest') {
+    let allItems = applyCartoonPublicBadges(rows, badgeIndex.movies).map(cartoonMovieDto);
+    let shuffleSeed = null;
+    if (sortKey === 'random') {
+      shuffleSeed = String(c.req.query('seed') || randomUUID());
+      allItems = shuffleCartoonCatalog(allItems, shuffleSeed);
+    } else if (sortKey === 'newest') {
       allItems.sort((a, b) => String(b.releaseDate || '').localeCompare(String(a.releaseDate || '')) ||
         (Number(b.popularity) || 0) - (Number(a.popularity) || 0));
     } else if (sortKey === 'rating') {
@@ -1420,9 +1430,10 @@ app.get('/api/cartoons/movies', async (c) => {
     }
     const total = allItems.length;
     return c.json({
-      items: allItems.slice((page - 1) * limit, page * limit).map(cartoonMovieDto),
+      items: allItems.slice((page - 1) * limit, page * limit),
       genres: [...new Set(genres.filter(Boolean))].sort(),
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      shuffleSeed
     });
   } catch (error) {
     return apiError(c, error, 'Cartoon movie catalog is temporarily unavailable.');
@@ -1458,8 +1469,12 @@ app.get('/api/cartoons/series', async (c) => {
       CartoonSeries.distinct('genres', approvedCartoonSeriesFilter()),
       getCartoonPublicBadgeIndex()
     ]);
-    const allItems = applyCartoonPublicBadges(rows, badgeIndex.series);
-    if (sortKey === 'newest') {
+    let allItems = applyCartoonPublicBadges(rows, badgeIndex.series).map((item) => cartoonSeriesDto(item));
+    let shuffleSeed = null;
+    if (sortKey === 'random') {
+      shuffleSeed = String(c.req.query('seed') || randomUUID());
+      allItems = shuffleCartoonCatalog(allItems, shuffleSeed);
+    } else if (sortKey === 'newest') {
       allItems.sort((a, b) => String(b.firstAirDate || '').localeCompare(String(a.firstAirDate || '')) ||
         (Number(b.popularity) || 0) - (Number(a.popularity) || 0));
     } else if (sortKey === 'rating') {
@@ -1472,9 +1487,10 @@ app.get('/api/cartoons/series', async (c) => {
     }
     const total = allItems.length;
     return c.json({
-      items: allItems.slice((page - 1) * limit, page * limit).map((item) => cartoonSeriesDto(item)),
+      items: allItems.slice((page - 1) * limit, page * limit),
       genres: [...new Set(genres.filter(Boolean))].sort(),
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      shuffleSeed
     });
   } catch (error) {
     return apiError(c, error, 'Cartoon TV catalog is temporarily unavailable.');

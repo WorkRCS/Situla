@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { SiteWorkspace } from "../../../../../components/site-sidebar.jsx";
 import SeriesMediaPlayer from "../../../../../components/media-player";
 import { normalizeTvPlayerRoute } from "../../../../../../src/player-urls.js";
 
@@ -32,11 +33,13 @@ export default async function TvEpisodePage({ params }) {
   if (!route) notFound();
 
   return (
-    <SeriesMediaPlayer
-      kind="tv"
-      tmdbId={route.tmdbId}
-      season={route.season}
-      episode={route.episode}
-    />
+    <SiteWorkspace>
+      <SeriesMediaPlayer
+        kind="tv"
+        tmdbId={route.tmdbId}
+        season={route.season}
+        episode={route.episode}
+      />
+    </SiteWorkspace>
   );
 }

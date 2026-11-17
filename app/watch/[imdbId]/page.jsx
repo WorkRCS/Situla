@@ -1,4 +1,5 @@
 import PlayerExperience from "./player";
+import { SiteWorkspace } from "../../components/site-sidebar.jsx";
 import { connectDatabase } from "../../../src/db.js";
 import { Movie } from "../../../src/models.js";
 
@@ -35,5 +36,5 @@ export async function generateMetadata({ params }) {
 
 export default async function WatchPage({ params }) {
   const { imdbId } = await params;
-  return <PlayerExperience imdbId={imdbId} />;
+  return <SiteWorkspace><PlayerExperience imdbId={imdbId} /></SiteWorkspace>;
 }

@@ -12,6 +12,13 @@ function formatYear(value) {
   return /^\\d{4}/.test(date) ? date.slice(0, 4) : "";
 }
 
+function createCartoonRefreshSeed() {
+  try {
+    if (typeof window !== "undefined" && window.crypto?.randomUUID) return window.crypto.randomUUID();
+  } catch {}
+  return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+}
+
 function publicOrder(items) {
   return [...(Array.isArray(items) ? items : [])].sort((a, b) =>
     Number(Boolean(b.featured)) - Number(Boolean(a.featured)) ||
@@ -216,7 +223,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("All");
-  const [sort, setSort] = useState(view === "cartoons" ? "random" : "popular");
+  const [sort, setSort] = useState("random");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -249,7 +256,8 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
       if (homeView) setHome(null);
       try {
         if (homeView) {
-          const response = await fetch("/api/cartoons/home", {
+          const seed = createCartoonRefreshSeed();
+          const response = await fetch("/api/cartoons/home?seed=" + encodeURIComponent(seed), {
             cache: "no-store", credentials: "same-origin", signal: controller.signal
           });
           const payload = await response.json().catch(() => ({}));
@@ -257,6 +265,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           if (!controller.signal.aborted) setHome(payload);
         } else {
           const params = new URLSearchParams({ page: "1", limit: "48", sort });
+          if (sort === "random") params.set("seed", createCartoonRefreshSeed());
           if (selectedGenre !== "All") params.set("genre", selectedGenre);
           const response = await fetch(endpoint + "?" + params.toString(), {
             cache: "no-store", credentials: "same-origin", signal: controller.signal
@@ -287,7 +296,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   }, [homeView, endpoint, sort, selectedGenre, pageTitle]);
 
   useEffect(() => {
-    setSort(mixedView ? "random" : "popular");
+    setSort("random");
   }, [view]);
 
   async function loadMore() {
@@ -298,7 +307,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     try {
       const params = new URLSearchParams({ page: String(nextPage), limit: "48", sort });
       if (selectedGenre !== "All") params.set("genre", selectedGenre);
-      if (mixedView && shuffleSeed) params.set("seed", shuffleSeed);
+      if (sort === "random" && shuffleSeed) params.set("seed", shuffleSeed);
       const response = await fetch(endpoint + "?" + params.toString(), {
         cache: "no-store", credentials: "same-origin"
       });
@@ -347,7 +356,19 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   }, [sortedHome]);
 
   useEffect(() => {
-    setHeroIndex(0);
+    if (!cartoonHeroItems.length) {
+      setHeroIndex(0);
+      return;
+    }
+    let previousId = "";
+    try { previousId = localStorage.getItem("situla:kids:home-spotlight:v1") || ""; } catch {}
+    const getId = (item) => String(item?.mediaType || "") + ":" + String(item?.tmdbId || "");
+    const freshItems = cartoonHeroItems.filter((item) => getId(item) !== previousId);
+    const pool = freshItems.length ? freshItems : cartoonHeroItems;
+    const selected = pool[Math.floor(Math.random() * pool.length)] || cartoonHeroItems[0];
+    try { localStorage.setItem("situla:kids:home-spotlight:v1", getId(selected)); } catch {}
+    const selectedIndex = cartoonHeroItems.findIndex((item) => getId(item) === getId(selected));
+    setHeroIndex(Math.max(0, selectedIndex));
   }, [cartoonHeroItems]);
 
   useEffect(() => {

@@ -16,6 +16,7 @@ import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "
 import CartoonsCatalog, { CartoonCard } from "./cartoons-catalog.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
+import { formatRuntimeDuration } from "../../src/media-time.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
 import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
 const BOOTSTRAP_ICONS = {
@@ -60,8 +61,7 @@ function formatHistoryDate(timestamp) {
 }
 
 function formatRuntime(minutes) {
-  const seconds = Math.max(0, Math.round(Number(minutes) || 0) * 60);
-  return seconds ? formatClock(seconds) : "";
+  return formatRuntimeDuration(minutes);
 }
 
 function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
@@ -436,7 +436,7 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
   const year = item.releaseYear || (item.firstAirDate ? item.firstAirDate.slice(0, 4) : "");
   const rating = isTv ? item.voteAverage : item.score;
   const meta = isTv
-    ? [year, item.runtime ? item.runtime + " min / ep" : "TV series", item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "", item.numberOfEpisodes ? item.numberOfEpisodes + " eps" : ""].filter(Boolean).join(" · ")
+    ? [year, item.runtime ? formatRuntime(item.runtime) + " / ep" : "TV series", item.numberOfSeasons ? item.numberOfSeasons + " seasons" : "", item.numberOfEpisodes ? item.numberOfEpisodes + " eps" : ""].filter(Boolean).join(" · ")
     : [year, item.episodes ? item.episodes + " episodes" : "Anime series"].filter(Boolean).join(" · ");
   const category = (item.genres || []).slice(0, 2).join(" · ");
   const posterUrl = item.posterUrl || item.posterFallbackUrl;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatRuntimeDuration } from "../../../src/media-time.js";
 
 export default function TvSeriesExperience({ tmdbId }) {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function TvSeriesExperience({ tmdbId }) {
               <div className="series-detail-meta">
                 {series.releaseYear && <span>{series.releaseYear}</span>}
                 {series.voteAverage > 0 && <span>★ {Number(series.voteAverage).toFixed(1)} rating</span>}
-                {series.runtime > 0 && <span>{series.runtime} min / episode</span>}
+                {series.runtime > 0 && <span>{formatRuntimeDuration(series.runtime)} / episode</span>}
                 {series.numberOfSeasons > 0 && <span>{series.numberOfSeasons} seasons</span>}
                 {series.numberOfEpisodes > 0 && <span>{series.numberOfEpisodes} episodes</span>}
                 {series.certification && <span>{series.certification}</span>}
@@ -172,7 +173,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                       <div className="selected-episode-info mt-4">
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="font-bold text-white">S{seasonNumber} E{selectedEpisode.episodeNumber} · {selectedEpisode.name}</h3>
-                          {selectedEpisode.runtime > 0 && <span className="text-xs text-[#e8b65b]">{selectedEpisode.runtime} min</span>}
+                          {selectedEpisode.runtime > 0 && <span className="text-xs text-[#e8b65b]">{formatRuntimeDuration(selectedEpisode.runtime)}</span>}
                         </div>
                         {selectedEpisode.airDate && <p className="mt-1 text-[10px] text-[#9297a7]">First aired {selectedEpisode.airDate}</p>}
                         <p className="mt-2 text-xs leading-5 text-[#9297a7]">{selectedEpisode.overview || "Episode description unavailable."}</p>
@@ -219,7 +220,7 @@ export default function TvSeriesExperience({ tmdbId }) {
                           : <div className="episode-guide-placeholder"><i className="bi bi-play-circle" aria-hidden="true" /></div>}
                         <span className="episode-guide-copy">
                           <strong>E{item.episodeNumber} · {item.name || "Episode " + item.episodeNumber}</strong>
-                          <small>{[item.airDate, item.runtime ? item.runtime + " min" : ""].filter(Boolean).join(" · ")}</small>
+                          <small>{[item.airDate, item.runtime ? formatRuntimeDuration(item.runtime) : ""].filter(Boolean).join(" · ")}</small>
                           <span>{item.overview || "Episode details unavailable."}</span>
                         </span>
                       </button>

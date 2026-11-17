@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { SiteWorkspace } from "../../../../components/site-sidebar.jsx";
 import CartoonMediaPlayer from "../../../../components/cartoon-media-player.jsx";
 
 function normalizeTmdbId(value) {
@@ -17,5 +18,5 @@ export default async function CartoonMovieWatchPage({ params }) {
   const { tmdbId } = await params;
   const id = normalizeTmdbId(tmdbId);
   if (!id) notFound();
-  return <CartoonMediaPlayer type="movie" tmdbId={id} />;
+  return <SiteWorkspace><CartoonMediaPlayer type="movie" tmdbId={id} /></SiteWorkspace>;
 }
