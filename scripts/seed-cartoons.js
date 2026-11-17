@@ -52,14 +52,23 @@ const MOVIE_SEARCH_TERMS = [
   "Crayon Shin-chan The Kasukabe Boys of the Evening Sun", "Crayon Shin-chan Kasukabe Animal Kingdom",
   "Crayon Shin-chan The Spy", "Crayon Shin-chan Robot Dad", "Crayon Shin-chan Cactus Attack",
   "Crayon Shin-chan Food for Survival", "Crayon Shin-chan Our Dinosaur Diary",
-  "Crayon Shin-chan Spicy Kasukabe Dancers", "cartoon movie family animation", "children animated movie"
+  "Crayon Shin-chan Spicy Kasukabe Dancers", "Crayon Shin-chan Jungle That Invites Storm",
+  "Crayon Shin-chan Yakiniku Road of Honor", "Crayon Shin-chan The Legend Called Buri Buri 3 Minutes Charge",
+  "Crayon Shin-chan Dance Amigo", "Crayon Shin-chan The Singing Bomb", "Crayon Shin-chan Hero of Kinpoko",
+  "Crayon Shin-chan My Bride", "Crayon Shin-chan Me and the Space Princess",
+  "Crayon Shin-chan B Class Gourmet Survival", "Crayon Shin-chan Fast Asleep Dreaming World",
+  "Crayon Shin-chan Alien Shiriri", "Crayon Shin-chan Bakumori Kung Fu Boys",
+  "Crayon Shin-chan Rakuga Kingdom", "Crayon Shin-chan Tenkasu Academy",
+  "Crayon Shin-chan Ninja Mononoke", "Crayon Shin-chan Battle of Supernatural Powers",
+  "Doraemon Nobita movie", "Doraemon movie Nobita adventure", "Motu Patlu movie",
+  "cartoon movie family animation", "children animated movie"
 ];
 const SERIES_SEARCH_TERMS = [
   "Motu Patlu", "Doraemon", "Ninja Hattori Returns",
   "Oggy and the Cockroaches Next Generation", "Oggy Oggy",
   "cartoon", "children animation", "kids animation", "animated family"
 ];
-const SHINCHAN_HINDI_DUB = /adult empire|battle of the warring states|kasukabe boys|kasukabe animal kingdom|the spy|robot dad|cactus attack|food for survival|our dinosaur diary|spicy kasukabe dancers/i;
+const SHINCHAN_HINDI_DUB = /adult empire|battle of the warring states|kasukabe boys|kasukabe animal kingdom|the spy|robot dad|cactus attack|food for survival|our dinosaur diary|spicy kasukabe dancers|jungle that invites storm|yakiniku|buri buri 3 minutes|dance[! ]*amigo|singing bomb|hero of kinpoko|my bride|space princess|b class gourmet|dreaming world|alien shiriri|kung fu boys|rakuga kingdom|tenkasu academy|ninja mononoke|battle of supernatural powers/i;
 const MOTU_PATLU_TITLE = /motu[\s-]*patlu/i;
 
 function parseNumber(value) {
@@ -381,9 +390,15 @@ function movieFromMeta(meta, tmdbId) {
       !isCartoonYearAllowed(year) || isAdultMetadata(meta)) return null;
   if (!isChildrenAnimation({ genres, rating: meta?.certification || meta?.contentRating || "", pinned: pinnedFranchise })) return null;
   const originalLanguage = parseLanguage(meta?.language || meta?.original_language);
-  const audioLanguages = originalLanguage ? [originalLanguage] : [];
-  if (MOTU_PATLU_TITLE.test(title) && originalLanguage === "Hindi" && !audioLanguages.includes("Hindi")) audioLanguages.push("Hindi");
-  const dubLanguages = isShinchanHindiTitle(title) ? ["Hindi"] : [];
+  const audioLanguages = [];
+  for (const value of [originalLanguage, ...(Array.isArray(meta?.audioLanguages) ? meta.audioLanguages : [])]) {
+    const language = parseLanguage(value);
+    if (language && !audioLanguages.includes(language)) audioLanguages.push(language);
+  }
+  const dubLanguages = [...new Set([
+    ...(Array.isArray(meta?.dubLanguages) ? meta.dubLanguages.map(parseLanguage).filter(Boolean) : []),
+    ...(isShinchanHindiTitle(title) ? ["Hindi"] : [])
+  ])];
   return {
     tmdbId,
     imdbId,
@@ -440,7 +455,10 @@ function createSeriesRecord(show, meta, tmdbId, episodeData) {
     const language = parseLanguage(value);
     if (language && !audioLanguages.includes(language)) audioLanguages.push(language);
   }
-  const dubLanguages = [...new Set(pin?.dubLanguages || [])];
+  const dubLanguages = [...new Set([
+    ...(Array.isArray(meta?.dubLanguages) ? meta.dubLanguages.map(parseLanguage).filter(Boolean) : []),
+    ...(pin?.dubLanguages || [])
+  ])];
   if (!tmdbId || !title || overview.length < 50 || !isCartoonYearAllowed(year) ||
       !episodeData.numberOfEpisodes) return null;
   if (!isChildrenAnimation({
