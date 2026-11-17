@@ -28,7 +28,8 @@ test("one unified seed command runs curated imports, public metadata discovery a
   assert.equal(CATALOG_YEAR_START, 2020);
   assert.equal(CATALOG_YEAR_END, 2026);
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.match(runner, /seedOfflineCatalog/);
   assert.match(runner, /seedMovieAdditions/);
   assert.match(runner, /seedTvSeries/);
