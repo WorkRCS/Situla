@@ -98,7 +98,8 @@ test("the unified seed imports the Anime pack insert-only and then refreshes pub
   const marketRefresh = await read("../scripts/refresh-catalog-market-data.js");
   const pkg = JSON.parse(await read("../package.json"));
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.equal(pkg.scripts["check:anime"], "node scripts/check-anime-additions.js");
   assert.equal(pkg.scripts["audit:anime"], "node scripts/audit-anime-artwork.js");
   assert.equal(pkg.scripts["audit:anime:apply"], "node scripts/audit-anime-artwork.js --apply");
