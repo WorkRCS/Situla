@@ -51,8 +51,22 @@ test("saved items can be removed independently without affecting another media t
   ]);
 });
 
+test("Cartoon Movies and Cartoon TV Series save independently using TMDB IDs", () => {
+  const movie = { tmdbId: 7001, mediaType: "cartoon_movie", title: "Cartoon Movie" };
+  const series = { tmdbId: 7001, mediaType: "cartoon_tv", title: "Cartoon Series" };
+  let saved = toggleSavedMedia([], movie, "cartoon_movie");
+  saved = toggleSavedMedia(saved, series, "cartoon_tv");
+
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["cartoon_tv:7001", "cartoon_movie:7001"]);
+  assert.deepEqual(saved.map((item) => savedMediaType(item)), ["cartoon_tv", "cartoon_movie"]);
+  saved = toggleSavedMedia(saved, movie, "cartoon_movie");
+  assert.deepEqual(saved.map((item) => savedMediaKey(item)), ["cartoon_tv:7001"]);
+});
+
 test("invalid IDs cannot be added to the saved collection", () => {
   assert.deepEqual(toggleSavedMedia([], { tmdbId: 0 }, "tv"), []);
+  assert.deepEqual(toggleSavedMedia([], { tmdbId: 0 }, "cartoon_movie"), []);
+  assert.deepEqual(toggleSavedMedia([], { tmdbId: -1 }, "cartoon_tv"), []);
   assert.deepEqual(toggleSavedMedia([], { malId: "not-a-number" }, "anime"), []);
   assert.deepEqual(toggleSavedMedia([], { imdbId: "movie-1" }), []);
 });

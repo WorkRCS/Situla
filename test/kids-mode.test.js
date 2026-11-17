@@ -89,8 +89,8 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
   assert.ok(app.includes('const kidsOnlyView = ["home", "cartoons",'));
   assert.ok(!app.includes('router.replace("/")'));
   assert.ok(app.includes('const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;'));
-  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" />'));
-  assert.ok(app.includes("<CartoonsCatalog view={tab} />"));
+  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" isSaved={isCartoonSaved}'));
+  assert.ok(app.includes('<CartoonsCatalog view={tab} isSaved={isCartoonSaved}'));
   assert.ok(app.includes("kidsMode={kidsMode}"));
   assert.ok(sidebar.includes('{ id: "home", href: "/", label: "Home", icon: House }'));
   assert.ok(sidebar.includes("export function SiteWorkspace({ children, kidsMode = false })"));
@@ -118,6 +118,33 @@ test("Kids Mode cards use the same TV poster, card size, rating and metadata sty
   assert.ok(cartoons.includes("Load more"));
 });
 
+
+test("Cartoons reuse the header search and expose Movie-style badge, Save and Share actions", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
+  const backend = await read("../src/app.js");
+
+  assert.ok(!cartoons.includes("catalog-search"));
+  assert.ok(!cartoons.includes("setQuery"));
+  assert.ok(!cartoons.includes("Search size={16}"));
+  assert.ok(cartoons.includes("catalog-toolbar-sort-only"));
+  assert.ok(app.includes('className="header-search search-box header-search-trigger"'));
+  assert.ok(app.includes('onClick={() => setSearchOpen(true)}'));
+  assert.ok(cartoons.includes('catalog-badge-" + catalogBadge.kind'));
+  assert.ok(cartoons.includes('className={"save-button" + (saved ? " saved" : "")}'));
+  assert.ok(cartoons.includes('className="share-button"'));
+  assert.ok(cartoons.includes("onSave?.(item, mediaType)"));
+  assert.ok(cartoons.includes("onShare(item, mediaType)"));
+  assert.ok(app.includes("isSaved={isCartoonSaved}"));
+  assert.ok(app.includes("onSave={toggleSaved}"));
+  assert.ok(app.includes("onShare={shareCartoon}"));
+  assert.ok(app.includes('kind === "cartoon_movie" || kind === "cartoon_tv"'));
+  assert.ok(backend.includes("deriveCartoonBadges"));
+  assert.ok(backend.includes("getCartoonPublicBadgeIndex"));
+  assert.ok(backend.includes("applyCartoonPublicBadges(movieRows, badgeIndex.movies)"));
+  assert.ok(backend.includes("applyCartoonPublicBadges(seriesRows, badgeIndex.series)"));
+  assert.ok(backend.includes("CARTOON_BADGE_CACHE_TTL_MS = 5 * 60 * 1000"));
+});
 
 test("Cartoon detail and watch routes mount the dedicated components", async () => {
   const series = await read("../app/cartoons/tv/[tmdbId]/page.jsx");

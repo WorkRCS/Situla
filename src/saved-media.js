@@ -11,6 +11,8 @@ export function savedMediaType(item, preferredType) {
   if (type === "movie" && VALID_IMDB_ID.test(String(item.imdbId || ""))) return "movie";
   if (type === "tv" && normalizePositiveId(item.tmdbId)) return "tv";
   if (type === "anime" && normalizePositiveId(item.malId)) return "anime";
+  if (type === "cartoon_movie" && normalizePositiveId(item.tmdbId)) return "cartoon_movie";
+  if (type === "cartoon_tv" && normalizePositiveId(item.tmdbId)) return "cartoon_tv";
   if (type) return null;
   if (VALID_IMDB_ID.test(String(item.imdbId || ""))) return "movie";
   if (normalizePositiveId(item.tmdbId)) return "tv";
@@ -23,6 +25,7 @@ export function savedMediaKey(item, preferredType) {
   if (type === "movie") return "movie:" + String(item.imdbId).toLowerCase();
   if (type === "tv") return "tv:" + normalizePositiveId(item.tmdbId);
   if (type === "anime") return "anime:" + normalizePositiveId(item.malId);
+  if (type === "cartoon_movie" || type === "cartoon_tv") return type + ":" + normalizePositiveId(item.tmdbId);
   return null;
 }
 

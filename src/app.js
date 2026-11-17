@@ -24,6 +24,7 @@ import adminRouter from './admin.js';
 import upcomingRouter from './upcoming.js';
 import { encryptSensitiveIp, parseUserAgent } from './admin-analytics.js';
 import { approvedCartoonMovieFilter, approvedCartoonSeriesFilter, shuffleCartoonCatalog, cartoonDatabaseDateRange } from './cartoon-catalog.js';
+import { deriveCartoonBadges } from './cartoon-seed.js';
 import { buildNewestFirstSort, PREMIUM_FEED_LIMIT } from './premium-feed.js';
 import { getCatalogBadge, recordCatalogPlaybackStart } from './catalog-popularity.js';
 import { normalizeSharePosterUrl, detectSharePosterMimeType, SHARE_POSTER_MAX_BYTES } from './media-image.js';
@@ -1140,11 +1141,70 @@ const HOME_MOVIE_DISCOVERY_SORT = {
   _id: 1
 };
 
+const CARTOON_BADGE_CACHE_TTL_MS = 5 * 60 * 1000;
+let cartoonBadgeCache = { expiresAt: 0, value: null, pending: null };
+
+async function getCartoonPublicBadgeIndex() {
+  if (cartoonBadgeCache.value && cartoonBadgeCache.expiresAt > Date.now()) {
+    return cartoonBadgeCache.value;
+  }
+  if (cartoonBadgeCache.pending) return cartoonBadgeCache.pending;
+
+  const pending = (async () => {
+    const [movieMetrics, seriesMetrics] = await Promise.all([
+      CartoonMovie.find(approvedCartoonMovieFilter())
+        .select('tmdbId releaseYear releaseDate voteAverage voteCount popularity').lean(),
+      CartoonSeries.find(approvedCartoonSeriesFilter())
+        .select('tmdbId releaseYear firstAirDate voteAverage voteCount popularity').lean()
+    ]);
+    const toIndex = (records) => new Map(deriveCartoonBadges(records).map((item) => [
+      Number(item.tmdbId),
+      { featured: item.featured === true, hot: item.hot === true, popular: item.popular === true }
+    ]));
+    const value = { movies: toIndex(movieMetrics), series: toIndex(seriesMetrics) };
+    cartoonBadgeCache = {
+      expiresAt: Date.now() + CARTOON_BADGE_CACHE_TTL_MS,
+      value,
+      pending: null
+    };
+    return value;
+  })();
+
+  cartoonBadgeCache.pending = pending;
+  try {
+    return await pending;
+  } catch (error) {
+    if (cartoonBadgeCache.pending === pending) cartoonBadgeCache.pending = null;
+    throw error;
+  }
+}
+
+function applyCartoonPublicBadges(records, index) {
+  return records.map((item) => ({
+    ...item,
+    ...(index.get(Number(item.tmdbId)) || {
+      featured: Boolean(item.featured),
+      hot: Boolean(item.hot),
+      popular: Boolean(item.popular)
+    })
+  }));
+}
+
+function compareCartoonPublicOrder(a, b) {
+  return Number(Boolean(b.featured)) - Number(Boolean(a.featured)) ||
+    Number(Boolean(b.hot)) - Number(Boolean(a.hot)) ||
+    Number(Boolean(b.popular)) - Number(Boolean(a.popular)) ||
+    (Number(b.popularity) || 0) - (Number(a.popularity) || 0) ||
+    (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+    (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0) ||
+    String(a.title || '').localeCompare(String(b.title || ''));
+}
+
 function cartoonCatalogBadge(item) {
   if (item.featured) return { label: 'Featured', kind: 'featured' };
   if (item.hot) return { label: 'Hot', kind: 'hot' };
   if (item.popular) return { label: 'Popular', kind: 'popular' };
-  return null;
+  return { label: 'Featured', kind: 'featured' };
 }
 
 function cartoonMovieDto(item) {
@@ -1243,13 +1303,17 @@ app.get('/api/cartoons/home', async (c) => {
     await connectDatabase();
     const movieFilter = approvedCartoonMovieFilter();
     const seriesFilter = approvedCartoonSeriesFilter();
-    const sort = { featured: -1, hot: -1, popular: -1, trendScore: -1, popularity: -1, voteAverage: -1, title: 1 };
-    const [movies, series, movieTotal, seriesTotal] = await Promise.all([
-      CartoonMovie.find(movieFilter).sort(sort).limit(24).lean(),
-      CartoonSeries.find(seriesFilter).sort(sort).limit(30).lean(),
+    const [movieRows, seriesRows, movieTotal, seriesTotal, badgeIndex] = await Promise.all([
+      CartoonMovie.find(movieFilter).lean(),
+      CartoonSeries.find(seriesFilter).lean(),
       CartoonMovie.countDocuments(movieFilter),
-      CartoonSeries.countDocuments(seriesFilter)
+      CartoonSeries.countDocuments(seriesFilter),
+      getCartoonPublicBadgeIndex()
     ]);
+    const movies = applyCartoonPublicBadges(movieRows, badgeIndex.movies)
+      .sort(compareCartoonPublicOrder).slice(0, 24);
+    const series = applyCartoonPublicBadges(seriesRows, badgeIndex.series)
+      .sort(compareCartoonPublicOrder).slice(0, 30);
     return c.json({
       featuredMovie: movies.find((item) => item.featured) || movies[0] || null,
       featuredSeries: series.find((item) => item.featured) || series[0] || null,
@@ -1279,16 +1343,17 @@ app.get('/api/cartoons/catalog', async (c) => {
       else if (query) filter.$text = { $search: query };
     }
 
-    const [movieRows, seriesRows, movieGenres, seriesGenres] = await Promise.all([
+    const [movieRows, seriesRows, movieGenres, seriesGenres, badgeIndex] = await Promise.all([
       CartoonMovie.find(movieFilter).lean(),
       CartoonSeries.find(seriesFilter).lean(),
       CartoonMovie.distinct('genres', approvedCartoonMovieFilter()),
-      CartoonSeries.distinct('genres', approvedCartoonSeriesFilter())
+      CartoonSeries.distinct('genres', approvedCartoonSeriesFilter()),
+      getCartoonPublicBadgeIndex()
     ]);
 
     let items = [
-      ...movieRows.map(cartoonMovieDto),
-      ...seriesRows.map((item) => cartoonSeriesDto(item))
+      ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map(cartoonMovieDto),
+      ...applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => cartoonSeriesDto(item))
     ];
     let shuffleSeed = null;
 
@@ -1333,20 +1398,27 @@ app.get('/api/cartoons/movies', async (c) => {
     if (genre) filter.genres = genre;
     if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
-    const sort = sortKey === 'newest'
-      ? { releaseDate: -1, popularity: -1 }
-      : sortKey === 'rating'
-        ? { voteAverage: -1, voteCount: -1, popularity: -1 }
-        : sortKey === 'az'
-          ? { title: 1 }
-          : { featured: -1, hot: -1, popular: -1, popularity: -1, voteAverage: -1 };
-    const [items, total] = await Promise.all([
-      CartoonMovie.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
-      CartoonMovie.countDocuments(filter)
+    const [rows, genres, badgeIndex] = await Promise.all([
+      CartoonMovie.find(filter).lean(),
+      CartoonMovie.distinct('genres', approvedCartoonMovieFilter()),
+      getCartoonPublicBadgeIndex()
     ]);
+    const allItems = applyCartoonPublicBadges(rows, badgeIndex.movies);
+    if (sortKey === 'newest') {
+      allItems.sort((a, b) => String(b.releaseDate || '').localeCompare(String(a.releaseDate || '')) ||
+        (Number(b.popularity) || 0) - (Number(a.popularity) || 0));
+    } else if (sortKey === 'rating') {
+      allItems.sort((a, b) => (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+        (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0));
+    } else if (sortKey === 'az') {
+      allItems.sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+    } else {
+      allItems.sort(compareCartoonPublicOrder);
+    }
+    const total = allItems.length;
     return c.json({
-      items: items.map(cartoonMovieDto),
-      genres: [...new Set((await CartoonMovie.distinct('genres', approvedCartoonMovieFilter())).filter(Boolean))].sort(),
+      items: allItems.slice((page - 1) * limit, page * limit).map(cartoonMovieDto),
+      genres: [...new Set(genres.filter(Boolean))].sort(),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -1378,20 +1450,27 @@ app.get('/api/cartoons/series', async (c) => {
     if (genre) filter.genres = genre;
     if (query && /^[0-9]{1,12}$/.test(query)) filter.tmdbId = Number(query);
     else if (query) filter.$text = { $search: query };
-    const sort = sortKey === 'newest'
-      ? { firstAirDate: -1, popularity: -1 }
-      : sortKey === 'rating'
-        ? { voteAverage: -1, voteCount: -1, popularity: -1 }
-        : sortKey === 'az'
-          ? { title: 1 }
-          : { featured: -1, hot: -1, popular: -1, popularity: -1, voteAverage: -1 };
-    const [items, total] = await Promise.all([
-      CartoonSeries.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(),
-      CartoonSeries.countDocuments(filter)
+    const [rows, genres, badgeIndex] = await Promise.all([
+      CartoonSeries.find(filter).lean(),
+      CartoonSeries.distinct('genres', approvedCartoonSeriesFilter()),
+      getCartoonPublicBadgeIndex()
     ]);
+    const allItems = applyCartoonPublicBadges(rows, badgeIndex.series);
+    if (sortKey === 'newest') {
+      allItems.sort((a, b) => String(b.firstAirDate || '').localeCompare(String(a.firstAirDate || '')) ||
+        (Number(b.popularity) || 0) - (Number(a.popularity) || 0));
+    } else if (sortKey === 'rating') {
+      allItems.sort((a, b) => (Number(b.voteAverage) || 0) - (Number(a.voteAverage) || 0) ||
+        (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0));
+    } else if (sortKey === 'az') {
+      allItems.sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+    } else {
+      allItems.sort(compareCartoonPublicOrder);
+    }
+    const total = allItems.length;
     return c.json({
-      items: items.map((item) => cartoonSeriesDto(item)),
-      genres: [...new Set((await CartoonSeries.distinct('genres', approvedCartoonSeriesFilter())).filter(Boolean))].sort(),
+      items: allItems.slice((page - 1) * limit, page * limit).map((item) => cartoonSeriesDto(item)),
+      genres: [...new Set(genres.filter(Boolean))].sort(),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -1462,18 +1541,19 @@ app.get('/api/cartoons/search', async (c) => {
     const seriesSort = query.length >= 2 && !numericId
       ? { score: { $meta: 'textScore' }, firstAirDate: -1, popularity: -1 }
       : { firstAirDate: -1, releaseYear: -1, popularity: -1, voteAverage: -1 };
-    const [movieRows, seriesRows, movieTotal, seriesTotal, movieDates, seriesDates] = await Promise.all([
+    const [movieRows, seriesRows, movieTotal, seriesTotal, movieDates, seriesDates, badgeIndex] = await Promise.all([
       CartoonMovie.find(movieFilter).sort(movieSort).lean(),
       CartoonSeries.find(seriesFilter).sort(seriesSort).lean(),
       CartoonMovie.countDocuments(movieFilter),
       CartoonSeries.countDocuments(seriesFilter),
       CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate').lean(),
-      CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean()
+      CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate').lean(),
+      getCartoonPublicBadgeIndex()
     ]);
     const dateRange = cartoonDatabaseDateRange(movieDates, seriesDates);
     const combined = [
-      ...movieRows.map((item) => ({ ...cartoonMovieDto(item), searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '') })),
-      ...seriesRows.map((item) => ({ ...cartoonSeriesDto(item), searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '') }))
+      ...applyCartoonPublicBadges(movieRows, badgeIndex.movies).map((item) => ({ ...cartoonMovieDto(item), searchDate: item.releaseDate || (item.releaseYear ? String(item.releaseYear) : '') })),
+      ...applyCartoonPublicBadges(seriesRows, badgeIndex.series).map((item) => ({ ...cartoonSeriesDto(item), searchDate: item.firstAirDate || (item.releaseYear ? String(item.releaseYear) : '') }))
     ];
     combined.sort((a, b) =>
       String(b.searchDate || '').localeCompare(String(a.searchDate || '')) ||

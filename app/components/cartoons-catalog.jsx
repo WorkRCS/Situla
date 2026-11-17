@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Baby, Film, Search, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Baby, Bookmark, Check, Film, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 
 function formatYear(value) {
@@ -23,15 +23,32 @@ function publicOrder(items) {
   );
 }
 
-function CartoonCard({ item, kind = "series" }) {
+export function CartoonCard({
+  item,
+  kind = "series",
+  saved = false,
+  onSave,
+  onShare,
+  onPrepareShare
+}) {
   const isMovie = kind === "movie";
+  const mediaType = isMovie ? "cartoon_movie" : "cartoon_tv";
   const href = isMovie
     ? "/cartoons/watch/movie/" + encodeURIComponent(item.tmdbId)
     : "/cartoons/tv/" + encodeURIComponent(item.tmdbId);
   const year = formatYear(item.releaseYear || item.releaseDate || item.firstAirDate);
-  const badgeLabel = item.catalogBadge?.label || (item.featured ? "Featured" : item.hot ? "Hot" : item.popular ? "Popular" : "");
-  const badgeKind = item.catalogBadge?.kind || (item.featured ? "featured" : item.hot ? "hot" : "popular");
+  const catalogBadge = item.catalogBadge?.kind
+    ? item.catalogBadge
+    : item.featured
+      ? { label: "Featured", kind: "featured" }
+      : item.hot
+        ? { label: "Hot", kind: "hot" }
+        : item.popular
+          ? { label: "Popular", kind: "popular" }
+          : { label: "Featured", kind: "featured" };
   const posterUrl = item.posterUrl ? optimizeTmdbImageUrl(item.posterUrl, "w185") : "";
+  const [shareFeedback, setShareFeedback] = useState("");
+  const [sharePreparing, setSharePreparing] = useState(false);
 
   const meta = isMovie
     ? [year || "Movie", item.runtime > 0 ? item.runtime + " min" : ""].filter(Boolean).join(" · ")
@@ -42,6 +59,27 @@ function CartoonCard({ item, kind = "series" }) {
         item.numberOfEpisodes > 0 ? item.numberOfEpisodes + " eps" : ""
       ].filter(Boolean).join(" · ");
   const category = Array.isArray(item.genres) ? item.genres.slice(0, 2).join(" · ") : "";
+
+  function handleSave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    onSave?.(item, mediaType);
+  }
+
+  async function handleShare(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!onShare || sharePreparing) return;
+    setSharePreparing(true);
+    try {
+      const feedback = await onShare(item, mediaType);
+      setShareFeedback(feedback || "");
+    } catch {
+      setShareFeedback("Could not share this cartoon.");
+    } finally {
+      setSharePreparing(false);
+    }
+  }
 
   return (
     <article className={"movie-card series-card series-card-tv" + (isMovie ? " cartoon-movie-card" : " cartoon-series-card")}>
@@ -54,11 +92,9 @@ function CartoonCard({ item, kind = "series" }) {
           {posterUrl
             ? <img src={posterUrl} alt={item.title + " poster"} loading="lazy" decoding="async" />
             : <span className="poster-fallback"><Baby size={28} /></span>}
-          {badgeLabel && (
-            <span className={"catalog-badge catalog-badge-" + badgeKind} role="status" aria-label={badgeLabel + " title"}>
-              {badgeLabel}
-            </span>
-          )}
+          <span className={"catalog-badge catalog-badge-" + catalogBadge.kind} role="status" aria-label={catalogBadge.label + " title"}>
+            {catalogBadge.label}
+          </span>
           {Number(item.voteAverage) > 0 && (
             <span className="rating-pill"><Star size={11} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>
           )}
@@ -67,11 +103,35 @@ function CartoonCard({ item, kind = "series" }) {
         <p className="series-card-meta">{meta}</p>
         {category && <p className="series-card-category">{category}</p>}
       </Link>
+      <button
+        type="button"
+        onClick={handleSave}
+        className={"save-button" + (saved ? " saved" : "")}
+        aria-label={saved ? "Remove from My List" : "Save cartoon to My List"}
+        aria-pressed={saved}
+        title={saved ? "Remove from My List" : "Save to My List"}
+      >
+        {saved ? <Check size={15} /> : <Bookmark size={15} />}
+      </button>
+      <button
+        type="button"
+        className="share-button"
+        onClick={handleShare}
+        onPointerEnter={() => onPrepareShare?.(item)}
+        onFocus={() => onPrepareShare?.(item)}
+        disabled={sharePreparing}
+        aria-busy={sharePreparing}
+        aria-label={"Share " + (item.title || "cartoon")}
+        title="Share poster and cartoon link"
+      >
+        <Share2 size={15} />
+      </button>
+      {shareFeedback && <span className="share-feedback" role="status">{shareFeedback}</span>}
     </article>
   );
 }
 
-function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, variant = "series" }) {
+function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, variant = "series", isSaved, onSave, onShare, onPrepareShare }) {
   if (!items?.length) return null;
   const shelfClass = kind === "movie" ? "home-movie-shelf" : "home-series-shelf";
   return (
@@ -84,7 +144,14 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
         {moreHref && <Link href={moreHref} className="shelf-browse-link">Explore all <ArrowUpRight size={14} /></Link>}
       </div>
       <div className="media-row flex gap-4 overflow-x-auto pb-3">
-        {items.map((item) => <CartoonCard key={kind + ":" + item.tmdbId} item={item} kind={kind} />)}
+        {items.map((item) => {
+          const mediaType = kind === "movie" ? "cartoon_movie" : "cartoon_tv";
+          return <CartoonCard key={kind + ":" + item.tmdbId}
+            item={item} kind={kind}
+            saved={Boolean(isSaved?.(item, mediaType))}
+            onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare}
+          />;
+        })}
       </div>
     </section>
   );
@@ -144,13 +211,12 @@ function CartoonSpotlight({ item, onPause, onResume, onPrevious, onNext, index =
   );
 }
 
-export default function CartoonsCatalog({ view = "cartoons" }) {
+export default function CartoonsCatalog({ view = "cartoons", isSaved, onSave, onShare, onPrepareShare }) {
   const [home, setHome] = useState(null);
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("All");
   const [sort, setSort] = useState(view === "cartoons" ? "random" : "popular");
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -191,7 +257,6 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
           if (!controller.signal.aborted) setHome(payload);
         } else {
           const params = new URLSearchParams({ page: "1", limit: "48", sort });
-          if (query.trim()) params.set("q", query.trim());
           if (selectedGenre !== "All") params.set("genre", selectedGenre);
           const response = await fetch(endpoint + "?" + params.toString(), {
             cache: "no-store", credentials: "same-origin", signal: controller.signal
@@ -219,7 +284,7 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [homeView, endpoint, sort, query, selectedGenre, pageTitle]);
+  }, [homeView, endpoint, sort, selectedGenre, pageTitle]);
 
   useEffect(() => {
     setSort(mixedView ? "random" : "popular");
@@ -232,7 +297,6 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
     setLoadMoreError("");
     try {
       const params = new URLSearchParams({ page: String(nextPage), limit: "48", sort });
-      if (query.trim()) params.set("q", query.trim());
       if (selectedGenre !== "All") params.set("genre", selectedGenre);
       if (mixedView && shuffleSeed) params.set("seed", shuffleSeed);
       const response = await fetch(endpoint + "?" + params.toString(), {
@@ -317,12 +381,12 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
           onPrevious={() => setHeroIndex((current) => (current - 1 + cartoonHeroItems.length) % cartoonHeroItems.length)}
           onNext={() => setHeroIndex((current) => (current + 1) % cartoonHeroItems.length)}
         />
-        <CartoonShelf title="Featured TV series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" variant="featured" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" variant="hot" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Popular cartoon series" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularSeries} kind="series" variant="popular" moreHref="/cartoons/tv" />
-        <CartoonShelf title="Featured movies" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredMovies} kind="movie" variant="featured" moreHref="/cartoons/movies" />
-        <CartoonShelf title="Hot cartoon movies" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotMovies} kind="movie" variant="hot" moreHref="/cartoons/movies" />
-        <CartoonShelf title="Popular cartoon movies" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" variant="popular" moreHref="/cartoons/movies" />
+        <CartoonShelf title="Featured TV series" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredSeriesList} kind="series" variant="featured" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        <CartoonShelf title="Hot right now" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotSeries} kind="series" variant="hot" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        <CartoonShelf title="Popular cartoon series" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularSeries} kind="series" variant="popular" moreHref="/cartoons/tv" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        <CartoonShelf title="Featured movies" eyebrow="EDITOR'S PICKS" items={sortedHome?.featuredMovies} kind="movie" variant="featured" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        <CartoonShelf title="Hot cartoon movies" eyebrow="RECENT SITULA ACTIVITY" items={sortedHome?.hotMovies} kind="movie" variant="hot" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
+        <CartoonShelf title="Popular cartoon movies" eyebrow="PUBLIC AUDIENCE DATA" items={sortedHome?.popularMovies?.length ? sortedHome.popularMovies : sortedHome?.movies} kind="movie" variant="popular" moreHref="/cartoons/movies" isSaved={isSaved} onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare} />
         {sortedHome && !sortedHome.movies.length && !sortedHome.series.length && (
           <div className="catalog-empty-state"><Baby size={28} /><h2>No approved cartoons yet</h2><p>Only reviewed family-friendly titles are shown in Kids Mode.</p></div>
         )}
@@ -340,8 +404,7 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
           {mixedView && <p className="series-card-meta">{total ? total + " approved movies & series" : "Movies and TV series in one collection"}</p>}
         </div>
       </div>
-      <div className="catalog-toolbar">
-        <label className="catalog-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"Search " + pageTitle.toLowerCase()} aria-label={"Search " + pageTitle} /></label>
+      <div className="catalog-toolbar catalog-toolbar-sort-only">
         <label className="catalog-sort"><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}>{mixedView && <option value="random">Random mix</option>}<option value="popular">Popular</option><option value="newest">Newest</option><option value="rating">Top rated</option><option value="az">A–Z</option></select></label>
       </div>
       {!!genres.length && (
@@ -355,7 +418,12 @@ export default function CartoonsCatalog({ view = "cartoons" }) {
           <div className="catalog-grid">
             {items.map((item) => {
               const itemKind = item.mediaType === "cartoon_movie" ? "movie" : mixedView ? "series" : kind;
-              return <CartoonCard key={itemKind + ":" + item.tmdbId} item={item} kind={itemKind} />;
+              const mediaType = itemKind === "movie" ? "cartoon_movie" : "cartoon_tv";
+              return <CartoonCard key={itemKind + ":" + item.tmdbId}
+                item={item} kind={itemKind}
+                saved={Boolean(isSaved?.(item, mediaType))}
+                onSave={onSave} onShare={onShare} onPrepareShare={onPrepareShare}
+              />;
             })}
           </div>
           {loading && <p className="mt-5 text-center text-xs text-[#858b9b]">Refreshing catalogue…</p>}

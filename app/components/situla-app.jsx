@@ -13,7 +13,7 @@ import { Progress } from "./ui/progress.jsx";
 import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
 import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
-import CartoonsCatalog from "./cartoons-catalog.jsx";
+import CartoonsCatalog, { CartoonCard } from "./cartoons-catalog.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
@@ -1541,6 +1541,43 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const toggleSaved = useCallback((item, kind) => {
     setSavedMovies((current) => toggleSavedMedia(current, item, kind));
   }, []);
+  const isCartoonSaved = useCallback((item, mediaType) => (
+    savedIds.has(savedMediaKey(item, mediaType))
+  ), [savedIds]);
+  const prepareCartoonSharePoster = useCallback((item) => {
+    if (item?.posterUrl) void prepareSharePosterBlob(item.posterUrl).catch(() => {});
+  }, []);
+  const shareCartoon = useCallback(async (item, mediaType) => {
+    const isMovie = mediaType === "cartoon_movie";
+    const href = isMovie
+      ? "/cartoons/watch/movie/" + encodeURIComponent(item?.tmdbId)
+      : "/cartoons/tv/" + encodeURIComponent(item?.tmdbId);
+    if (!item?.tmdbId) return "Cartoon link unavailable.";
+    const title = item.title || (isMovie ? "Cartoon movie" : "Cartoon TV series");
+    const url = new URL(href, window.location.origin).toString();
+    const posterUrl = item.posterUrl || "";
+    if (typeof navigator.share !== "function" || typeof navigator.canShare !== "function" || typeof File !== "function") {
+      return copyContentUrl(url);
+    }
+    if (!posterUrl) return "Poster unavailable for sharing.";
+    if (!sharePosterBlobs.has(String(posterUrl))) {
+      try {
+        await prepareSharePosterBlob(posterUrl);
+        return "Poster ready — tap Share again";
+      } catch {
+        return "Poster unavailable for sharing.";
+      }
+    }
+    try {
+      const shareTask = shareMediaCard({ title, href, posterUrl });
+      if (!shareTask) return copyContentUrl(url);
+      await shareTask;
+      return "Shared";
+    } catch (shareError) {
+      if (shareError?.name === "AbortError") return "";
+      return "Poster ready — tap Share again";
+    }
+  }, []);
   const openHomeSpotlight = useCallback((item) => {
     if (item?.mediaType === "tv") {
       setPendingHomeNavigation("tv:" + String(item.tmdbId));
@@ -2326,7 +2363,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <footer className="mt-12 border-t border-white/5 py-7 text-center text-[10px] text-[#686e7d]">SITULA · DISCOVER MORE</footer>
             </div>
             <div className="kids-mode-panel" hidden={!kidsMode} aria-hidden={!kidsMode}>
-              <CartoonsCatalog view="kidsHome" />
+              <CartoonsCatalog view="kidsHome" isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
             </div>
           </div>
         )}
@@ -2335,7 +2372,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           <div className="app-view-main-column">
             <div className="app-view-mode-panel" hidden={kidsMode && !kidsOnlyView} aria-hidden={kidsMode && !kidsOnlyView}>
         {["cartoons", "cartoonMovies", "cartoonTv"].includes(tab) && (
-          <CartoonsCatalog view={tab} />
+          <CartoonsCatalog view={tab} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
         )}
 
         {tab === "movies" && (
@@ -2459,6 +2496,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 {visibleSavedMovies.map((item) => {
                   const kind = savedMediaType(item);
                   const key = savedMediaKey(item);
+                  if (kind === "cartoon_movie" || kind === "cartoon_tv") {
+                    return <CartoonCard
+                      key={key} item={item}
+                      kind={kind === "cartoon_movie" ? "movie" : "series"}
+                      saved={savedIds.has(key)}
+                      onSave={toggleSaved}
+                      onShare={shareCartoon}
+                      onPrepareShare={prepareCartoonSharePoster}
+                    />;
+                  }
                   return kind === "movie"
                     ? <MovieCard key={key} movie={item} onOpen={openMovie} onSave={toggleSaved} saved={savedIds.has(key)} />
                     : <SeriesCard key={key} item={item} kind={kind} onOpen={kind === "tv" ? openTvSeries : openAnimeSeries} onSave={toggleSaved} saved={savedIds.has(key)} />;
