@@ -415,11 +415,6 @@ function movieFromMeta(meta, tmdbId) {
   };
 }
 
-function parseRuntime(value) {
-  const match = String(value || "").match(/(\d+(?:\.\d+)?)/);
-  return match ? Math.max(0, Math.round(Number(match[1]))) : null;
-}
-
 function createSeriesRecord(show, tmdbId, episodeData) {
   const pin = pinnedForShow(show);
   const imdbId = extractImdbId(show.externals?.imdb) || pin?.imdbId || "";
@@ -566,43 +561,6 @@ async function buildSeriesRecords(existingIds, needed) {
   const badges = deriveCartoonBadges(unique);
   const finalIds = new Set(badges.map((item) => item.tmdbId));
   return { records: badges, episodes: episodes.filter((item) => finalIds.has(item.seriesTmdbId)) };
-}
-
-async function discoverCinemeta(type, genres, searches) {
-  const candidates = new Map();
-  for (const genre of genres) {
-    for (let skip = 0; skip < 2400; skip += 100) {
-      const extra = "genre=" + encodeURIComponent(genre) + "&skip=" + skip;
-      const url = CINEMETA + "/catalog/" + type + "/top/" + extra + ".json";
-      let payload;
-      try {
-        payload = await cachedJson("cinemeta-catalog", type + "-" + genre + "-" + skip, url);
-      } catch (error) {
-        console.warn("Cinemeta catalog page failed:", genre, skip, error.message);
-        break;
-      }
-      const metas = Array.isArray(payload?.metas) ? payload.metas : [];
-      for (const item of metas) {
-        const imdbId = extractImdbId(item?.id || item?.imdb_id);
-        if (imdbId) candidates.set(imdbId, { ...item, imdbId });
-      }
-      if (!metas.length || metas.length < 20) break;
-    }
-  }
-  for (const term of searches) {
-    const extra = "search=" + encodeURIComponent(term);
-    const url = CINEMETA + "/catalog/" + type + "/top/" + extra + ".json";
-    try {
-      const payload = await cachedJson("cinemeta-search", type + "-" + term, url);
-      for (const item of Array.isArray(payload?.metas) ? payload.metas : []) {
-        const imdbId = extractImdbId(item?.id || item?.imdb_id);
-        if (imdbId) candidates.set(imdbId, { ...item, imdbId });
-      }
-    } catch (error) {
-      console.warn("Cinemeta search failed:", term, error.message);
-    }
-  }
-  return [...candidates.values()];
 }
 
 async function writeGeneratedFiles(movies, series, episodes) {
