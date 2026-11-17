@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { normalizeUpcomingUrl, countdownParts } from "../src/upcoming-utils.js";
 import { UpcomingItem, UpcomingWaitlist, UpcomingRead } from "../src/models.js";
 import app from "../src/app.js";
+
+const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("Upcoming poster URLs require safe public HTTPS hosts", () => {
   assert.equal(normalizeUpcomingUrl("https://cdn.example.com/posters/title.jpg"), "https://cdn.example.com/posters/title.jpg");
