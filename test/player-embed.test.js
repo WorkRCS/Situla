@@ -479,8 +479,12 @@ test("Cartoon Movie and TV embeds use the configured VidBolt TMDB routes", async
 
 test("Cartoon playback APIs retain same-origin credentials and never call account logout", async () => {
   const cartoonPlayer = await read("../app/components/cartoon-media-player.jsx");
-  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/start",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
-  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/heartbeat",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
-  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/stop",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
-  assert.doesNotMatch(cartoonPlayer, /\\/api\\/auth\\/logout|revokeCurrentSession|clearAuthCookies/);
+  for (const endpoint of ["/api/playback/start", "/api/playback/heartbeat", "/api/playback/stop"]) {
+    const requestStart = cartoonPlayer.indexOf('fetch("' + endpoint + '"');
+    assert.notEqual(requestStart, -1, endpoint + " request must exist");
+    const requestBlock = cartoonPlayer.slice(requestStart, requestStart + 400);
+    assert.match(requestBlock, /credentials: "same-origin"/, endpoint + " must include the Situla login cookie");
+  }
+  assert.equal(cartoonPlayer.includes("/api/auth/logout"), false);
+  assert.doesNotMatch(cartoonPlayer, /revokeCurrentSession|clearAuthCookies/);
 });
