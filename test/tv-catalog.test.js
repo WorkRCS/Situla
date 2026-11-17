@@ -168,7 +168,8 @@ test("TVmaze importer is new-only and is orchestrated by one catalogue seed comm
   const api = await read("../src/app.js");
 
   assert.equal(pkg.scripts.seed, "node scripts/seed.js");
-  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 0);
+  assert.equal(pkg.scripts["seed:cartoons"], "node scripts/seed-cartoons.js");
+  assert.equal(Object.keys(pkg.scripts).filter((key) => key.startsWith("seed:")).length, 1);
   assert.equal(pkg.scripts["check:tv"], "node --test test/tv-catalog.test.js");
   assert.match(runner, /seedTvSeries/);
   assert.match(script, /TV_SERIES_TARGET_ADDITIONS = 200/);
