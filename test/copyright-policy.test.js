@@ -12,7 +12,8 @@ test("global Site footer appears after page content and links to the copyright p
   assert.match(footer, /href="\/copyright"/);
   assert.match(footer, /Copyright &amp; Content Policy/);
   assert.match(footer, /an0-my1@proton\.me/);
-  assert.match(footer, /pathname\?\.startsWith\("\/watch\/"\)/);
+  assert.match(footer, /normalizedPath\.startsWith\("\/watch\/"\)/);
+  assert.match(footer, /inApp !== isAppRoute/);
 });
 
 test("copyright policy explains third-party video embeds without claiming blanket legal immunity", async () => {
