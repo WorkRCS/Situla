@@ -118,3 +118,50 @@ test("Cartoon listings use the same top frame spacing as Movies and keep hero at
   assert.ok(listingStart >= 0);
   assert.ok(!cartoons.slice(listingStart).includes("home-hero-atmosphere"));
 });
+
+
+test("Normal and Kids Home use the same manual three-card hero without changing refresh selection", async () => {
+  const [app, cartoons, hero, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/three-card-hero.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.ok(app.includes('import ThreeCardHero from "./three-card-hero.jsx";'));
+  assert.ok(app.includes("<ThreeCardHero"));
+  assert.ok(cartoons.includes('import ThreeCardHero from "./three-card-hero.jsx";'));
+  assert.ok(cartoons.includes("<ThreeCardHero"));
+  assert.ok(hero.includes('className="home-hero-deck"'));
+  assert.ok(hero.includes("home-hero-deck-arrow-left"));
+  assert.ok(hero.includes("home-hero-deck-arrow-right"));
+  assert.ok(hero.includes("onTransitionEnd={finishTransition}"));
+  assert.ok(hero.includes("[-2, -1, 0, 1, 2]"));
+
+  // Keep the existing random-per-refresh home selection and catalogue APIs intact.
+  assert.ok(app.includes('chooseFreshSpotlight(homeHeroItems, "situla:spotlight:home", "heroId")'));
+  assert.ok(app.includes('"/api/movies/discover"'));
+  assert.ok(app.includes('"/api/tv?page=1&limit=10&random=true"'));
+  assert.ok(app.includes('"/api/anime?page=1&limit=10&random=true"'));
+  assert.ok(cartoons.includes('fetch("/api/cartoons/home?seed="'));
+  assert.ok(cartoons.includes('situla:kids:home-spotlight:v1'));
+  assert.ok(cartoons.includes('setSort("random")'));
+
+  // No timer-based hero changes and no spotlight hero on catalogue listing pages.
+  assert.doesNotMatch(app, /function CatalogSpotlight|<CatalogSpotlight|catalogSpotlight/i);
+  assert.doesNotMatch(app, /homeHeroItems.length, heroPaused|setHeroPaused/);
+  assert.doesNotMatch(cartoons, /setInterval\s*\(|heroPaused/);
+  assert.ok(css.includes(".home-hero-deck-track.is-next"));
+  assert.ok(css.includes(".home-hero-deck-track.is-previous"));
+  assert.ok(css.includes("@media (prefers-reduced-motion:reduce)"));
+  assert.ok(css.includes("@media (max-width:380px)"));
+  assert.ok(css.includes("filter:blur(22px) saturate(1.28)"));
+});
+
+
+test("playback access updates use the non-deprecated post-update Mongoose option", async () => {
+  const source = await read("../src/access-control.js");
+  assert.equal((source.match(/findOneAndUpdate\s*\(/g) || []).length, 6);
+  assert.equal((source.match(/returnDocument:\s*'after'/g) || []).length, 6);
+  assert.doesNotMatch(source, /\bnew\s*:\s*true/);
+});

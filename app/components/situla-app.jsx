@@ -15,6 +15,7 @@ import UpcomingSection from "./upcoming-section.jsx";
 import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
 import CartoonsCatalog, { CartoonCard } from "./cartoons-catalog.jsx";
 import SiteFooter from "./site-footer.jsx";
+import ThreeCardHero from "./three-card-hero.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { formatRuntimeDuration } from "../../src/media-time.js";
@@ -571,48 +572,6 @@ const SeriesCard = memo(function SeriesCard({ item, kind, onOpen, onSave, saved 
   );
 });
 
-function CatalogSpotlight({ item, kind, onWatch, onSave, saved }) {
-  if (!item) return null;
-  const isTv = kind === "tv";
-  const isAnime = kind === "anime";
-  const title = isAnime ? (item.titleEnglish || item.title) : item.title;
-  const year = item.releaseYear || item.firstAirDate?.slice(0, 4) || item.airedFrom?.slice(0, 4) || "";
-  const rating = isAnime ? item.score : item.voteAverage;
-  const genres = Array.isArray(item.genres) ? item.genres.slice(0, 2) : [];
-  const kicker = isTv ? "A SERIES TO GET LOST IN" : isAnime ? "ANOTHER WORLD AWAITS" : "FEATURED MOVIE";
-  return (
-    <section className="hero-card catalog-spotlight" key={item.tmdbId || item.imdbId || item.malId}>
-      {(item.backdropUrl || item.posterUrl) && <img className="hero-image" src={optimizeTmdbImageUrl(item.backdropUrl || item.posterUrl, item.backdropUrl ? "w780" : "w342")} alt="" fetchPriority="high" onError={(event) => {
-        if (item.posterUrl && event.currentTarget.src !== item.posterUrl) {
-          event.currentTarget.src = item.posterUrl;
-        } else if (isAnime && item.posterFallbackUrl && event.currentTarget.src !== item.posterFallbackUrl) {
-          event.currentTarget.src = item.posterFallbackUrl;
-        } else {
-          event.currentTarget.style.display = "none";
-        }
-      }} />}
-      <div className="hero-content">
-        <div className="hero-eyebrow"><span className="hero-live-dot" /> {kicker}</div>
-        <p className="hero-kicker">Picked for your next watch</p>
-        <h2 className="hero-title">{title}</h2>
-        <div className="hero-meta">
-          {year && <Badge variant="outline">{year}</Badge>}
-          {rating > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(rating).toFixed(1)}</span>}
-          {genres.map((genre) => <Badge key={genre} variant="outline">{genre}</Badge>)}
-        </div>
-        <p className="hero-description">{item.overview || item.synopsis || "Discover this title on Situla."}</p>
-        <div className="hero-actions">
-          <Button variant="gold" onClick={() => onWatch(item)}><Icon name="play" size={17} /> {isTv || isAnime ? "Explore series" : "Watch now"}</Button>
-          {!isTv && !isAnime && <Button variant="ghost" onClick={() => onSave(item)}>
-            <Icon name={saved ? "check" : "bookmark"} size={16} /> {saved ? "In my list" : "Add to my list"}
-          </Button>}
-        </div>
-        <span className="catalog-spotlight-note">FRESH PICK · CHANGES WHEN YOU REFRESH</span>
-      </div>
-    </section>
-  );
-}
-
 function SeriesShelf({ title, eyebrow, description = "", variant = "series", items, kind, onOpen, onSave, savedIds, pendingNavigation = "", onPreload }) {
   const shelfDrag = useMediaRowPointerDrag();
   if (!items.length) return null;
@@ -955,11 +914,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeTvShows, setHomeTvShows] = useState([]);
   const [homeAnimeShows, setHomeAnimeShows] = useState([]);
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
-  const [heroPaused, setHeroPaused] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
-  const [catalogSpotlight, setCatalogSpotlight] = useState(null);
-  const [catalogSpotlightItems, setCatalogSpotlightItems] = useState([]);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -999,8 +955,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, []);
 
   useEffect(() => {
-    setCatalogSpotlight(null);
-    setCatalogSpotlightItems([]);
     setPendingHomeNavigation("");
   }, [tab]);
 
@@ -1303,11 +1257,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             uniqueHeroMovies.push(candidate);
           }
           setCategoryShelves(Array.isArray(payload.categories) ? payload.categories : []);
-          if (tab === "movies") {
-            const freshSpotlight = chooseFreshSpotlight(uniqueHeroMovies, "situla:spotlight:movies");
-            setCatalogSpotlightItems(uniqueHeroMovies);
-            setCatalogSpotlight(freshSpotlight || payload.featured || items[0] || null);
-          } else {
+          if (tab !== "movies") {
             const homeMoviePicks = uniqueHeroMovies
               .map((item) => toHomeSpotlight(item, "movie"))
               .filter(Boolean);
@@ -1421,16 +1371,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [tab, homeHeroItems, heroIndex]);
 
   useEffect(() => {
-    if (tab !== "home" || !homeSeriesReady || homeHeroItems.length < 2 || heroPaused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible" || isScrollingRef.current) return;
-      setHeroIndex((current) => (current + 1) % homeHeroItems.length);
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [tab, homeSeriesReady, homeHeroItems.length, heroPaused]);
-
-  useEffect(() => {
     if (tab !== "tv" && tab !== "anime") return;
     const controller = new AbortController();
     const recentKey = tab === "tv" ? "situla:recent-catalog:tv" : "situla:recent-catalog:anime";
@@ -1450,14 +1390,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         rememberRecentCatalogIds(recentKey, items.map((item) => tab === "tv" ? item.tmdbId : item.malId));
         if (tab === "tv") {
           setTvShows(items);
-          setCatalogSpotlightItems(items);
-          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:tv", "tmdbId"));
           setTvPage(Number(payload.pagination?.page) || 1);
           setTvTotal(Number(payload.pagination?.total) || items.length);
         } else {
           setAnimeShows(items);
-          setCatalogSpotlightItems(items);
-          setCatalogSpotlight(chooseFreshSpotlight(items, "situla:spotlight:anime", "malId"));
           setAnimePage(Number(payload.pagination?.page) || 1);
           setAnimeTotal(Number(payload.pagination?.total) || items.length);
         }
@@ -1476,29 +1412,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     loadSeries();
     return () => controller.abort();
   }, [tab]);
-
-  useEffect(() => {
-    if (tab !== "movies" && tab !== "tv" && tab !== "anime") return;
-    if (catalogSpotlightItems.length < 2) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const interval = window.setInterval(() => {
-      if (document.visibilityState !== "visible" || isScrollingRef.current) return;
-      setCatalogSpotlight((current) => {
-        const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
-        const currentIndex = catalogSpotlightItems.findIndex((item) => String(item[idField]) === String(current?.[idField]));
-        return catalogSpotlightItems[(currentIndex + 1 + catalogSpotlightItems.length) % catalogSpotlightItems.length];
-      });
-    }, 10000);
-    return () => window.clearInterval(interval);
-  }, [tab, catalogSpotlightItems]);
-
-  useEffect(() => {
-    if (!catalogSpotlight || (tab !== "movies" && tab !== "tv" && tab !== "anime")) return;
-    const idField = tab === "anime" ? "malId" : tab === "tv" ? "tmdbId" : "imdbId";
-    const id = catalogSpotlight[idField];
-    if (!id) return;
-    try { localStorage.setItem("situla:spotlight:" + tab, String(id)); } catch {}
-  }, [tab, catalogSpotlight]);
 
   const allGenres = useMemo(() => ["All", ...homeCategoryShelves.map((item) => item.name)], [homeCategoryShelves]);
 
@@ -2220,90 +2133,87 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </div>
               )}
             {featured ? (
-              <section
-                className="hero-card home-hero-card"
-                key={featured.heroId || featured.imdbId || featured.id}
-                onMouseEnter={() => setHeroPaused(true)}
-                onMouseLeave={() => setHeroPaused(false)}
-                onFocusCapture={() => setHeroPaused(true)}
-                onBlurCapture={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false);
+              <ThreeCardHero
+                items={homeHeroItems}
+                index={heroIndex}
+                onIndexChange={setHeroIndex}
+                getImage={(item) => {
+                  const image = item.heroImage || item.backdropUrl || item.bannerUrl || item.posterUrl || item.heroPoster;
+                  return image ? optimizeTmdbImageUrl(image, "w342") : "";
                 }}
-                aria-label={featured.heroMediaLabel + " spotlight"}
-              >
-                {(featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl) && (
-                  <img
-                    className="hero-image"
-                    src={featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl}
-                    alt=""
-                    fetchPriority="high"
-                    decoding="async"
-                    onError={(event) => {
-                      const fallback = featured.heroPoster || featured.posterUrl || featured.posterFallbackUrl;
-                      if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
-                      else event.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
-                <button
-                  type="button"
-                  className="hero-art-link"
-                  aria-label={"Explore " + featured.heroTitle}
-                  aria-busy={pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId))}
-                  disabled={Boolean(pendingHomeNavigation)}
-                  onClick={() => openHomeSpotlight(featured)}
-                />
-                {pendingHomeNavigation && pendingHomeNavigation === (featured.mediaType === "movie" ? "movie:" + featured.imdbId : featured.mediaType + ":" + String(featured.mediaType === "tv" ? featured.tmdbId : featured.malId)) && (
-                  <span className="hero-route-loading" role="status"><span className="inline-loading-spinner" /> Opening {featured.heroMediaLabel.toLowerCase()}…</span>
-                )}
-                <div className="hero-content">
-                  <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA SPOTLIGHT · {featured.heroMediaLabel}</div>
-                  <p className="hero-kicker">
-                    {featured.mediaType === "movie" ? "A film for your next movie night" : featured.mediaType === "tv" ? "A series to settle into" : "A new world to discover"}
-                  </p>
-                  <h1 className="hero-title">{featured.heroTitle}</h1>
-                  <div className="hero-meta" aria-label="Title details">
-                    {featured.heroYear && <span>{featured.heroYear}</span>}
-                    {featured.heroRating > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(featured.heroRating).toFixed(1)}</span>}
-                    {featured.heroRuntime > 0 && <span>{formatRuntime(featured.heroRuntime)}</span>}
-                    {featured.heroEpisodes > 0 && <span>{featured.heroEpisodes} episodes</span>}
-                    {featured.heroGenres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
-                  </div>
-                  <p className="hero-description">{featured.heroOverview || "Discover a new favourite on Situla."}</p>
-                  <div className="hero-actions">
-                    <button
-                      type="button"
-                      className="gold-button"
-                      onClick={() => openHomeSpotlight(featured)}
-                      disabled={Boolean(pendingHomeNavigation)}
-                      aria-busy={Boolean(pendingHomeNavigation)}
-                    >
-                      {pendingHomeNavigation ? <span className="inline-loading-spinner" /> : <Icon name="play" size={17} />}
-                      {pendingHomeNavigation ? "Opening…" : featured.mediaType === "movie" ? "Watch now" : featured.mediaType === "tv" ? "Explore TV series" : "Explore anime"}
-                    </button>
-                    <button
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => toggleSaved(featured, featured.mediaType)}
-                      aria-pressed={savedIds.has(savedMediaKey(featured, featured.mediaType))}
-                    >
-                      <Icon name={savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "check" : "bookmark"} size={16} />
-                      {savedIds.has(savedMediaKey(featured, featured.mediaType)) ? "In my list" : "Add to my list"}
-                    </button>
-                  </div>
-                  {homeHeroItems.length > 1 && (
-                    <div className="hero-carousel-footer">
-                      <span className="hero-carousel-label">DISCOVER ANOTHER STORY</span>
-                      <div className="hero-carousel-controls">
-                        <button type="button" className="hero-arrow" aria-label="Previous featured title" onClick={() => setHeroIndex((current) => (current - 1 + homeHeroItems.length) % homeHeroItems.length)}><BootstrapIcon icon="arrow-left" size={16} /></button>
-                        <span className="hero-progress-track" aria-hidden="true"><span className="hero-progress-fill" key={featured.heroId} style={{ animationPlayState: heroPaused ? "paused" : "running" }} /></span>
-                        <button type="button" className="hero-arrow" aria-label="Next featured title" onClick={() => setHeroIndex((current) => (current + 1) % homeHeroItems.length)}><BootstrapIcon icon="arrow-right" size={16} /></button>
+                getTitle={(item) => item.heroTitle || "Untitled"}
+                ariaLabel="Movies, TV series and anime spotlight"
+                renderCenter={(heroItem) => {
+                  const navigationKey = heroItem.mediaType === "movie"
+                    ? "movie:" + heroItem.imdbId
+                    : heroItem.mediaType + ":" + String(heroItem.mediaType === "tv" ? heroItem.tmdbId : heroItem.malId);
+                  return (
+                    <section className="hero-card home-hero-card" aria-label={heroItem.heroMediaLabel + " spotlight"}>
+                      {(heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl) && (
+                        <img
+                          className="hero-image"
+                          src={heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl}
+                          alt=""
+                          fetchPriority="high"
+                          decoding="async"
+                          onError={(event) => {
+                            const fallback = heroItem.heroPoster || heroItem.posterUrl || heroItem.posterFallbackUrl;
+                            if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
+                            else event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="hero-art-link"
+                        aria-label={"Explore " + heroItem.heroTitle}
+                        aria-busy={pendingHomeNavigation === navigationKey}
+                        disabled={Boolean(pendingHomeNavigation)}
+                        onClick={() => openHomeSpotlight(heroItem)}
+                      />
+                      {pendingHomeNavigation === navigationKey && (
+                        <span className="hero-route-loading" role="status"><span className="inline-loading-spinner" /> Opening {heroItem.heroMediaLabel.toLowerCase()}…</span>
+                      )}
+                      <div className="hero-content">
+                        <div className="hero-eyebrow"><span className="hero-live-dot" /> SITULA SPOTLIGHT · {heroItem.heroMediaLabel}</div>
+                        <p className="hero-kicker">
+                          {heroItem.mediaType === "movie" ? "A film for your next movie night" : heroItem.mediaType === "tv" ? "A series to settle into" : "A new world to discover"}
+                        </p>
+                        <h1 className="hero-title">{heroItem.heroTitle}</h1>
+                        <div className="hero-meta" aria-label="Title details">
+                          {heroItem.heroYear && <span>{heroItem.heroYear}</span>}
+                          {heroItem.heroRating > 0 && <span className="hero-rating"><Icon name="star" size={13} /> {Number(heroItem.heroRating).toFixed(1)}</span>}
+                          {heroItem.heroRuntime > 0 && <span>{formatRuntime(heroItem.heroRuntime)}</span>}
+                          {heroItem.heroEpisodes > 0 && <span>{heroItem.heroEpisodes} episodes</span>}
+                          {heroItem.heroGenres?.slice(0, 2).map((item) => <span key={item}>{item}</span>)}
+                        </div>
+                        <p className="hero-description">{heroItem.heroOverview || "Discover a new favourite on Situla."}</p>
+                        <div className="hero-actions">
+                          <button
+                            type="button"
+                            className="gold-button"
+                            onClick={() => openHomeSpotlight(heroItem)}
+                            disabled={Boolean(pendingHomeNavigation)}
+                            aria-busy={Boolean(pendingHomeNavigation)}
+                          >
+                            {pendingHomeNavigation ? <span className="inline-loading-spinner" /> : <Icon name="play" size={17} />}
+                            {pendingHomeNavigation ? "Opening…" : heroItem.mediaType === "movie" ? "Watch now" : heroItem.mediaType === "tv" ? "Explore TV series" : "Explore anime"}
+                          </button>
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={() => toggleSaved(heroItem, heroItem.mediaType)}
+                            aria-pressed={savedIds.has(savedMediaKey(heroItem, heroItem.mediaType))}
+                          >
+                            <Icon name={savedIds.has(savedMediaKey(heroItem, heroItem.mediaType)) ? "check" : "bookmark"} size={16} />
+                            {savedIds.has(savedMediaKey(heroItem, heroItem.mediaType)) ? "In my list" : "Add to my list"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-              </section>
+                    </section>
+                  );
+                }}
+              />
             ) : loading || !homeSeriesReady ? (
               <>
                 <div className="hero-skeleton"><div className="skeleton-hero-copy"><div className="skeleton-line short" /><div className="skeleton-line hero-title" /><div className="skeleton-line wide" /><div className="skeleton-line medium" /><div className="skeleton-hero-button" /></div></div>
@@ -2366,7 +2276,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         {tab === "movies" && (
-          <section className="pb-8" aria-label="Movies catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="movie" onWatch={openMovie} onSave={toggleSaved} saved={savedIds.has(savedMediaKey(catalogSpotlight, "movie"))} />}
+          <section className="pb-8" aria-label="Movies catalog">
             {loading && !movies.length ? (
               <SkeletonGrid count={12} />
             ) : movies.length ? (
@@ -2387,7 +2297,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         {tab === "tv" && (
-          <section className="pb-8" aria-label="TV series catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="tv" onWatch={openTvSeries} />}
+          <section className="pb-8" aria-label="TV series catalog">
             {loading && !tvShows.length ? (
               <SkeletonGrid count={12} />
             ) : tvShows.length ? (
@@ -2408,7 +2318,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
 
         {tab === "anime" && (
-          <section className="pb-8" aria-label="Anime catalog">{catalogSpotlight && <CatalogSpotlight item={catalogSpotlight} kind="anime" onWatch={openAnimeSeries} />}
+          <section className="pb-8" aria-label="Anime catalog">
             {loading && !animeShows.length ? (
               <SkeletonGrid count={12} />
             ) : animeShows.length ? (

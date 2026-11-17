@@ -198,7 +198,7 @@ test("movie, TV, and Anime cards have direct routes and preserve click metadata 
 test("TV and Anime series cards both share their poster, title, and canonical detail link", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
-  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function SeriesShelf"));
   assert.match(seriesCard, /const isAnime = kind === "anime"/);
   assert.match(seriesCard, /if \(!href \|\| \(!isTv && !isAnime\) \|\| sharePreparing\) return/);
   assert.match(seriesCard, /const shareTitle = title \|\| \(isTv \? "TV series" : "Anime"\)/);
@@ -220,7 +220,7 @@ test("Movie, TV and Anime shares attach poster files and keep exact detail links
   const api = await read("../src/app.js");
   const share = app.slice(app.indexOf("const SHARE_POSTER_CACHE_LIMIT"), app.indexOf("const MovieCard"));
   const movie = app.slice(app.indexOf("const MovieCard"), app.indexOf("function SeriesPosterImage"));
-  const series = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  const series = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function SeriesShelf"));
   const proxy = api.slice(api.indexOf("async function readSharePosterBytes"), api.indexOf("app.route("));
   assert.match(share, /const data = \{ files: \[file\], title, text: title, url \}/);
   assert.match(share, /navigator\.canShare\(data\)/);
@@ -254,7 +254,7 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   const app = await read("../app/components/situla-app.jsx");
   const css = await read("../app/globals.css");
   const movieCard = app.slice(app.indexOf("const MovieCard"), app.indexOf("function SeriesPosterImage"));
-  const seriesCard = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  const seriesCard = app.slice(app.indexOf("const SeriesCard"), app.indexOf("function SeriesShelf"));
   const cardStyles = css.slice(css.indexOf("/* Premium catalogue polish:"));
   assert.match(movieCard, /className="movie-card"/);
   assert.match(seriesCard, /className=\{"movie-card series-card series-card-" \+ kind \+ \(cardClassName \? " " \+ cardClassName : ""\)\}/);
@@ -339,7 +339,7 @@ test("Settings About credits media identifier sources and links the Premium entr
 
 test("TV and Anime cards expose the same Save control as Movie cards and feed one My List", async () => {
   const app = await read("../app/components/situla-app.jsx");
-  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function CatalogSpotlight"));
+  const seriesCard = app.slice(app.indexOf("function SeriesCard"), app.indexOf("function SeriesShelf"));
   assert.match(seriesCard, /onSave\?\.\(item, kind\)/);
   assert.match(seriesCard, /className=\{"save-button" \+ \(saved \? " saved" : ""\)\}/);
   assert.match(seriesCard, /aria-pressed=\{saved\}/);
@@ -386,7 +386,7 @@ test("load-more failures keep current catalog cards and do not surface raw serve
 });
 
 
-test("Movies, TV and Anime catalog pages put the spotlight first and remove the intro headings", async () => {
+test("Movies, TV and Anime catalog pages remove the Home-only hero and keep catalog grids", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const movies = app.slice(app.indexOf('{tab === "movies" &&'), app.indexOf('{tab === "tv" &&'));
   const tv = app.slice(app.indexOf('{tab === "tv" &&'), app.indexOf('{tab === "anime" &&'));
@@ -395,7 +395,7 @@ test("Movies, TV and Anime catalog pages put the spotlight first and remove the 
   for (const section of [movies, tv, anime]) {
     assert.match(section, /aria-label="(?:Movies|TV series|Anime) catalog"/);
     assert.doesNotMatch(section, /className="section-heading"|EXPLORE THE CATALOG|WATCH BY SEASON & EPISODE|MYANIMELIST · SUB & DUB/);
-    assert.match(section, /CatalogSpotlight/);
+    assert.doesNotMatch(section, /CatalogSpotlight|hero-card|home-hero-deck/);
   }
   assert.match(app, /tab === "movies" \? "movies-catalog-page"/);
 });

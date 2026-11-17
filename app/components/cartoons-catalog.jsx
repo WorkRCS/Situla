@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Baby, Bookmark, Check, Film, Star, Tv, ArrowUpRight, Sparkles, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { Baby, Bookmark, Check, Film, Star, Tv, ArrowUpRight, Sparkles, Share2 } from "lucide-react";
+import ThreeCardHero from "./three-card-hero.jsx";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
 import { formatRuntimeDuration } from "../../src/media-time.js";
 
@@ -165,57 +166,52 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ item, kidsMode = true, onPause, onResume, onPrevious, onNext, index = 0, total = 0 }) {
-  if (!item) return null;
-  const isMovie = item.mediaType === "cartoon_movie";
-  const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
-  const href = isMovie
-    ? "/cartoons/watch/movie/" + encodeURIComponent(item.tmdbId)
-    : "/cartoons/tv/" + encodeURIComponent(item.tmdbId);
-  const image = item.backdropUrl || item.posterUrl;
-  const imageUrl = image ? optimizeTmdbImageUrl(image, item.backdropUrl ? "w780" : "w342") : "";
+function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
+  const current = items?.[index] || items?.[0] || null;
+  if (!current) return null;
 
   return (
-    <section
-      className="hero-card catalog-spotlight"
-      key={item.mediaType + ":" + item.tmdbId}
-      onMouseEnter={onPause}
-      onMouseLeave={onResume}
-      onFocusCapture={onPause}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) onResume?.();
+    <ThreeCardHero
+      items={items}
+      index={index}
+      onIndexChange={onIndexChange}
+      getImage={(item) => {
+        const image = item.backdropUrl || item.posterUrl;
+        return image ? optimizeTmdbImageUrl(image, "w342") : "";
       }}
-      aria-label="Cartoon spotlight"
-    >
-      {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
-      <div className="hero-content">
-        <div className="hero-eyebrow"><span className="hero-live-dot" /> {kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</div>
-        <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>
-        <h2 className="hero-title">{item.title}</h2>
-        <div className="hero-meta">
-          {year && <span>{year}</span>}
-          {Number(item.voteAverage) > 0 && <span className="hero-rating"><Star size={13} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
-          {item.minimumAge != null && <span>{Number(item.minimumAge)}+</span>}
-          {(item.genres || []).slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
-        </div>
-        <p className="hero-description">{item.overview || "Discover this family-friendly animated title on Situla."}</p>
-        <div className="hero-actions">
-          <Link href={href} className="gold-button"><Film size={16} /> {isMovie ? "Watch movie" : "Explore series"}</Link>
-        </div>
-        {total > 1 && (
-          <div className="hero-carousel-footer">
-            <span className="hero-carousel-label">DISCOVER ANOTHER CARTOON · {index + 1}/{total}</span>
-            <div className="hero-carousel-controls">
-              <button type="button" className="hero-arrow" onClick={onPrevious} aria-label="Previous featured cartoon"><ChevronLeft size={16} /></button>
-              <span className="hero-progress-track" aria-hidden="true">
-                <span className="hero-progress-fill" key={item.mediaType + ":" + item.tmdbId} />
-              </span>
-              <button type="button" className="hero-arrow" onClick={onNext} aria-label="Next featured cartoon"><ChevronRight size={16} /></button>
+      getTitle={(item) => item.title || "Untitled cartoon"}
+      ariaLabel="Approved cartoons spotlight"
+      renderCenter={(item) => {
+        const isMovie = item.mediaType === "cartoon_movie";
+        const year = formatYear(item.releaseYear || item.firstAirDate || item.releaseDate);
+        const href = isMovie
+          ? "/cartoons/watch/movie/" + encodeURIComponent(item.tmdbId)
+          : "/cartoons/tv/" + encodeURIComponent(item.tmdbId);
+        const image = item.backdropUrl || item.posterUrl;
+        const imageUrl = image ? optimizeTmdbImageUrl(image, item.backdropUrl ? "w780" : "w342") : "";
+
+        return (
+          <section className="hero-card home-hero-card cartoons-home-hero" aria-label="Cartoon spotlight">
+            {imageUrl && <img className="hero-image" src={imageUrl} alt="" fetchPriority="high" decoding="async" />}
+            <div className="hero-content">
+              <div className="hero-eyebrow"><span className="hero-live-dot" /> {kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</div>
+              <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>
+              <h1 className="hero-title">{item.title}</h1>
+              <div className="hero-meta">
+                {year && <span>{year}</span>}
+                {Number(item.voteAverage) > 0 && <span className="hero-rating"><Star size={13} fill="currentColor" /> {Number(item.voteAverage).toFixed(1)}</span>}
+                {item.minimumAge != null && <span>{Number(item.minimumAge)}+</span>}
+                {(item.genres || []).slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
+              </div>
+              <p className="hero-description">{item.overview || "Discover this family-friendly animated title on Situla."}</p>
+              <div className="hero-actions">
+                <Link href={href} className="gold-button"><Film size={16} /> {isMovie ? "Watch movie" : "Explore series"}</Link>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </section>
+          </section>
+        );
+      }}
+    />
   );
 }
 
@@ -234,7 +230,6 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   const [loadMoreError, setLoadMoreError] = useState("");
   const [error, setError] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
-  const [heroPaused, setHeroPaused] = useState(false);
   const [homeFeedCount, setHomeFeedCount] = useState(5);
   const listingSentinelRef = useRef(null);
   const homeFeedSentinelRef = useRef(null);
@@ -394,17 +389,6 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   }, [cartoonHeroItems]);
 
   useEffect(() => {
-    if (!homeView || cartoonHeroItems.length < 2 || heroPaused) return undefined;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        setHeroIndex((current) => (current + 1) % cartoonHeroItems.length);
-      }
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [homeView, cartoonHeroItems.length, heroPaused]);
-
-  useEffect(() => {
     const sentinel = listingSentinelRef.current;
     if (!sentinel || !hasMore || loading || loadingMore || loadMoreError) return undefined;
     const observer = new IntersectionObserver((entries) => {
@@ -443,14 +427,10 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
           </div>
         )}
         <CartoonSpotlight
-          item={featured}
-          kidsMode={kidsMode}
+          items={cartoonHeroItems}
           index={heroIndex}
-          total={cartoonHeroItems.length}
-          onPause={() => setHeroPaused(true)}
-          onResume={() => setHeroPaused(false)}
-          onPrevious={() => setHeroIndex((current) => (current - 1 + cartoonHeroItems.length) % cartoonHeroItems.length)}
-          onNext={() => setHeroIndex((current) => (current + 1) % cartoonHeroItems.length)}
+          onIndexChange={setHeroIndex}
+          kidsMode={kidsMode}
         />
         {cartoonFeedItems.length > 0 && (
           <section className="home-scroll-feed cartoons-home-feed" aria-label="Discover more approved cartoons">

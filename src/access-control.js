@@ -83,7 +83,7 @@ async function ensureUsageState(principal) {
     return await UsageState.findOneAndUpdate(
       filter,
       { $setOnInsert: { ...filter, usedSeconds: 0, cooldownUntil: null, cycleStartedAt: new Date() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
   } catch (error) {
     // A concurrent first request may win the unique ownerType/ownerId insert.
@@ -100,7 +100,7 @@ export async function readAccessStatus(principal, now = new Date()) {
       state = await UsageState.findOneAndUpdate(
         { _id: state._id },
         { $set: { usedSeconds: 0, cooldownUntil: null, cycleStartedAt: now } },
-        { new: true }
+        { returnDocument: 'after' }
       ) || await UsageState.findById(state._id);
     }
     return getAccessSnapshot(policy, state, now);
@@ -109,14 +109,14 @@ export async function readAccessStatus(principal, now = new Date()) {
     state = await UsageState.findOneAndUpdate(
       { _id: state._id, cooldownUntil: { $lte: now } },
       { $set: { usedSeconds: 0, cooldownUntil: null, cycleStartedAt: now } },
-      { new: true }
+      { returnDocument: 'after' }
     ) || await UsageState.findById(state._id);
   }
   if (policy.allowanceSeconds !== null && state.usedSeconds >= policy.allowanceSeconds && !state.cooldownUntil) {
     state = await UsageState.findOneAndUpdate(
       { _id: state._id, cooldownUntil: null },
       { $set: { cooldownUntil: new Date(now.getTime() + policy.cooldownSeconds * 1000) } },
-      { new: true }
+      { returnDocument: 'after' }
     ) || await UsageState.findById(state._id);
   }
   return getAccessSnapshot(policy, state, now);
@@ -137,7 +137,7 @@ async function addWatchedSeconds(principal, seconds, now) {
       $or: [{ cooldownUntil: null }, { cooldownUntil: { $exists: false } }]
     },
     { $inc: { usedSeconds: creditedSeconds }, $set: { lastUsedAt: now } },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (updated && updated.usedSeconds >= policy.allowanceSeconds) {
     await UsageState.updateOne(
@@ -165,7 +165,7 @@ async function applyHeartbeat(session, principal, playing, now) {
         expiresAt: new Date(now.getTime() + ACTIVE_SESSION_LEASE_MS)
       }
     },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (!result) {
     const error = new Error('Playback session was updated by another request. Retry the heartbeat.');

@@ -228,12 +228,18 @@ test("Normal and Kids search year selectors come from database date ranges only"
   assert.ok(helper.includes("const sorted = [...years].sort((a, b) => b - a)"));
 });
 
-test("Kids Home spotlight mixes cartoons and auto-rotates like the normal home hero", async () => {
-  const cartoons = await read("../app/components/cartoons-catalog.jsx");
+test("Kids Home spotlight uses the shared manual three-card hero without autoplay", async () => {
+  const [cartoons, hero] = await Promise.all([
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/three-card-hero.jsx")
+  ]);
   assert.match(cartoons, /cartoonHeroItems/);
-  assert.match(cartoons, /setInterval\([\s\S]*?\}, 3000\)/);
-  assert.match(cartoons, /Previous featured cartoon/);
-  assert.match(cartoons, /Next featured cartoon/);
+  assert.match(cartoons, /<CartoonSpotlight/);
+  assert.match(cartoons, /<ThreeCardHero/);
+  assert.doesNotMatch(cartoons, /setInterval\s*\(|heroPaused/);
+  assert.match(hero, /Previous featured title/);
+  assert.match(hero, /Next featured title/);
+  assert.match(hero, /home-hero-deck-slide/);
 });
 
 
