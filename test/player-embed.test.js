@@ -479,9 +479,8 @@ test("Cartoon Movie and TV embeds use the configured VidBolt TMDB routes", async
 
 test("Cartoon playback APIs retain same-origin credentials and never call account logout", async () => {
   const cartoonPlayer = await read("../app/components/cartoon-media-player.jsx");
-  for (const endpoint of ["/api/playback/start", "/api/playback/heartbeat", "/api/playback/stop"]) {
-    const escaped = endpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    assert.match(cartoonPlayer, new RegExp('fetch\\("' + escaped + '"[\\s\\S]*?credentials: "same-origin"'));
-  }
-  assert.doesNotMatch(cartoonPlayer, /\/api\/auth\/logout|revokeCurrentSession|clearAuthCookies/);
+  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/start",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
+  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/heartbeat",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
+  assert.match(cartoonPlayer, /fetch\\("\\/api\\/playback\\/stop",\\s*\\{[\\s\\S]*?credentials: "same-origin"/);
+  assert.doesNotMatch(cartoonPlayer, /\\/api\\/auth\\/logout|revokeCurrentSession|clearAuthCookies/);
 });
