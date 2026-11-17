@@ -46,8 +46,8 @@ test('cache policy varies TTL and premium scope by route and query', () => {
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/search?q=spider').ttl, 15);
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/movies/123').ttl, 300);
   assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/cartoons/series/123/seasons/1').ttl, 300);
-  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/upcoming').premiumAware, undefined);
-  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/announcements').premiumAware, undefined);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/upcoming'), null);
+  assert.equal(getCatalogCachePolicy('GET', 'https://situla.example/api/announcements'), null);
 });
 
 test('canonical cache key ignores parameter order but preserves filters and premium variant', () => {
