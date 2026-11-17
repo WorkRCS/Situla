@@ -37,7 +37,7 @@ const PINNED_SERIES = [
   { tmdbId: 70058, tvmazeId: 35173, imdbId: "tt2649730", title: "Motu Patlu", audioLanguages: ["Hindi"], dubLanguages: [] },
   { tmdbId: 65733, tvmazeId: 55578, imdbId: "tt4083422", title: "Doraemon (2005)", originalLanguage: "Japanese", audioLanguages: ["Japanese", "Hindi"], dubLanguages: ["Hindi"] },
   { tvmazeId: 78908, imdbId: "tt2827710", title: "Ninja Hattori Returns", originalLanguage: "Japanese", audioLanguages: ["Japanese", "Hindi"], dubLanguages: ["Hindi"] },
-  { tmdbId: 49562, imdbId: "tt21195494", title: "Oggy and the Cockroaches: Next Generation", originalLanguage: "English", audioLanguages: ["English", "Hindi"], dubLanguages: ["Hindi"] }
+  { imdbId: "tt21195494", title: "Oggy and the Cockroaches: Next Generation", originalLanguage: "English", audioLanguages: ["English", "Hindi"], dubLanguages: ["Hindi"] }
 ];
 const MOVIE_SEARCH_TERMS = [
   "Motu Patlu in Wonderland", "Motu Patlu Mission Moon", "Motu Patlu Deep Sea Adventure",
@@ -613,7 +613,7 @@ async function writeGeneratedFiles(movies, series, episodes) {
     ["cartoon-episodes.generated.json", episodes]
   ];
   for (const [name, value] of files) {
-    await writeFile(resolve(DATA_DIR, name), JSON.stringify(value, null, 2) + "\\n", "utf8");
+    await writeFile(resolve(DATA_DIR, name), JSON.stringify(value, null, 2) + "\n", "utf8");
   }
   return files.map(([name, value]) => ({ file: "data/" + name, count: value.length }));
 }
