@@ -68,7 +68,7 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.match(app, /role="dialog" aria-modal="true"/);
   assert.match(app, /search-type-filters/);
   assert.match(app, /search-year-filter/);
-  assert.match(app, /searchInput\.trim\(\)\.length < 3/);
+  assert.match(app, /searchInput\.trim\(\)\.length < \(kidsMode \? 2 : 3\)/);
   assert.match(app, /setSearchInput\(event\.target\.value\)/);
   assert.match(app, /loadMoreSearch/);
   assert.match(app, /onClick=\{\(\) => openSearchResult\(item\)\}/);
