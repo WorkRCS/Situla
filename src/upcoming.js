@@ -71,7 +71,9 @@ router.get('/', async (c) => {
         { $group: { _id: '$upcomingId', count: { $sum: 1 } } }
       ]),
       authenticated
-        ? UpcomingWaitlist.find({ userId: authenticated.user._id, upcomingId: { $in: ids } }).select('upcomingId').lean()
+        ? myOnly
+          ? Promise.resolve(items.map((item) => ({ upcomingId: item._id })))
+          : UpcomingWaitlist.find({ userId: authenticated.user._id, upcomingId: { $in: ids } }).select('upcomingId').lean()
         : Promise.resolve([])
     ]);
     const counts = new Map(countRows.map((row) => [String(row._id), row.count]));

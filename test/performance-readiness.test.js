@@ -124,3 +124,15 @@ test("cartoon public catalogue reads and search metadata are cached instead of r
   assert.equal(cartoonSearch.includes("CartoonMovie.find(approvedCartoonMovieFilter()).select('releaseYear releaseDate')"), false);
   assert.equal(cartoonSearch.includes("CartoonSeries.find(approvedCartoonSeriesFilter()).select('releaseYear firstAirDate')"), false);
 });
+
+
+test("database models include indexes for frequently sorted admin and upcoming reads", async () => {
+  const models = await read("../src/models.js");
+  assert.match(models, /guestAccessSchema\.index\(\{ lastSeenAt: -1, _id: -1 \}\)/);
+  assert.match(models, /authSessionSchema\.index\(\{ userId: 1, createdAt: -1 \}\)/);
+  assert.match(models, /paymentTransactionSchema\.index\(\{ userId: 1, createdAt: -1 \}\)/);
+  assert.match(models, /upcomingItemSchema\.index\(\{ status: 1, releaseAt: 1, _id: 1 \}\)/);
+  const db = await read("../src/db.js");
+  assert.match(db, /Model\.createIndexes\(\)/);
+  assert.match(db, /autoIndex: false/);
+});

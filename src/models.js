@@ -362,12 +362,14 @@ const authSessionSchema = new mongoose.Schema({
   revokedAt: { type: Date, default: null }
 }, { timestamps: true, versionKey: false, strict: true });
 authSessionSchema.index({ userId: 1, revokedAt: 1, createdAt: -1 });
+authSessionSchema.index({ userId: 1, createdAt: -1 });
 
 const guestAccessSchema = new mongoose.Schema({
   ipHash: { type: String, required: true, unique: true },
   firstSeenAt: { type: Date, required: true },
   lastSeenAt: { type: Date, required: true }
 }, { timestamps: true, versionKey: false, strict: true });
+guestAccessSchema.index({ lastSeenAt: -1, _id: -1 });
 
 const guestSessionSchema = new mongoose.Schema({
   tokenHash: { type: String, required: true, unique: true },
@@ -467,6 +469,7 @@ const paymentTransactionSchema = new mongoose.Schema({
 }, { timestamps: true, versionKey: false, strict: true });
 paymentTransactionSchema.index({ provider: 1, transactionRef: 1 }, { unique: true });
 paymentTransactionSchema.index({ status: 1, createdAt: -1 });
+paymentTransactionSchema.index({ userId: 1, createdAt: -1 });
 
 const adminAuditLogSchema = new mongoose.Schema({
   actorUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -506,6 +509,7 @@ const upcomingItemSchema = new mongoose.Schema({
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true, versionKey: false, strict: true });
 upcomingItemSchema.index({ type: 1, status: 1, releaseAt: 1 });
+upcomingItemSchema.index({ status: 1, releaseAt: 1, _id: 1 });
 upcomingItemSchema.index({ status: 1, updatedAt: -1 });
 
 const upcomingWaitlistSchema = new mongoose.Schema({

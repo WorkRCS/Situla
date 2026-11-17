@@ -42,6 +42,15 @@ test("Upcoming item model stores the three content types, release data, labels a
   for (const path of ["title", "posterMode", "posterUrl", "posterData", "releaseAt", "rating", "isPopular", "isHot", "isFeatured", "isPremium", "countdownEnabled", "status"]) {
     assert.ok(UpcomingItem.schema.path(path), "missing " + path);
   }
+  const indexes = UpcomingItem.schema.indexes();
+  assert.ok(indexes.some(([keys]) => keys.status === 1 && keys.releaseAt === 1 && keys._id === 1));
+});
+
+test("Upcoming mine feed reuses its waitlist query and avoids a second lookup", async () => {
+  const source = await read("../src/upcoming.js");
+  const route = source.slice(source.indexOf("router.get('/',"), source.indexOf("router.get('/status'"));
+  assert.match(route, /myOnly\s*\?\s*Promise\.resolve\(items\.map/);
+  assert.match(route, /UpcomingWaitlist\.find\(\{ userId: authenticated\.user\._id, upcomingId:/);
 });
 
 test("Upcoming waitlist enforces one row per user and item", () => {
