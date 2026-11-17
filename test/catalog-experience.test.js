@@ -281,7 +281,7 @@ test("mobile/tablet navigation reuses the original full-width seven-item bar", a
 
   assert.ok(app.includes("SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar"));
   assert.ok(bottomNav.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
-  assert.ok(workspaceNav.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
+  assert.ok(workspaceNav.includes("(activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
   assert.ok(workspaceNav.includes('className={"nav-button site-workspace-mobile-link"'));
   assert.doesNotMatch(bottomNav, /navigateBack|setSearchOpen|>Search</);
   assert.ok(css.includes("position:fixed !important"));

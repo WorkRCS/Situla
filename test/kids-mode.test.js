@@ -89,8 +89,8 @@ test("Kids Mode stays in the shared home UI and navigation", async () => {
   assert.ok(app.includes('const kidsOnlyView = ["home", "cartoons",'));
   assert.ok(!app.includes('router.replace("/")'));
   assert.ok(app.includes('const navigationTab = kidsMode && !kidsOnlyView ? "cartoons" : tab;'));
-  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" isSaved={isCartoonSaved}'));
-  assert.ok(app.includes('<CartoonsCatalog view={tab} isSaved={isCartoonSaved}'));
+  assert.ok(app.includes('<CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved}'));
+  assert.ok(app.includes('<CartoonsCatalog view={tab} kidsMode={kidsMode} isSaved={isCartoonSaved}'));
   assert.ok(app.includes("kidsMode={kidsMode}"));
   assert.ok(sidebar.includes('{ id: "home", href: "/", label: "Home", icon: House }'));
   assert.ok(sidebar.includes('{ id: "cartoonMovies", href: "/cartoons/movies", label: "Cartoon Movies", icon: Film }'));
