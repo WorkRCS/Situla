@@ -3065,7 +3065,7 @@ body { color:#f7f7fa; background:#08090e; }
 .plans-page {
   width:100%;
   max-width:1440px;
-  min-height:100%;
+  min-height:100dvh;
   margin:0 auto;
   padding:clamp(16px,2.4vw,32px) clamp(12px,2vw,26px) 38px;
   color:#f7f7fa;
@@ -3074,7 +3074,7 @@ body { color:#f7f7fa; background:#08090e; }
     #08090e;
 }
 .plans-shell { width:min(1220px,100%); margin:0 auto; }
-.plans-topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:3px 0 27px; }
+.plans-topbar { display:flex; align-items:center; justify-content:flex-start; gap:14px; padding:3px 0 27px; }
 .plans-brand { display:inline-flex; min-width:0; align-items:center; gap:10px; color:#fff; text-decoration:none; }
 .plans-brand img { width:36px; height:36px; border-radius:10px; }
 .plans-brand > span { display:grid; gap:3px; }
@@ -7213,7 +7213,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   min-height:0 !important;
   grid-template-columns:repeat(7,minmax(0,1fr)) !important;
   align-items:stretch;
-  column-gap:clamp(2px,.8vw,8px) !important;
+  column-gap:clamp(4px,.9vw,8px) !important;
   row-gap:0 !important;
   overflow:hidden !important;
   overscroll-behavior-x:contain;
@@ -7426,9 +7426,8 @@ body:has(.login-page) .site-footer { display:none !important; }
 .bottom-nav,
 .site-workspace-mobile-nav {
   grid-template-columns:repeat(7,minmax(0,1fr)) !important;
-  gap:0 !important;
-  column-gap:0 !important;
   row-gap:0 !important;
+  column-gap:clamp(4px,.9vw,8px) !important;
   padding-left:4px !important;
   padding-right:4px !important;
 }
@@ -7440,8 +7439,8 @@ body:has(.login-page) .site-footer { display:none !important; }
   min-width:0 !important;
   max-width:100% !important;
   margin:0 !important;
-  padding:4px 0 !important;
-  gap:3px !important;
+  padding:5px 2px !important;
+  gap:4px !important;
   overflow:hidden;
   box-sizing:border-box;
 }
@@ -9248,4 +9247,24 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   overflow:visible !important;
   overscroll-behavior:auto;
   scrollbar-width:auto;
+}
+
+
+/* The site footer is a section of Plans only; it follows the plan content in document flow. */
+.plans-page > .site-footer {
+  width:min(1220px,100%);
+  margin:clamp(32px,4vw,52px) auto 0;
+  padding:24px 0 calc(18px + env(safe-area-inset-bottom));
+  border-top:1px solid rgba(232,182,91,.14);
+  background:transparent;
+}
+.plans-page > .site-footer .site-footer-inner {
+  width:100%;
+  max-width:none;
+}
+@media (max-width:700px) {
+  .plans-page > .site-footer {
+    margin-top:28px;
+    padding:22px 0 calc(18px + env(safe-area-inset-bottom));
+  }
 }
