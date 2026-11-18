@@ -97,10 +97,10 @@ test("Normal and Kids Hero images retry without CORS before switching to poster 
     read("../app/components/cartoons-catalog.jsx")
   ]);
   for (const source of [app, cartoons]) {
-    assert.match(source, /data\.corsRetry/);
+    assert.match(source, /dataset\.corsRetry/);
     assert.match(source, /removeAttribute\("crossorigin"\)/);
     assert.match(source, /currentSrc \|\| imageElement\.src/);
-    assert.match(source, /data\.posterFallback/);
+    assert.match(source, /dataset\.posterFallback/);
   }
   assert.match(app, /key=\{String\(heroItem\.heroId \|\| heroItem\.imdbId \|\| heroItem\.tmdbId \|\| heroItem\.malId\)\}/);
   assert.match(cartoons, /key=\{item\.mediaType \+ ":" \+ item\.tmdbId\}/);
