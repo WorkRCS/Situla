@@ -144,7 +144,7 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(tvRoute.includes("{ tmdbId }"));
   assert.ok(animeRoute.includes("{ malId }"));
 
-  const homeStart = app.indexOf('<div className="home-mode-panel"');
+  const homeStart = app.indexOf('className="home-mode-panel"');
   const homeEnd = app.indexOf('<div className="kids-mode-panel"', homeStart);
   const normalHome = app.slice(homeStart, homeEnd);
   assert.ok(normalHome.includes('className="hero-card home-hero-card"'));
