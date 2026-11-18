@@ -102,18 +102,22 @@ test("Guest and Free watch cooldowns are visible without demo-only text", async 
 });
 
 
-test("Plans mobile layout flows naturally before the global footer", async () => {
-  const css = await read("../app/globals.css");
-  const layout = await read("../app/layout.jsx");
+test("Plans is standalone, keeps only its back link and owns the footer in the same document scroll", async () => {
+  const [css, layout, route, page] = await Promise.all([
+    read("../app/globals.css"),
+    read("../app/layout.jsx"),
+    read("../app/plans/page.jsx"),
+    read("../app/plans/plans-page.jsx")
+  ]);
   assert.ok(layout.includes("{children}"));
-  assert.ok(layout.includes("<SiteFooter />"));
-  const mobileRules = css.slice(css.lastIndexOf("/* Let Plans content set the workspace height"));
-  assert.ok(mobileRules.includes("@media (max-width:767px)"));
-  assert.ok(mobileRules.includes("height:auto !important;"));
-  assert.ok(mobileRules.includes("max-height:none !important;"));
-  assert.ok(mobileRules.includes("min-height:0 !important;"));
-  assert.ok(mobileRules.includes("padding-bottom:calc(38px + 78px + env(safe-area-inset-bottom))"));
-  assert.ok(css.includes("margin-bottom:calc(78px + env(safe-area-inset-bottom))"));
+  assert.doesNotMatch(layout, /SiteFooter/);
+  assert.doesNotMatch(route, /SiteWorkspace|SiteSidebar|bottom-nav/);
+  assert.ok(page.includes("<SiteFooter />"));
+  assert.ok(page.includes('className="plans-back-link"'));
+  assert.doesNotMatch(page, /className="plans-brand"/);
+  assert.ok(css.includes("min-height:100dvh;"));
+  assert.ok(css.includes(".plans-page > .site-footer"));
+  assert.ok(css.includes("margin:clamp(32px,4vw,52px) auto 0;"));
 });
 
 test("the shared workspace nav is edge-attached rather than a floating capsule", async () => {
