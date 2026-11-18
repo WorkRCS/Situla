@@ -9272,19 +9272,44 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 }
 
 
-/* The visible Home wrapper paints the active poster colour across the full page content. */
-.home-mode-panel {
-  display:block;
-  width:100%;
-  min-width:0;
-  background-color:var(--home-hero-palette,#08090e);
-  transition:background-color .48s ease;
+/* Typed palette colors smoothly crossfade into a multi-color ambient glow. */
+@property --home-hero-color-1 {
+  syntax:"<color>";
+  inherits:true;
+  initial-value:#111827;
 }
+@property --home-hero-color-2 {
+  syntax:"<color>";
+  inherits:true;
+  initial-value:#17212b;
+}
+@property --home-hero-color-3 {
+  syntax:"<color>";
+  inherits:true;
+  initial-value:#171d2c;
+}
+@property --home-hero-color-4 {
+  syntax:"<color>";
+  inherits:true;
+  initial-value:#201a29;
+}
+
+/* Softly blended poster colors replace the old single-color page wash. */
+.home-mode-panel,
 .cartoons-home-catalog {
   width:100%;
   min-width:0;
-  background-color:var(--home-hero-palette,#08090e);
-  transition:background-color .48s ease;
+  background-color:#08090e;
+  background-image:
+    radial-gradient(ellipse 76% 34% at 10% 3%,color-mix(in srgb,var(--home-hero-color-1) 34%,transparent),transparent 78%),
+    radial-gradient(ellipse 70% 38% at 92% 13%,color-mix(in srgb,var(--home-hero-color-2) 31%,transparent),transparent 80%),
+    radial-gradient(ellipse 74% 42% at 54% 58%,color-mix(in srgb,var(--home-hero-color-3) 23%,transparent),transparent 84%),
+    radial-gradient(ellipse 74% 38% at 30% 100%,color-mix(in srgb,var(--home-hero-color-4) 27%,transparent),transparent 82%);
+  transition:
+    --home-hero-color-1 1.15s ease-in-out,
+    --home-hero-color-2 1.3s ease-in-out,
+    --home-hero-color-3 1.45s ease-in-out,
+    --home-hero-color-4 1.25s ease-in-out;
 }
 @media (prefers-reduced-motion:reduce) {
   .home-mode-panel,.cartoons-home-catalog { transition:none !important; }

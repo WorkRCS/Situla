@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Normal and Kids Home apply the active poster's exact dominant colour to the page surface", async () => {
+test("Normal and Kids Home blend a smooth multi-color ambient palette from the active poster", async () => {
   const [app, cartoons, hero, api, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/cartoons-catalog.jsx"),
@@ -13,19 +13,25 @@ test("Normal and Kids Home apply the active poster's exact dominant colour to th
     read("../app/globals.css")
   ]);
 
+  assert.match(hero, /extractPosterPalette/);
   assert.match(hero, /fetch\(endpoint,\s*\{/);
   assert.match(hero, /\/api\/share-poster\?url=/);
   assert.match(hero, /createImageBitmap\(blob\)/);
-  assert.match(hero, /onPaletteChange\?\.\(dominantRgb\)/);
+  assert.match(hero, /selected\.slice\(0, 4\)/);
+  assert.match(hero, /onPaletteChange\?\.\(palette\)/);
   assert.match(hero, /onPaletteChange\?\.\(null\)/);
   assert.match(api, /app\.get\('\/api\/share-poster'/);
-  assert.match(app, /onPaletteChange=\{setHeroPaletteRgb\}/);
-  assert.match(app, /heroPaletteRgb \? `rgb\(\$\{heroPaletteRgb\}\)`/);
-  assert.match(cartoons, /onPaletteChange=\{setHeroPaletteRgb\}/);
-  assert.match(cartoons, /heroPaletteRgb \? `rgb\(\$\{heroPaletteRgb\}\)`/);
-  assert.match(css, /\.home-mode-panel \{[\s\S]*?display:block;[\s\S]*?background-color:var\(--home-hero-palette/);
-  assert.match(css, /\.cartoons-home-catalog \{[\s\S]*?background-color:var\(--home-hero-palette/);
-  assert.doesNotMatch(app + cartoons, /rgba\(\$\{heroPaletteRgb\}, \.24\)/);
+  assert.match(app, /onPaletteChange=\{setHeroPaletteColors\}/);
+  assert.match(cartoons, /onPaletteChange=\{setHeroPaletteColors\}/);
+  for (let index = 1; index <= 4; index += 1) {
+    assert.match(app, new RegExp("--home-hero-color-" + index));
+    assert.match(cartoons, new RegExp("--home-hero-color-" + index));
+    assert.match(css, new RegExp("@property --home-hero-color-" + index));
+  }
+  assert.match(css, /color-mix\(in srgb,var\(--home-hero-color-1\)/);
+  assert.match(css, /radial-gradient\(ellipse 76% 34%/);
+  assert.match(css, /--home-hero-color-4 1\.25s ease-in-out/);
+  assert.doesNotMatch(app + cartoons, /--home-hero-palette|heroPaletteRgb/);
 });
 
 test("responsive breakpoints size catalog grids and hero layouts for phone, tablet and desktop", async () => {

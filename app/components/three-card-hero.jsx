@@ -7,18 +7,18 @@ function wrapIndex(index, length) {
   return ((index % length) + length) % length;
 }
 
-function extractPosterDominantRgb(image) {
+function extractPosterPalette(image) {
   try {
     const width = image?.naturalWidth || image?.width || 0;
     const height = image?.naturalHeight || image?.height || 0;
-    if (!image || !width || !height) return null;
+    if (!image || !width || !height) return [];
     const canvas = document.createElement("canvas");
-    canvas.width = 20;
-    canvas.height = 20;
+    canvas.width = 32;
+    canvas.height = 32;
     const context = canvas.getContext("2d", { willReadFrequently: true });
-    if (!context) return null;
-    context.drawImage(image, 0, 0, 20, 20);
-    const pixels = context.getImageData(0, 0, 20, 20).data;
+    if (!context) return [];
+    context.drawImage(image, 0, 0, 32, 32);
+    const pixels = context.getImageData(0, 0, 32, 32).data;
     const buckets = new Map();
     let allR = 0;
     let allG = 0;
@@ -40,9 +40,9 @@ function extractPosterDominantRgb(image) {
       allB += blue;
       allCount += 1;
 
-      // Ignore near-black and near-white pixels so the palette follows the
-      // artwork rather than letterboxing, poster text, or the page frame.
-      if (luminance < 22 || luminance > 246 || saturation < 0.12) continue;
+      // Ignore near-black and near-white poster borders, but retain muted
+      // colors too: the ambient effect should reflect the whole artwork.
+      if (luminance < 18 || luminance > 248) continue;
       const key = (red >> 4) + ":" + (green >> 4) + ":" + (blue >> 4);
       let bucket = buckets.get(key);
       if (!bucket) {
@@ -53,28 +53,54 @@ function extractPosterDominantRgb(image) {
       bucket.green += green;
       bucket.blue += blue;
       bucket.count += 1;
-      bucket.score += 1 + saturation * 1.6;
+      bucket.score += 1 + saturation * 1.7;
     }
 
-    let dominant = null;
-    for (const bucket of buckets.values()) {
-      if (!dominant || bucket.score > dominant.score) dominant = bucket;
+    const candidates = [...buckets.values()]
+      .filter((bucket) => bucket.count > 0)
+      .map((bucket) => ({
+        red: bucket.red / bucket.count,
+        green: bucket.green / bucket.count,
+        blue: bucket.blue / bucket.count,
+        score: bucket.score
+      }))
+      .sort((left, right) => right.score - left.score);
+
+    if (!candidates.length) {
+      if (!allCount) return [];
+      return [[allR, allG, allB]
+        .map((value) => Math.max(0, Math.min(255, Math.round(value / allCount))))
+        .join(", ")];
     }
-    const selected = dominant || (allCount ? {
-      red: allR, green: allG, blue: allB, count: allCount
-    } : null);
-    if (!selected || !selected.count) return null;
-    return [selected.red, selected.green, selected.blue]
-      .map((value) => Math.max(0, Math.min(255, Math.round(value / selected.count)))
-      )
-      .join(", ");
+
+    // Pick several genuinely different color clusters rather than letting
+    // neighboring shades of one hue dominate the ambient palette.
+    const selected = [];
+    for (const minimumDistance of [64, 42, 24]) {
+      for (const candidate of candidates) {
+        if (selected.length >= 4) break;
+        const distinct = selected.every((color) => {
+          const red = candidate.red - color.red;
+          const green = candidate.green - color.green;
+          const blue = candidate.blue - color.blue;
+          return Math.sqrt(red * red + green * green + blue * blue) >= minimumDistance;
+        });
+        if (distinct) selected.push(candidate);
+      }
+      if (selected.length >= 4) break;
+    }
+
+    return selected.slice(0, 4).map((color) =>
+      [color.red, color.green, color.blue]
+        .map((value) => Math.max(0, Math.min(255, Math.round(value))))
+        .join(", ")
+    );
   } catch {
-    // A browser or image host that blocks canvas sampling still gets the
-    // normal poster-driven hero artwork; never interrupt navigation for it.
-    return null;
+    // Palette sampling is decorative; unsupported canvas access must never
+    // interrupt the poster, hero navigation, or the rest of the page.
+    return [];
   }
 }
-
 async function samplePosterPalette(imageUrl, signal) {
   const endpoint = "/api/share-poster?url=" + encodeURIComponent(imageUrl);
   const response = await fetch(endpoint, {
@@ -90,7 +116,7 @@ async function samplePosterPalette(imageUrl, signal) {
   if (typeof createImageBitmap === "function") {
     const bitmap = await createImageBitmap(blob);
     try {
-      return extractPosterDominantRgb(bitmap);
+      return extractPosterPalette(bitmap);
     } finally {
       bitmap.close?.();
     }
@@ -104,7 +130,7 @@ async function samplePosterPalette(imageUrl, signal) {
       element.onerror = () => reject(new Error("Poster palette image could not be decoded."));
       element.src = objectUrl;
     });
-    return extractPosterDominantRgb(image);
+    return extractPosterPalette(image);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
@@ -157,9 +183,9 @@ export default function ThreeCardHero({
     const controller = new AbortController();
     paletteRequestRef.current = controller;
     void samplePosterPalette(imageUrl, controller.signal)
-      .then((dominantRgb) => {
+      .then((palette) => {
         if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
-          onPaletteChange?.(dominantRgb);
+          onPaletteChange?.(palette);
         }
       })
       .catch(() => {
