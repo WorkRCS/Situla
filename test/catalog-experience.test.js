@@ -83,7 +83,7 @@ test("global search uses shared type/year filters and direct media navigation", 
 test("premium and standard plans share the same vertical mixed Home discovery layout", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const homeDiscovery = await read("../src/home-discovery.js");
-  const homeStart = app.indexOf('<div className="home-mode-panel"');
+  const homeStart = app.indexOf('className="home-mode-panel"');
   const homeEnd = app.indexOf('<div className="kids-mode-panel"', homeStart);
   const normalHome = app.slice(homeStart, homeEnd);
 
