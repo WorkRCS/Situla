@@ -161,7 +161,7 @@ test("Profile stays in the account menu and responsive navigation stays compact"
 
   assert.doesNotMatch(navItems, /profile|Profile/);
   assert.ok(app.includes('router.push("/profile")'));
-  assert.ok(css.includes("column-gap:0 !important;"));
+  assert.ok(css.includes("column-gap:clamp(4px,.9vw,8px) !important;"));
   assert.ok(css.includes("min-width:0 !important;"));
   assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important;"));
   assert.ok(css.includes("Shared page-header glass treatment"));
