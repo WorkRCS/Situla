@@ -93,17 +93,19 @@ test("desktop sidebar defaults to collapsed while an explicit expanded preferenc
   assert.match(css, /site-app-header \.header-actions \.header-search-trigger[\s\S]*?height:44px/);
 });
 
-test("Normal and Kids Hero images retry without CORS before switching to poster fallback", async () => {
-  const [app, cartoons] = await Promise.all([
+test("Normal and Kids Hero images load without CORS mode and sample colours through the same-origin poster proxy", async () => {
+  const [app, cartoons, hero] = await Promise.all([
     read("../app/components/situla-app.jsx"),
-    read("../app/components/cartoons-catalog.jsx")
+    read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/three-card-hero.jsx")
   ]);
   for (const source of [app, cartoons]) {
-    assert.match(source, /dataset\.corsRetry/);
-    assert.match(source, /removeAttribute\("crossorigin"\)/);
-    assert.match(source, /currentSrc \|\| imageElement\.src/);
+    assert.doesNotMatch(source, /crossOrigin="anonymous"/);
     assert.match(source, /dataset\.posterFallback/);
   }
+  assert.match(hero, /\/api\/share-poster\?url=/);
+  assert.match(hero, /cache: "force-cache"/);
+  assert.match(hero, /createImageBitmap\(blob\)/);
   assert.match(app, /key=\{String\(heroItem\.heroId \|\| heroItem\.imdbId \|\| heroItem\.tmdbId \|\| heroItem\.malId\)\}/);
   assert.match(cartoons, /key=\{item\.mediaType \+ ":" \+ item\.tmdbId\}/);
 });
