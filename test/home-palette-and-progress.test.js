@@ -21,6 +21,10 @@ test("Normal and Kids Home keep poster-driven colour strictly inside Hero page c
   assert.match(app, /onHeroPaletteChange=\{reportKidsHeroPalette\}/);
   assert.match(app, /normalHeroPaletteStyle/);
   assert.match(app, /kidsHeroPaletteStyle/);
+  assert.ok(app.includes('<div className="home-mode-panel" hidden={!kidsModeReady || kidsMode}'));
+  assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
+  assert.match(app, /home-hero-palette-surface/);
+  assert.match(app, /kids-hero-palette-surface/);
   assert.match(app, /className=\{"home-mode-panel" \+ \(heroPalettes\.normal \? " has-home-hero-palette" : ""\)\}/);
   assert.match(app, /className=\{"kids-mode-panel" \+ \(heroPalettes\.kids \? " has-home-hero-palette" : ""\)\}/);
   assert.match(app, /src=\{optimizeTmdbImageUrl\(featured\.heroImage/);
@@ -29,8 +33,8 @@ test("Normal and Kids Home keep poster-driven colour strictly inside Hero page c
   assert.match(cartoons, /onLoad=\{onCenterImageLoad\}/);
   assert.match(cartoons, /optimizeTmdbImageUrl\(featured\.backdropUrl/);
 
-  assert.ok(css.includes(".home-mode-panel.has-home-hero-palette"));
-  assert.ok(css.includes(".kids-mode-panel.has-home-hero-palette"));
+  assert.ok(css.includes(".home-mode-panel .home-hero-palette-surface.has-home-hero-palette"));
+  assert.ok(css.includes(".kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette"));
   assert.doesNotMatch(css, /\.app-shell\.has-home-hero-palette/);
   assert.doesNotMatch(css, /\.site-app-header[^\n]*--home-hero-rgb|\.site-sidebar[^\n]*--home-hero-rgb|\.bottom-nav[^\n]*--home-hero-rgb|\.site-footer-app[^\n]*--home-hero-rgb/);
   assert.match(css, /filter:blur\(30px\) saturate\(1\.55\)/);

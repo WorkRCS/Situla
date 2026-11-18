@@ -9116,8 +9116,8 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 
 /* Poster-driven colour belongs only to the Hero page content in Normal and Kids Home.
    The palette variable is attached to these panels, never to the app shell or chrome. */
-.home-mode-panel.has-home-hero-palette,
-.kids-mode-panel.has-home-hero-palette {
+.home-mode-panel .home-hero-palette-surface.has-home-hero-palette,
+.kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette {
   position:relative;
   isolation:isolate;
   border-radius:24px;
@@ -9127,15 +9127,15 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
     linear-gradient(180deg,rgba(var(--home-hero-rgb),.055),rgba(8,9,14,.02) 56%,rgba(8,9,14,.10));
   transition:background-color .68s ease,background-image .68s ease;
 }
-.home-mode-panel.has-home-hero-palette > .home-hero-atmosphere,
-.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere {
+.home-mode-panel .home-hero-palette-surface.has-home-hero-palette > .home-hero-atmosphere,
+.kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere {
   inset:-8px 0 0;
   border-radius:24px;
   opacity:.66;
   contain:paint;
 }
-.home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
-.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+.home-mode-panel .home-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img,
+.kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img {
   inset:0;
   width:100%;
   height:100%;
@@ -9143,8 +9143,8 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   filter:blur(30px) saturate(1.55) contrast(1.03);
   transform:none;
 }
-.home-mode-panel.has-home-hero-palette .home-hero-atmosphere::after,
-.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere::after {
+.home-mode-panel .home-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere::after,
+.kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere::after {
   background:
     linear-gradient(180deg,rgba(5,6,10,.32) 0%,rgba(5,6,10,.64) 48%,rgba(5,6,10,.94) 100%),
     radial-gradient(ellipse at 50% 5%,rgba(var(--home-hero-rgb),.15),rgba(5,6,10,.58) 78%);
@@ -9210,12 +9210,12 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .home-hero-deck-slide.is-adjacent {
     filter:none;
   }
-  .home-mode-panel.has-home-hero-palette,
-  .kids-mode-panel.has-home-hero-palette {
+  .home-mode-panel .home-hero-palette-surface.has-home-hero-palette,
+  .kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette {
     border-radius:17px;
   }
-  .home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
-  .kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+  .home-mode-panel .home-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img,
+  .kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img {
     opacity:.56;
     filter:blur(17px) saturate(1.34);
   }
@@ -9278,12 +9278,12 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .home-hero-deck-slide .hero-description { -webkit-line-clamp:2; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .home-mode-panel.has-home-hero-palette,
-  .kids-mode-panel.has-home-hero-palette {
+  .home-mode-panel .home-hero-palette-surface.has-home-hero-palette,
+  .kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette {
     transition:none !important;
   }
-  .home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
-  .kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+  .home-mode-panel .home-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img,
+  .kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img {
     filter:none;
   }
 }

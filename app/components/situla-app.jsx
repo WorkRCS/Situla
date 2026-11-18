@@ -2135,12 +2135,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <SkeletonShelf title="Preparing your feed" />
               </section>
             )}
-            <div
-              className={"home-mode-panel" + (heroPalettes.normal ? " has-home-hero-palette" : "")}
-              style={normalHeroPaletteStyle}
-              hidden={!kidsModeReady || kidsMode}
-              aria-hidden={!kidsModeReady || kidsMode}
-            >
+            <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
+              <div
+                className={"home-hero-palette-surface" + (heroPalettes.normal ? " has-home-hero-palette" : "")}
+                style={normalHeroPaletteStyle}
+              >
               {featured && (featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster) && (
                 <div className="home-hero-atmosphere" aria-hidden="true">
                   <img
@@ -2282,13 +2281,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             )}
             
             </div>
-            <div
-              className={"kids-mode-panel" + (heroPalettes.kids ? " has-home-hero-palette" : "")}
-              style={kidsHeroPaletteStyle}
-              hidden={!kidsModeReady || !kidsMode}
-              aria-hidden={!kidsModeReady || !kidsMode}
-            >
-              <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} onHeroPaletteChange={reportKidsHeroPalette} />
+            </div>
+            <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
+              <div
+                className={"kids-hero-palette-surface" + (heroPalettes.kids ? " has-home-hero-palette" : "")}
+                style={kidsHeroPaletteStyle}
+              >
+                <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} onHeroPaletteChange={reportKidsHeroPalette} />
+              </div>
             </div>
             <SiteFooter inApp />
           </div>
