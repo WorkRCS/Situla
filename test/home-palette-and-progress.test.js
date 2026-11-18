@@ -14,7 +14,7 @@ test("Home and Kids keep artwork inside the hero instead of creating an oversize
   assert.match(app, /className="home-mode-panel"/);
   assert.match(app, /className="kids-mode-panel"/);
   assert.match(app, /className="hero-card home-hero-card"/);
-  assert.match(cartoons, /className="cartoons-home-catalog"/);
+  assert.match(cartoons, /className="pb-8 cartoons-home-catalog"/);
   assert.match(cartoons, /<CartoonSpotlight/);
   assert.doesNotMatch(app, /heroPalettes|home-hero-palette-surface|kids-hero-palette-surface|home-hero-atmosphere/);
   assert.doesNotMatch(app, /onPaletteChange=\{reportNormalHeroPalette\}|onHeroPaletteChange/);

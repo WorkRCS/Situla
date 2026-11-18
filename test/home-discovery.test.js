@@ -174,9 +174,9 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(!discovery.includes("$sample"));
   assert.ok(discovery.includes("Movie.countDocuments"));
 
-  assert.ok(css.includes(".home-hero-atmosphere"));
-  assert.ok(css.includes("filter:blur(46px) saturate(1.45)"));
-  assert.ok(css.includes("filter:blur(22px) saturate(1.28)"));
+  assert.equal(css.includes(".home-hero-atmosphere"), false);
+  assert.equal(css.includes("filter:blur(46px) saturate(1.45)"), false);
+  assert.equal(css.includes("filter:blur(22px) saturate(1.28)"), false);
   assert.ok(css.includes(".home-hero-deck-track.is-next"));
   assert.ok(css.includes(".home-hero-deck-arrow-right"));
   assert.ok(css.includes(".home-scroll-feed .catalog-grid"));

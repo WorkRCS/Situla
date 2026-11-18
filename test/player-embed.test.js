@@ -192,9 +192,9 @@ test("Situla Home renders a Hero followed by one vertical mixed Discover More gr
   assert.match(css, /--accent:#e8b65b/);
   assert.match(css, /#f7d58b/);
   assert.doesNotMatch(css, /#55b8ff|#69c7ff|#2388ee/);
-  assert.match(css, /\.home-hero-atmosphere/);
-  assert.match(css, /filter:blur\(46px\) saturate\(1\.45\)/);
-  assert.match(css, /filter:blur\(22px\) saturate\(1\.28\)/);
+  assert.doesNotMatch(css, /\.home-hero-atmosphere/);
+  assert.doesNotMatch(css, /filter:blur\(46px\) saturate\(1\.45\)/);
+  assert.doesNotMatch(css, /filter:blur\(22px\) saturate\(1\.28\)/);
   assert.match(css, /\.home-hero-deck-track\.is-next/);
 });
 

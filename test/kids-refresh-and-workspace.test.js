@@ -93,7 +93,7 @@ test("app pages keep the shared footer inside the right content scroll frame", a
   assert.ok(css.includes(".app-view-main-column > .site-footer-app"));
 });
 
-test("Cartoon listings use the same top frame spacing as Movies and keep hero atmosphere Home-only", async () => {
+test("Cartoon listings use the same top frame spacing without a full-page Home atmosphere", async () => {
   const [app, cartoons, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/cartoons-catalog.jsx"),
@@ -113,7 +113,7 @@ test("Cartoon listings use the same top frame spacing as Movies and keep hero at
   const kidsHomeStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
   const kidsHomeEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsHomeStart);
   const kidsHome = cartoons.slice(kidsHomeStart, kidsHomeEnd);
-  assert.ok(kidsHome.includes('className="home-hero-atmosphere"'));
+  assert.equal(kidsHome.includes('className="home-hero-atmosphere"'), false);
   const listingStart = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"');
   assert.ok(listingStart >= 0);
   assert.ok(!cartoons.slice(listingStart).includes("home-hero-atmosphere"));
@@ -155,7 +155,7 @@ test("Normal and Kids Home use the same manual three-card hero without changing 
   assert.ok(css.includes(".home-hero-deck-track.is-previous"));
   assert.ok(css.includes("@media (prefers-reduced-motion:reduce)"));
   assert.ok(css.includes("@media (max-width:380px)"));
-  assert.ok(css.includes("filter:blur(22px) saturate(1.28)"));
+  assert.equal(css.includes("filter:blur(22px) saturate(1.28)"), false);
 });
 
 
