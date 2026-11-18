@@ -239,7 +239,7 @@ export function SiteWorkspace({ children, kidsMode }) {
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
       <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={activeKidsMode} />
       <div className="site-workspace-main">{children}</div>
-      <nav className="bottom-nav site-workspace-mobile-nav" aria-label="Main navigation">
+      <nav className={"bottom-nav site-workspace-mobile-nav" + (activeKidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">
         {(activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const Icon = item.icon;
           const mobileItems = activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS;
