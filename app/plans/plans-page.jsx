@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { PREMIUM_BILLING } from "../../src/membership-preview.js";
+import SiteFooter from "../components/site-footer.jsx";
 import {
   ArrowLeft, ArrowRight, Check, Clock3, CreditCard, Crown,
   Globe2, LockKeyhole, ShieldCheck, UserRound, UserRoundCheck
@@ -37,10 +38,6 @@ export default function PlansPage() {
     <main className="plans-page">
       <div className="plans-shell">
         <header className="plans-topbar">
-          <Link href="/" className="plans-brand" aria-label="Situla home">
-            <img src="/icon.svg" alt="" width="38" height="38" />
-            <span><strong>SITULA</strong><small>PLANS & ACCESS</small></span>
-          </Link>
           <Link href="/" className="plans-back-link">
             <ArrowLeft size={15} strokeWidth={2.2} aria-hidden="true" />
             Back to Situla
@@ -159,6 +156,7 @@ export default function PlansPage() {
           </div>
         </section>
       </div>
+      <SiteFooter />
     </main>
   );
 }
