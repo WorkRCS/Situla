@@ -14,7 +14,6 @@ import AnnouncementCenter from "./announcement-center.jsx";
 import UpcomingSection from "./upcoming-section.jsx";
 import { SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar } from "./site-sidebar.jsx";
 import CartoonsCatalog, { CartoonCard } from "./cartoons-catalog.jsx";
-import SiteFooter from "./site-footer.jsx";
 import ThreeCardHero from "./three-card-hero.jsx";
 import { createHistoryResumeTarget } from "../../src/watch-history.js";
 import { optimizeTmdbImageUrl } from "../../src/media-image.js";
@@ -2271,7 +2270,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
               <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
             </div>
-            <SiteFooter inApp />
+            
           </div>
         )}
 
@@ -2519,7 +2518,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             </div>
 
         
-            <SiteFooter inApp />
+            
           </div>
         )}
       </div>
