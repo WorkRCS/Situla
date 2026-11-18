@@ -445,10 +445,10 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
         className="pb-8 cartoons-home-catalog"
         aria-label="Cartoons catalog"
         style={{
-        "--home-hero-color-1": heroPaletteColors[0] ? `rgb(${heroPaletteColors[0]})` : "#111827",
-        "--home-hero-color-2": heroPaletteColors[1] ? `rgb(${heroPaletteColors[1]})` : "#17212b",
-        "--home-hero-color-3": heroPaletteColors[2] ? `rgb(${heroPaletteColors[2]})` : "#171d2c",
-        "--home-hero-color-4": heroPaletteColors[3] ? `rgb(${heroPaletteColors[3]})` : "#201a29"
+        "--home-hero-color-1": heroPaletteColors?.[0] ? `rgb(${heroPaletteColors?.[0]})` : "#111827",
+        "--home-hero-color-2": heroPaletteColors?.[1] ? `rgb(${heroPaletteColors?.[1]})` : "#17212b",
+        "--home-hero-color-3": heroPaletteColors?.[2] ? `rgb(${heroPaletteColors?.[2]})` : "#171d2c",
+        "--home-hero-color-4": heroPaletteColors?.[3] ? `rgb(${heroPaletteColors?.[3]})` : "#201a29"
       }}
       >
         <CartoonSpotlight

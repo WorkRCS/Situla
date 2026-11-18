@@ -2128,10 +2128,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               hidden={!kidsModeReady || kidsMode}
               aria-hidden={!kidsModeReady || kidsMode}
               style={{
-              "--home-hero-color-1": heroPaletteColors[0] ? `rgb(${heroPaletteColors[0]})` : "#111827",
-              "--home-hero-color-2": heroPaletteColors[1] ? `rgb(${heroPaletteColors[1]})` : "#17212b",
-              "--home-hero-color-3": heroPaletteColors[2] ? `rgb(${heroPaletteColors[2]})` : "#171d2c",
-              "--home-hero-color-4": heroPaletteColors[3] ? `rgb(${heroPaletteColors[3]})` : "#201a29"
+              "--home-hero-color-1": heroPaletteColors?.[0] ? `rgb(${heroPaletteColors?.[0]})` : "#111827",
+              "--home-hero-color-2": heroPaletteColors?.[1] ? `rgb(${heroPaletteColors?.[1]})` : "#17212b",
+              "--home-hero-color-3": heroPaletteColors?.[2] ? `rgb(${heroPaletteColors?.[2]})` : "#171d2c",
+              "--home-hero-color-4": heroPaletteColors?.[3] ? `rgb(${heroPaletteColors?.[3]})` : "#201a29"
             }}
             >
             {featured ? (
