@@ -280,7 +280,7 @@ test("mobile/tablet navigation keeps a full-width seven-item default dock and fi
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
   const bottomNav = app.slice(app.indexOf('<nav className={"bottom-nav"'));
-  const workspaceNav = sidebar.slice(sidebar.indexOf('<nav className="bottom-nav site-workspace-mobile-nav"'));
+  const workspaceNav = sidebar.slice(sidebar.indexOf('className={"bottom-nav site-workspace-mobile-nav"'));
 
   assert.ok(app.includes("SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar"));
   assert.ok(bottomNav.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
