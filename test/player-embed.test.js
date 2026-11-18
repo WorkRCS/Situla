@@ -171,8 +171,8 @@ test("Situla Home renders a Hero followed by one vertical mixed Discover More gr
   const app = await read("../app/components/situla-app.jsx");
   const cartoons = await read("../app/components/cartoons-catalog.jsx");
   const css = await read("../app/globals.css");
-  const normalStart = app.indexOf('<div className="home-mode-panel"');
-  const normalEnd = app.indexOf('<div className="kids-mode-panel"', normalStart);
+  const normalStart = app.indexOf('className="home-mode-panel"');
+  const normalEnd = app.indexOf('className="kids-mode-panel"', normalStart);
   const normalHome = app.slice(normalStart, normalEnd);
   const kidsStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
   const kidsEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsStart);
@@ -380,8 +380,8 @@ test("Watch pages delegate episode selection to the embedded iframe player", asy
 test("Home contains no horizontal shelves: Normal and Kids modes each use one vertical feed", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const cartoons = await read("../app/components/cartoons-catalog.jsx");
-  const normalStart = app.indexOf('<div className="home-mode-panel"');
-  const normalEnd = app.indexOf('<div className="kids-mode-panel"', normalStart);
+  const normalStart = app.indexOf('className="home-mode-panel"');
+  const normalEnd = app.indexOf('className="kids-mode-panel"', normalStart);
   const normalHome = app.slice(normalStart, normalEnd);
   const kidsStart = cartoons.indexOf('if (homeView) {\n    const featured = cartoonHeroItems');
   const kidsEnd = cartoons.indexOf('return (\n    <section className="pb-8 cartoons-listing-catalog"', kidsStart);
