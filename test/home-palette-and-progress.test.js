@@ -29,6 +29,7 @@ test("Normal and Kids Home blend a smooth multi-color ambient palette from the a
     assert.match(css, new RegExp("@property --home-hero-color-" + index));
   }
   assert.match(css, /color-mix\(in srgb,var\(--home-hero-color-1\)/);
+  assert.match(css, /\.home-mode-panel \{ display:block; \}/);
   assert.match(css, /radial-gradient\(ellipse 76% 34%/);
   assert.match(css, /--home-hero-color-4 1\.25s ease-in-out/);
   assert.doesNotMatch(app + cartoons, /--home-hero-palette|heroPaletteRgb/);

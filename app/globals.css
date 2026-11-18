@@ -9294,7 +9294,8 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   initial-value:#201a29;
 }
 
-/* Softly blended poster colors replace the old single-color page wash. */
+/* Keep the mode wrapper paintable; the glow belongs to this full-width surface. */
+.home-mode-panel { display:block; }
 .home-mode-panel,
 .cartoons-home-catalog {
   width:100%;
