@@ -45,3 +45,18 @@ test("the app uses one document scroll surface instead of a nested content viewp
   assert.match(flowRules, /\.home-main-column,[\s\S]*?\.app-view-main-column/);
   assert.match(flowRules, /overscroll-behavior:auto/);
 });
+test("mobile navigation dock keeps evenly spaced icons on Cartoon TV at phone and tablet widths", async () => {
+  const [app, sidebar, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/site-sidebar.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.ok(app.includes('(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS)'));
+  assert.ok(app.includes('className={"bottom-nav" + (kidsMode ? " is-kids-nav" : "")}'));
+  assert.ok(sidebar.includes('(activeKidsMode ? " is-kids-nav" : "")'));
+  assert.match(css, /\.bottom-nav\.is-kids-nav\s*\{\s*grid-template-columns:repeat\(5,minmax\(0,1fr\)\) !important;/);
+  assert.match(css, /\.bottom-nav,\.site-workspace-mobile-nav\s*\{[\s\S]*?grid-template-columns:repeat\(7,minmax\(0,1fr\)\) !important;[\s\S]*?column-gap:clamp\(4px,\.9vw,8px\) !important;/);
+  assert.match(css, /\.bottom-nav \.nav-button,\s*\.bottom-nav \.site-workspace-mobile-link\s*\{[\s\S]*?padding:5px 2px !important;[\s\S]*?gap:4px !important;/);
+});
+
