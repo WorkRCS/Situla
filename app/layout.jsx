@@ -1,6 +1,5 @@
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./globals.css";
-import SiteFooter from "./components/site-footer.jsx";
 import PresenceTracker from "./components/presence-tracker.jsx";
 import RouteProgress from "./components/route-progress.jsx";
 import PersistentSitulaApp from "./components/persistent-situla-app.jsx";
@@ -43,7 +42,6 @@ export default function RootLayout({ children }) {
         <RouteProgress />
         <PersistentSitulaApp>{children}</PersistentSitulaApp>
         <PresenceTracker />
-        <SiteFooter />
       </body>
     </html>
   );
