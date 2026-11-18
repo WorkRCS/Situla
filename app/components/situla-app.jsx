@@ -916,13 +916,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
-  const [heroPalettes, setHeroPalettes] = useState({ normal: "", kids: "" });
-  const reportNormalHeroPalette = useCallback((rgb) => {
-    setHeroPalettes((current) => ({ ...current, normal: rgb || "" }));
-  }, []);
-  const reportKidsHeroPalette = useCallback((rgb) => {
-    setHeroPalettes((current) => ({ ...current, kids: rgb || "" }));
-  }, []);
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -1841,12 +1834,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
   const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;
-  const normalHeroPaletteStyle = heroPalettes.normal
-    ? { "--home-hero-rgb": heroPalettes.normal }
-    : undefined;
-  const kidsHeroPaletteStyle = heroPalettes.kids
-    ? { "--home-hero-rgb": heroPalettes.kids }
-    : undefined;
+
 
   useEffect(() => {
     if (tab === "home" && featured) prefetchHomeSpotlight(featured);
@@ -2136,19 +2124,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               </section>
             )}
             <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
-              <div
-                className={"home-hero-palette-surface" + (heroPalettes.normal ? " has-home-hero-palette" : "")}
-                style={normalHeroPaletteStyle}
-              >
-              {featured && (featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster) && (
-                <div className="home-hero-atmosphere" aria-hidden="true">
-                  <img
-                    src={optimizeTmdbImageUrl(featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster, "w342")}
-                    alt=""
-                    decoding="async"
-                  />
-                </div>
-              )}
             {featured ? (
               <ThreeCardHero
                 items={homeHeroItems}
@@ -2160,7 +2135,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 }}
                 getTitle={(item) => item.heroTitle || "Untitled"}
                 ariaLabel="Movies, TV series and anime spotlight"
-                onPaletteChange={reportNormalHeroPalette}
                 renderCenter={(heroItem, onCenterImageLoad) => {
                   const navigationKey = heroItem.mediaType === "movie"
                     ? "movie:" + heroItem.imdbId
@@ -2294,14 +2268,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             )}
             
             </div>
-            </div>
             <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
-              <div
-                className={"kids-hero-palette-surface" + (heroPalettes.kids ? " has-home-hero-palette" : "")}
-                style={kidsHeroPaletteStyle}
-              >
-                <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} onHeroPaletteChange={reportKidsHeroPalette} />
-              </div>
+              <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} />
             </div>
             <SiteFooter inApp />
           </div>

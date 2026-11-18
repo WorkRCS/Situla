@@ -166,7 +166,7 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true, onPaletteChange }) {
+function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
   const current = items?.[index] || items?.[0] || null;
   if (!current) return null;
 
@@ -175,7 +175,6 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true, onPale
       items={items}
       index={index}
       onIndexChange={onIndexChange}
-      onPaletteChange={onPaletteChange}
       getImage={(item) => {
         const image = item.backdropUrl || item.posterUrl;
         return image ? optimizeTmdbImageUrl(image, "w342") : "";
@@ -246,7 +245,7 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true, onPale
   );
 }
 
-export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, isSaved, onSave, onShare, onPrepareShare, onHeroPaletteChange }) {
+export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, isSaved, onSave, onShare, onPrepareShare }) {
   const [home, setHome] = useState(null);
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
@@ -452,16 +451,10 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
     const featured = cartoonHeroItems[heroIndex] || sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
       <section className="pb-8 cartoons-home-catalog" aria-label="Cartoons catalog">
-        {featured && (featured.backdropUrl || featured.posterUrl) && (
-          <div className="home-hero-atmosphere" aria-hidden="true">
-            <img src={optimizeTmdbImageUrl(featured.backdropUrl || featured.posterUrl, "w342")} alt="" decoding="async" />
-          </div>
-        )}
         <CartoonSpotlight
           items={cartoonHeroItems}
           index={heroIndex}
           onIndexChange={setHeroIndex}
-          onPaletteChange={onHeroPaletteChange}
           kidsMode={kidsMode}
         />
         {cartoonFeedItems.length > 0 && (

@@ -21,21 +21,27 @@ test("Cartoon TV mobile grid and five-item Kids navigation stay evenly aligned",
   assert.match(css, /\.cartoons-catalog-page \.catalog-grid\s*\{\s*grid-template-columns:repeat\(3,minmax\(0,1fr\)\);/);
 });
 
-test("Hero palette selectors are isolated from shared navigation and app chrome", async () => {
+test("Vercel installs the Tailwind PostCSS build plugin even when production omits dev dependencies", async () => {
+  const [config, pkg] = await Promise.all([
+    read("../vercel.json"),
+    read("../package.json")
+  ]);
+  const vercel = JSON.parse(config);
+  const manifest = JSON.parse(pkg);
+
+  assert.match(vercel.installCommand, /npm install --include=dev/);
+  assert.equal(manifest.devDependencies["@tailwindcss/postcss"], "4.3.5");
+  assert.equal(manifest.devDependencies.tailwindcss, "4.3.5");
+  assert.ok(manifest.devDependencies.postcss);
+});
+
+test("the app uses one document scroll surface instead of a nested content viewport", async () => {
   const css = await read("../app/globals.css");
-  const app = await read("../app/components/situla-app.jsx");
-  assert.match(app, /<main className="app-shell">/);
-  assert.match(app, /home-hero-palette-surface/);
-  assert.match(app, /kids-hero-palette-surface/);
-  for (const chromeSelector of [
-    ".site-app-header",
-    ".site-sidebar",
-    ".bottom-nav",
-    ".site-footer-app"
-  ]) {
-    const selectors = css.split("\n").filter((line) => line.includes(chromeSelector) && line.includes("home-hero-rgb"));
-    assert.equal(selectors.length, 0, chromeSelector + " must not read the poster palette");
-  }
-  assert.match(css, /\.home-mode-panel \.home-hero-palette-surface\.has-home-hero-palette/);
-  assert.match(css, /\.kids-mode-panel \.kids-hero-palette-surface\.has-home-hero-palette/);
+  const flowRules = css.slice(css.lastIndexOf("/* One document scroll surface:"));
+
+  assert.match(flowRules, /\.app-shell:has\(\.home-page-layout\)/);
+  assert.match(flowRules, /height:auto !important/);
+  assert.match(flowRules, /overflow:visible !important/);
+  assert.match(flowRules, /\.home-main-column,[\s\S]*?\.app-view-main-column/);
+  assert.match(flowRules, /overscroll-behavior:auto/);
 });

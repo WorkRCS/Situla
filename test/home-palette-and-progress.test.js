@@ -4,44 +4,22 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Normal and Kids Home keep poster-driven colour strictly inside Hero page content", async () => {
-  const [app, cartoons, hero, css] = await Promise.all([
+test("Home and Kids keep artwork inside the hero instead of creating an oversized blurred page backdrop", async () => {
+  const [app, cartoons, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/cartoons-catalog.jsx"),
-    read("../app/components/three-card-hero.jsx"),
     read("../app/globals.css")
   ]);
 
-  assert.match(hero, /extractPosterDominantRgb/);
-  assert.match(hero, /canvas\.getContext\("2d", \{ willReadFrequently: true \}\)/);
-  assert.match(hero, /getImageData\(0, 0, 20, 20\)/);
-  assert.match(hero, /renderCenter\?\.\(item, onCenterImageLoad\)/);
-  assert.match(hero, /onPaletteChange\?\.\(dominantRgb\)/);
-  assert.match(app, /onPaletteChange=\{reportNormalHeroPalette\}/);
-  assert.match(app, /onHeroPaletteChange=\{reportKidsHeroPalette\}/);
-  assert.match(app, /normalHeroPaletteStyle/);
-  assert.match(app, /kidsHeroPaletteStyle/);
-  assert.ok(app.includes('<div className="home-mode-panel" hidden={!kidsModeReady || kidsMode}'));
-  assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
-  assert.match(app, /home-hero-palette-surface/);
-  assert.match(app, /kids-hero-palette-surface/);
-  assert.match(app, /className=\{"home-hero-palette-surface" \+ \(heroPalettes\.normal \? " has-home-hero-palette" : ""\)\}/);
-  assert.match(app, /className=\{"kids-hero-palette-surface" \+ \(heroPalettes\.kids \? " has-home-hero-palette" : ""\)\}/);
-  assert.match(app, /src=\{optimizeTmdbImageUrl\(featured\.heroImage/);
-  assert.doesNotMatch(app, /activeHeroPalette|appShellStyle|app-shell.*has-home-hero-palette/);
-  assert.match(cartoons, /onPaletteChange=\{onHeroPaletteChange\}/);
-  assert.match(cartoons, /onLoad=\{onCenterImageLoad\}/);
-  assert.match(cartoons, /optimizeTmdbImageUrl\(featured\.backdropUrl/);
-
-  assert.ok(css.includes(".home-mode-panel .home-hero-palette-surface.has-home-hero-palette"));
-  assert.ok(css.includes(".kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette"));
-  assert.doesNotMatch(css, /\.app-shell\.has-home-hero-palette/);
-  assert.doesNotMatch(css, /\.site-app-header[^\n]*--home-hero-rgb|\.site-sidebar[^\n]*--home-hero-rgb|\.bottom-nav[^\n]*--home-hero-rgb|\.site-footer-app[^\n]*--home-hero-rgb/);
-  assert.match(css, /filter:blur\(30px\) saturate\(1\.72\)/);
-  assert.match(css, /background-color:color-mix\(in srgb,rgb\(var\(--home-hero-rgb\)\) 12%,#08090e\)/);
-  assert.match(css, /rgba\(var\(--home-hero-rgb\),\.31\)/);
-  assert.match(css, /transition:background-color \.68s ease/);
-  assert.match(css, /inset:-8px 0 0/);
+  assert.match(app, /className="home-mode-panel"/);
+  assert.match(app, /className="kids-mode-panel"/);
+  assert.match(app, /className="home-hero-card"/);
+  assert.match(cartoons, /className="cartoons-home-catalog"/);
+  assert.match(cartoons, /<CartoonSpotlight/);
+  assert.doesNotMatch(app, /heroPalettes|home-hero-palette-surface|kids-hero-palette-surface|home-hero-atmosphere/);
+  assert.doesNotMatch(app, /onPaletteChange=\{reportNormalHeroPalette\}|onHeroPaletteChange/);
+  assert.doesNotMatch(cartoons, /home-hero-atmosphere|onPaletteChange|onHeroPaletteChange/);
+  assert.doesNotMatch(css, /home-hero-atmosphere|home-hero-palette-surface|kids-hero-palette-surface/);
 });
 
 test("responsive breakpoints size catalog grids and hero layouts for phone, tablet and desktop", async () => {
