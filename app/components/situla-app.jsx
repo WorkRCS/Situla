@@ -2556,7 +2556,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
       </div>
 
-      <nav className="bottom-nav" aria-label="Main navigation">
+      <nav className={"bottom-nav" + (kidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">
         {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const NavigationIcon = item.icon;
           return (

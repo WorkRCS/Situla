@@ -10,6 +10,17 @@ test("Vercel Hobby functions are pinned to the Mumbai region", async () => {
   assert.equal(config.regions.length, 1);
 });
 
+test("Cartoon TV mobile grid and five-item Kids navigation stay evenly aligned", async () => {
+  const [app, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.ok(app.includes('<nav className={"bottom-nav" + (kidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">'));
+  assert.ok(css.includes(".bottom-nav.is-kids-nav { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }"));
+  assert.match(css, /\.cartoons-catalog-page \.catalog-grid\s*\{\s*grid-template-columns:repeat\(3,minmax\(0,1fr\)\);/);
+});
+
 test("Hero palette selectors are isolated from shared navigation and app chrome", async () => {
   const css = await read("../app/globals.css");
   const app = await read("../app/components/situla-app.jsx");
