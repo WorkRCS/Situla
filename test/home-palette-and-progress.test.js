@@ -55,3 +55,14 @@ test("the top route progress bar also tracks user-triggered server requests with
   assert.doesNotMatch(css, /\.site-server-activity\s*\{/);
   assert.match(legacyLoader, /return null/);
 });
+
+test("desktop header height aligns with the fixed sidebar brand row", async () => {
+  const css = await read("../app/globals.css");
+  const desktopHeader = css.slice(css.lastIndexOf("/* Keep the left brand strip and the right application header"));
+
+  assert.match(desktopHeader, /--site-desktop-header-height:54px/);
+  assert.match(desktopHeader, /height:var\\(--site-desktop-header-height\\)/);
+  assert.match(desktopHeader, /height:calc\\(var\\(--site-desktop-header-height\\) \\+ 1px\\)/);
+  assert.match(desktopHeader, /height:44px !important/);
+  assert.match(desktopHeader, /width:42px/);
+});
