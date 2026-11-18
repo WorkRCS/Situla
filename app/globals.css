@@ -9114,79 +9114,176 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 }
 
 
-/* The active Home poster supplies one palette for the entire app frame.
-   These stronger washes tint the header, full-height sidebar, content gaps,
-   mobile dock and footer together without repainting any catalogue cards. */
-.app-shell.has-home-hero-palette .home-hero-atmosphere img {
-  opacity:.79;
-  filter:blur(46px) saturate(1.74) contrast(1.04);
-}
-.app-shell.has-home-hero-palette {
-  background-color:color-mix(in srgb,rgb(var(--home-hero-rgb)) 26%,#08090e);
+/* Poster-driven colour belongs only to the Hero page content in Normal and Kids Home.
+   The palette variable is attached to these panels, never to the app shell or chrome. */
+.home-mode-panel.has-home-hero-palette,
+.kids-mode-panel.has-home-hero-palette {
+  position:relative;
+  isolation:isolate;
+  border-radius:24px;
+  background-color:color-mix(in srgb,rgb(var(--home-hero-rgb)) 7%,#08090e);
   background-image:
-    radial-gradient(ellipse 86% 72% at 66% 2%,rgba(var(--home-hero-rgb),.34),transparent 68%),
-    radial-gradient(ellipse 48% 92% at 0% 46%,rgba(var(--home-hero-rgb),.20),transparent 74%),
-    linear-gradient(180deg,rgba(8,9,14,.78) 0%,rgba(8,9,14,.9) 56%,rgba(8,9,14,.96) 100%);
-  transition:background-color .68s ease;
+    radial-gradient(ellipse 88% 38% at 54% 0%,rgba(var(--home-hero-rgb),.19),transparent 78%),
+    linear-gradient(180deg,rgba(var(--home-hero-rgb),.055),rgba(8,9,14,.02) 56%,rgba(8,9,14,.10));
+  transition:background-color .68s ease,background-image .68s ease;
 }
-.app-shell.has-home-hero-palette .site-app-header {
-  background:color-mix(in srgb,rgb(var(--home-hero-rgb)) 38%,#08090e 62%) !important;
-  border-bottom-color:rgba(var(--home-hero-rgb),.38);
-  box-shadow:0 10px 38px rgba(var(--home-hero-rgb),.16),0 10px 38px rgba(0,0,0,.18);
-  transition:background-color .68s ease,border-color .68s ease,box-shadow .68s ease;
+.home-mode-panel.has-home-hero-palette > .home-hero-atmosphere,
+.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere {
+  inset:-8px 0 0;
+  border-radius:24px;
+  opacity:.66;
+  contain:paint;
 }
-.app-shell.has-home-hero-palette .site-sidebar.home-sidebar {
+.home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
+.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:.72;
+  filter:blur(30px) saturate(1.55) contrast(1.03);
+  transform:none;
+}
+.home-mode-panel.has-home-hero-palette .home-hero-atmosphere::after,
+.kids-mode-panel.has-home-hero-palette .home-hero-atmosphere::after {
   background:
-    linear-gradient(180deg,rgba(var(--home-hero-rgb),.34),rgba(var(--home-hero-rgb),.18) 48%,rgba(var(--home-hero-rgb),.25)),
-    radial-gradient(ellipse at 8% 0%,rgba(var(--home-hero-rgb),.24),transparent 60%),
-    linear-gradient(180deg,#10131c 0%,#0b0e16 58%,#080b12 100%) !important;
-  border-right-color:rgba(var(--home-hero-rgb),.42);
-  box-shadow:8px 0 34px rgba(var(--home-hero-rgb),.12),8px 0 32px rgba(0,0,0,.16);
-  transition:background-color .68s ease,border-color .68s ease,box-shadow .68s ease;
+    linear-gradient(180deg,rgba(5,6,10,.32) 0%,rgba(5,6,10,.64) 48%,rgba(5,6,10,.94) 100%),
+    radial-gradient(ellipse at 50% 5%,rgba(var(--home-hero-rgb),.15),rgba(5,6,10,.58) 78%);
 }
-.app-shell.has-home-hero-palette .site-sidebar .site-sidebar-heading {
-  border-bottom-color:rgba(var(--home-hero-rgb),.34);
-}
-.app-shell.has-home-hero-palette .site-sidebar .home-side-link.active {
-  border-color:rgba(var(--home-hero-rgb),.5);
-  background:rgba(var(--home-hero-rgb),.24);
-  box-shadow:inset 0 1px rgba(255,255,255,.05),0 5px 18px rgba(var(--home-hero-rgb),.12);
-}
-.app-shell.has-home-hero-palette .home-main-column,
-.app-shell.has-home-hero-palette .app-view-main-column,
-.app-shell.has-home-hero-palette .home-page-layout,
-.app-shell.has-home-hero-palette .app-view-layout {
-  background:transparent;
-}
-.app-shell.has-home-hero-palette .site-footer-app {
-  border-top-color:rgba(var(--home-hero-rgb),.36);
-  background:linear-gradient(180deg,rgba(var(--home-hero-rgb),.14),rgba(8,9,14,.12));
-  transition:background-color .68s ease,border-color .68s ease;
-}
-.app-shell.has-home-hero-palette .bottom-nav {
-  border-top-color:rgba(var(--home-hero-rgb),.38);
-  background:linear-gradient(180deg,rgba(var(--home-hero-rgb),.24),rgba(8,9,14,.96)) !important;
-  box-shadow:0 -8px 28px rgba(var(--home-hero-rgb),.12),0 -8px 24px rgba(0,0,0,.19);
-  transition:background-color .68s ease,border-color .68s ease;
-}
-@media (max-width:767px) {
-  .app-shell.has-home-hero-palette .home-hero-atmosphere img {
-    opacity:.62;
-    filter:blur(22px) saturate(1.54);
+
+/* Device-fit layouts: larger phone cards, balanced tablet density and fluid hero sizing. */
+@media (max-width:599px) {
+  .catalog-grid,
+  .skeleton-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:clamp(14px,3.5vw,19px) clamp(10px,3vw,14px);
   }
-  .app-shell.has-home-hero-palette .site-app-header {
-    background:color-mix(in srgb,rgb(var(--home-hero-rgb)) 34%,#08090e 66%) !important;
+  .catalog-grid .movie-card h3 {
+    min-height:2.5em;
+    font-size:clamp(11px,3.1vw,14px);
+    line-height:1.3;
+    white-space:normal;
   }
-  .app-shell.has-home-hero-palette .bottom-nav {
-    background:linear-gradient(180deg,rgba(var(--home-hero-rgb),.28),rgba(8,9,14,.97)) !important;
+  .catalog-grid .movie-card p {
+    font-size:clamp(9px,2.6vw,11px);
+    line-height:1.35;
   }
+  .catalog-grid .movie-card .save-button,
+  .catalog-grid .movie-card .share-button {
+    min-width:36px;
+    min-height:36px;
+  }
+  .home-page-layout,
+  .app-view-layout {
+    padding-inline:clamp(10px,3.2vw,16px) !important;
+  }
+  .home-main-column,
+  .app-view-main-column {
+    padding-inline:0 !important;
+  }
+  .home-hero-deck {
+    height:clamp(300px,48svh,420px);
+    border-radius:15px;
+  }
+  .home-hero-deck-slide .hero-content {
+    padding:clamp(13px,4vw,19px) clamp(12px,3.8vw,18px);
+  }
+  .home-hero-deck-slide .hero-title {
+    font-size:clamp(22px,7vw,34px);
+    line-height:1.08;
+  }
+  .home-hero-deck-slide .hero-description {
+    max-width:42ch;
+    font-size:clamp(10px,2.9vw,12px);
+    line-height:1.45;
+  }
+  .home-hero-deck-slide .hero-actions {
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:12px;
+  }
+  .home-hero-deck-slide .hero-actions .gold-button,
+  .home-hero-deck-slide .hero-actions .ghost-button {
+    min-height:40px;
+    padding-inline:clamp(9px,3vw,14px);
+    font-size:clamp(10px,2.7vw,12px);
+  }
+  .home-hero-deck-slide.is-adjacent {
+    filter:none;
+  }
+  .home-mode-panel.has-home-hero-palette,
+  .kids-mode-panel.has-home-hero-palette {
+    border-radius:17px;
+  }
+  .home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
+  .kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+    opacity:.56;
+    filter:blur(17px) saturate(1.34);
+  }
+}
+@media (min-width:600px) and (max-width:767px) {
+  .catalog-grid,
+  .skeleton-grid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:clamp(15px,2.4vw,20px) clamp(12px,2vw,17px);
+  }
+  .home-page-layout,
+  .app-view-layout {
+    padding-inline:clamp(16px,3vw,26px) !important;
+  }
+  .home-main-column,
+  .app-view-main-column {
+    padding-inline:0 !important;
+  }
+  .home-hero-deck { height:clamp(340px,52svh,440px); }
+  .home-hero-deck-slide .hero-title { font-size:clamp(26px,4.5vw,38px); }
+  .home-hero-deck-slide .hero-actions .gold-button,
+  .home-hero-deck-slide .hero-actions .ghost-button { min-height:42px; }
+}
+@media (min-width:768px) and (max-width:1100px) {
+  .catalog-grid,
+  .skeleton-grid {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:clamp(16px,2vw,22px) clamp(12px,1.6vw,18px);
+  }
+  .home-page-layout,
+  .app-view-layout {
+    padding-inline:clamp(18px,3vw,34px) !important;
+  }
+  .home-main-column,
+  .app-view-main-column {
+    padding:clamp(15px,2.1vw,23px) 0 42px !important;
+  }
+  .home-hero-deck { height:clamp(360px,46vw,500px); }
+  .home-hero-deck-slide .hero-title { font-size:clamp(30px,4vw,46px); }
+  .home-hero-deck-slide .hero-actions .gold-button,
+  .home-hero-deck-slide .hero-actions .ghost-button { min-height:44px; }
+}
+@media (min-width:1101px) {
+  .home-main-column,
+  .app-view-main-column {
+    padding-inline:clamp(22px,2.8vw,48px);
+  }
+  .home-hero-deck { height:clamp(370px,38vw,540px); }
+  .home-hero-deck-slide .hero-title { font-size:clamp(34px,3.2vw,52px); }
+}
+@media (min-width:1450px) {
+  .catalog-grid,
+  .skeleton-grid {
+    grid-template-columns:repeat(7,minmax(0,1fr));
+  }
+}
+@media (max-width:900px) and (orientation:landscape) and (max-height:620px) {
+  .home-hero-deck { height:clamp(250px,66vh,360px); }
+  .home-hero-deck-slide .hero-content { padding-block:12px; }
+  .home-hero-deck-slide .hero-description { -webkit-line-clamp:2; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .app-shell.has-home-hero-palette,
-  .app-shell.has-home-hero-palette .site-app-header,
-  .app-shell.has-home-hero-palette .site-sidebar.home-sidebar,
-  .app-shell.has-home-hero-palette .site-footer-app,
-  .app-shell.has-home-hero-palette .bottom-nav {
+  .home-mode-panel.has-home-hero-palette,
+  .kids-mode-panel.has-home-hero-palette {
     transition:none !important;
+  }
+  .home-mode-panel.has-home-hero-palette .home-hero-atmosphere img,
+  .kids-mode-panel.has-home-hero-palette .home-hero-atmosphere img {
+    filter:none;
   }
 }

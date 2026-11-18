@@ -424,7 +424,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
       <section className="pb-8 cartoons-home-catalog" aria-label="Cartoons catalog">
         {featured && (featured.backdropUrl || featured.posterUrl) && (
           <div className="home-hero-atmosphere" aria-hidden="true">
-            <img src={featured.backdropUrl || featured.posterUrl} alt="" decoding="async" />
+            <img src={optimizeTmdbImageUrl(featured.backdropUrl || featured.posterUrl, "w342")} alt="" decoding="async" />
           </div>
         )}
         <CartoonSpotlight

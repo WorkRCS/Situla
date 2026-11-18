@@ -1841,15 +1841,19 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const hasMoreTv = tvShows.length < tvTotal;
   const hasMoreAnime = animeShows.length < animeTotal;
   const featured = homeSeriesReady ? (homeHeroItems[heroIndex % Math.max(1, homeHeroItems.length)] || featuredMovie) : null;
-  const activeHeroPalette = tab === "home" ? heroPalettes[kidsMode ? "kids" : "normal"] : "";
-  const appShellStyle = activeHeroPalette ? { "--home-hero-rgb": activeHeroPalette } : undefined;
+  const normalHeroPaletteStyle = heroPalettes.normal
+    ? { "--home-hero-rgb": heroPalettes.normal }
+    : undefined;
+  const kidsHeroPaletteStyle = heroPalettes.kids
+    ? { "--home-hero-rgb": heroPalettes.kids }
+    : undefined;
 
   useEffect(() => {
     if (tab === "home" && featured) prefetchHomeSpotlight(featured);
   }, [tab, featured?.heroId]);
 
   return (
-    <main className={"app-shell" + (activeHeroPalette ? " has-home-hero-palette" : "")} style={appShellStyle}>
+    <main className="app-shell">
       <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
         <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
           <Link href="/" className="brand-lockup" aria-label="Situla home">
@@ -2131,11 +2135,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <SkeletonShelf title="Preparing your feed" />
               </section>
             )}
-            <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
+            <div
+              className={"home-mode-panel" + (heroPalettes.normal ? " has-home-hero-palette" : "")}
+              style={normalHeroPaletteStyle}
+              hidden={!kidsModeReady || kidsMode}
+              aria-hidden={!kidsModeReady || kidsMode}
+            >
               {featured && (featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster) && (
                 <div className="home-hero-atmosphere" aria-hidden="true">
                   <img
-                    src={featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster}
+                    src={optimizeTmdbImageUrl(featured.heroImage || featured.backdropUrl || featured.bannerUrl || featured.posterUrl || featured.heroPoster, "w342")}
                     alt=""
                     decoding="async"
                   />
@@ -2273,7 +2282,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             )}
             
             </div>
-            <div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode} aria-hidden={!kidsModeReady || !kidsMode}>
+            <div
+              className={"kids-mode-panel" + (heroPalettes.kids ? " has-home-hero-palette" : "")}
+              style={kidsHeroPaletteStyle}
+              hidden={!kidsModeReady || !kidsMode}
+              aria-hidden={!kidsModeReady || !kidsMode}
+            >
               <CartoonsCatalog view="kidsHome" kidsMode={kidsMode} isSaved={isCartoonSaved} onSave={toggleSaved} onShare={shareCartoon} onPrepareShare={prepareCartoonSharePoster} onHeroPaletteChange={reportKidsHeroPalette} />
             </div>
             <SiteFooter inApp />
