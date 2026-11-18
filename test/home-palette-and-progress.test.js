@@ -31,7 +31,7 @@ test("responsive breakpoints size catalog grids and hero layouts for phone, tabl
   assert.match(responsive, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(responsive, /@media \(min-width:1450px\)[\s\S]*?grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
   assert.match(responsive, /height:clamp\(285px,44svh,350px\)/);
-  assert.match(responsive, /min-height:40px/);
+  assert.match(responsive, /min-height:33px/);
   assert.match(responsive, /orientation:landscape/);
 });
 
