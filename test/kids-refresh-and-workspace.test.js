@@ -163,3 +163,11 @@ test("playback access updates use the non-deprecated post-update Mongoose option
   assert.equal((source.match(/returnDocument:\s*'after'/g) || []).length, 6);
   assert.doesNotMatch(source, /\bnew\s*:\s*true/);
 });
+
+
+test("Cartoon catalogue routes start their request without an artificial mount delay", async () => {
+  const source = await read("../app/components/cartoons-catalog.jsx");
+  assert.match(source, /void load\(\);\s*return \(\) => controller\.abort\(\);/);
+  assert.doesNotMatch(source, /setTimeout\(load, homeView \? 0 : 100\)/);
+});
+

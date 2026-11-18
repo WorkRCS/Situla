@@ -166,7 +166,7 @@ function CartoonShelf({ title, eyebrow, items, kind = "series", moreHref, varian
   );
 }
 
-function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
+function CartoonSpotlight({ items, index, onIndexChange, onPaletteChange, kidsMode = true }) {
   const current = items?.[index] || items?.[0] || null;
   if (!current) return null;
 
@@ -175,6 +175,7 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true }) {
       items={items}
       index={index}
       onIndexChange={onIndexChange}
+      onPaletteChange={onPaletteChange}
       getImage={(item) => {
         const image = item.backdropUrl || item.posterUrl;
         return image ? optimizeTmdbImageUrl(image, "w342") : "";
@@ -260,6 +261,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   const [loadMoreError, setLoadMoreError] = useState("");
   const [error, setError] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPaletteRgb, setHeroPaletteRgb] = useState("");
   const [homeFeedCount, setHomeFeedCount] = useState(5);
   const listingSentinelRef = useRef(null);
   const homeFeedSentinelRef = useRef(null);
@@ -317,11 +319,8 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
         if (!controller.signal.aborted) setLoading(false);
       }
     }
-    const timer = window.setTimeout(load, homeView ? 0 : 100);
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
+    void load();
+    return () => controller.abort();
   }, [homeView, endpoint, sort, selectedGenre, pageTitle]);
 
   useEffect(() => {
@@ -450,11 +449,16 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
   if (homeView) {
     const featured = cartoonHeroItems[heroIndex] || sortedHome?.featuredSeries || sortedHome?.featuredMovie;
     return (
-      <section className="pb-8 cartoons-home-catalog" aria-label="Cartoons catalog">
+      <section
+        className="pb-8 cartoons-home-catalog"
+        aria-label="Cartoons catalog"
+        style={{ "--home-hero-palette": heroPaletteRgb ? `rgba(${heroPaletteRgb}, .24)` : "rgba(232,182,91,.08)" }}
+      >
         <CartoonSpotlight
           items={cartoonHeroItems}
           index={heroIndex}
           onIndexChange={setHeroIndex}
+          onPaletteChange={setHeroPaletteRgb}
           kidsMode={kidsMode}
         />
         {cartoonFeedItems.length > 0 && (

@@ -4,22 +4,23 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Home and Kids keep artwork inside the hero instead of creating an oversized blurred page backdrop", async () => {
-  const [app, cartoons, css] = await Promise.all([
+test("Normal and Kids Home update a subtle page palette from the active centre poster", async () => {
+  const [app, cartoons, hero, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/cartoons-catalog.jsx"),
+    read("../app/components/three-card-hero.jsx"),
     read("../app/globals.css")
   ]);
 
-  assert.match(app, /className="home-mode-panel"/);
-  assert.match(app, /className="kids-mode-panel"/);
-  assert.match(app, /className="hero-card home-hero-card"/);
-  assert.match(cartoons, /className="pb-8 cartoons-home-catalog"/);
-  assert.match(cartoons, /<CartoonSpotlight/);
-  assert.doesNotMatch(app, /heroPalettes|home-hero-palette-surface|kids-hero-palette-surface|home-hero-atmosphere/);
-  assert.doesNotMatch(app, /onPaletteChange=\{reportNormalHeroPalette\}|onHeroPaletteChange/);
-  assert.doesNotMatch(cartoons, /home-hero-atmosphere|onPaletteChange|onHeroPaletteChange/);
-  assert.doesNotMatch(css, /home-hero-atmosphere|home-hero-palette-surface|kids-hero-palette-surface/);
+  assert.match(hero, /extractPosterDominantRgb\(event\.currentTarget\)/);
+  assert.match(hero, /onPaletteChange\?\.\(dominantRgb\)/);
+  assert.match(hero, /onPaletteChange\?\.\(null\)/);
+  assert.match(app, /onPaletteChange=\{setHeroPaletteRgb\}/);
+  assert.match(app, /--home-hero-palette/);
+  assert.match(cartoons, /onPaletteChange=\{setHeroPaletteRgb\}/);
+  assert.match(cartoons, /--home-hero-palette/);
+  assert.match(css, /\.home-mode-panel::before,[\s\S]*?\.cartoons-home-catalog::before/);
+  assert.match(css, /radial-gradient\(ellipse 92% 360px at 50% 0,var\(--home-hero-palette/);
 });
 
 test("responsive breakpoints size catalog grids and hero layouts for phone, tablet and desktop", async () => {
@@ -29,7 +30,7 @@ test("responsive breakpoints size catalog grids and hero layouts for phone, tabl
   assert.match(responsive, /@media \(min-width:600px\) and \(max-width:767px\)[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(responsive, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
   assert.match(responsive, /@media \(min-width:1450px\)[\s\S]*?grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
-  assert.match(responsive, /height:clamp\(300px,48svh,420px\)/);
+  assert.match(responsive, /height:clamp\(285px,44svh,350px\)/);
   assert.match(responsive, /min-height:40px/);
   assert.match(responsive, /orientation:landscape/);
 });
@@ -77,5 +78,31 @@ test("Hero carousel keeps the active middle card larger than its side previews",
   assert.match(css, /\.home-hero-deck-slide\.is-adjacent\s*\{[\s\S]*?transform:scale\(\.84\)/);
   assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.home-hero-deck-slide\.is-adjacent[^}]*transform:scale\(\.88\)/);
   assert.match(css, /transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease/);
+});
+
+
+
+test("Hero fits the viewport, keeps side previews softly blurred and contains mobile copy", async () => {
+  const css = await read("../app/globals.css");
+  const hero = css.slice(css.indexOf("/* Three-card Home spotlight:"));
+
+  assert.match(hero, /height:clamp\(300px,min\(34vw,44svh\),430px\)/);
+  assert.match(hero, /height:clamp\(290px,min\(38vw,46svh\),390px\)/);
+  assert.match(hero, /filter:blur\(\.7px\)/);
+  assert.match(hero, /height:clamp\(285px,44svh,350px\)/);
+  assert.match(hero, /height:100%; min-height:0; overflow:hidden/);
+  assert.match(hero, /font-size:clamp\(19px,5vw,27px\)/);
+  assert.match(hero, /min-height:33px/);
+});
+
+test("Full-site glass styling remains dark and limits backdrop blur to compact chrome", async () => {
+  const css = await read("../app/globals.css");
+  const glass = css.slice(css.indexOf("/* Shared dark-glass tokens for responsive Situla surfaces."));
+
+  assert.match(glass, /--situla-glass-surface:rgba\(15,18,27,\.76\)/);
+  assert.match(glass, /--situla-glass-border:rgba\(220,229,245,\.13\)/);
+  assert.match(glass, /backdrop-filter:blur\(7px\) saturate\(122%\)/);
+  assert.match(glass, /prefers-reduced-transparency:reduce/);
+  assert.doesNotMatch(glass, /\.movie-card[^}]*backdrop-filter/);
 });
 

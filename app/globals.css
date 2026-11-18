@@ -6666,7 +6666,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 /* Use the original editorial hero content scale while retaining the newer right-side recommendations. */
 @media (min-width:1101px) {
   .home-page-layout .home-hero-card {
-    min-height:clamp(500px,62vh,660px);
+    min-height:0;
     aspect-ratio:auto;
   }
   .home-page-layout .home-hero-card .hero-content {
@@ -6676,7 +6676,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 @media (min-width:768px) and (max-width:1100px) {
   .home-page-layout .home-hero-card {
-    min-height:clamp(460px,60vh,600px);
+    min-height:0;
   }
   .home-page-layout .home-hero-card .hero-content {
     width:min(720px,76%);
@@ -6685,7 +6685,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 }
 @media (max-width:767px) {
   .home-page-layout .home-hero-card {
-    min-height:clamp(460px,68svh,610px);
+    min-height:0;
     aspect-ratio:auto;
     border-radius:18px;
   }
@@ -6695,7 +6695,7 @@ body:has(.login-page) .site-footer { display:none !important; }
   }
 }
 @media (max-width:390px) {
-  .home-page-layout .home-hero-card { min-height:460px; }
+  .home-page-layout .home-hero-card { min-height:0; }
   .home-page-layout .home-hero-card .hero-content { padding:24px 17px 21px; }
 }
 
@@ -8862,7 +8862,7 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   position:relative;
   isolation:isolate;
   width:100%;
-  height:clamp(330px,42vw,540px);
+  height:clamp(300px,min(34vw,44svh),430px);
   overflow:hidden;
   border-radius:clamp(16px,2vw,24px);
   contain:layout paint;
@@ -8904,7 +8904,7 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 .home-hero-deck-slide.is-adjacent {
   z-index:1;
   opacity:.86;
-  filter:none;
+  filter:blur(.7px);
   transform:scale(.84);
   transform-origin:center;
   transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease;
@@ -9031,14 +9031,14 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 .home-hero-deck-arrow:focus-visible { outline:2px solid #f1c978; outline-offset:3px; }
 .home-hero-deck .hero-route-loading { z-index:5; }
 @media (max-width:1100px) {
-  .home-hero-deck { height:clamp(350px,48vw,510px); }
+  .home-hero-deck { height:clamp(290px,min(38vw,46svh),390px); }
   .home-hero-deck-slide .hero-title { font-size:clamp(23px,3.6vw,38px); }
   .home-hero-deck-slide .hero-description { -webkit-line-clamp:2; }
   .home-hero-deck-arrow { width:46px; height:46px; }
 }
 @media (max-width:760px) {
   .home-hero-deck {
-    height:clamp(330px,58svh,455px);
+    height:clamp(285px,48svh,360px);
     border-radius:15px;
   }
   .home-hero-deck-track {
@@ -9050,13 +9050,14 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .home-hero-deck-slide > .hero-card,
   .home-hero-deck-side { border-radius:14px; }
   .home-hero-deck-slide { padding-inline:3px; }
-  .home-hero-deck-slide.is-adjacent { filter:none; opacity:.84; transform:scale(.88); }
+  .home-hero-deck-slide.is-adjacent { filter:blur(.35px); opacity:.88; transform:scale(.88); }
   .home-hero-deck-slide.is-outer { filter:none; opacity:.18; transform:scale(.78); }
-  .home-hero-deck-slide .hero-content { padding:18px 15px; }
-  .home-hero-deck-slide .hero-title { font-size:clamp(23px,6vw,34px); }
-  .home-hero-deck-slide .hero-eyebrow { font-size:7px; letter-spacing:.1em; }
-  .home-hero-deck-slide .hero-meta { gap:5px 8px; font-size:9px; }
-  .home-hero-deck-slide .hero-description { font-size:9px; line-height:1.4; }
+  .home-hero-deck-slide .hero-content { height:100%; min-height:0; overflow:hidden; padding:12px 10px; }
+  .home-hero-deck-slide .hero-title { font-size:clamp(19px,5vw,27px); line-height:1.06; -webkit-line-clamp:2; }
+  .home-hero-deck-slide .hero-eyebrow { margin-bottom:5px; font-size:6.5px; letter-spacing:.08em; }
+  .home-hero-deck-slide .hero-kicker { margin-bottom:3px; font-size:7px; }
+  .home-hero-deck-slide .hero-meta { gap:4px 6px; margin-top:7px; font-size:8px; }
+  .home-hero-deck-slide .hero-description { margin-top:6px; font-size:8px; line-height:1.35; -webkit-line-clamp:2; }
   .home-hero-deck-side-copy { right:5px; bottom:12px; left:7px; }
   .home-hero-deck-side-copy small { font-size:6px; letter-spacing:.08em; }
   .home-hero-deck-side-copy strong { font-size:9px; }
@@ -9114,20 +9115,21 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
     padding-inline:0 !important;
   }
   .home-hero-deck {
-    height:clamp(300px,48svh,420px);
+    height:clamp(285px,44svh,350px);
     border-radius:15px;
   }
   .home-hero-deck-slide .hero-content {
     padding:clamp(13px,4vw,19px) clamp(12px,3.8vw,18px);
   }
   .home-hero-deck-slide .hero-title {
-    font-size:clamp(22px,7vw,34px);
+    font-size:clamp(19px,5vw,27px);
     line-height:1.08;
   }
   .home-hero-deck-slide .hero-description {
-    max-width:42ch;
-    font-size:clamp(10px,2.9vw,12px);
-    line-height:1.45;
+    max-width:34ch;
+    font-size:clamp(8px,2.3vw,9px);
+    line-height:1.35;
+    -webkit-line-clamp:2;
   }
   .home-hero-deck-slide .hero-actions {
     flex-wrap:wrap;
@@ -9136,9 +9138,9 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   }
   .home-hero-deck-slide .hero-actions .gold-button,
   .home-hero-deck-slide .hero-actions .ghost-button {
-    min-height:40px;
-    padding-inline:clamp(9px,3vw,14px);
-    font-size:clamp(10px,2.7vw,12px);
+    min-height:33px;
+    padding-inline:clamp(7px,2vw,10px);
+    font-size:clamp(8px,2.2vw,9px);
   }
   .home-hero-deck-slide.is-adjacent {
     filter:none;
@@ -9268,3 +9270,77 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
     padding:22px 0 calc(18px + env(safe-area-inset-bottom));
   }
 }
+
+
+/* Poster-led Home atmosphere: only the active centre image supplies this tint. */
+.home-mode-panel,
+.cartoons-home-catalog {
+  position:relative;
+  isolation:isolate;
+}
+.home-mode-panel::before,
+.cartoons-home-catalog::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0 0 auto;
+  height:min(760px,78%);
+  pointer-events:none;
+  background:radial-gradient(ellipse 92% 360px at 50% 0,var(--home-hero-palette,rgba(232,182,91,.08)),transparent 78%);
+  transition:background .42s ease;
+}
+
+/* Shared dark-glass tokens for responsive Situla surfaces. */
+:root {
+  --situla-glass-surface:rgba(15,18,27,.76);
+  --situla-glass-surface-strong:rgba(12,15,23,.9);
+  --situla-glass-border:rgba(220,229,245,.13);
+  --situla-glass-highlight:rgba(255,255,255,.065);
+  --situla-glass-shadow:0 16px 38px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.055);
+}
+:where(
+  .site-app-header,.site-sidebar,.bottom-nav,.site-workspace-mobile-nav,
+  .header-account-popover,.header-notification-popover,.search-dialog,
+  .profile-upgrade-dialog,.plans-card,.plans-access-notes > div,
+  .history-card,.about-situla-card,.series-detail-hero,.series-detail-panel,
+  .plans-table-wrap,.admin-record-card,.announcement-admin-card,
+  .premium-coming-soon,.copyright-policy-card,.watch-topbar,.series-watch-topbar,
+  .hero-card,.movie-card .movie-poster,.home-hero-deck-side,.home-hero-deck-arrow,
+  .catalog-page-state,.catalog-empty-state
+) {
+  border-color:var(--situla-glass-border);
+  box-shadow:var(--situla-glass-shadow);
+}
+:where(
+  .header-search-trigger,.header-avatar-trigger,.header-notification-trigger,
+  .home-side-link,.bottom-nav .nav-button,.site-workspace-mobile-link,
+  .gold-button,.ghost-button,.plans-card-action,.catalog-sort select,
+  .home-genre-row .genre-chip,.search-type-button,.search-year-filter select,
+  .profile-upgrade-trigger,.profile-upgrade-close,.home-hero-deck-arrow
+) {
+  box-shadow:inset 0 1px 0 var(--situla-glass-highlight),0 5px 16px rgba(0,0,0,.16);
+}
+@supports (backdrop-filter:blur(6px)) {
+  .site-app-header,.site-sidebar,.bottom-nav,.site-workspace-mobile-nav,
+  .header-account-popover,.header-notification-popover,.search-dialog,
+  .profile-upgrade-dialog {
+    -webkit-backdrop-filter:blur(7px) saturate(122%);
+    backdrop-filter:blur(7px) saturate(122%);
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .site-app-header,.site-sidebar,.bottom-nav,.site-workspace-mobile-nav,
+  .header-account-popover,.header-notification-popover,.search-dialog,
+  .profile-upgrade-dialog {
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+@media (max-width:760px) {
+  .home-hero-deck-slide.is-adjacent { filter:blur(.35px); }
+  .home-hero-deck-slide.is-outer { filter:blur(.55px); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .home-mode-panel::before,.cartoons-home-catalog::before { transition:none !important; }
+}
+

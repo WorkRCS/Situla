@@ -915,6 +915,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [homeSeriesReady, setHomeSeriesReady] = useState(false);
   const [pendingHomeNavigation, setPendingHomeNavigation] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPaletteRgb, setHeroPaletteRgb] = useState("");
   const [categoryShelves, setCategoryShelves] = useState([]);
   const [tvShows, setTvShows] = useState([]);
   const [animeShows, setAnimeShows] = useState([]);
@@ -2122,12 +2123,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <SkeletonShelf title="Preparing your feed" />
               </section>
             )}
-            <div className="home-mode-panel" hidden={!kidsModeReady || kidsMode} aria-hidden={!kidsModeReady || kidsMode}>
+            <div
+              className="home-mode-panel"
+              hidden={!kidsModeReady || kidsMode}
+              aria-hidden={!kidsModeReady || kidsMode}
+              style={{ "--home-hero-palette": heroPaletteRgb ? `rgba(${heroPaletteRgb}, .24)` : "rgba(232,182,91,.08)" }}
+            >
             {featured ? (
               <ThreeCardHero
                 items={homeHeroItems}
                 index={heroIndex}
                 onIndexChange={setHeroIndex}
+                onPaletteChange={setHeroPaletteRgb}
                 getImage={(item) => {
                   const image = item.heroImage || item.backdropUrl || item.bannerUrl || item.posterUrl || item.heroPoster;
                   return image ? optimizeTmdbImageUrl(image, "w342") : "";

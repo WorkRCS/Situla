@@ -100,6 +100,10 @@ export default function ThreeCardHero({
   activeIdentityRef.current = activeIdentity;
   const canNavigate = hasItems && items.length > 1 && direction === 0;
 
+  useEffect(() => {
+    onPaletteChange?.(null);
+  }, [activeIdentity, onPaletteChange]);
+
   const onCenterImageLoad = useCallback((event) => {
     if (activeIdentityRef.current !== activeIdentity) return;
     const dominantRgb = extractPosterDominantRgb(event.currentTarget);
