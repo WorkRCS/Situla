@@ -8174,7 +8174,7 @@ body:has(.login-page) .site-footer { display:none !important; }
 /* Keep the left brand strip and the right application header on one shared vertical grid. */
 @media (min-width:1101px) {
   :root {
-    --site-desktop-header-height:76px;
+    --site-desktop-header-height:38px;
   }
 
   .site-app-header .header-inner {
@@ -9288,5 +9288,27 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .home-mode-panel .home-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img,
   .kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette .home-hero-atmosphere img {
     filter:none;
+  }
+}
+
+
+/* Desktop header controls fit the slimmer 38px header without shrinking icon glyphs. */
+@media (min-width:1101px) {
+  .site-app-header .header-actions .header-search-trigger {
+    height:38px !important;
+    min-height:38px !important;
+  }
+  .site-app-header .header-avatar-trigger,
+  .site-app-header .header-notification-trigger {
+    width:38px;
+    height:38px;
+  }
+  .site-sidebar .site-sidebar-heading .site-sidebar-brand img {
+    width:34px;
+    height:34px;
+  }
+  .site-sidebar .site-sidebar-heading .site-sidebar-toggle {
+    width:34px;
+    height:34px;
   }
 }

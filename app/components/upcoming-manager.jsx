@@ -5,6 +5,7 @@ import {
   Bell, CalendarClock, Check, Clock3, Crown, Edit3, ExternalLink, Flame, ImagePlus,
   LoaderCircle, Plus, RefreshCw, Save, Sparkles, Star, Trash2, X
 } from "lucide-react";
+import IframeConnectionHints from "./iframe-connection-hints.jsx";
 
 const TYPES = [
   { id: "movie", label: "Movies" },
@@ -286,7 +287,10 @@ export default function UpcomingManager() {
             <article className="upcoming-admin-item" key={item.id}>
               <div className="upcoming-admin-thumb">
                 {item.posterMode === "embed" && item.posterUrl
-                  ? <iframe src={item.posterUrl} title={item.title + " preview"} loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation" />
+                  ? <>
+                    <IframeConnectionHints src={item.posterUrl} />
+                    <iframe src={item.posterUrl} title={item.title + " preview"} loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation" />
+                  </>
                   : item.posterImageUrl || item.posterUrl
                     ? <img src={item.posterImageUrl || item.posterUrl} alt="" loading="lazy" />
                     : <CalendarClock size={24} />}

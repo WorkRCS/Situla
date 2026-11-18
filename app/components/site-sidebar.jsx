@@ -87,12 +87,17 @@ export function SiteSidebar({
 }) {
   const pathname = usePathname() || "/";
   const [statusUnread, setStatusUnread] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     try {
-      setCollapsed(window.localStorage.getItem("situla:sidebar-collapsed:v1") === "1");
-    } catch {}
+      const savedPreference = window.localStorage.getItem("situla:sidebar-collapsed:v1");
+      if (savedPreference === "1") setCollapsed(true);
+      else if (savedPreference === "0") setCollapsed(false);
+      else setCollapsed(window.matchMedia("(min-width: 1101px)").matches);
+    } catch {
+      setCollapsed(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -209,7 +214,7 @@ export function SiteSidebar({
 
 export function SiteWorkspace({ children, kidsMode }) {
   const pathname = usePathname() || "/";
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [serverKidsMode, setServerKidsMode] = useState(false);
 
   useEffect(() => {

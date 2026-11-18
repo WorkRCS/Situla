@@ -812,7 +812,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [kidsModeError, setKidsModeError] = useState("");
   const kidsModeRequestId = useRef(0);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [homeFeedCount, setHomeFeedCount] = useState(5);
   const homeFeedSentinelRef = useRef(null);
   const catalogLoadSentinelRef = useRef(null);
@@ -2169,17 +2169,30 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     <section className="hero-card home-hero-card" aria-label={heroItem.heroMediaLabel + " spotlight"}>
                       {(heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl) && (
                         <img
+                          key={String(heroItem.heroId || heroItem.imdbId || heroItem.tmdbId || heroItem.malId)}
                           className="hero-image"
                           crossOrigin="anonymous"
-                          src={heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl}
+                          src={optimizeTmdbImageUrl(heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl, "w342")}
                           alt=""
                           fetchPriority="high"
                           decoding="async"
                           onLoad={onCenterImageLoad}
                           onError={(event) => {
+                            const imageElement = event.currentTarget;
+                            if (!imageElement.dataset.corsRetry) {
+                              imageElement.dataset.corsRetry = "true";
+                              const failedUrl = imageElement.currentSrc || imageElement.src;
+                              imageElement.removeAttribute("crossorigin");
+                              imageElement.src = failedUrl;
+                              return;
+                            }
                             const fallback = heroItem.heroPoster || heroItem.posterUrl || heroItem.posterFallbackUrl;
-                            if (fallback && event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
-                            else event.currentTarget.style.display = "none";
+                            if (fallback && !imageElement.dataset.posterFallback) {
+                              imageElement.dataset.posterFallback = "true";
+                              imageElement.src = optimizeTmdbImageUrl(fallback, "w342");
+                            } else {
+                              imageElement.style.display = "none";
+                            }
                           }}
                         />
                       )}

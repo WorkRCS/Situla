@@ -193,7 +193,37 @@ function CartoonSpotlight({ items, index, onIndexChange, kidsMode = true, onPale
 
         return (
           <section className="hero-card home-hero-card cartoons-home-hero" aria-label="Cartoon spotlight">
-            {imageUrl && <img className="hero-image" crossOrigin="anonymous" src={imageUrl} alt="" fetchPriority="high" decoding="async" onLoad={onCenterImageLoad} />}
+            {imageUrl && (
+              <img
+                key={item.mediaType + ":" + item.tmdbId}
+                className="hero-image"
+                crossOrigin="anonymous"
+                src={imageUrl}
+                alt=""
+                fetchPriority="high"
+                decoding="async"
+                onLoad={onCenterImageLoad}
+                onError={(event) => {
+                  const imageElement = event.currentTarget;
+                  if (!imageElement.dataset.corsRetry) {
+                    imageElement.dataset.corsRetry = "true";
+                    const failedUrl = imageElement.currentSrc || imageElement.src;
+                    imageElement.removeAttribute("crossorigin");
+                    imageElement.src = failedUrl;
+                    return;
+                  }
+                  const fallback = item.backdropUrl && item.posterUrl
+                    ? optimizeTmdbImageUrl(item.posterUrl, "w342")
+                    : "";
+                  if (fallback && !imageElement.dataset.posterFallback) {
+                    imageElement.dataset.posterFallback = "true";
+                    imageElement.src = fallback;
+                  } else {
+                    imageElement.style.display = "none";
+                  }
+                }}
+              />
+            )}
             <div className="hero-content">
               <div className="hero-eyebrow"><span className="hero-live-dot" /> {kidsMode ? "SITULA KIDS · FAMILY CATALOGUE" : "SITULA · CARTOON CATALOGUE"}</div>
               <p className="hero-kicker">{item.featured ? "FEATURED CARTOON" : item.hot ? "HOT CARTOON" : "POPULAR CARTOON"}</p>

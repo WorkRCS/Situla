@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { hindiMoviePlaybackUrl, moviePlaybackUrl, MOVIE_PLAYBACK_ORIGIN, HINDI_PLAYBACK_ORIGIN } from "../../../src/player-urls.js";
 import { attachFullscreenLandscapeLock } from "../../../src/player-fullscreen.js";
+import IframeConnectionHints from "../../components/iframe-connection-hints.jsx";
 
 
 export default function PlayerExperience({ imdbId }) {
@@ -249,6 +250,7 @@ export default function PlayerExperience({ imdbId }) {
   return (
     <main className="watch-screen">
       {playerUrl ? (
+        <IframeConnectionHints src={playerUrl} />
         <iframe
           ref={iframeRef}
           key={playerLanguage + ":" + playerUrl}

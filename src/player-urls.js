@@ -7,6 +7,11 @@ const SERIES_THEME_COLOR = "e8b65b";
 const IMDB_TITLE_ID = /^tt\d{5,12}$/i;
 const TMDB_TV_ID = /^[0-9]{1,12}$/;
 export const HINDI_PLAYBACK_ORIGIN = "https://slast430did.com";
+export const IFRAME_PLAYER_ORIGINS = Object.freeze([
+  MOVIE_PLAYBACK_ORIGIN,
+  SERIES_PLAYBACK_ORIGIN,
+  HINDI_PLAYBACK_ORIGIN
+]);
 const HINDI_PLAYBACK_BASE_URL = HINDI_PLAYBACK_ORIGIN + "/play/";
 
 // Normalize route params before they are used by Server or Client Components.

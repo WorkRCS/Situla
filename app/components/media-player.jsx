@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { normalizeAnimePlayerRoute } from "../../src/anime-player-route.js";
 import { normalizeTvPlayerRoute, tvSeriesPlaybackUrl, animeSeriesPlaybackUrl, normalizeSeriesPlaybackEvent, SERIES_PLAYBACK_ORIGIN } from "../../src/player-urls.js";
 import { attachFullscreenLandscapeLock } from "../../src/player-fullscreen.js";
+import IframeConnectionHints from "./iframe-connection-hints.jsx";
 
 export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode, audio }) {
   const router = useRouter();
@@ -328,6 +329,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   return (
     <main className="watch-screen series-watch-screen">
       {playerUrl ? (
+        <IframeConnectionHints src={playerUrl} />
         <iframe
           id="situla-series-player"
           ref={iframeRef}

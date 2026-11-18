@@ -8,6 +8,7 @@ import {
   normalizeSeriesPlaybackEvent,
   SERIES_PLAYBACK_ORIGIN
 } from "../../src/player-urls.js";
+import IframeConnectionHints from "./iframe-connection-hints.jsx";
 
 function readResume(key) {
   try {
@@ -256,6 +257,7 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
   return (
     <main className={"watch-screen" + (isMovie ? "" : " series-watch-screen")}>
       {playerUrl ? (
+        <IframeConnectionHints src={playerUrl} />
         <iframe
           ref={iframeRef}
           key={playerUrl}

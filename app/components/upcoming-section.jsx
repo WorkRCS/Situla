@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, CalendarClock, Crown, Flame, ListChecks, LoaderCircle, Share2, Sparkles, Star } from "lucide-react";
+import IframeConnectionHints from "./iframe-connection-hints.jsx";
 
 const UPCOMING_TABS = [
   { id: "movie", label: "Movies", subtitle: "Upcoming Movies" },
@@ -266,6 +267,7 @@ export default function UpcomingSection() {
             <article className="upcoming-card" id={"upcoming-" + item.id} key={item.id}>
               <div className="upcoming-poster">
                 {item.posterMode === "embed" && item.posterUrl ? (
+                  <IframeConnectionHints src={item.posterUrl} />
                   <iframe
                     src={item.posterUrl}
                     title={item.title + " poster preview"}

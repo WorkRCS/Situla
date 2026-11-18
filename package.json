@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.0.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
@@ -47,5 +47,8 @@
     "@tailwindcss/postcss": "4.3.5",
     "postcss": "^8.5.6",
     "tailwindcss": "4.3.5"
+  },
+  "overrides": {
+    "node-domexception": "file:./vendor/native-domexception"
   }
 }

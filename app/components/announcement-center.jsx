@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, ExternalLink, Megaphone, X } from "lucide-react";
 import { formatAnnouncementDateTime, resolveAnnouncementMedia } from "../../src/announcement-utils.js";
+import IframeConnectionHints from "./iframe-connection-hints.jsx";
 
 function readLocalIds(storageKey) {
   try {
@@ -188,6 +189,7 @@ export default function AnnouncementCenter({ onOpen }) {
                   )}
                   {media?.type === "iframe" && (
                     <div className="header-announcement-embed">
+                      <IframeConnectionHints src={media.src} />
                       <iframe
                         src={media.src}
                         title={item.title + " media"}
