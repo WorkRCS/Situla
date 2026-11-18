@@ -275,11 +275,11 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
-test("mobile/tablet navigation reuses the original full-width seven-item bar", async () => {
+test("mobile/tablet navigation keeps a full-width seven-item default dock and five-item Kids dock", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
-  const bottomNav = app.slice(app.indexOf('<nav className="bottom-nav"'));
+  const bottomNav = app.slice(app.indexOf('<nav className={"bottom-nav"'));
   const workspaceNav = sidebar.slice(sidebar.indexOf('<nav className="bottom-nav site-workspace-mobile-nav"'));
 
   assert.ok(app.includes("SITE_KIDS_MOBILE_NAV_ITEMS, SITE_MOBILE_NAV_ITEMS, SiteSidebar"));
@@ -291,6 +291,7 @@ test("mobile/tablet navigation reuses the original full-width seven-item bar", a
   assert.ok(css.includes("bottom:0 !important"));
   assert.ok(css.includes("width:100% !important"));
   assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
+  assert.ok(css.includes(".bottom-nav.is-kids-nav { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }"));
   assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
   assert.ok(css.includes("backdrop-filter:blur(26px) saturate(180%) !important"));
   assert.ok(css.includes("backdrop-filter:none !important"));
