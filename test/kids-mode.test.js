@@ -113,7 +113,7 @@ test("Kids Home keeps its hero and only one vertical mixed Discover More feed", 
   assert.ok(cartoons.includes('className="rating-pill"'));
   assert.ok(cartoons.includes('className="series-card-meta"'));
   assert.ok(kidsHome.includes("<CartoonSpotlight"));
-  assert.ok(kidsHome.includes('className="home-hero-atmosphere"'));
+  assert.equal(kidsHome.includes('className="home-hero-atmosphere"'), false);
   assert.ok(kidsHome.includes('className="home-scroll-feed cartoons-home-feed"'));
   assert.ok(kidsHome.includes("<h2>Discover More</h2>"));
   assert.ok(kidsHome.includes("cartoonFeedItems.slice(0, homeFeedCount)"));

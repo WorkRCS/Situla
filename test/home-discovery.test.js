@@ -152,7 +152,7 @@ test("landing cards explicitly navigate and use live database catalogue ordering
   assert.ok(normalHome.includes("<h2>Discover More</h2>"));
   assert.ok(normalHome.includes("homeFeedSentinelRef"));
   assert.ok(normalHome.includes("homeBrowseItems.slice(0, homeFeedCount)"));
-  assert.ok(normalHome.includes('className="home-hero-atmosphere"'));
+  assert.equal(normalHome.includes('className="home-hero-atmosphere"'), false);
   assert.equal(normalHome.includes("HomeMixedShelf"), false);
   assert.equal(normalHome.includes("MixedSeriesShelf"), false);
   assert.equal(normalHome.includes("<SeriesShelf"), false);

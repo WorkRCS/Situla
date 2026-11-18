@@ -75,7 +75,7 @@ test("Vercel build pins Node 22 and clears only injected cache-dir environment c
     assert.match(command, /unset npm_config_cache_dir pnpm_config_cache_dir/);
     assert.match(command, /NPM_CONFIG_CACHE_DIR PNPM_CONFIG_CACHE_DIR/);
   }
-  assert.match(vercel.installCommand, /npm install$/);
+  assert.match(vercel.installCommand, /npm install --include=dev$/);
   assert.match(vercel.buildCommand, /npm run build$/);
 });
 
