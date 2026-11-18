@@ -4,23 +4,28 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("Normal and Kids Home update a subtle page palette from the active centre poster", async () => {
-  const [app, cartoons, hero, css] = await Promise.all([
+test("Normal and Kids Home apply the active poster's exact dominant colour to the page surface", async () => {
+  const [app, cartoons, hero, api, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/cartoons-catalog.jsx"),
     read("../app/components/three-card-hero.jsx"),
+    read("../src/app.js"),
     read("../app/globals.css")
   ]);
 
-  assert.match(hero, /extractPosterDominantRgb\(event\.currentTarget\)/);
+  assert.match(hero, /fetch\(endpoint,\s*\{/);
+  assert.match(hero, /\/api\/share-poster\?url=/);
+  assert.match(hero, /createImageBitmap\(blob\)/);
   assert.match(hero, /onPaletteChange\?\.\(dominantRgb\)/);
   assert.match(hero, /onPaletteChange\?\.\(null\)/);
+  assert.match(api, /app\.get\('\/api\/share-poster'/);
   assert.match(app, /onPaletteChange=\{setHeroPaletteRgb\}/);
-  assert.match(app, /--home-hero-palette/);
+  assert.match(app, /heroPaletteRgb \? `rgb\(\$\{heroPaletteRgb\}\)`/);
   assert.match(cartoons, /onPaletteChange=\{setHeroPaletteRgb\}/);
-  assert.match(cartoons, /--home-hero-palette/);
-  assert.match(css, /\.home-mode-panel::before,[\s\S]*?\.cartoons-home-catalog::before/);
-  assert.match(css, /radial-gradient\(ellipse 92% 360px at 50% 0,var\(--home-hero-palette/);
+  assert.match(cartoons, /heroPaletteRgb \? `rgb\(\$\{heroPaletteRgb\}\)`/);
+  assert.match(css, /\.home-mode-panel \{[\s\S]*?display:block;[\s\S]*?background-color:var\(--home-hero-palette/);
+  assert.match(css, /\.cartoons-home-catalog \{[\s\S]*?background-color:var\(--home-hero-palette/);
+  assert.doesNotMatch(app + cartoons, /rgba\(\$\{heroPaletteRgb\}, \.24\)/);
 });
 
 test("responsive breakpoints size catalog grids and hero layouts for phone, tablet and desktop", async () => {
@@ -103,6 +108,9 @@ test("Full-site glass styling remains dark and limits backdrop blur to compact c
   assert.match(glass, /--situla-glass-border:rgba\(220,229,245,\.13\)/);
   assert.match(glass, /backdrop-filter:blur\(7px\) saturate\(122%\)/);
   assert.match(glass, /prefers-reduced-transparency:reduce/);
+  assert.match(glass, /--situla-glass-shadow:inset 0 1px 0/);
+  assert.doesNotMatch(glass, /\.gold-button|\.ghost-button|\.plans-card-action|\.nav-button/);
+  assert.doesNotMatch(glass, /0 5px 16px/);
   assert.doesNotMatch(glass, /\.movie-card[^}]*backdrop-filter/);
 });
 

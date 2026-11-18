@@ -9,7 +9,9 @@ function wrapIndex(index, length) {
 
 function extractPosterDominantRgb(image) {
   try {
-    if (!image || !image.naturalWidth || !image.naturalHeight) return null;
+    const width = image?.naturalWidth || image?.width || 0;
+    const height = image?.naturalHeight || image?.height || 0;
+    if (!image || !width || !height) return null;
     const canvas = document.createElement("canvas");
     canvas.width = 20;
     canvas.height = 20;
@@ -73,6 +75,41 @@ function extractPosterDominantRgb(image) {
   }
 }
 
+async function samplePosterPalette(imageUrl, signal) {
+  const endpoint = "/api/share-poster?url=" + encodeURIComponent(imageUrl);
+  const response = await fetch(endpoint, {
+    credentials: "same-origin",
+    cache: "force-cache",
+    signal
+  });
+  if (!response.ok) throw new Error("Poster palette source is unavailable.");
+
+  const blob = await response.blob();
+  if (!blob.size) throw new Error("Poster palette source is empty.");
+
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return extractPosterDominantRgb(bitmap);
+    } finally {
+      bitmap.close?.();
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Poster palette image could not be decoded."));
+      element.src = objectUrl;
+    });
+    return extractPosterDominantRgb(image);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export default function ThreeCardHero({
   items = [],
   index = 0,
@@ -97,17 +134,39 @@ export default function ThreeCardHero({
   const activeItem = hasItems ? items[safeIndex] : null;
   const activeIdentity = String(activeItem?.heroId || activeItem?.tmdbId || activeItem?.imdbId || activeItem?.malId || (activeItem ? getTitle?.(activeItem) : "") || "");
   const activeIdentityRef = useRef(activeIdentity);
+  const paletteRequestRef = useRef(null);
   activeIdentityRef.current = activeIdentity;
   const canNavigate = hasItems && items.length > 1 && direction === 0;
 
   useEffect(() => {
+    paletteRequestRef.current?.abort();
+    paletteRequestRef.current = null;
     onPaletteChange?.(null);
+    return () => {
+      paletteRequestRef.current?.abort();
+      paletteRequestRef.current = null;
+    };
   }, [activeIdentity, onPaletteChange]);
 
   const onCenterImageLoad = useCallback((event) => {
     if (activeIdentityRef.current !== activeIdentity) return;
-    const dominantRgb = extractPosterDominantRgb(event.currentTarget);
-    onPaletteChange?.(dominantRgb);
+    const imageUrl = event.currentTarget.currentSrc || event.currentTarget.src;
+    if (!imageUrl) return;
+
+    paletteRequestRef.current?.abort();
+    const controller = new AbortController();
+    paletteRequestRef.current = controller;
+    void samplePosterPalette(imageUrl, controller.signal)
+      .then((dominantRgb) => {
+        if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
+          onPaletteChange?.(dominantRgb);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
+          onPaletteChange?.(null);
+        }
+      });
   }, [activeIdentity, onPaletteChange]);
 
   if (!hasItems) return null;

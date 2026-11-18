@@ -2127,7 +2127,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               className="home-mode-panel"
               hidden={!kidsModeReady || kidsMode}
               aria-hidden={!kidsModeReady || kidsMode}
-              style={{ "--home-hero-palette": heroPaletteRgb ? `rgba(${heroPaletteRgb}, .24)` : "rgba(232,182,91,.08)" }}
+              style={{ "--home-hero-palette": heroPaletteRgb ? `rgb(${heroPaletteRgb})` : "#08090e" }}
             >
             {featured ? (
               <ThreeCardHero
@@ -2151,7 +2151,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         <img
                           key={String(heroItem.heroId || heroItem.imdbId || heroItem.tmdbId || heroItem.malId)}
                           className="hero-image"
-                          crossOrigin="anonymous"
                           src={optimizeTmdbImageUrl(heroItem.heroImage || heroItem.backdropUrl || heroItem.bannerUrl || heroItem.posterUrl, "w342")}
                           alt=""
                           fetchPriority="high"
@@ -2159,13 +2158,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                           onLoad={onCenterImageLoad}
                           onError={(event) => {
                             const imageElement = event.currentTarget;
-                            if (!imageElement.dataset.corsRetry) {
-                              imageElement.dataset.corsRetry = "true";
-                              const failedUrl = imageElement.currentSrc || imageElement.src;
-                              imageElement.removeAttribute("crossorigin");
-                              imageElement.src = failedUrl;
-                              return;
-                            }
                             const fallback = heroItem.heroPoster || heroItem.posterUrl || heroItem.posterFallbackUrl;
                             if (fallback && !imageElement.dataset.posterFallback) {
                               imageElement.dataset.posterFallback = "true";

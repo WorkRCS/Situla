@@ -197,7 +197,6 @@ function CartoonSpotlight({ items, index, onIndexChange, onPaletteChange, kidsMo
               <img
                 key={item.mediaType + ":" + item.tmdbId}
                 className="hero-image"
-                crossOrigin="anonymous"
                 src={imageUrl}
                 alt=""
                 fetchPriority="high"
@@ -205,13 +204,6 @@ function CartoonSpotlight({ items, index, onIndexChange, onPaletteChange, kidsMo
                 onLoad={onCenterImageLoad}
                 onError={(event) => {
                   const imageElement = event.currentTarget;
-                  if (!imageElement.dataset.corsRetry) {
-                    imageElement.dataset.corsRetry = "true";
-                    const failedUrl = imageElement.currentSrc || imageElement.src;
-                    imageElement.removeAttribute("crossorigin");
-                    imageElement.src = failedUrl;
-                    return;
-                  }
                   const fallback = item.backdropUrl && item.posterUrl
                     ? optimizeTmdbImageUrl(item.posterUrl, "w342")
                     : "";
@@ -452,7 +444,7 @@ export default function CartoonsCatalog({ view = "cartoons", kidsMode = true, is
       <section
         className="pb-8 cartoons-home-catalog"
         aria-label="Cartoons catalog"
-        style={{ "--home-hero-palette": heroPaletteRgb ? `rgba(${heroPaletteRgb}, .24)` : "rgba(232,182,91,.08)" }}
+        style={{ "--home-hero-palette": heroPaletteRgb ? `rgb(${heroPaletteRgb})` : "#08090e" }}
       >
         <CartoonSpotlight
           items={cartoonHeroItems}

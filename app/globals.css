@@ -9272,22 +9272,22 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 }
 
 
-/* Poster-led Home atmosphere: only the active centre image supplies this tint. */
-.home-mode-panel,
-.cartoons-home-catalog {
-  position:relative;
-  isolation:isolate;
+/* The visible Home wrapper paints the active poster colour across the full page content. */
+.home-mode-panel {
+  display:block;
+  width:100%;
+  min-width:0;
+  background-color:var(--home-hero-palette,#08090e);
+  transition:background-color .48s ease;
 }
-.home-mode-panel::before,
-.cartoons-home-catalog::before {
-  content:"";
-  position:absolute;
-  z-index:-1;
-  inset:0 0 auto;
-  height:min(760px,78%);
-  pointer-events:none;
-  background:radial-gradient(ellipse 92% 360px at 50% 0,var(--home-hero-palette,rgba(232,182,91,.08)),transparent 78%);
-  transition:background .42s ease;
+.cartoons-home-catalog {
+  width:100%;
+  min-width:0;
+  background-color:var(--home-hero-palette,#08090e);
+  transition:background-color .48s ease;
+}
+@media (prefers-reduced-motion:reduce) {
+  .home-mode-panel,.cartoons-home-catalog { transition:none !important; }
 }
 
 /* Shared dark-glass tokens for responsive Situla surfaces. */
@@ -9296,7 +9296,7 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   --situla-glass-surface-strong:rgba(12,15,23,.9);
   --situla-glass-border:rgba(220,229,245,.13);
   --situla-glass-highlight:rgba(255,255,255,.065);
-  --situla-glass-shadow:0 16px 38px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.055);
+  --situla-glass-shadow:inset 0 1px 0 rgba(255,255,255,.035);
 }
 :where(
   .site-app-header,.site-sidebar,.bottom-nav,.site-workspace-mobile-nav,
@@ -9305,20 +9305,11 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .history-card,.about-situla-card,.series-detail-hero,.series-detail-panel,
   .plans-table-wrap,.admin-record-card,.announcement-admin-card,
   .premium-coming-soon,.copyright-policy-card,.watch-topbar,.series-watch-topbar,
-  .hero-card,.movie-card .movie-poster,.home-hero-deck-side,.home-hero-deck-arrow,
+  .hero-card,.movie-card .movie-poster,.home-hero-deck-side,
   .catalog-page-state,.catalog-empty-state
 ) {
   border-color:var(--situla-glass-border);
   box-shadow:var(--situla-glass-shadow);
-}
-:where(
-  .header-search-trigger,.header-avatar-trigger,.header-notification-trigger,
-  .home-side-link,.bottom-nav .nav-button,.site-workspace-mobile-link,
-  .gold-button,.ghost-button,.plans-card-action,.catalog-sort select,
-  .home-genre-row .genre-chip,.search-type-button,.search-year-filter select,
-  .profile-upgrade-trigger,.profile-upgrade-close,.home-hero-deck-arrow
-) {
-  box-shadow:inset 0 1px 0 var(--situla-glass-highlight),0 5px 16px rgba(0,0,0,.16);
 }
 @supports (backdrop-filter:blur(6px)) {
   .site-app-header,.site-sidebar,.bottom-nav,.site-workspace-mobile-nav,
