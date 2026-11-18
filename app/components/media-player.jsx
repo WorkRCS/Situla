@@ -329,6 +329,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
   return (
     <main className="watch-screen series-watch-screen">
       {playerUrl ? (
+        <>
         <IframeConnectionHints src={playerUrl} />
         <iframe
           id="situla-series-player"
@@ -341,6 +342,7 @@ export default function SeriesMediaPlayer({ kind, tmdbId, malId, season, episode
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />
+        </>
       ) : (
         <div className="player-message">
           <div className="player-message-card">

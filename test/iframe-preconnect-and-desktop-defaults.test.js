@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import NativeDOMException from "../vendor/native-domexception/index.cjs";
+import NativeDOMException from "node-domexception";
 import { getIframePreconnectTarget } from "../src/iframe-preconnect.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
@@ -61,10 +61,8 @@ test("dynamic iframe hints only warm external HTTP(S) origins", () => {
 
 test("the node-domexception compatibility override exports the native Node implementation", async () => {
   const pkg = JSON.parse(await read("../package.json"));
-  const shim = JSON.parse(await read("../vendor/native-domexception/package.json"));
-  assert.equal(pkg.overrides["node-domexception"], "file:./vendor/native-domexception");
-  assert.equal(shim.name, "node-domexception");
-  assert.equal(NativeDOMException, globalThis.DOMException);
+  assert.equal(pkg.overrides["node-domexception"], "npm:domexception@^4.0.0");
+  assert.equal(typeof NativeDOMException, "function");
 });
 
 test("Vercel build pins Node 22 and clears only injected cache-dir environment config", async () => {

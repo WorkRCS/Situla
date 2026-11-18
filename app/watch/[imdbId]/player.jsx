@@ -250,6 +250,7 @@ export default function PlayerExperience({ imdbId }) {
   return (
     <main className="watch-screen">
       {playerUrl ? (
+        <>
         <IframeConnectionHints src={playerUrl} />
         <iframe
           ref={iframeRef}
@@ -262,6 +263,7 @@ export default function PlayerExperience({ imdbId }) {
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />
+        </>
       ) : (
         <div className="player-message">
           <div className="player-message-card">

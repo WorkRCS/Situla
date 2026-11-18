@@ -257,6 +257,7 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
   return (
     <main className={"watch-screen" + (isMovie ? "" : " series-watch-screen")}>
       {playerUrl ? (
+        <>
         <IframeConnectionHints src={playerUrl} />
         <iframe
           ref={iframeRef}
@@ -268,6 +269,7 @@ export default function CartoonMediaPlayer({ type, tmdbId, seasonNumber, episode
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />
+        </>
       ) : (
         <div className="player-message">
           <div className="player-message-card">

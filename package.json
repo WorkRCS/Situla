@@ -49,6 +49,6 @@
     "tailwindcss": "4.3.5"
   },
   "overrides": {
-    "node-domexception": "file:./vendor/native-domexception"
+    "node-domexception": "npm:domexception@^4.0.0"
   }
 }

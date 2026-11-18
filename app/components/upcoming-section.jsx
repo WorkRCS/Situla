@@ -267,6 +267,7 @@ export default function UpcomingSection() {
             <article className="upcoming-card" id={"upcoming-" + item.id} key={item.id}>
               <div className="upcoming-poster">
                 {item.posterMode === "embed" && item.posterUrl ? (
+                  <>
                   <IframeConnectionHints src={item.posterUrl} />
                   <iframe
                     src={item.posterUrl}
@@ -276,6 +277,7 @@ export default function UpcomingSection() {
                     sandbox="allow-scripts allow-same-origin allow-presentation"
                     allow="fullscreen; picture-in-picture"
                   />
+                  </>
                 ) : (item.posterImageUrl || item.posterUrl) ? (
                   <img src={item.posterImageUrl || item.posterUrl} alt={item.title + " poster"} loading="lazy" decoding="async" />
                 ) : (
