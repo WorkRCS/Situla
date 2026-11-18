@@ -473,7 +473,7 @@ test("sidebar routes share the exact existing seven-item mobile navigation bar",
   assert.ok(app.includes("(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) =>"));
   assert.ok(sidebar.includes("export const SITE_MOBILE_NAV_ITEMS = SITE_NAV_ITEMS"));
   assert.ok(sidebar.includes('filter((item) => item.id !== "profile")'));
-  assert.ok(sidebar.includes('<nav className="bottom-nav site-workspace-mobile-nav"'));
+  assert.ok(sidebar.includes('className={"bottom-nav site-workspace-mobile-nav" + (activeKidsMode ? " is-kids-nav" : "")}'));
   assert.ok(sidebar.includes('className={"nav-button site-workspace-mobile-link"'));
   assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
   assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
