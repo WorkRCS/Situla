@@ -61,8 +61,10 @@ test("dynamic iframe hints only warm external HTTP(S) origins", () => {
 
 test("the node-domexception compatibility override exports the native Node implementation", async () => {
   const pkg = JSON.parse(await read("../package.json"));
-  assert.equal(pkg.overrides["node-domexception"], "npm:domexception@^4.0.0");
-  assert.equal(typeof NativeDOMException, "function");
+  const shim = JSON.parse(await read("../vendor/native-domexception/package.json"));
+  assert.equal(pkg.dependencies["node-domexception"], "file:./vendor/native-domexception");
+  assert.equal(shim.name, "node-domexception");
+  assert.equal(NativeDOMException, globalThis.DOMException);
 });
 
 test("Vercel build pins Node 22 and clears only injected cache-dir environment config", async () => {

@@ -41,14 +41,13 @@
     "tailwind-merge": "^3.3.1",
     "lucide-react": "^0.468.0",
     "google-auth-library": "^11.3.4",
-    "@upstash/redis": "^1.41.0"
+    "@upstash/redis": "^1.41.0",
+    "node-domexception": "file:./vendor/native-domexception"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.5",
     "postcss": "^8.5.6",
     "tailwindcss": "4.3.5"
   },
-  "overrides": {
-    "node-domexception": "npm:domexception@^4.0.0"
-  }
+  "overrides": {}
 }
