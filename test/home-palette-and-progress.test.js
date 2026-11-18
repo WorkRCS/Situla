@@ -66,3 +66,16 @@ test("desktop header height aligns with the fixed sidebar brand row", async () =
   assert.ok(desktopHeader.includes("height:44px !important;"));
   assert.ok(desktopHeader.includes("width:42px;"));
 });
+test("Hero carousel keeps the active middle card larger than its side previews", async () => {
+  const [hero, css] = await Promise.all([
+    read("../app/components/three-card-hero.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.match(hero, /isCenter \? " is-center" : isAdjacent \? " is-adjacent"/);
+  assert.match(css, /\.home-hero-deck-slide\.is-center\s*\{[\s\S]*?transform:scale\(1\)/);
+  assert.match(css, /\.home-hero-deck-slide\.is-adjacent\s*\{[\s\S]*?transform:scale\(\.84\)/);
+  assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.home-hero-deck-slide\.is-adjacent[^}]*transform:scale\(\.88\)/);
+  assert.match(css, /transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease/);
+});
+

@@ -8894,13 +8894,23 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   animation:none !important;
 }
 .home-hero-deck-slide .hero-image { animation:none !important; }
-.home-hero-deck-slide.is-adjacent {
-  opacity:.76;
-  filter:blur(1.2px);
-  transform:scale(.985);
+.home-hero-deck-slide.is-center {
+  z-index:2;
+  opacity:1;
+  filter:none;
+  transform:scale(1);
+  transform-origin:center;
   transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease;
 }
-.home-hero-deck-slide.is-outer { opacity:.35; filter:blur(1.6px); }
+.home-hero-deck-slide.is-adjacent {
+  z-index:1;
+  opacity:.86;
+  filter:none;
+  transform:scale(.84);
+  transform-origin:center;
+  transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease;
+}
+.home-hero-deck-slide.is-outer { z-index:0; opacity:.28; filter:blur(1.2px); transform:scale(.76); }
 .home-hero-deck-side {
   position:relative;
   width:100%;
@@ -9041,8 +9051,8 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .home-hero-deck-slide > .hero-card,
   .home-hero-deck-side { border-radius:14px; }
   .home-hero-deck-slide { padding-inline:3px; }
-  .home-hero-deck-slide.is-adjacent { filter:blur(.6px); opacity:.66; }
-  .home-hero-deck-slide.is-outer { filter:none; opacity:.2; }
+  .home-hero-deck-slide.is-adjacent { filter:none; opacity:.84; transform:scale(.88); }
+  .home-hero-deck-slide.is-outer { filter:none; opacity:.18; transform:scale(.78); }
   .home-hero-deck-slide .hero-content { padding:18px 15px; }
   .home-hero-deck-slide .hero-title { font-size:clamp(23px,6vw,34px); }
   .home-hero-deck-slide .hero-eyebrow { font-size:7px; letter-spacing:.1em; }
@@ -9068,6 +9078,7 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 @media (prefers-reduced-motion:reduce) {
   .home-hero-deck-track.is-rebasing { transition:none !important; }
   .home-hero-deck-track { transition-duration:1ms !important; }
+  .home-hero-deck-slide.is-center,
   .home-hero-deck-slide.is-adjacent,
   .home-hero-deck-arrow { transition:none !important; }
 }
@@ -9132,6 +9143,8 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   }
   .home-hero-deck-slide.is-adjacent {
     filter:none;
+    opacity:.84;
+    transform:scale(.88);
   }
 }
 @media (min-width:600px) and (max-width:767px) {
