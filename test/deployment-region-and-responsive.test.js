@@ -14,6 +14,8 @@ test("Hero palette selectors are isolated from shared navigation and app chrome"
   const css = await read("../app/globals.css");
   const app = await read("../app/components/situla-app.jsx");
   assert.match(app, /<main className="app-shell">/);
+  assert.match(app, /home-hero-palette-surface/);
+  assert.match(app, /kids-hero-palette-surface/);
   for (const chromeSelector of [
     ".site-app-header",
     ".site-sidebar",
@@ -23,6 +25,6 @@ test("Hero palette selectors are isolated from shared navigation and app chrome"
     const selectors = css.split("\n").filter((line) => line.includes(chromeSelector) && line.includes("home-hero-rgb"));
     assert.equal(selectors.length, 0, chromeSelector + " must not read the poster palette");
   }
-  assert.match(css, /\.home-mode-panel\.has-home-hero-palette/);
-  assert.match(css, /\.kids-mode-panel\.has-home-hero-palette/);
+  assert.match(css, /\.home-mode-panel \.home-hero-palette-surface\.has-home-hero-palette/);
+  assert.match(css, /\.kids-mode-panel \.kids-hero-palette-surface\.has-home-hero-palette/);
 });

@@ -25,8 +25,8 @@ test("Normal and Kids Home keep poster-driven colour strictly inside Hero page c
   assert.ok(app.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
   assert.match(app, /home-hero-palette-surface/);
   assert.match(app, /kids-hero-palette-surface/);
-  assert.match(app, /className=\{"home-mode-panel" \+ \(heroPalettes\.normal \? " has-home-hero-palette" : ""\)\}/);
-  assert.match(app, /className=\{"kids-mode-panel" \+ \(heroPalettes\.kids \? " has-home-hero-palette" : ""\)\}/);
+  assert.match(app, /className=\{"home-hero-palette-surface" \+ \(heroPalettes\.normal \? " has-home-hero-palette" : ""\)\}/);
+  assert.match(app, /className=\{"kids-hero-palette-surface" \+ \(heroPalettes\.kids \? " has-home-hero-palette" : ""\)\}/);
   assert.match(app, /src=\{optimizeTmdbImageUrl\(featured\.heroImage/);
   assert.doesNotMatch(app, /activeHeroPalette|appShellStyle|app-shell.*has-home-hero-palette/);
   assert.match(cartoons, /onPaletteChange=\{onHeroPaletteChange\}/);
