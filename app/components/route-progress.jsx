@@ -92,7 +92,9 @@ export default function RouteProgress() {
         finishing: false
       };
       pendingRef.current = pending;
-      setProgress(12);
+      // Route updates can originate inside Next.js useInsertionEffect via the
+      // History API wrapper. Keep every React state update inside the scheduled
+      // callback so insertion effects never synchronously schedule React work.
       scheduleProgress(pending, deferStateUpdate);
     }
 

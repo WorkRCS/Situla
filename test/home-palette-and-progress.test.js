@@ -63,6 +63,15 @@ test("the top route progress bar also tracks user-triggered server requests with
   assert.match(progress, /isUserTriggeredServerRequest/);
   assert.match(progress, /startRoute\(target/);
   assert.match(progress, /window\.history\[method\] = wrappedHistoryMethod/);
+  const scheduleStart = progress.indexOf("function scheduleProgress(");
+  const routeStart = progress.indexOf("function startRoute(");
+  const serverStart = progress.indexOf("function startServerRequest(");
+  const scheduledRouteProgress = progress.slice(scheduleStart, routeStart);
+  const routeStartLogic = progress.slice(routeStart, serverStart);
+  assert.match(scheduledRouteProgress, /setProgress\(\(value\) => Math\.max\(value, 12\)\)/);
+  assert.doesNotMatch(routeStartLogic, /setProgress\(/);
+  assert.match(routeStartLogic, /scheduleProgress\(pending, deferStateUpdate\)/);
+  assert.match(progress, /startRoute\(target, true\)/);
   assert.match(progress, /aria-label="Loading page and server request"/);
   assert.match(css, /\.site-route-progress \{[\s\S]*?height:3px/);
   assert.doesNotMatch(css, /\.site-server-activity\s*\{/);
