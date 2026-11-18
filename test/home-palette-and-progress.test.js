@@ -37,7 +37,7 @@ test("Normal and Kids Home keep poster-driven colour strictly inside Hero page c
   assert.ok(css.includes(".kids-mode-panel .kids-hero-palette-surface.has-home-hero-palette"));
   assert.doesNotMatch(css, /\.app-shell\.has-home-hero-palette/);
   assert.doesNotMatch(css, /\.site-app-header[^\n]*--home-hero-rgb|\.site-sidebar[^\n]*--home-hero-rgb|\.bottom-nav[^\n]*--home-hero-rgb|\.site-footer-app[^\n]*--home-hero-rgb/);
-  assert.match(css, /filter:blur\\(30px\\) saturate\\(1\\.72\\)/);
+  assert.match(css, /filter:blur\(30px\) saturate\(1\.72\)/);
   assert.match(css, /background-color:color-mix\(in srgb,rgb\(var\(--home-hero-rgb\)\) 12%,#08090e\)/);
   assert.match(css, /rgba\(var\(--home-hero-rgb\),\.31\)/);
   assert.match(css, /transition:background-color \.68s ease/);
