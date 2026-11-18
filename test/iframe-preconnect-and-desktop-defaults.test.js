@@ -89,8 +89,8 @@ test("desktop sidebar defaults to collapsed while an explicit expanded preferenc
   assert.match(sidebar, /matchMedia\("\(min-width: 1101px\)"\)\.matches/);
   assert.match(sidebar, /savedPreference === "0"/);
   assert.match(app, /const \[sidebarCollapsed, setSidebarCollapsed\] = useState\(true\)/);
-  assert.match(css, /--site-desktop-header-height:38px/);
-  assert.match(css, /site-app-header \.header-actions \.header-search-trigger[\s\S]*?height:38px/);
+  assert.match(css, /--site-desktop-header-height:54px/);
+  assert.match(css, /site-app-header \.header-actions \.header-search-trigger[\s\S]*?height:44px/);
 });
 
 test("Normal and Kids Hero images retry without CORS before switching to poster fallback", async () => {
