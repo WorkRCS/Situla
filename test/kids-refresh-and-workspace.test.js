@@ -73,24 +73,22 @@ test("Cartoon Movies and TV listings omit their heading, sort controls and genre
 });
 
 
-test("app pages keep the shared footer inside the right content scroll frame", async () => {
-  const [app, footer, rootLayout, css] = await Promise.all([
+test("the shared site footer is mounted only inside the Plans page", async () => {
+  const [app, footer, rootLayout, plansPage, plansRoute] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/site-footer.jsx"),
     read("../app/layout.jsx"),
-    read("../app/globals.css")
+    read("../app/plans/plans-page.jsx"),
+    read("../app/plans/page.jsx")
   ]);
 
-  assert.ok(app.includes('import SiteFooter from "./site-footer.jsx";'));
-  assert.ok(app.includes("<SiteFooter inApp />"));
-  assert.equal(app.split("<SiteFooter inApp />").length - 1, 2);
-  assert.ok(footer.includes("if (inApp !== isAppRoute"));
-  assert.ok(footer.includes('className={"site-footer" + (inApp ? " site-footer-app" : "")}'));
-  assert.ok(rootLayout.includes("<SiteFooter />"));
-  assert.ok(css.includes(".site-footer-app {"));
-  assert.ok(css.includes("body:has(.bottom-nav) .site-footer.site-footer-app"));
-  assert.ok(css.includes(".home-main-column > .site-footer-app"));
-  assert.ok(css.includes(".app-view-main-column > .site-footer-app"));
+  assert.doesNotMatch(app, /SiteFooter|site-footer-app/);
+  assert.doesNotMatch(rootLayout, /SiteFooter/);
+  assert.ok(plansPage.includes('import SiteFooter from "../components/site-footer.jsx";'));
+  assert.ok(plansPage.includes("<SiteFooter />"));
+  assert.ok(plansPage.indexOf("<SiteFooter />") > plansPage.indexOf("plans-access-notes"));
+  assert.doesNotMatch(plansRoute, /SiteWorkspace|SiteSidebar|bottom-nav/);
+  assert.ok(footer.includes('<Link href="/plans">Plans</Link>'));
 });
 
 test("Cartoon listings use the same top frame spacing without a full-page Home atmosphere", async () => {
