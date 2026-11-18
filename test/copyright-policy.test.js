@@ -4,16 +4,18 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("global Site footer appears after page content and links to the copyright policy", async () => {
+test("the global Site footer is owned by Plans rather than the root layout", async () => {
   const layout = await read("../app/layout.jsx");
+  const plans = await read("../app/plans/plans-page.jsx");
   const footer = await read("../app/components/site-footer.jsx");
-  assert.match(layout, /import SiteFooter from "\.\/components\/site-footer\.jsx"/);
-  assert.match(layout, /\{children\}[\s\S]*?<SiteFooter \/>/);
+
+  assert.doesNotMatch(layout, /SiteFooter/);
+  assert.match(plans, /import SiteFooter from "\.\.\/components\/site-footer\.jsx"/);
+  assert.match(plans, /<SiteFooter \/>/);
   assert.match(footer, /href="\/copyright"/);
   assert.match(footer, /Copyright &amp; Content Policy/);
   assert.match(footer, /an0-my1@proton\.me/);
   assert.match(footer, /normalizedPath\.startsWith\("\/watch\/"\)/);
-  assert.match(footer, /inApp !== isAppRoute/);
 });
 
 test("copyright policy explains third-party video embeds without claiming blanket legal immunity", async () => {
