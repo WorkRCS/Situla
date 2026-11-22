@@ -73,3 +73,18 @@ test("Kids search API uses tolerant matching but only queries the two approved C
   assert.equal(route.includes("findMatches(Movie"), false);
   assert.equal(route.includes("findMatches(TvSeries"), false);
 });
+
+test("Cartoon Movies and TV cards use the same phone and tablet grid density as the normal catalogues", async () => {
+  const css = await read("../app/globals.css");
+  const cartoonLayout = css.slice(css.indexOf("/* Cartoon catalogues share the existing Movies/TV page grid"));
+  const phone = cartoonLayout.slice(cartoonLayout.indexOf("@media (max-width:599px)"));
+  const tablet = cartoonLayout.slice(cartoonLayout.indexOf("@media (min-width:600px) and (max-width:767px)"));
+  assert.match(phone, /\.cartoons-catalog-page \.catalog-grid\s*\{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(tablet, /\.cartoons-catalog-page \.catalog-grid\s*\{[\s\S]*?grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.doesNotMatch(cartoonLayout.slice(0, cartoonLayout.indexOf("@media (max-width:767px)")), /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  const sharedCardSizing = css.slice(css.lastIndexOf("/* Media actions stay icon-sized"));
+  assert.match(sharedCardSizing, /max-width:calc\(100% - 49px\) !important/);
+  assert.match(sharedCardSizing, /font-size:9.5px !important/);
+  assert.match(sharedCardSizing, /width:32px !important/);
+});
+
