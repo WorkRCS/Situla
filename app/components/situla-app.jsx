@@ -77,7 +77,7 @@ function getAccountInitials(user) {
   const displayName = String(
     user?.name || user?.displayName || user?.fullName || user?.email || ""
   ).trim();
-  const words = displayName.split(/\\s+/).filter(Boolean);
+  const words = displayName.split(/\s+/).filter(Boolean);
   const initials = words.length > 1
     ? words.slice(0, 2).map((word) => Array.from(word)[0] || "").join("")
     : Array.from(words[0] || "").slice(0, 2).join("");
