@@ -1552,10 +1552,39 @@ app.get('/api/cartoons/series/:tmdbId/seasons/:seasonNumber', async (c) => {
   }
 });
 
+app.get('/api/cartoons/search/filters', async (c) => {
+  try {
+    await connectDatabase();
+    const movieFilter = approvedCartoonMovieFilter();
+    const seriesFilter = approvedCartoonSeriesFilter();
+    const [movieYears, movieDates, movieGenres, seriesYears, seriesDates, seriesGenres] = await Promise.all([
+      CartoonMovie.distinct('releaseYear', movieFilter),
+      CartoonMovie.distinct('releaseDate', movieFilter),
+      CartoonMovie.distinct('genres', movieFilter),
+      CartoonSeries.distinct('releaseYear', seriesFilter),
+      CartoonSeries.distinct('firstAirDate', seriesFilter),
+      CartoonSeries.distinct('genres', seriesFilter)
+    ]);
+    const genres = [...new Map([...movieGenres, ...seriesGenres]
+      .filter((value) => typeof value === 'string' && value.trim())
+      .map((value) => [value.trim().toLocaleLowerCase(), value.trim()])).values()]
+      .sort((left, right) => left.localeCompare(right));
+    return c.json({ ...buildSearchYearOptions([movieYears, movieDates, seriesYears, seriesDates], {
+      minimumYear: 2000,
+      maximumYear: new Date().getFullYear()
+    }), genres });
+  } catch (error) {
+    return apiError(c, error, 'Cartoon search filters are temporarily unavailable.');
+  }
+});
+
 app.get('/api/cartoons/search', async (c) => {
   const query = safeText(c.req.query('q'));
   const yearText = String(c.req.query('year') || '').trim();
   const year = yearText ? Number(yearText) : null;
+  const genre = safeText(c.req.query('genre')).trim();
+  if (genre.length > 48) return c.json({ error: 'Choose a valid Cartoon genre.', items: [] }, 400);
+  const genrePattern = genre ? new RegExp('^' + escapeSearchRegex(genre) + '$', 'i') : null;
   if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) || year < 2000 || year > 2099)) {
     return c.json({ error: 'Choose a valid Cartoon release year.', items: [] }, 400);
   }
@@ -1571,6 +1600,10 @@ app.get('/api/cartoons/search', async (c) => {
     if (year !== null) {
       movieFilter.$and.push({ $or: [{ releaseYear: year }, { releaseDate: { $regex: '^' + year } }] });
       seriesFilter.$and.push({ $or: [{ releaseYear: year }, { firstAirDate: { $regex: '^' + year } }] });
+    }
+    if (genrePattern) {
+      movieFilter.$and.push({ genres: genrePattern });
+      seriesFilter.$and.push({ genres: genrePattern });
     }
 
     const findMatches = (Model, filter, dateSort) => {
@@ -1779,14 +1812,21 @@ app.get('/api/search/filters', async (c) => {
 
   try {
     await connectDatabase();
-    const values = await Promise.all(catalogs.map(async (catalog) => {
-      const [releaseYears, releaseDates] = await Promise.all([
-        catalog.Model.distinct('releaseYear', catalog.baseFilter),
-        catalog.Model.distinct(catalog.dateField, catalog.baseFilter)
-      ]);
-      return [...releaseYears, ...releaseDates];
-    }));
-    return c.json(buildSearchYearOptions(values));
+    const [values, genreGroups] = await Promise.all([
+      Promise.all(catalogs.map(async (catalog) => {
+        const [releaseYears, releaseDates] = await Promise.all([
+          catalog.Model.distinct('releaseYear', catalog.baseFilter),
+          catalog.Model.distinct(catalog.dateField, catalog.baseFilter)
+        ]);
+        return [...releaseYears, ...releaseDates];
+      })),
+      Promise.all(catalogs.map((catalog) => catalog.Model.distinct('genres', catalog.baseFilter)))
+    ]);
+    const genres = [...new Map(genreGroups.flat()
+      .filter((value) => typeof value === 'string' && value.trim())
+      .map((value) => [value.trim().toLocaleLowerCase(), value.trim()])).values()]
+      .sort((left, right) => left.localeCompare(right));
+    return c.json({ ...buildSearchYearOptions(values), genres });
   } catch (error) {
     return apiError(c, error, 'Search filters are temporarily unavailable.');
   }
@@ -1804,12 +1844,15 @@ app.get('/api/search', async (c) => {
 
   const yearText = String(c.req.query('year') || '').trim();
   const year = yearText ? Number(yearText) : null;
+  const genre = safeText(c.req.query('genre')).trim();
+  if (genre.length > 48) return c.json({ error: 'Choose a valid genre.', items: [] }, 400);
+  const genrePattern = genre ? new RegExp('^' + escapeSearchRegex(genre) + '$', 'i') : null;
   if (yearText && (!/^\d{4}$/.test(yearText) || !Number.isInteger(year) ||
       year < 1870 || year > new Date().getFullYear())) {
     return c.json({ error: 'Choose a valid release year.', items: [] }, 400);
   }
-  if (query && query.length < 3) return c.json({ items: [] });
-  if (!query && selectedType === 'all' && year === null) return c.json({ items: [] });
+  if (query && query.length < 2) return c.json({ items: [] });
+  if (!query && selectedType === 'all' && year === null && !genre && sort === 'relevance') return c.json({ items: [] });
 
   const requestedPage = Number(c.req.query('page') || 1);
   const requestedLimit = Number(c.req.query('limit') || 20);
@@ -1834,29 +1877,36 @@ app.get('/api/search', async (c) => {
       type: 'movie',
       Model: Movie,
       dateField: 'releaseDate',
-      searchFields: ['title', 'originalTitle'],
+      searchFields: ['title', 'originalTitle', 'genres', 'keywords', 'directors', 'writers', 'cast.name'],
       baseFilter: { imdbId: IMDB_ID, adult: { $ne: true } },
       exactFilter: IMDB_ID.test(normalizedId) ? { imdbId: normalizedId } : null,
-      select: 'imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d genres adult',
+      popularSort: { popularity: -1, voteAverage: -1, voteCount: -1, _id: 1 },
+      ratingSort: { voteAverage: -1, voteCount: -1, popularity: -1, _id: 1 },
+      select: 'imdbId title originalTitle overview posterUrl backdropUrl releaseDate releaseYear runtime voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d genres keywords directors writers cast.name adult',
       toDto: movieDto
     },
     {
       type: 'tv',
       Model: TvSeries,
       dateField: 'firstAirDate',
-      searchFields: ['title', 'originalTitle'],
+      searchFields: ['title', 'originalTitle', 'genres', 'keywords', 'creators', 'network', 'country'],
       baseFilter: { tmdbId: { $type: 'number', $gt: 0 }, adult: { $ne: true } },
-      exactFilter: numericId ? { tmdbId: numericId } : null,
-      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d providerRating providerPopularity genres numberOfSeasons numberOfEpisodes status',
+      exactFilter: numericId ? { tmdbId: numericId }
+        : IMDB_ID.test(normalizedId) ? { externalImdbId: normalizedId } : null,
+      popularSort: { popularity: -1, voteAverage: -1, voteCount: -1, _id: 1 },
+      ratingSort: { voteAverage: -1, voteCount: -1, popularity: -1, _id: 1 },
+      select: 'tmdbId externalImdbId title originalTitle overview posterUrl backdropUrl firstAirDate releaseYear runtime adult certification voteAverage voteCount popularity trendScore trendUpdatedAt voteVelocity7d providerRating providerPopularity genres keywords creators network country numberOfSeasons numberOfEpisodes status',
       toDto: tvSeriesDto
     },
     {
       type: 'anime',
       Model: AnimeSeries,
       dateField: 'airedFrom',
-      searchFields: ['title', 'titleEnglish', 'titleJapanese'],
+      searchFields: ['title', 'titleEnglish', 'titleJapanese', 'genres', 'themes', 'demographics', 'studios', 'producers', 'anilistTags'],
       baseFilter: { type: { $in: ['TV', 'ONA'] } },
-      exactFilter: numericId ? { malId: numericId } : null,
+      exactFilter: numericId ? { $or: [{ malId: numericId }, { anilistId: numericId }] } : null,
+      popularSort: { anilistPopularity: -1, popularity: -1, anilistTrending: -1, score: -1, _id: 1 },
+      ratingSort: { anilistScore: -1, score: -1, scoredBy: -1, popularity: -1, _id: 1 },
       select: 'malId anilistId anilistUrl anilistScore anilistPopularity anilistTrending anilistFavourites anilistTags anilistUpdatedAt title titleEnglish titleJapanese synopsis posterUrl posterFallbackUrl backdropUrl bannerUrl airedFrom releaseYear episodes duration score scoredBy rank popularity trendScore trendUpdatedAt voteVelocity7d status season type source genres themes demographics studios producers rating',
       toDto: animeSeriesDto
     }
@@ -1867,13 +1917,16 @@ app.get('/api/search', async (c) => {
     const groups = await Promise.all(catalogs.map(async (catalog) => {
       const scope = [catalog.baseFilter];
       if (year !== null) scope.push(buildSearchYearFilter(catalog.dateField, 'releaseYear', year));
+      if (genrePattern) scope.push({ genres: genrePattern });
       const dateSort = { [catalog.dateField]: -1, releaseYear: -1, _id: 1 };
+      const browseSort = sort === 'popular' ? catalog.popularSort
+        : sort === 'rating' ? catalog.ratingSort : dateSort;
       const projection = (builder) => builder.select(catalog.select).lean();
 
       if (!query) {
         const records = await projection(
           catalog.Model.find(scope.length === 1 ? scope[0] : { $and: scope })
-            .sort(dateSort).limit(candidateLimit)
+            .sort(browseSort).limit(candidateLimit)
         );
         return {
           items: records.map((record) => ({ ...catalog.toDto(record), mediaType: catalog.type })),
@@ -1895,7 +1948,7 @@ app.get('/api/search', async (c) => {
       if (catalog.exactFilter) partialAlternatives.push(catalog.exactFilter);
       const partialFilter = { $and: [...scope, { $or: partialAlternatives }] };
       const partialTask = projection(
-        catalog.Model.find(partialFilter).sort(dateSort).limit(candidateLimit)
+        catalog.Model.find(partialFilter).sort(browseSort).limit(candidateLimit)
       );
       const batches = await Promise.allSettled([textTask, partialTask]);
       const successful = batches.filter((batch) => batch.status === 'fulfilled').map((batch) => batch.value);
@@ -1906,10 +1959,16 @@ app.get('/api/search', async (c) => {
         for (const record of records) recordsById.set(String(record._id), record);
       }
       return {
-        items: [...recordsById.values()].map((record) => ({
-          ...catalog.toDto(record),
-          mediaType: catalog.type
-        })),
+        items: [...recordsById.values()].map((record) => {
+          const searchTerms = catalog.searchFields.flatMap((field) => {
+            const value = field.split('.').reduce((current, key) => (
+              Array.isArray(current) ? current.flatMap((entry) => entry?.[key]) : current?.[key]
+            ), record);
+            return (Array.isArray(value) ? value : [value])
+              .filter((entry) => typeof entry === 'string' && entry.trim());
+          });
+          return { ...catalog.toDto(record), searchTerms, mediaType: catalog.type };
+        }),
         hasMoreCandidate: successful.some((batch) => batch.length === candidateLimit)
       };
     }));
@@ -1939,7 +1998,7 @@ app.get('/api/search', async (c) => {
       page,
       limit,
       returned: items.length,
-      minQueryLength: 3,
+      minQueryLength: 2,
       sort
     });
   } catch (error) {
