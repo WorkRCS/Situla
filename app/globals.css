@@ -9917,7 +9917,7 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   color:#2a1c0a !important;
   border:1px solid rgba(255,236,194,.88) !important;
   background:linear-gradient(145deg,#ffe8b8,#d99a3e) !important;
-  box-shadow:0 0 0 3px rgba(232,182,91,.12),0 5px 16px rgba(214,154,62,.24) !important;
+  box-shadow:0 0 0 3px rgba(232,182,91,.12),0 4px 13px rgba(214,154,62,.22) !important;
 }
 @media (max-width:767px) {
   .site-app-header .header-avatar-trigger {
