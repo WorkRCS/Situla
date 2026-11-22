@@ -10026,3 +10026,142 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   .search-filter-panel { grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px; }
 }
 @media (prefers-reduced-motion:reduce) { .search-filter-panel {animation:none;} .search-filter-toggle {transition:none;} }
+
+/* Low-memory catalogue rendering, collision-safe poster controls and quiet scroll. */
+.movie-card {
+  content-visibility:auto;
+  contain-intrinsic-size:170px 340px;
+}
+.catalog-grid > .movie-card {
+  content-visibility:auto;
+  contain-intrinsic-size:170px 340px;
+}
+.media-row > .movie-card {
+  content-visibility:auto;
+  contain-intrinsic-size:170px 320px;
+}
+
+/* Poster labels reserve the right edge for the vertically stacked action buttons. */
+.movie-card .catalog-badge {
+  left:8px !important;
+  top:8px !important;
+  max-width:calc(100% - 64px) !important;
+  min-width:0 !important;
+  min-height:26px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  padding:5px 8px !important;
+  border-radius:7px !important;
+  font-size:10.5px !important;
+  line-height:1.1 !important;
+  letter-spacing:.045em !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.movie-card > .save-button,
+.movie-card > .share-button,
+.movie-card.series-card-tv > .save-button,
+.movie-card.series-card-tv > .share-button {
+  right:8px !important;
+  width:40px !important;
+  height:40px !important;
+  min-width:40px !important;
+  min-height:40px !important;
+  display:grid !important;
+  place-items:center !important;
+  z-index:6 !important;
+  border:1px solid rgba(255,255,255,.17) !important;
+  border-radius:11px !important;
+  background:rgba(6,8,12,.94) !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.movie-card > .save-button,
+.movie-card.series-card-tv > .save-button { top:8px !important; }
+.movie-card > .share-button,
+.movie-card.series-card-tv > .share-button { top:54px !important; }
+.movie-card > .save-button svg,
+.movie-card > .share-button svg {
+  width:19px !important;
+  height:19px !important;
+}
+.movie-card .rating-pill {
+  left:8px !important;
+  right:auto !important;
+  bottom:8px !important;
+  top:auto !important;
+  max-width:calc(100% - 50px) !important;
+  min-height:27px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  padding:5px 9px !important;
+  gap:5px !important;
+  border-radius:8px !important;
+  font-size:11px !important;
+  line-height:1.1 !important;
+  white-space:nowrap !important;
+  text-overflow:ellipsis !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+.home-collection-rated .series-card .rating-pill {
+  left:8px !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:8px !important;
+}
+.movie-card > .share-feedback,
+.movie-card.series-card-tv > .share-feedback {
+  right:7px;
+  top:100px;
+  max-width:calc(100% - 56px);
+  overflow-wrap:anywhere;
+}
+
+/* Avoid expensive moving shadows/transforms during catalogue scrolling. */
+.movie-card:hover,
+.movie-card:hover .movie-poster,
+.movie-card:hover .movie-poster img,
+.home-series-shelf .series-card:hover {
+  transform:none !important;
+}
+.movie-card:hover .movie-poster {
+  border-color:rgba(205,164,92,.34) !important;
+  box-shadow:none !important;
+}
+.movie-card:hover .movie-poster img { filter:none !important; }
+.home-collection-rank { box-shadow:none !important; }
+
+/* Keep the glass palette, but do not sample the scrolling backdrop on low-power planes. */
+.site-app-header,
+.site-sidebar.home-sidebar,
+.site-workspace > .site-sidebar,
+.bottom-nav,
+.site-workspace-mobile-nav,
+.movie-card .catalog-badge,
+.movie-card .rating-pill,
+.movie-card > .save-button,
+.movie-card > .share-button {
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+@media (hover:none), (pointer:coarse) {
+  .movie-card,
+  .movie-card .movie-poster,
+  .movie-card .movie-poster img,
+  .home-series-shelf .series-card {
+    transition:none !important;
+  }
+  .movie-card:hover .movie-poster,
+  .movie-card:hover .movie-poster img,
+  .home-series-shelf .series-card:hover {
+    transform:none !important;
+    box-shadow:none !important;
+  }
+}
+
