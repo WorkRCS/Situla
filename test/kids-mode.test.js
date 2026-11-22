@@ -287,3 +287,21 @@ test("the root Home view switches between Normal mixed discovery and Kids mixed 
   assert.ok(app.includes('<CartoonsCatalog view="kidsHome" kidsMode={kidsMode}'));
   assert.ok(app.includes('const isDiscover = (tab === "home" && genre === "All") || tab === "movies";'));
 });
+
+
+test("Kids Mode refresh never renders Normal navigation before the server preference is resolved", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+
+  assert.match(app, /<SiteSidebar[\s\S]*?kidsMode=\{kidsMode\}[\s\S]*?modeReady=\{kidsModeReady\}/);
+  assert.match(app, /className=\{\"desktop-nav\" \+ \(!kidsModeReady \? \" is-mode-pending\" : \"\"\)\}/);
+  assert.match(app, /\{kidsModeReady && \([\s\S]*?className=\{\"bottom-nav\"/);
+  assert.match(sidebar, /modeReady = true/);
+  assert.match(sidebar, /\{modeReady && <nav className=\"home-sidebar-nav site-sidebar-navigation\"/);
+  assert.match(sidebar, /\{modeReady && continueItems && <ContinueWatching/);
+  assert.match(sidebar, /const \[serverKidsModeReady, setServerKidsModeReady\] = useState\(false\)/);
+  assert.match(sidebar, /typeof payload\.enabled === \"boolean\"/);
+  assert.match(sidebar, /setServerKidsModeReady\(true\)/);
+  assert.match(sidebar, /modeReady=\{activeKidsModeReady\}/);
+  assert.match(sidebar, /\{activeKidsModeReady && <nav className=\{\"bottom-nav site-workspace-mobile-nav\"/);
+});

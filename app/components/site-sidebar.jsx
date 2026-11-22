@@ -83,7 +83,8 @@ export function SiteSidebar({
   continueItems,
   onResume,
   onCollapsedChange,
-  kidsMode = false
+  kidsMode = false,
+  modeReady = true
 }) {
   const pathname = usePathname() || "/";
   const [statusUnread, setStatusUnread] = useState(false);
@@ -151,7 +152,7 @@ export function SiteSidebar({
           {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
         </button>
       </div>
-      <nav className="home-sidebar-nav site-sidebar-navigation" aria-label="Primary navigation">
+      {modeReady && <nav className="home-sidebar-nav site-sidebar-navigation" aria-label="Primary navigation">
         <div className="site-sidebar-nav-group">
           <span className="site-sidebar-section-label">DISCOVER</span>
           {discoverItems.map((item) => {
@@ -202,8 +203,8 @@ export function SiteSidebar({
             );
           })}
         </div>
-      </nav>
-      {continueItems && <ContinueWatching items={continueItems} onResume={onResume} />}
+      </nav>}
+      {modeReady && continueItems && <ContinueWatching items={continueItems} onResume={onResume} />}
       <div className="site-sidebar-footer" aria-label="Situla workspace">
         <span className="site-sidebar-footer-mark"><ShieldCheck size={15} strokeWidth={1.9} /></span>
         <span className="site-sidebar-footer-copy"><strong>SITULA WORKSPACE</strong><small>Discover · Watch · Belong</small></span>
@@ -216,10 +217,12 @@ export function SiteWorkspace({ children, kidsMode }) {
   const pathname = usePathname() || "/";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [serverKidsMode, setServerKidsMode] = useState(false);
+  const [serverKidsModeReady, setServerKidsModeReady] = useState(false);
 
   useEffect(() => {
     if (typeof kidsMode === "boolean") {
       setServerKidsMode(kidsMode);
+      setServerKidsModeReady(true);
       return undefined;
     }
     const controller = new AbortController();
@@ -229,17 +232,21 @@ export function SiteWorkspace({ children, kidsMode }) {
       signal: controller.signal
     }).then(async (response) => {
       const payload = await response.json().catch(() => ({}));
-      if (response.ok && !controller.signal.aborted) setServerKidsMode(Boolean(payload.enabled));
+      if (response.ok && typeof payload.enabled === "boolean" && !controller.signal.aborted) {
+        setServerKidsMode(payload.enabled);
+        setServerKidsModeReady(true);
+      }
     }).catch(() => {});
     return () => controller.abort();
   }, [kidsMode]);
 
   const activeKidsMode = typeof kidsMode === "boolean" ? kidsMode : serverKidsMode;
+  const activeKidsModeReady = typeof kidsMode === "boolean" || serverKidsModeReady;
   return (
     <div className={"site-workspace" + (sidebarCollapsed ? " is-sidebar-collapsed" : "")}>
-      <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={activeKidsMode} />
+      <SiteSidebar onCollapsedChange={setSidebarCollapsed} kidsMode={activeKidsMode} modeReady={activeKidsModeReady} />
       <div className="site-workspace-main">{children}</div>
-      <nav className={"bottom-nav site-workspace-mobile-nav" + (activeKidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">
+      {activeKidsModeReady && <nav className={"bottom-nav site-workspace-mobile-nav" + (activeKidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">
         {(activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const Icon = item.icon;
           const mobileItems = activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS;
@@ -257,7 +264,7 @@ export function SiteWorkspace({ children, kidsMode }) {
             </Link>
           );
         })}
-      </nav>
+      </nav>}
     </div>
   );
 }

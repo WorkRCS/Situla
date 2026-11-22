@@ -1971,7 +1971,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               })[tab] || "DISCOVER MOVIES"}</small>
             </span>
           </Link>
-          <nav className="desktop-nav" aria-label="Primary navigation">
+          <nav className={"desktop-nav" + (!kidsModeReady ? " is-mode-pending" : "")} aria-label="Primary navigation">
             {navigationItems.filter((item) => item.id !== "search").map((item) => (
               <Link key={item.id} href={item.href} className={"desktop-nav-link" + (navigationTab === item.id ? " active" : "")} aria-current={navigationTab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
@@ -1985,12 +1985,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 type="button"
                 className="header-search search-box header-search-trigger"
                 onClick={() => setSearchOpen(true)}
-                aria-label={kidsMode ? "Search cartoons" : "Search movies, TV series and anime"}
+                aria-label={!kidsModeReady ? "Search" : kidsMode ? "Search cartoons" : "Search movies, TV series and anime"}
                 aria-haspopup="dialog"
                 aria-expanded={searchOpen}
               >
                 <Search size={18} strokeWidth={2} aria-hidden="true" />
-                <span className="header-search-label">{kidsMode ? "Search cartoons" : "Search movies, TV & anime"}</span>
+                <span className="header-search-label">{!kidsModeReady ? "Search" : kidsMode ? "Search cartoons" : "Search movies, TV & anime"}</span>
               </button>
             </div>
             <div className="header-account-wrap">
@@ -2265,6 +2265,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           onResume={tab === "home" ? resumeHistoryItem : undefined}
           onCollapsedChange={setSidebarCollapsed}
           kidsMode={kidsMode}
+          modeReady={kidsModeReady}
         />
 
         {tab === "home" && (
@@ -2679,6 +2680,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         )}
       </div>
 
+      {kidsModeReady && (
       <nav className={"bottom-nav" + (kidsMode ? " is-kids-nav" : "")} aria-label="Main navigation">
         {(kidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map((item) => {
           const NavigationIcon = item.icon;
@@ -2696,6 +2698,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           );
         })}
       </nav>
+      )}
     </main>
   );
 }
