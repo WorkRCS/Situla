@@ -845,7 +845,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const homeFeedSentinelRef = useRef(null);
   const catalogLoadSentinelRef = useRef(null);
   const demoSignedIn = Boolean(accountUser);
-  const navigationItems = kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
+  const navigationItems = !kidsModeReady ? [] : kidsMode ? KIDS_NAV_ITEMS : NAV_ITEMS;
   const kidsOnlyView = ["home", "cartoons", "cartoonMovies", "cartoonTv", "saved", "settings"].includes(tab);
   const navigationTab = (kidsMode && !kidsOnlyView) || tab === "cartoons" ? "home" : tab;
 
@@ -1971,7 +1971,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               })[tab] || "DISCOVER MOVIES"}</small>
             </span>
           </Link>
-          <nav className={"desktop-nav" + (!kidsModeReady ? " is-mode-pending" : "")} aria-label="Primary navigation">
+          <nav className="desktop-nav" aria-label="Primary navigation">
             {navigationItems.filter((item) => item.id !== "search").map((item) => (
               <Link key={item.id} href={item.href} className={"desktop-nav-link" + (navigationTab === item.id ? " active" : "")} aria-current={navigationTab === item.id ? "page" : undefined}>
                 {item.id === "upcoming" ? <CalendarDays size={17} /> : <Icon name={item.icon} size={17} />}
