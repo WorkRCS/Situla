@@ -134,7 +134,9 @@ test('desktop navigation keeps one toggle next to the sidebar brand and no dupli
   ]);
   assert.doesNotMatch(app, /site-app-sidebar-toggle|situla:toggle-sidebar/);
   assert.match(sidebar, /className="site-sidebar-toggle"/);
-  assert.match(sidebar, /situla:sidebar-collapsed:v2/);
+  assert.match(sidebar, /const \[collapsed, setCollapsed\] = useState\(true\)/);
+  assert.match(sidebar, /onClick=\{\(\) => setCollapsed\(\(value\) => !value\)\}/);
+  assert.doesNotMatch(sidebar, /situla:sidebar-collapsed:v2|localStorage\.getItem\(.*sidebar/);
   assert.match(css, /\.site-app-header\s*\{[\s\S]*?width:calc\(100% - var\(--site-sidebar-column\)\)/);
   assert.match(css, /\.site-app-header \.brand-lockup \{ display:none !important; \}/);
 });
@@ -155,3 +157,14 @@ test('search uses a simple field and concise catalogue recommendations', async (
   assert.match(css, /\.search-dialog \{[\s\S]*?border-radius:12px/);
   assert.match(css, /\.suggestion-item \{[\s\S]*?border-radius:7px !important/);
 });
+
+test("catalogue card badges, rating and actions stay readable without overlapping", async () => {
+  const css = await read("../app/globals.css");
+  const finalCards = css.slice(css.lastIndexOf("/* Low-memory catalogue rendering"));
+  assert.match(finalCards, /\.movie-card \.catalog-badge\s*\{[\s\S]*?max-width:calc\(100% - 64px\) !important/);
+  assert.match(finalCards, /\.movie-card > \.save-button[\s\S]*?width:40px !important/);
+  assert.match(finalCards, /\.movie-card > \.share-button[\s\S]*?top:54px !important/);
+  assert.match(finalCards, /\.movie-card \.rating-pill\s*\{[\s\S]*?max-width:calc\(100% - 50px\) !important/);
+  assert.match(finalCards, /\.home-collection-rated \.series-card \.rating-pill\s*\{[\s\S]*?bottom:8px !important/);
+});
+
