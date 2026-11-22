@@ -45,6 +45,9 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.includes("Password"));
   assert.ok(login.includes("Continue with email"));
   assert.ok(login.includes("Continue with Google"));
+  assert.doesNotMatch(login, /login-auth-hint|New email\\?|create a Free account automatically|Enter your account password|Password: 10–128 bytes/);
+  assert.match(login, /type=\{showPassword \? "text" : "password"\}/);
+  assert.doesNotMatch(login, /name="password"[^>]*placeholder=/);
   assert.ok(login.includes("/api/auth/email"));
   assert.ok(login.includes("/api/auth/google"));
   assert.doesNotMatch(login, /rememberMe|Remember me/);
@@ -168,3 +171,30 @@ test("Profile stays in the account menu and responsive navigation stays compact"
   assert.ok(css.includes(".site-app-header .header-notification-trigger"));
   assert.ok(css.includes(".site-app-header .header-actions .header-search-trigger"));
 });
+
+test("Login, Plans and Profile keep their existing content with a clearer responsive UI", async () => {
+  const [css, login, plans, profile] = await Promise.all([
+    read("../app/globals.css"),
+    read("../app/components/account-pages.jsx"),
+    read("../app/plans/plans-page.jsx"),
+    read("../app/profile/page.jsx")
+  ]);
+  const loginView = login.slice(login.indexOf("export function LoginPage"), login.indexOf("\\nfunction formatAccessDuration"));
+  assert.doesNotMatch(loginView, /New email\\?|create a Free account automatically|Enter your account password|login-auth-hint/);
+  assert.ok(loginView.includes("Continue with email"));
+  assert.ok(loginView.includes("Continue with Google"));
+  assert.ok(loginView.includes("/api/auth/email"));
+  assert.ok(loginView.includes("/api/auth/google"));
+  assert.ok(plans.includes("<h2>Guest</h2>") && plans.includes("<h2>Free</h2>") && plans.includes("<h2>Premium</h2>"));
+  assert.ok(profile.includes("<ProfilePage />"));
+  assert.ok(css.includes("Focused visual refinement for Login, Plans and Profile only."));
+  assert.ok(css.includes(".login-page .login-form-panel .login-form-card"));
+  assert.ok(css.includes(".plans-card:not(.plans-card-guest) .plans-metrics"));
+  assert.ok(css.includes(".profile-overview-panel"));
+  assert.ok(css.includes(".profile-readonly-field"));
+  assert.ok(css.includes(".profile-upgrade-dialog"));
+  assert.ok(css.includes("@media (max-width:640px)"));
+  assert.ok(css.includes("@media (max-width:520px)"));
+  assert.ok(css.includes("@media (max-width:380px)"));
+});
+
