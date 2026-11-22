@@ -24,7 +24,7 @@ import {
   setCachedAccountUser
 } from "../../src/client-account-session.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick, PanelLeftOpen, PanelLeftClose, Clock3, SlidersHorizontal } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -82,6 +82,13 @@ function getAccountInitials(user) {
     ? words.slice(0, 2).map((word) => Array.from(word)[0] || "").join("")
     : Array.from(words[0] || "").slice(0, 2).join("");
   return initials.toLocaleUpperCase() || "S";
+}
+
+function searchOptionId(item) {
+  if (!item) return "";
+  const identity = item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
+    ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+  return "search-option-" + item.mediaType + "-" + String(identity || "unknown");
 }
 
 function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
@@ -809,6 +816,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchType, setSearchType] = useState("all");
   const [searchYear, setSearchYear] = useState("all");
+  const [searchSort, setSearchSort] = useState("relevance");
+  const [selectedSearchIndex, setSelectedSearchIndex] = useState(0);
+  const [recentSearches, setRecentSearches] = useState([]);
   const [searchYears, setSearchYears] = useState([]);
   const [searchDateRange, setSearchDateRange] = useState(null);
   const [searchError, setSearchError] = useState("");
@@ -1035,6 +1045,28 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
 
   useEffect(() => {
     if (!searchOpen) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("situla:search-history:v1") || "[]");
+      setRecentSearches(Array.isArray(stored)
+        ? [...new Set(stored.map((value) => String(value || "").trim()).filter(Boolean))].slice(0, 6)
+        : []);
+    } catch {
+      setRecentSearches([]);
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    function handleGlobalSearchShortcut(event) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey || String(event.key).toLowerCase() !== "k") return;
+      event.preventDefault();
+      setSearchOpen(true);
+    }
+    window.addEventListener("keydown", handleGlobalSearchShortcut);
+    return () => window.removeEventListener("keydown", handleGlobalSearchShortcut);
+  }, []);
+
+  useEffect(() => {
+    if (!searchOpen) return;
     setAccountOpen(false);
   }, [searchOpen]);
 
@@ -1093,6 +1125,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (!kidsModeReady) return;
     setSearchType("all");
     setSearchYear("all");
+    setSearchSort("relevance");
+    setSelectedSearchIndex(0);
     setSearchYears([]);
     setSearchDateRange(null);
     setSuggestions([]);
@@ -1213,6 +1247,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       const params = new URLSearchParams({ page: '1', limit: '20', type: searchType });
       if (value.length >= 3) params.set('q', value);
       if (searchYear !== 'all') params.set('year', searchYear);
+      params.set('sort', searchSort);
       try {
         const response = await fetch('/api/search?' + params.toString(), {
           cache: 'no-store', credentials: 'same-origin',
@@ -1241,7 +1276,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       controller.abort();
       if (isCurrentRequest()) searchRequestVersion.current += 1;
     };
-  }, [searchInput, searchOpen, searchType, searchYear, kidsModeReady, kidsMode]);
+  }, [searchInput, searchOpen, searchType, searchYear, searchSort, kidsModeReady, kidsMode]);
   useEffect(() => {
     if (!kidsModeReady || kidsMode) { setLoading(false); return undefined; }
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
@@ -1504,6 +1539,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       if (searchYear !== 'all') params.set('year', searchYear);
     } else {
       params.set('type', searchType);
+      params.set('sort', searchSort);
       if (value.length >= 3) params.set('q', value);
       if (searchYear !== 'all') params.set('year', searchYear);
     }
@@ -1554,6 +1590,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         ? 'Only approved cartoon movies and TV series can be opened in Kids Mode.'
         : 'This title does not belong to the current search catalogue.');
       return;
+    }
+    const recentTerm = searchInput.trim();
+    if (!kidsMode && recentTerm.length >= 3) {
+      const nextRecent = [recentTerm, ...recentSearches.filter((term) => term.toLocaleLowerCase() !== recentTerm.toLocaleLowerCase())].slice(0, 6);
+      setRecentSearches(nextRecent);
+      try { localStorage.setItem("situla:search-history:v1", JSON.stringify(nextRecent)); } catch {}
     }
     setSearchOpen(false);
     if (item.mediaType === 'cartoon_movie') {
@@ -1885,6 +1927,16 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     <main className="app-shell">
       <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
         <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
+          <button
+            type="button"
+            className="site-app-sidebar-toggle"
+            aria-label={sidebarCollapsed ? "Open website navigation" : "Close website navigation"}
+            aria-expanded={!sidebarCollapsed}
+            title={sidebarCollapsed ? "Open navigation" : "Close navigation"}
+            onClick={() => window.dispatchEvent(new Event("situla:toggle-sidebar"))}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
+          </button>
           <Link href="/" className="brand-lockup" aria-label="Situla home">
             <img src="/icon.svg" alt="" className="brand-logo" width="40" height="40" />
             <span className="brand-copy min-w-0">
@@ -2028,7 +2080,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <div>
                 <span>{kidsMode ? "SITULA KIDS · APPROVED CARTOONS" : "SMART CATALOG SEARCH"}</span>
                 <h2 id="search-dialog-title">{kidsMode ? "Find a cartoon" : "Find your next watch"}</h2>
-                <p>{kidsMode ? "Search approved cartoon movies and TV series only." : "Movies, TV series and Anime · sorted by release date"}</p>
+                <p>{kidsMode ? "Search approved cartoon movies and TV series only." : "Search titles, original names and IMDb / TMDB / MAL IDs. Spelling variations are supported."}</p>
               </div>
               <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
                 <BootstrapIcon icon="x-lg" size={19} />
@@ -2039,12 +2091,27 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
               <input
                 autoFocus
                 value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setSearchOpen(false);
+                onChange={(event) => {
+                  setSearchInput(event.target.value);
+                  setSelectedSearchIndex(0);
                 }}
-                placeholder="Search & Title"
-                aria-label="Search catalogue by title"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchOpen(false);
+                  } else if (event.key === "ArrowDown" && suggestions.length) {
+                    event.preventDefault();
+                    setSelectedSearchIndex((current) => Math.min(suggestions.length - 1, current + 1));
+                  } else if (event.key === "ArrowUp" && suggestions.length) {
+                    event.preventDefault();
+                    setSelectedSearchIndex((current) => Math.max(0, current - 1));
+                  } else if (event.key === "Enter" && suggestions[selectedSearchIndex]) {
+                    event.preventDefault();
+                    openSearchResult(suggestions[selectedSearchIndex]);
+                  }
+                }}
+                placeholder="Search titles, original names or catalogue IDs…"
+                aria-label="Search titles, original names or catalogue IDs"
+                aria-activedescendant={suggestions[selectedSearchIndex] ? searchOptionId(suggestions[selectedSearchIndex]) : undefined}
               />
               {searchInput && (
                 <button type="button" onClick={() => { setSearchInput(""); setSuggestions([]); setSearchError(""); setSearchHasMore(false); setSearchPage(1); setSearchLoadingMore(false); }} aria-label="Clear search">
@@ -2052,6 +2119,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </button>
               )}
             </label>
+            {!kidsMode && (
+              <div className="search-keyboard-hint">
+                <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span><kbd>Enter</kbd> Open result</span>
+                <span><kbd>Esc</kbd> Close</span>
+                <span className="search-global-shortcut"><kbd>Ctrl</kbd>/<kbd>⌘</kbd> <kbd>K</kbd> Search anywhere</span>
+              </div>
+            )}
             <div className="search-filter-row">
               {!kidsMode && (
                 <div className="search-type-filters" role="group" aria-label="Filter by media type">
@@ -2077,6 +2152,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   {searchYears.length === 0 && <option value="" disabled>{searchDateRange ? "No database years available" : "Loading database years…"}</option>}
                 </select>
               </label>
+              {!kidsMode && (
+                <label className="search-sort-filter">
+                  <span><SlidersHorizontal size={12} /> Sort results</span>
+                  <select value={searchSort} onChange={(event) => { setSearchSort(event.target.value); setSelectedSearchIndex(0); }} aria-label="Sort search results">
+                    <option value="relevance">Best match</option>
+                    <option value="newest">Newest first</option>
+                    <option value="popular">Most popular</option>
+                    <option value="rating">Highest rated</option>
+                  </select>
+                </label>
+              )}
             </div>
             {searchDateRange && (
               <p className="search-results-caption" aria-label={kidsMode ? "Cartoon catalogue release date range" : "Catalogue release year range"}>
@@ -2089,7 +2175,35 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
             {searchInput.trim().length > 0 && searchInput.trim().length < (kidsMode ? 2 : 3) ? (
               <div className="suggestion-empty">{kidsMode ? "Enter at least 2 characters to search cartoons." : "Enter at least 3 characters to start smart search."}</div>
             ) : !kidsMode && !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
-              <div className="suggestion-empty">Type 3 or more characters, or choose a catalog or release year to browse the newest titles.</div>
+              <div className="search-idle-state">
+                <div className="search-idle-intro">
+                  <span className="search-idle-icon"><Search size={18} /></span>
+                  <span><strong>What would you like to watch?</strong><small>Search by title, original title, or a catalogue ID. Minor spelling mistakes are okay.</small></span>
+                </div>
+                {recentSearches.length > 0 ? (
+                  <div className="search-recent-section">
+                    <div className="search-recent-heading">
+                      <span><Clock3 size={13} /> Recent searches</span>
+                      <button type="button" onClick={() => {
+                        setRecentSearches([]);
+                        try { localStorage.removeItem("situla:search-history:v1"); } catch {}
+                      }}>Clear history</button>
+                    </div>
+                    <div className="search-recent-list">
+                      {recentSearches.map((term) => (
+                        <button key={term} type="button" className="search-recent-chip" onClick={() => {
+                          setSearchInput(term);
+                          setSearchType("all");
+                          setSearchYear("all");
+                          setSearchSort("relevance");
+                        }}>{term}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="search-idle-tip">Try a title like “Interstellar”, an original title, or paste an IMDb / TMDB / MAL ID.</p>
+                )}
+              </div>
             ) : suggestionsLoading ? (
               <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
             ) : searchError && !suggestions.length ? (
@@ -2099,10 +2213,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <div className="search-results-caption">
                   {suggestions.length} results shown · {kidsMode ? "Approved cartoons" : searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
                   {searchYear !== "all" ? " · " + searchYear : ""}
-                  {kidsMode ? " · Database release dates" : searchInput.trim().length >= 3 ? " · Smart relevance + newest first" : " · Newest first"}
+                  {kidsMode ? " · Database release dates" : " · " + ({ relevance: "Best match", newest: "Newest first", popular: "Most popular", rating: "Highest rated" }[searchSort] || "Best match")}
                 </div>
                 <div className="search-results-list" role="listbox" aria-label="Search results">
-                  {suggestions.map((item) => {
+                  {suggestions.map((item, index) => {
                     const identity = item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
                       ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
                     const date = item.releaseDate || item.firstAirDate || item.airedFrom || (item.releaseYear ? String(item.releaseYear) : "Release date unavailable");
@@ -2111,9 +2225,10 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                       <button
                         key={item.mediaType + ":" + identity}
                         type="button"
-                        className="suggestion-item"
+                        id={searchOptionId(item)}
+                        className={"suggestion-item" + (selectedSearchIndex === index ? " is-active" : "")}
                         role="option"
-                        aria-selected="false"
+                        aria-selected={selectedSearchIndex === index}
                         onClick={() => openSearchResult(item)}
                       >
                         {item.posterUrl || item.posterFallbackUrl

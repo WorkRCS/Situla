@@ -91,7 +91,7 @@ export function SiteSidebar({
 
   useEffect(() => {
     try {
-      const savedPreference = window.localStorage.getItem("situla:sidebar-collapsed:v1");
+      const savedPreference = window.localStorage.getItem("situla:sidebar-collapsed:v2");
       if (savedPreference === "1") setCollapsed(true);
       else if (savedPreference === "0") setCollapsed(false);
       else setCollapsed(window.matchMedia("(min-width: 1101px)").matches);
@@ -103,6 +103,18 @@ export function SiteSidebar({
   useEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
+
+  useEffect(() => {
+    function handleSidebarToggle() {
+      setCollapsed((value) => {
+        const nextValue = !value;
+        try { window.localStorage.setItem("situla:sidebar-collapsed:v2", nextValue ? "1" : "0"); } catch {}
+        return nextValue;
+      });
+    }
+    window.addEventListener("situla:toggle-sidebar", handleSidebarToggle);
+    return () => window.removeEventListener("situla:toggle-sidebar", handleSidebarToggle);
+  }, []);
 
   useEffect(() => {
     if (typeof upcomingHasUnread === "boolean") return;
@@ -141,7 +153,7 @@ export function SiteSidebar({
           className="site-sidebar-toggle"
           onClick={() => setCollapsed((value) => {
             const nextValue = !value;
-            try { window.localStorage.setItem("situla:sidebar-collapsed:v1", nextValue ? "1" : "0"); } catch {}
+            try { window.localStorage.setItem("situla:sidebar-collapsed:v2", nextValue ? "1" : "0"); } catch {}
             return nextValue;
           })}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}

@@ -60,3 +60,15 @@ test('results use newest database date as the tie-breaker and browse mode is new
 test('query text is escaped before it is used in a Mongo regular expression', () => {
   assert.equal(escapeSearchRegex('A+B (2026)'), 'A\\+B \\(2026\\)');
 });
+
+
+test('search results support newest, popularity and rating sort modes', () => {
+  const items = [
+    { title: 'Dune', releaseDate: '2021-10-22', popularity: 90, voteAverage: 8.0 },
+    { title: 'Dune', releaseDate: '2024-03-01', popularity: 55, voteAverage: 7.0 },
+    { title: 'Dune', releaseDate: '2019-01-01', popularity: 120, voteAverage: 9.0 }
+  ];
+  assert.equal(rankSearchResults(items, 'Dune', 'newest')[0].releaseDate, '2024-03-01');
+  assert.equal(rankSearchResults(items, 'Dune', 'popular')[0].releaseDate, '2019-01-01');
+  assert.equal(rankSearchResults(items, 'Dune', 'rating')[0].releaseDate, '2019-01-01');
+});

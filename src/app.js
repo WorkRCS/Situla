@@ -127,6 +127,10 @@ async function enforceAdultCatalogBoundary(c, next) {
       return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
     }
     if (pathname === '/api/search') {
+      const selectedSort = String(c.req.query('sort') || 'relevance').toLowerCase();
+      if (!new Set(['relevance', 'newest', 'popular', 'rating']).has(selectedSort)) {
+        return c.json({ error: 'Choose a valid search sort order.', items: [] }, 400);
+      }
       const query = safeText(c.req.query('q'));
       const yearText = String(c.req.query('year') || '').trim();
       const year = yearText ? Number(yearText) : null;
@@ -1793,6 +1797,10 @@ app.get('/api/search', async (c) => {
   const selectedType = String(c.req.query('type') || 'all').toLowerCase();
   const allowedTypes = new Set(['all', 'movie', 'tv', 'anime']);
   if (!allowedTypes.has(selectedType)) return c.json({ error: 'Choose a valid catalog filter.', items: [] }, 400);
+  const sort = String(c.req.query('sort') || 'relevance').toLowerCase();
+  if (!new Set(['relevance', 'newest', 'popular', 'rating']).has(sort)) {
+    return c.json({ error: 'Choose a valid search sort order.', items: [] }, 400);
+  }
 
   const yearText = String(c.req.query('year') || '').trim();
   const year = yearText ? Number(yearText) : null;
@@ -1917,7 +1925,7 @@ app.get('/api/search', async (c) => {
       uniqueItems.push(item);
     }
 
-    const rankedItems = rankSearchResults(uniqueItems, query);
+    const rankedItems = rankSearchResults(uniqueItems, query, sort);
     const items = rankedItems.slice(offset, offset + limit);
     const hasMore = page < 20 && (
       rankedItems.length > offset + limit ||
@@ -1930,7 +1938,7 @@ app.get('/api/search', async (c) => {
       limit,
       returned: items.length,
       minQueryLength: 3,
-      sort: query ? 'relevance_then_newest' : 'newest_first'
+      sort
     });
   } catch (error) {
     console.error('Global catalog search failed:', error?.message || 'Unknown error');

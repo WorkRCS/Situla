@@ -96,21 +96,24 @@ export function searchResultDate(item) {
   return Number.isInteger(year) && year >= 1000 && year <= 9999 ? String(year).padStart(4, '0') + '-01-01' : '';
 }
 
-export function rankSearchResults(items, query = '') {
+export function rankSearchResults(items, query = '', sort = 'relevance') {
   const normalizedQuery = normalizeSearchText(query);
-  return (Array.isArray(items) ? items : [])
-    .map((item, index) => ({
-      item,
-      index,
-      score: normalizedQuery ? searchRelevanceScore(item, normalizedQuery) : 0,
-      date: searchResultDate(item)
-    }))
-    .sort((left, right) =>
-      right.score - left.score ||
-      right.date.localeCompare(left.date) ||
-      left.index - right.index
-    )
-    .map(({ item }) => item);
+  const records = (Array.isArray(items) ? items : []).map((item, index) => ({
+    item,
+    index,
+    score: normalizedQuery ? searchRelevanceScore(item, normalizedQuery) : 0,
+    date: searchResultDate(item),
+    popularity: Number(item?.popularity) || 0,
+    rating: Number(item?.voteAverage ?? item?.score) || 0,
+    votes: Number(item?.voteCount ?? item?.scoredBy) || 0
+  }));
+  records.sort((left, right) => {
+    if (sort === 'newest') return right.date.localeCompare(left.date) || right.score - left.score || left.index - right.index;
+    if (sort === 'popular') return right.popularity - left.popularity || right.rating - left.rating || right.score - left.score || right.date.localeCompare(left.date) || left.index - right.index;
+    if (sort === 'rating') return right.rating - left.rating || right.votes - left.votes || right.popularity - left.popularity || right.date.localeCompare(left.date) || left.index - right.index;
+    return right.score - left.score || right.date.localeCompare(left.date) || left.index - right.index;
+  });
+  return records.map(({ item }) => item);
 }
 
 export function buildSearchYearFilter(dateField, yearField, year) {

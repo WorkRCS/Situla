@@ -124,3 +124,36 @@ test("header avatar initials stay legible on glass and fall back to the account 
   assert.match(app, /<span className="header-avatar-initials">\{getAccountInitials\(accountUser\)\}<\/span>/);
   assert.match(css, /\.site-app-header \.header-avatar-initials\s*\{[\s\S]*?color:#2a1c0a !important;[\s\S]*?background:linear-gradient\(145deg,#ffe8b8,#d99a3e\) !important/);
 });
+
+
+test('desktop navigation puts the brand above the rail and exposes a collapsed-by-default header toggle', async () => {
+  const [app, sidebar, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/components/site-sidebar.jsx"),
+    read("../app/globals.css")
+  ]);
+  assert.match(app, /className="site-app-sidebar-toggle"/);
+  assert.match(app, /situla:toggle-sidebar/);
+  assert.match(sidebar, /situla:toggle-sidebar/);
+  assert.match(sidebar, /situla:sidebar-collapsed:v2/);
+  assert.match(css, /\.site-app-header\s*\{[\s\S]*?width:calc\(100% - var\(--site-sidebar-column\)\)/);
+  assert.match(css, /\.site-app-header \.brand-lockup \{ display:none !important; \}/);
+});
+
+test('advanced search supports keyboard navigation, recent queries and safe sort modes', async () => {
+  const [app, api, ranker] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../src/app.js"),
+    read("../src/search-ranking.js")
+  ]);
+  assert.match(app, /handleGlobalSearchShortcut/);
+  assert.match(app, /event\.key === "ArrowDown"/);
+  assert.match(app, /event\.key === "ArrowUp"/);
+  assert.match(app, /situla:search-history:v1/);
+  assert.match(app, /search-sort-filter/);
+  assert.match(app, /value="popular">Most popular/);
+  assert.match(api, /Choose a valid search sort order/);
+  assert.match(ranker, /sort === 'newest'/);
+  assert.match(ranker, /sort === 'popular'/);
+  assert.match(ranker, /sort === 'rating'/);
+});
