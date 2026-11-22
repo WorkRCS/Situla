@@ -125,7 +125,9 @@ test("Hero fits the viewport, keeps side previews clear and contains mobile copy
 
 test("Full-site glass styling remains dark and applies restrained blur to shared navigation planes", async () => {
   const css = await read("../app/globals.css");
-  const glass = css.slice(css.indexOf("/* Shared dark-glass tokens for responsive Situla surfaces."));
+  const glassStart = css.indexOf("/* Shared dark-glass tokens for responsive Situla surfaces.");
+  const glassEnd = css.indexOf("/* Situla navigation glass system:", glassStart);
+  const glass = css.slice(glassStart, glassEnd > glassStart ? glassEnd : undefined);
 
   assert.match(glass, /--situla-glass-surface:rgba\(15,18,27,\.76\)/);
   assert.match(glass, /--situla-glass-border:rgba\(220,229,245,\.13\)/);
