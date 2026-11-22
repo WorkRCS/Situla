@@ -136,3 +136,18 @@ test("database models include indexes for frequently sorted admin and upcoming r
   assert.match(db, /Model\.createIndexes\(\)/);
   assert.match(db, /autoIndex: false/);
 });
+
+test("catalogue cards defer off-screen rendering and avoid expensive scroll-time effects", async () => {
+  const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
+  const cartoons = await read("../app/components/cartoons-catalog.jsx");
+  const finalPass = css.slice(css.lastIndexOf("/* Low-memory catalogue rendering"));
+  assert.match(finalPass, /\.catalog-grid > \.movie-card\s*\{[\s\S]*?content-visibility:auto/);
+  assert.match(finalPass, /\.media-row > \.movie-card\s*\{[\s\S]*?content-visibility:auto/);
+  assert.match(finalPass, /\.site-app-header,[\s\S]*?backdrop-filter:none !important/);
+  assert.match(finalPass, /\.movie-card:hover \.movie-poster\s*\{[\s\S]*?box-shadow:none !important/);
+  assert.match(app, /loading="lazy"[\s\S]*?decoding="async"/);
+  assert.match(cartoons, /loading="lazy" decoding="async"/);
+  assert.match(finalPass, /@media \(hover:none\), \(pointer:coarse\)/);
+});
+
