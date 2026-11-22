@@ -10369,3 +10369,532 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   bottom:7px !important;
 }
 
+
+
+/* Focused visual refinement for Login, Plans and Profile only. */
+.login-page .login-form-panel {
+  flex-basis:min(43%,620px);
+  width:min(43%,620px);
+  padding:clamp(24px,3.6vw,52px);
+  background:
+    radial-gradient(ellipse at 86% 8%,rgba(232,182,91,.075),transparent 44%),
+    linear-gradient(155deg,#121621 0%,#0b0e15 76%);
+}
+.login-page .login-form-panel .login-form-card {
+  width:min(100%,448px);
+  padding:clamp(25px,3vw,38px);
+  border:1px solid rgba(220,228,241,.14);
+  border-radius:22px;
+  background:linear-gradient(150deg,rgba(25,29,40,.99),rgba(13,16,24,.99) 76%);
+  box-shadow:0 26px 76px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.055);
+}
+.login-page .login-form-panel .login-form {
+  gap:19px;
+}
+.login-page .account-field {
+  gap:9px;
+  color:#e3e7ef;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:.005em;
+}
+.login-page .account-input-wrap {
+  min-height:53px;
+  gap:12px;
+  padding-inline:15px;
+  border-color:rgba(220,228,241,.15);
+  border-radius:13px;
+  background:rgba(5,8,14,.58);
+}
+.login-page .account-input-wrap > svg {
+  width:18px;
+  height:18px;
+  flex:none;
+  color:#bd9a60;
+}
+.login-page .account-input-wrap input {
+  height:51px;
+  font-size:14px;
+}
+.login-page .account-password-toggle {
+  width:34px;
+  height:34px;
+  border-radius:9px;
+}
+.login-page .account-primary-button {
+  min-height:52px;
+  margin-top:2px;
+  border-radius:13px;
+  font-size:13px;
+  font-weight:850;
+}
+.login-page .account-divider {
+  gap:14px;
+  margin:19px 0 2px;
+  font-size:9px;
+}
+.login-page .account-google-button {
+  min-height:51px;
+  border-radius:13px;
+  font-size:13px;
+  font-weight:700;
+}
+.login-page .account-action-notice {
+  margin-top:14px;
+  padding:12px 13px;
+  border-radius:11px;
+  font-size:11px;
+  line-height:1.55;
+}
+.login-page .account-input-wrap:focus-within {
+  border-color:rgba(232,182,91,.72);
+  box-shadow:0 0 0 3px rgba(232,182,91,.1);
+}
+.login-page button:focus-visible,
+.login-page input:focus-visible {
+  outline:2px solid rgba(245,213,143,.92);
+  outline-offset:3px;
+}
+@media (min-width:641px) and (max-width:1100px) {
+  .login-page .login-form-panel {
+    flex-basis:48%;
+    width:48%;
+    min-width:360px;
+    padding:28px;
+  }
+  .login-page .login-form-panel .login-form-card {
+    padding:28px 25px;
+  }
+}
+@media (max-width:900px) {
+  .login-page .login-form-panel {
+    align-items:center;
+    justify-content:center;
+    padding:22px;
+    background:linear-gradient(90deg,rgba(6,8,13,.66),rgba(6,8,13,.72));
+  }
+  .login-page .login-form-panel .login-form-card {
+    width:min(100%,448px);
+    padding:clamp(24px,4.5vw,34px);
+    background:linear-gradient(150deg,rgba(23,27,37,.985),rgba(12,15,23,.99));
+  }
+}
+@media (max-width:640px) {
+  .login-page .login-form-panel {
+    padding:16px;
+  }
+  .login-page .login-form-panel .login-form-card {
+    padding:24px 21px;
+    border-radius:20px;
+  }
+  .login-page .login-form-panel .login-form {
+    gap:17px;
+  }
+  .login-page .account-field { font-size:11.5px; }
+  .login-page .account-input-wrap { min-height:51px; padding-inline:13px; }
+  .login-page .account-input-wrap input { height:49px; font-size:14px; }
+  .login-page .account-primary-button,
+  .login-page .account-google-button { min-height:49px; }
+  .login-page { overflow-y:auto; }
+}
+@media (max-width:380px) {
+  .login-page .login-form-panel { padding:12px; }
+  .login-page .login-form-panel .login-form-card { padding:21px 17px; }
+}
+@media (max-height:560px) and (max-width:900px) {
+  .login-page { overflow-y:auto; }
+  .login-page .login-form-panel { min-height:100svh; align-items:flex-start; padding-block:22px; }
+}
+
+/* Plans: stronger hierarchy, legible plan details and balanced feature cards. */
+.plans-page {
+  padding-top:clamp(20px,3vw,38px);
+  background:
+    radial-gradient(ellipse 58% 28% at 10% 0%,rgba(232,182,91,.09),transparent 76%),
+    radial-gradient(ellipse 48% 24% at 96% 14%,rgba(87,106,151,.075),transparent 78%),
+    #08090e;
+}
+.plans-topbar { padding-bottom:clamp(24px,3vw,34px); }
+.plans-back-link {
+  min-height:40px;
+  padding:0 12px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;
+  background:rgba(255,255,255,.035);
+  font-size:11px;
+  transition:border-color .16s ease,background .16s ease,color .16s ease;
+}
+.plans-back-link:hover {
+  border-color:rgba(232,182,91,.32);
+  background:rgba(232,182,91,.07);
+}
+.plans-intro {
+  max-width:790px;
+  margin-bottom:clamp(23px,3vw,32px);
+}
+.plans-eyebrow { font-size:9px; letter-spacing:.19em; }
+.plans-intro h1 {
+  margin:10px 0 11px;
+  font-size:clamp(32px,4.1vw,46px);
+  line-height:1.06;
+  letter-spacing:-.042em;
+}
+.plans-intro p {
+  max-width:700px;
+  color:#aab1bf;
+  font-size:13px;
+  line-height:1.72;
+}
+.plans-cards { gap:16px; }
+.plans-card {
+  padding:clamp(19px,2vw,25px);
+  border-color:rgba(220,228,241,.105);
+  border-radius:20px;
+  background:linear-gradient(155deg,rgba(25,29,40,.98),rgba(13,16,23,.99) 78%);
+  box-shadow:0 18px 48px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.025);
+}
+.plans-card-premium {
+  border-color:rgba(232,182,91,.36);
+  background:linear-gradient(155deg,rgba(37,31,23,.98),rgba(16,17,23,.99) 74%);
+}
+.plans-card-heading { gap:13px; }
+.plans-plan-icon {
+  width:43px;
+  height:43px;
+  border-radius:13px;
+}
+.plans-card-kicker { font-size:8.5px; letter-spacing:.14em; }
+.plans-card h2 { font-size:22px; letter-spacing:-.03em; }
+.plans-price-line {
+  min-height:76px;
+  gap:5px;
+  margin:17px 0 15px;
+  padding:14px 0;
+}
+.plans-price-line strong { font-size:26px; }
+.plans-price-line span { color:#a1a9b7; font-size:10px; }
+.plans-metrics { gap:8px; }
+.plans-card:not(.plans-card-guest) .plans-metrics {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.plans-metric {
+  gap:6px;
+  padding:11px 9px;
+  border-color:rgba(220,228,241,.075);
+  border-radius:11px;
+  background:rgba(255,255,255,.032);
+}
+.plans-metric > span { font-size:8px; letter-spacing:.085em; }
+.plans-metric strong { font-size:12px; line-height:1.3; }
+.plans-metric small { color:#929bab; font-size:8.5px; line-height:1.4; }
+.plans-feature-list { gap:11px; margin:18px 0 20px; }
+.plans-feature-list li {
+  gap:9px;
+  color:#c9cfda;
+  font-size:11px;
+  line-height:1.58;
+}
+.plans-feature-list li svg { width:15px; height:15px; }
+.plans-card-action {
+  min-height:45px;
+  padding-inline:13px;
+  border-radius:11px;
+  font-size:11px;
+  font-weight:800;
+}
+.plans-billing { gap:10px; margin:17px 0 14px; padding:14px 0; }
+.plans-billing-label { font-size:8px; letter-spacing:.12em; }
+.plans-billing-options { gap:7px; }
+.plans-billing-options button {
+  min-height:36px;
+  border-radius:9px;
+  font-size:9px;
+}
+.plans-premium-price strong { font-size:28px; }
+.plans-premium-price span,.plans-effective-rate { font-size:9px; }
+.plans-effective-rate { margin-top:1px; }
+.plans-premium-note { gap:9px; font-size:9px; line-height:1.6; }
+.plans-access-notes { gap:13px; margin-top:19px; }
+.plans-access-notes > div {
+  gap:11px;
+  padding:15px;
+  border-color:rgba(220,228,241,.085);
+  border-radius:14px;
+  background:rgba(18,21,29,.72);
+}
+.plans-access-notes > div > svg { width:17px; height:17px; }
+.plans-access-notes p { gap:5px; }
+.plans-access-notes strong { font-size:10px; }
+.plans-access-notes span { color:#a0a8b6; font-size:9px; line-height:1.62; }
+.plans-page a:focus-visible,.plans-page button:focus-visible {
+  outline:2px solid rgba(232,182,91,.9);
+  outline-offset:3px;
+}
+@media (max-width:980px) {
+  .plans-page { padding-inline:clamp(16px,3vw,26px); }
+  .plans-cards { gap:13px; }
+  .plans-card { padding:20px; }
+  .plans-access-notes { gap:10px; }
+}
+@media (max-width:680px) {
+  .plans-page { padding:16px 13px calc(28px + env(safe-area-inset-bottom)); }
+  .plans-topbar { padding-bottom:22px; }
+  .plans-intro { margin:0 0 21px; }
+  .plans-intro h1 { font-size:clamp(29px,8.4vw,37px); }
+  .plans-intro p { font-size:12px; line-height:1.65; }
+  .plans-cards { gap:12px; }
+  .plans-card { padding:20px 18px; }
+  .plans-metrics { gap:7px; }
+  .plans-metric { padding:10px 8px; }
+  .plans-metric > span { font-size:8px; }
+  .plans-metric strong { font-size:11.5px; }
+  .plans-metric small { font-size:8.5px; }
+  .plans-feature-list li { font-size:11px; }
+  .plans-access-notes { gap:9px; margin-top:14px; }
+  .plans-access-notes > div { padding:13px; }
+}
+@media (max-width:380px) {
+  .plans-page { padding-inline:10px; }
+  .plans-card { padding:18px 15px; }
+  .plans-metrics { gap:5px; }
+  .plans-metric { padding:9px 6px; }
+  .plans-metric > span { font-size:7.5px; }
+  .plans-metric strong { font-size:10.5px; }
+  .plans-metric small { font-size:8px; }
+  .plans-billing-options button { font-size:8px; }
+}
+
+/* Profile: consistent type scale, clean identity summary and responsive information cards. */
+.profile-content { width:min(1240px,100%); margin:clamp(27px,3.2vw,40px) auto 0; }
+.profile-page-heading { gap:18px; margin-bottom:22px; }
+.profile-page-heading h1 {
+  margin:8px 0 7px;
+  font-size:clamp(27px,3vw,38px);
+  letter-spacing:-.045em;
+}
+.profile-page-heading p { color:#a1a9b7; font-size:12px; line-height:1.6; }
+.profile-preview-pill {
+  padding:8px 11px;
+  border-color:rgba(232,182,91,.29);
+  font-size:9px;
+  letter-spacing:.09em;
+}
+.profile-overview-panel {
+  gap:24px;
+  padding:clamp(20px,2.5vw,30px);
+  border-color:rgba(220,228,241,.12);
+  border-radius:21px;
+  background:radial-gradient(ellipse at 8% 0%,rgba(232,182,91,.12),transparent 50%),linear-gradient(120deg,#191d27,#10131b 78%);
+  box-shadow:0 18px 48px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.04);
+}
+.profile-identity { gap:19px; }
+.profile-avatar-large {
+  width:78px;
+  height:78px;
+  border-radius:23px;
+  font-size:23px;
+}
+.profile-identity-copy h2 { font-size:clamp(20px,2.4vw,28px); }
+.profile-identity-copy > p { font-size:12px; line-height:1.5; }
+.profile-overline { font-size:9px; letter-spacing:.15em; }
+.profile-verified-badge,.profile-active-badge {
+  min-height:27px;
+  padding:5px 10px;
+  font-size:10px;
+}
+.profile-account-health {
+  min-width:185px;
+  gap:8px;
+  padding:16px 18px;
+  border-radius:15px;
+}
+.profile-account-health > span { font-size:9px; }
+.profile-account-health strong { font-size:16px; }
+.profile-account-health small { font-size:10px; }
+.profile-main-grid { gap:19px; margin-top:19px; }
+.profile-primary-column,.profile-secondary-column { gap:18px; }
+.profile-membership-card,.profile-benefits-card,.profile-details-card,.profile-access-card {
+  padding:clamp(19px,2.1vw,25px);
+  border-color:rgba(220,228,241,.105);
+  border-radius:19px;
+  box-shadow:0 16px 42px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.025);
+}
+.profile-card-plan-icon { width:44px; height:44px; border-radius:14px; }
+.profile-plan-active { font-size:9px; letter-spacing:.11em; }
+.profile-plan-heading { margin-top:19px; }
+.profile-plan-heading h2 { font-size:33px; }
+.profile-plan-heading p { font-size:11px; line-height:1.5; }
+.profile-plan-price strong { font-size:27px; }
+.profile-plan-price > span { font-size:10px; }
+.profile-plan-price small { font-size:9px; }
+.profile-purchase-row { margin-top:20px; gap:10px 14px; }
+.profile-purchased-button,.profile-upgrade-trigger {
+  min-height:43px;
+  border-radius:12px;
+  font-size:11px;
+}
+.profile-purchase-caption { font-size:9px; }
+.profile-membership-progress { margin-top:23px; padding-top:18px; }
+.profile-progress-heading span { font-size:9px; }
+.profile-progress-heading strong { font-size:10px; }
+.profile-progress-track { height:7px; }
+.profile-progress-labels { margin-top:8px; font-size:9px; }
+.profile-plan-stats { gap:10px; margin-top:19px; }
+.profile-plan-stats > div { gap:9px; padding:11px 10px; border-radius:12px; }
+.profile-plan-stats > div > svg { width:17px; height:17px; }
+.profile-plan-stats small { font-size:8px; letter-spacing:.07em; }
+.profile-plan-stats strong { font-size:10px; }
+.profile-renewal-panel { gap:11px; margin-top:18px; padding:13px; }
+.profile-renewal-copy strong { font-size:11px; }
+.profile-renewal-copy small { font-size:9px; line-height:1.55; }
+.profile-renewal-panel > button { min-height:36px; font-size:10px; }
+.profile-renewal-locked { gap:9px; padding:12px; font-size:10px; line-height:1.5; }
+.profile-action-notice { font-size:10px; line-height:1.55; }
+.profile-section-heading h2 { font-size:18px; }
+.profile-benefit-count { font-size:9px; }
+.profile-benefit-grid { gap:10px; margin-top:18px; }
+.profile-benefit-item {
+  gap:6px;
+  padding:13px;
+  border-color:rgba(220,228,241,.075);
+  border-radius:13px;
+}
+.profile-benefit-item > span { width:32px; height:32px; border-radius:10px; }
+.profile-benefit-item strong { font-size:11px; line-height:1.45; }
+.profile-benefit-item small { font-size:9px; line-height:1.5; }
+.profile-view-plans { font-size:11px; }
+.profile-locked-intro { font-size:10px; line-height:1.6; }
+.profile-readonly-list { gap:9px; }
+.profile-readonly-field { gap:10px; padding:11px 10px; border-radius:12px; }
+.profile-field-icon { width:33px; height:33px; }
+.profile-field-copy { gap:5px; }
+.profile-field-copy small { font-size:9px; }
+.profile-field-copy strong {
+  font-size:10px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.profile-locked-label { font-size:9px; }
+.profile-security-note { gap:10px; margin-top:15px; padding:12px; border-radius:12px; }
+.profile-security-note strong { font-size:10px; }
+.profile-security-note small { font-size:9px; line-height:1.55; }
+.profile-access-card .profile-section-heading { margin-bottom:17px; }
+.profile-access-row { gap:13px; padding:11px 1px; }
+.profile-access-row > span,.profile-access-row > strong { font-size:10px; line-height:1.45; }
+.profile-access-footnote { font-size:9px; line-height:1.6; }
+.profile-signed-out {
+  width:min(490px,100%);
+  margin:clamp(72px,15vh,150px) auto 30px;
+  padding:clamp(26px,4vw,38px);
+  border-radius:21px;
+  background:linear-gradient(145deg,#191d27,#10131b);
+}
+.profile-signed-out h1 { font-size:27px; }
+.profile-signed-out p { font-size:12px; line-height:1.65; }
+@media (max-width:900px) {
+  .profile-content { margin-top:28px; }
+  .profile-overview-panel { gap:18px; padding:21px; }
+  .profile-account-health { min-width:165px; }
+  .profile-main-grid { gap:14px; }
+}
+@media (max-width:700px) {
+  .profile-page-heading { margin-bottom:17px; }
+  .profile-overview-panel { padding:18px; }
+  .profile-avatar-large { width:70px; height:70px; border-radius:21px; }
+  .profile-secondary-column { gap:13px; }
+}
+@media (max-width:520px) {
+  .profile-content { margin-top:24px; }
+  .profile-page-heading { display:grid; gap:10px; }
+  .profile-preview-pill { justify-self:start; margin:0; }
+  .profile-overview-panel { display:grid; gap:16px; padding:16px; }
+  .profile-identity { gap:13px; }
+  .profile-avatar-large { width:62px; height:62px; border-radius:18px; font-size:19px; }
+  .profile-identity-copy h2 { font-size:20px; }
+  .profile-main-grid { gap:12px; margin-top:13px; }
+  .profile-primary-column,.profile-secondary-column { gap:12px; }
+  .profile-secondary-column { grid-template-columns:minmax(0,1fr); }
+  .profile-plan-heading { align-items:flex-start; }
+  .profile-plan-heading h2 { font-size:29px; }
+  .profile-plan-price strong { font-size:24px; }
+  .profile-plan-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .profile-plan-stats > div { display:flex; gap:8px; padding:10px 9px; }
+  .profile-plan-stats > div:last-child { grid-column:1/-1; }
+  .profile-benefit-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .profile-benefit-item { padding:11px; }
+  .profile-renewal-panel { flex-wrap:wrap; }
+  .profile-renewal-copy { flex-basis:calc(100% - 49px); }
+  .profile-renewal-panel > button { margin-left:45px; }
+}
+@media (max-width:380px) {
+  .profile-content { margin-top:21px; }
+  .profile-page-heading h1 { font-size:26px; }
+  .profile-overview-panel { padding:14px; }
+  .profile-avatar-large { width:56px; height:56px; border-radius:16px; font-size:17px; }
+  .profile-identity-copy h2 { font-size:18px; }
+  .profile-identity-copy > p { font-size:11px; }
+  .profile-membership-card,.profile-benefits-card,.profile-details-card,.profile-access-card { padding:16px 14px; }
+  .profile-plan-stats { grid-template-columns:minmax(0,1fr); }
+  .profile-plan-stats > div:last-child { grid-column:auto; }
+  .profile-benefit-grid { gap:7px; }
+  .profile-benefit-item { padding:10px; }
+}
+
+/* The existing Profile upgrade dialog inherits the same measured type scale. */
+.profile-upgrade-dialog { border-radius:22px; }
+.profile-upgrade-header { padding:clamp(20px,3vw,29px) clamp(19px,3vw,30px) 18px; }
+.profile-upgrade-heading h2 { font-size:clamp(21px,2.7vw,28px); }
+.profile-upgrade-heading p { font-size:12px; line-height:1.65; }
+.profile-upgrade-section-heading > div > span { font-size:9px; }
+.profile-upgrade-section-heading h3 { font-size:17px; line-height:1.3; }
+.profile-upgrade-billing-options { gap:10px; }
+.profile-upgrade-billing-option { padding:14px; border-radius:14px; }
+.profile-upgrade-billing-option > strong { font-size:11px; }
+.profile-upgrade-billing-option > em { font-size:10px; }
+.profile-upgrade-price-summary span { font-size:10px; }
+.profile-upgrade-price-summary strong { font-size:17px; }
+.profile-upgrade-plan-stats > div { gap:9px; padding:13px; }
+.profile-upgrade-plan-stats small { font-size:9px; }
+.profile-upgrade-plan-stats strong { font-size:15px; }
+.profile-upgrade-feature-panel { padding:16px; border-radius:14px; }
+.profile-upgrade-feature-panel h3 { font-size:11px; }
+.profile-upgrade-feature-panel li { font-size:10px; line-height:1.6; }
+.profile-upgrade-checkout-notice { padding:13px 14px; }
+.profile-upgrade-checkout-notice strong { font-size:10px; }
+.profile-upgrade-checkout-notice small { font-size:10px; line-height:1.6; }
+.profile-upgrade-footer button { min-height:42px; font-size:10px; }
+@media (max-width:620px) {
+  .profile-upgrade-dialog { border-radius:18px; }
+  .profile-upgrade-header { padding:17px 15px 14px; }
+  .profile-upgrade-heading h2 { font-size:20px; }
+  .profile-upgrade-heading p { font-size:11px; }
+  .profile-upgrade-body { gap:14px; padding:14px 13px; }
+  .profile-upgrade-billing-options { gap:7px; }
+  .profile-upgrade-billing-option { padding:11px 9px; }
+  .profile-upgrade-billing-option > strong { font-size:9.5px; }
+  .profile-upgrade-billing-option > span { font-size:18px; }
+  .profile-upgrade-billing-option > em { font-size:9px; }
+  .profile-upgrade-price-summary { gap:8px; padding:11px; }
+  .profile-upgrade-price-summary span { font-size:9px; }
+  .profile-upgrade-price-summary strong { font-size:14px; }
+  .profile-upgrade-plan-stats > div { padding:10px 8px; }
+  .profile-upgrade-feature-panel { padding:12px; }
+  .profile-upgrade-feature-panel li { font-size:9px; }
+  .profile-upgrade-checkout-notice small { font-size:9px; }
+  .profile-upgrade-footer { padding:12px 14px; }
+}
+@media (max-width:380px) {
+  .profile-upgrade-header { gap:9px; }
+  .profile-upgrade-body { padding-inline:10px; }
+  .profile-upgrade-billing-option { padding:10px 7px; }
+  .profile-upgrade-billing-option > span { font-size:16px; }
+  .profile-upgrade-price-summary strong { font-size:13px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .login-page *,
+  .plans-page *,
+  .profile-page * {
+    transition:none !important;
+  }
+}
