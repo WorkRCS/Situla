@@ -79,20 +79,19 @@ test("Vercel build pins Node 22 and clears only injected cache-dir environment c
   assert.match(vercel.buildCommand, /npm run build$/);
 });
 
-test("desktop sidebar defaults to collapsed while an explicit expanded preference is respected", async () => {
+test("desktop sidebar always starts collapsed and opens only after the user toggles it", async () => {
   const [sidebar, app, css] = await Promise.all([
     read("../app/components/site-sidebar.jsx"),
     read("../app/components/situla-app.jsx"),
     read("../app/globals.css")
   ]);
   assert.match(sidebar, /const \[collapsed, setCollapsed\] = useState\(true\)/);
-  assert.match(sidebar, /matchMedia\("\(min-width: 1101px\)"\)\.matches/);
-  assert.match(sidebar, /savedPreference === "0"/);
+  assert.doesNotMatch(sidebar, /matchMedia\(|savedPreference|sidebar-collapsed:v2|localStorage/);
+  assert.match(sidebar, /onClick=\{\(\) => setCollapsed\(\(value\) => !value\)\}/);
   assert.match(app, /const \[sidebarCollapsed, setSidebarCollapsed\] = useState\(true\)/);
   assert.match(css, /--site-desktop-header-height:54px/);
   assert.match(css, /site-app-header \.header-actions \.header-search-trigger[\s\S]*?height:44px/);
 });
-
 test("Normal and Kids Hero images load without CORS mode and sample colours through the same-origin poster proxy", async () => {
   const [app, cartoons, hero] = await Promise.all([
     read("../app/components/situla-app.jsx"),
