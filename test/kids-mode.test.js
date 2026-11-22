@@ -305,3 +305,16 @@ test("Kids Mode refresh never renders Normal navigation before the server prefer
   assert.match(sidebar, /modeReady=\{activeKidsModeReady\}/);
   assert.match(sidebar, /\{activeKidsModeReady && <nav className=\{\"bottom-nav site-workspace-mobile-nav\"/);
 });
+
+test("Kids Mode hydration applies the confirmed mode before revealing navigation", async () => {
+  const app = await read("../app/components/situla-app.jsx");
+  const loaderStart = app.indexOf("async function loadKidsMode()");
+  const loaderEnd = app.indexOf('window.addEventListener("focus", refresh)', loaderStart);
+  assert.ok(loaderStart >= 0 && loaderEnd > loaderStart, "Kids Mode loader should exist");
+  const loader = app.slice(loaderStart, loaderEnd);
+  const applyMode = loader.indexOf("setKidsMode(enabled)");
+  const revealShell = loader.indexOf("setKidsModeReady(true)");
+  assert.ok(applyMode >= 0 && revealShell > applyMode,
+    "the confirmed mode must be committed before navigation/content becomes visible");
+});
+
