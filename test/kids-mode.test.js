@@ -294,7 +294,7 @@ test("Kids Mode refresh never renders Normal navigation before the server prefer
   const sidebar = await read("../app/components/site-sidebar.jsx");
 
   assert.match(app, /<SiteSidebar[\s\S]*?kidsMode=\{kidsMode\}[\s\S]*?modeReady=\{kidsModeReady\}/);
-  assert.match(app, /className=\{\"desktop-nav\" \+ \(!kidsModeReady \? \" is-mode-pending\" : \"\"\)\}/);
+  assert.match(app, /const navigationItems = !kidsModeReady \? \[\] : kidsMode \? KIDS_NAV_ITEMS : NAV_ITEMS;/);
   assert.match(app, /\{kidsModeReady && \([\s\S]*?className=\{\"bottom-nav\"/);
   assert.match(sidebar, /modeReady = true/);
   assert.match(sidebar, /\{modeReady && <nav className=\"home-sidebar-nav site-sidebar-navigation\"/);
