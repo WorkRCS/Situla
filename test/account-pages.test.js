@@ -180,7 +180,8 @@ test("Login, Plans and Profile keep their existing content with a clearer respon
     read("../app/profile/page.jsx")
   ]);
   const loginView = login.slice(login.indexOf("export function LoginPage"), login.indexOf("\nfunction formatAccessDuration"));
-  assert.doesNotMatch(loginView, /New email\\?|create a Free account automatically|Enter your account password|login-auth-hint/);
+  assert.equal(loginView.includes("New email?"), false);
+  assert.doesNotMatch(loginView, /create a Free account automatically|Enter your account password|login-auth-hint/);
   assert.ok(loginView.includes("Continue with email"));
   assert.ok(loginView.includes("Continue with Google"));
   assert.ok(loginView.includes("/api/auth/email"));
