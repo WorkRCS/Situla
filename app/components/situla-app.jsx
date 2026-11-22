@@ -24,7 +24,7 @@ import {
   setCachedAccountUser
 } from "../../src/client-account-session.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick, PanelLeftOpen, PanelLeftClose, Clock3, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick, Clock3, SlidersHorizontal } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -1927,16 +1927,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     <main className="app-shell">
       <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
         <div className="header-inner mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 md:px-8">
-          <button
-            type="button"
-            className="site-app-sidebar-toggle"
-            aria-label={sidebarCollapsed ? "Open website navigation" : "Close website navigation"}
-            aria-expanded={!sidebarCollapsed}
-            title={sidebarCollapsed ? "Open navigation" : "Close navigation"}
-            onClick={() => window.dispatchEvent(new Event("situla:toggle-sidebar"))}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
-          </button>
           <Link href="/" className="brand-lockup" aria-label="Situla home">
             <img src="/icon.svg" alt="" className="brand-logo" width="40" height="40" />
             <span className="brand-copy min-w-0">

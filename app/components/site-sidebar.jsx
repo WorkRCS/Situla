@@ -105,18 +105,6 @@ export function SiteSidebar({
   }, [collapsed, onCollapsedChange]);
 
   useEffect(() => {
-    function handleSidebarToggle() {
-      setCollapsed((value) => {
-        const nextValue = !value;
-        try { window.localStorage.setItem("situla:sidebar-collapsed:v2", nextValue ? "1" : "0"); } catch {}
-        return nextValue;
-      });
-    }
-    window.addEventListener("situla:toggle-sidebar", handleSidebarToggle);
-    return () => window.removeEventListener("situla:toggle-sidebar", handleSidebarToggle);
-  }, []);
-
-  useEffect(() => {
     if (typeof upcomingHasUnread === "boolean") return;
     let active = true;
     async function refreshStatus() {

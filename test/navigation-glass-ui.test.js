@@ -126,15 +126,14 @@ test("header avatar initials stay legible on glass and fall back to the account 
 });
 
 
-test('desktop navigation puts the brand above the rail and exposes a collapsed-by-default header toggle', async () => {
+test('desktop navigation keeps one toggle next to the sidebar brand and no duplicate header toggle', async () => {
   const [app, sidebar, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
     read("../app/components/site-sidebar.jsx"),
     read("../app/globals.css")
   ]);
-  assert.match(app, /className="site-app-sidebar-toggle"/);
-  assert.match(app, /situla:toggle-sidebar/);
-  assert.match(sidebar, /situla:toggle-sidebar/);
+  assert.doesNotMatch(app, /site-app-sidebar-toggle|situla:toggle-sidebar/);
+  assert.match(sidebar, /className="site-sidebar-toggle"/);
   assert.match(sidebar, /situla:sidebar-collapsed:v2/);
   assert.match(css, /\.site-app-header\s*\{[\s\S]*?width:calc\(100% - var\(--site-sidebar-column\)\)/);
   assert.match(css, /\.site-app-header \.brand-lockup \{ display:none !important; \}/);
