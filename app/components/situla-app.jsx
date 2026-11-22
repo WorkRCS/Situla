@@ -867,12 +867,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         }
         if (active && requestId === kidsModeRequestId.current) {
           const enabled = Boolean(payload.enabled);
-          setKidsModeReady(true);
           if (!kidsModeSaveInFlightRef.current) {
             kidsModePreferenceRef.current = enabled;
             kidsModeIntentRef.current = enabled;
+            // Apply the confirmed mode before revealing navigation/content.
             setKidsMode(enabled);
           }
+          setKidsModeReady(true);
         }
       } catch {
         // Fail closed on first load so Normal content never flashes before the
