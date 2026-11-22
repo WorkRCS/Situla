@@ -91,17 +91,6 @@ export function SiteSidebar({
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
-    try {
-      const savedPreference = window.localStorage.getItem("situla:sidebar-collapsed:v2");
-      if (savedPreference === "1") setCollapsed(true);
-      else if (savedPreference === "0") setCollapsed(false);
-      else setCollapsed(window.matchMedia("(min-width: 1101px)").matches);
-    } catch {
-      setCollapsed(false);
-    }
-  }, []);
-
-  useEffect(() => {
     onCollapsedChange?.(collapsed);
   }, [collapsed, onCollapsedChange]);
 
@@ -140,11 +129,7 @@ export function SiteSidebar({
         <button
           type="button"
           className="site-sidebar-toggle"
-          onClick={() => setCollapsed((value) => {
-            const nextValue = !value;
-            try { window.localStorage.setItem("situla:sidebar-collapsed:v2", nextValue ? "1" : "0"); } catch {}
-            return nextValue;
-          })}
+          onClick={() => setCollapsed((value) => !value)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-expanded={!collapsed}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
