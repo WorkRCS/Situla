@@ -120,14 +120,14 @@ test("Plans is standalone, keeps only its back link and owns the footer in the s
   assert.ok(css.includes("margin:clamp(32px,4vw,52px) auto 0;"));
 });
 
-test("the shared workspace nav is edge-attached rather than a floating capsule", async () => {
+test("the shared workspace nav is a centered floating glass capsule with a proportionate responsive width", async () => {
   const css = await read("../app/globals.css");
   const sharedNav = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
   assert.ok(sharedNav.includes("position:fixed !important;"));
-  assert.ok(sharedNav.includes("left:0 !important;"));
-  assert.ok(sharedNav.includes("right:0 !important;"));
-  assert.ok(sharedNav.includes("bottom:0 !important;"));
-  assert.ok(sharedNav.includes("width:100% !important;"));
-  assert.ok(sharedNav.includes("border-radius:22px 22px 0 0 !important;"));
+  assert.ok(sharedNav.includes("left:50% !important;"));
+  assert.ok(sharedNav.includes("right:auto !important;"));
+  assert.ok(sharedNav.includes("bottom:max(14px,env(safe-area-inset-bottom)) !important;"));
+  assert.ok(sharedNav.includes("width:min(940px,calc(100% - 44px)) !important;"));
+  assert.ok(sharedNav.includes("border-radius:25px !important;"));
   assert.doesNotMatch(sharedNav, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
 });

@@ -116,7 +116,7 @@ test("Hero fits the viewport, keeps side previews softly blurred and contains mo
   assert.match(hero, /min-height:33px/);
 });
 
-test("Full-site glass styling remains dark and limits backdrop blur to compact chrome", async () => {
+test("Full-site glass styling remains dark and applies restrained blur to shared navigation planes", async () => {
   const css = await read("../app/globals.css");
   const glass = css.slice(css.indexOf("/* Shared dark-glass tokens for responsive Situla surfaces."));
 
@@ -126,7 +126,7 @@ test("Full-site glass styling remains dark and limits backdrop blur to compact c
   assert.match(glass, /prefers-reduced-transparency:reduce/);
   assert.match(glass, /--situla-glass-shadow:inset 0 1px 0/);
   assert.doesNotMatch(glass, /\.gold-button|\.ghost-button|\.plans-card-action|\.nav-button/);
-  assert.doesNotMatch(glass, /0 5px 16px/);
+  assert.doesNotMatch(glass, /0 5px 16px/);\n  assert.match(glass, /Only the large navigation planes sample the backdrop/);
   assert.doesNotMatch(glass, /\.movie-card[^}]*backdrop-filter/);
 });
 

@@ -275,7 +275,7 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
-test("mobile/tablet navigation keeps a full-width seven-item default dock and five-item Kids dock", async () => {
+test("mobile/tablet navigation keeps a proportionate glass dock with seven default items and five Kids items", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
@@ -289,11 +289,11 @@ test("mobile/tablet navigation keeps a full-width seven-item default dock and fi
   assert.doesNotMatch(bottomNav, /navigateBack|setSearchOpen|>Search</);
   assert.ok(css.includes("position:fixed !important"));
   assert.ok(css.includes("bottom:0 !important"));
-  assert.ok(css.includes("width:100% !important"));
+  assert.ok(css.includes("width:100% !important"));\n  assert.ok(css.includes("width:min(940px,calc(100% - 44px)) !important"));
   assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
   assert.ok(css.includes(".bottom-nav.is-kids-nav { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }"));
-  assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));
-  assert.ok(css.includes("backdrop-filter:blur(26px) saturate(180%) !important"));
+  assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));\n  assert.ok(css.includes("border-radius:25px !important"));
+  assert.ok(css.includes("backdrop-filter:blur(14px) saturate(148%) !important"));
   assert.ok(css.includes("backdrop-filter:none !important"));
   const finalDock = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
   assert.doesNotMatch(finalDock, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
