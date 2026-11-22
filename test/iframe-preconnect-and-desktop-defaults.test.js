@@ -109,3 +109,25 @@ test("Normal and Kids Hero images load without CORS mode and sample colours thro
   assert.match(app, /key=\{String\(heroItem\.heroId \|\| heroItem\.imdbId \|\| heroItem\.tmdbId \|\| heroItem\.malId\)\}/);
   assert.match(cartoons, /key=\{item\.mediaType \+ ":" \+ item\.tmdbId\}/);
 });
+
+
+test("desktop top header restores the website name and logo", async () => {
+  const [app, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/globals.css")
+  ]);
+  const desktopBrand = css.slice(css.lastIndexOf("/* Desktop restores the brand"));
+  assert.match(app, /className="brand-lockup"/);
+  assert.match(app, /className="brand-logo"/);
+  assert.match(app, /<strong>SITULA<\/strong>/);
+  assert.match(desktopBrand, /\.site-app-header \.brand-lockup\s*\{[\s\S]*?display:flex !important;/);
+});
+
+test("desktop pages suppress the mobile navigation docks while tablet and phone keep them", async () => {
+  const css = await read("../app/globals.css");
+  const responsiveOwner = css.slice(css.lastIndexOf("/* Responsive ownership is explicit:"));
+  assert.match(responsiveOwner, /@media \(min-width:1101px\)[\s\S]*?display:none !important/);
+  assert.match(responsiveOwner, /@media \(max-width:1100px\)[\s\S]*?display:grid !important/);
+  assert.match(responsiveOwner, /\.app-shell > \.bottom-nav/);
+  assert.match(responsiveOwner, /\.site-workspace > \.site-workspace-mobile-nav/);
+});

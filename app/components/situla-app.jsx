@@ -810,6 +810,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [kidsModeBusy, setKidsModeBusy] = useState(false);
   const [kidsModeError, setKidsModeError] = useState("");
   const kidsModeRequestId = useRef(0);
+  const kidsModePreferenceRef = useRef(false);
+  const kidsModeIntentRef = useRef(false);
+  const kidsModeSaveInFlightRef = useRef(false);
   const [upcomingHasUnread, setUpcomingHasUnread] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [homeFeedCount, setHomeFeedCount] = useState(5);
@@ -837,8 +840,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
           throw new Error(payload.error || "Kids Mode settings are unavailable.");
         }
         if (active && requestId === kidsModeRequestId.current) {
-          setKidsMode(Boolean(payload.enabled));
+          const enabled = Boolean(payload.enabled);
           setKidsModeReady(true);
+          if (!kidsModeSaveInFlightRef.current) {
+            kidsModePreferenceRef.current = enabled;
+            kidsModeIntentRef.current = enabled;
+            setKidsMode(enabled);
+          }
         }
       } catch {
         // Fail closed on first load so Normal content never flashes before the
@@ -857,32 +865,51 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     };
   }, []);
 
-  async function changeKidsMode(enabled) {
-    const previousMode = kidsMode;
-    const requestId = ++kidsModeRequestId.current;
-    setKidsModeError("");
-    setKidsMode(Boolean(enabled));
+  async function persistKidsModePreference() {
+    if (kidsModeSaveInFlightRef.current) return;
+    kidsModeSaveInFlightRef.current = true;
     setKidsModeBusy(true);
     try {
-      const response = await fetch("/api/kids-mode", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Kids Mode could not be updated.");
-      if (requestId === kidsModeRequestId.current) {
-        setKidsMode(Boolean(payload.enabled));
-      }
-    } catch (error) {
-      if (requestId === kidsModeRequestId.current) {
-        setKidsMode(previousMode);
-        setKidsModeError(error.message || "Kids Mode could not be updated.");
+      while (true) {
+        const requestedMode = kidsModeIntentRef.current;
+        try {
+          const response = await fetch("/api/kids-mode", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: requestedMode })
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || typeof payload.enabled !== "boolean") {
+            throw new Error(payload.error || "Kids Mode could not be updated.");
+          }
+          kidsModePreferenceRef.current = Boolean(payload.enabled);
+          if (kidsModeIntentRef.current === kidsModePreferenceRef.current) {
+            setKidsMode(kidsModePreferenceRef.current);
+            break;
+          }
+        } catch (error) {
+          // A newer tap supersedes an older failed request; persist the latest intent.
+          if (kidsModeIntentRef.current !== requestedMode) continue;
+          kidsModeIntentRef.current = kidsModePreferenceRef.current;
+          setKidsMode(kidsModePreferenceRef.current);
+          setKidsModeError(error.message || "Kids Mode could not be updated.");
+          break;
+        }
       }
     } finally {
-      if (requestId === kidsModeRequestId.current) setKidsModeBusy(false);
+      kidsModeSaveInFlightRef.current = false;
+      setKidsModeBusy(false);
     }
+  }
+
+  async function changeKidsMode(enabled) {
+    const nextMode = Boolean(enabled);
+    kidsModeIntentRef.current = nextMode;
+    setKidsModeError("");
+    // Switch the page immediately; only preference persistence runs in the background.
+    setKidsMode(Boolean(enabled));
+    if (!kidsModeSaveInFlightRef.current) void persistKidsModePreference();
   }
 
   useEffect(() => {
@@ -1921,7 +1948,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                         aria-checked={kidsMode}
                         aria-label="Kids Mode"
                         aria-busy={kidsModeBusy}
-                        disabled={kidsModeBusy || !kidsModeReady}
+                        disabled={!kidsModeReady}
                         onClick={() => changeKidsMode(!kidsMode)}
                       >
                         <span className="header-kids-mode-switch-track"><span /></span>

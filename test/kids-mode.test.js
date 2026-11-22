@@ -42,13 +42,22 @@ test("Kids Mode API stores just the toggle and clears all old PIN hashes", async
   assert.ok(!route.includes("verifyPassword"));
 });
 
-test("Kids Mode switch is optimistic, avoids route navigation, and keeps both home views mounted", async () => {
+test("Kids Mode changes content immediately and persists the latest switch state without reloads", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const handler = app.slice(app.indexOf("async function changeKidsMode"), app.indexOf("useEffect(() => {\n    if (!kidsModeReady || kidsMode) return undefined;"));
   const home = app.slice(app.indexOf('<div className="home-main-column">'), app.indexOf("</div>\n          </>", app.indexOf('<div className="home-main-column">')));
 
+  assert.ok(handler.includes("kidsModeIntentRef.current = nextMode"));
   assert.ok(handler.includes("setKidsMode(Boolean(enabled))"));
+  assert.ok(handler.includes("void persistKidsModePreference()"));
   assert.ok(!handler.includes("router.replace"));
+  assert.ok(!handler.includes("router.refresh"));
+  assert.ok(!handler.includes("location.reload"));
+  assert.ok(app.includes("while (true)"));
+  assert.ok(app.includes("kidsModeSaveInFlightRef.current"));
+  assert.ok(app.includes("kidsModeIntentRef.current !== requestedMode"));
+  assert.match(app, /disabled=\{!kidsModeReady\}/);
+  assert.doesNotMatch(app, /disabled=\{kidsModeBusy \|\| !kidsModeReady\}/);
   assert.ok(home.includes('className="home-mode-panel"') && home.includes('hidden={!kidsModeReady || kidsMode}'));
   assert.ok(home.includes('<div className="kids-mode-panel" hidden={!kidsModeReady || !kidsMode}'));
   assert.ok(home.includes("Preparing your home feed"));

@@ -68,3 +68,30 @@ test("glass chrome respects reduced transparency, reduced motion, and unsupporte
   assert.match(glass, /@supports not \(backdrop-filter:blur\(1px\)\)/);
   assert.match(glass, /Only the large navigation planes sample the backdrop/);
 });
+
+
+test("desktop header keeps the SITULA brand visible beside the desktop sidebar", async () => {
+  const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
+  const desktopBrand = css.slice(css.lastIndexOf("/* Desktop restores the brand"));
+
+  assert.match(app, /<Link href="\/" className="brand-lockup" aria-label="Situla home">/);
+  assert.match(app, /className="brand-logo"/);
+  assert.match(app, /<strong>SITULA<\/strong>/);
+  assert.match(desktopBrand, /@media \(min-width:1101px\)/);
+  assert.match(desktopBrand, /\.site-app-header \.brand-lockup\s*\{[\s\S]*?display:flex !important;/);
+  assert.match(desktopBrand, /\.site-app-header \.brand-copy\s*\{[\s\S]*?display:grid !important;/);
+  assert.match(desktopBrand, /justify-content:space-between/);
+});
+
+test("mobile navigation is explicitly hidden on desktop and enabled only below the desktop breakpoint", async () => {
+  const css = await read("../app/globals.css");
+  const rules = css.slice(css.lastIndexOf("/* Responsive ownership is explicit:"));
+  const app = await read("../app/components/situla-app.jsx");
+  const sidebar = await read("../app/components/site-sidebar.jsx");
+
+  assert.match(rules, /@media \(min-width:1101px\)[\s\S]*?\.app-shell > \.bottom-nav,[\s\S]*?\.site-workspace > \.site-workspace-mobile-nav\s*\{[\s\S]*?display:none !important/);
+  assert.match(rules, /@media \(max-width:1100px\)[\s\S]*?\.app-shell > \.bottom-nav,[\s\S]*?\.site-workspace > \.site-workspace-mobile-nav\s*\{[\s\S]*?display:grid !important/);
+  assert.match(app, /<nav className=\{["']bottom-nav/);
+  assert.match(sidebar, /className=\{["']bottom-nav site-workspace-mobile-nav/);
+});

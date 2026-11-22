@@ -9793,3 +9793,70 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
     background-color:rgba(12,15,23,.95) !important;
   }
 }
+
+/* Desktop restores the brand in the top header; navigation stays in the left rail. */
+@media (min-width:1101px) {
+  .site-app-header .header-inner {
+    justify-content:space-between;
+    gap:clamp(12px,1.6vw,22px);
+  }
+  .site-app-header .brand-lockup {
+    display:flex !important;
+    flex:0 0 auto;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+    margin-right:auto;
+  }
+  .site-app-header .brand-logo {
+    width:34px;
+    height:34px;
+    flex:none;
+  }
+  .site-app-header .brand-copy {
+    display:grid !important;
+    min-width:0;
+    gap:2px;
+  }
+  .site-app-header .brand-copy strong {
+    color:#f7f7fa;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:.075em;
+    line-height:1.1;
+  }
+  .site-app-header .brand-copy small {
+    color:#a0a9b8;
+    font-size:7px;
+    font-weight:800;
+    letter-spacing:.15em;
+    line-height:1.15;
+  }
+  .site-app-header .header-actions {
+    width:auto;
+    min-width:0;
+    flex:0 1 auto;
+    justify-content:flex-end;
+    margin-left:auto;
+    gap:10px;
+  }
+}
+
+/* Responsive ownership is explicit: the desktop rail replaces both mobile docks. */
+@media (min-width:1101px) {
+  .app-shell > .bottom-nav,
+  .site-workspace > .site-workspace-mobile-nav {
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+}
+@media (max-width:1100px) {
+  .app-shell > .bottom-nav,
+  .site-workspace > .site-workspace-mobile-nav {
+    display:grid !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+  }
+}
+
