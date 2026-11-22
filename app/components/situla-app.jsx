@@ -24,7 +24,7 @@ import {
   setCachedAccountUser
 } from "../../src/client-account-session.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick, Clock3, SlidersHorizontal } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -818,6 +818,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchYear, setSearchYear] = useState("all");
   const [searchSort, setSearchSort] = useState("relevance");
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(0);
+  const [recentSearches, setRecentSearches] = useState([]);
   const [searchYears, setSearchYears] = useState([]);
   const [searchDateRange, setSearchDateRange] = useState(null);
   const [searchError, setSearchError] = useState("");
@@ -1040,6 +1041,18 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previousOverflow; };
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("situla:search-history:v1") || "[]");
+      setRecentSearches(Array.isArray(stored)
+        ? [...new Set(stored.map((value) => String(value || "").trim()).filter(Boolean))].slice(0, 6)
+        : []);
+    } catch {
+      setRecentSearches([]);
+    }
   }, [searchOpen]);
 
   useEffect(() => {
@@ -1394,23 +1407,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     [heroMovies, homeTvShows, homeAnimeShows]
   );
   const homeHeroItems = useMemo(() => homeBrowseItems.slice(0, 20), [homeBrowseItems]);
-  const searchRecommendations = useMemo(() => {
-    const candidates = [
-      ...homeBrowseItems,
-      ...movies.map((item) => toHomeSpotlight(item, "movie")),
-      ...tvShows.map((item) => toHomeSpotlight(item, "tv")),
-      ...animeShows.map((item) => toHomeSpotlight(item, "anime"))
-    ].filter(Boolean);
-    const seen = new Set();
-    return candidates.filter((item) => {
-      const id = item.mediaType === "movie" ? item.imdbId
-        : item.mediaType === "tv" ? item.tmdbId : item.malId;
-      const key = item.mediaType + ":" + String(id || "");
-      if (!id || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 8);
-  }, [homeBrowseItems, movies, tvShows, animeShows]);
 
   useEffect(() => {
     setHomeFeedCount(5);
@@ -1594,6 +1590,12 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         ? 'Only approved cartoon movies and TV series can be opened in Kids Mode.'
         : 'This title does not belong to the current search catalogue.');
       return;
+    }
+    const recentTerm = searchInput.trim();
+    if (!kidsMode && recentTerm.length >= 3) {
+      const nextRecent = [recentTerm, ...recentSearches.filter((term) => term.toLocaleLowerCase() !== recentTerm.toLocaleLowerCase())].slice(0, 6);
+      setRecentSearches(nextRecent);
+      try { localStorage.setItem("situla:search-history:v1", JSON.stringify(nextRecent)); } catch {}
     }
     setSearchOpen(false);
     if (item.mediaType === 'cartoon_movie') {
@@ -1921,10 +1923,6 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (tab === "home" && featured) prefetchHomeSpotlight(featured);
   }, [tab, featured?.heroId]);
 
-  const searchDisplayItems = searchInput.trim()
-    ? suggestions
-    : kidsMode ? suggestions : searchRecommendations;
-
   return (
     <main className="app-shell">
       <header className={"app-header safe-top site-app-header" + (tab === "home" ? " home-app-header" : "")}>
@@ -2069,13 +2067,17 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         >
           <section className="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-dialog-title">
             <div className="search-dialog-heading">
-              <h2 id="search-dialog-title">Search</h2>
+              <div>
+                <span>{kidsMode ? "SITULA KIDS · APPROVED CARTOONS" : "SMART CATALOG SEARCH"}</span>
+                <h2 id="search-dialog-title">{kidsMode ? "Find a cartoon" : "Find your next watch"}</h2>
+                <p>{kidsMode ? "Search approved cartoon movies and TV series only." : "Search titles, original names and IMDb / TMDB / MAL IDs. Spelling variations are supported."}</p>
+              </div>
               <button type="button" className="search-dialog-close" onClick={() => setSearchOpen(false)} aria-label="Close search">
-                <BootstrapIcon icon="x-lg" size={16} />
+                <BootstrapIcon icon="x-lg" size={19} />
               </button>
             </div>
             <label className="search-dialog-input">
-              <Search size={18} aria-hidden="true" />
+              <BootstrapIcon icon="search" size={18} />
               <input
                 autoFocus
                 value={searchInput}
@@ -2086,86 +2088,164 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
                     setSearchOpen(false);
-                  } else if (event.key === "ArrowDown" && searchDisplayItems.length) {
+                  } else if (event.key === "ArrowDown" && suggestions.length) {
                     event.preventDefault();
-                    setSelectedSearchIndex((current) => Math.min(searchDisplayItems.length - 1, current + 1));
-                  } else if (event.key === "ArrowUp" && searchDisplayItems.length) {
+                    setSelectedSearchIndex((current) => Math.min(suggestions.length - 1, current + 1));
+                  } else if (event.key === "ArrowUp" && suggestions.length) {
                     event.preventDefault();
                     setSelectedSearchIndex((current) => Math.max(0, current - 1));
-                  } else if (event.key === "Enter" && searchDisplayItems[selectedSearchIndex]) {
+                  } else if (event.key === "Enter" && suggestions[selectedSearchIndex]) {
                     event.preventDefault();
-                    openSearchResult(searchDisplayItems[selectedSearchIndex]);
+                    openSearchResult(suggestions[selectedSearchIndex]);
                   }
                 }}
-                placeholder={kidsMode ? "Search cartoons…" : "Search movies, TV & anime…"}
-                aria-label={kidsMode ? "Search cartoons" : "Search movies, TV and anime"}
-                aria-activedescendant={searchDisplayItems[selectedSearchIndex] ? searchOptionId(searchDisplayItems[selectedSearchIndex]) : undefined}
+                placeholder="Search titles, original names or catalogue IDs…"
+                aria-label="Search titles, original names or catalogue IDs"
+                aria-activedescendant={suggestions[selectedSearchIndex] ? searchOptionId(suggestions[selectedSearchIndex]) : undefined}
               />
               {searchInput && (
-                <button type="button" onClick={() => {
-                  setSearchInput("");
-                  setSuggestions([]);
-                  setSearchError("");
-                  setSearchHasMore(false);
-                  setSearchPage(1);
-                  setSearchLoadingMore(false);
-                  setSelectedSearchIndex(0);
-                }} aria-label="Clear search">
-                  <BootstrapIcon icon="x-lg" size={14} />
+                <button type="button" onClick={() => { setSearchInput(""); setSuggestions([]); setSearchError(""); setSearchHasMore(false); setSearchPage(1); setSearchLoadingMore(false); }} aria-label="Clear search">
+                  <BootstrapIcon icon="x-lg" size={16} />
                 </button>
               )}
             </label>
-            {searchInput.trim().length > 0 && searchInput.trim().length < (kidsMode ? 2 : 3) ? null
-              : suggestionsLoading ? (
-                <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching…</div>
-              ) : searchError && !searchDisplayItems.length ? (
-                <div className="suggestion-empty" role="alert">{searchError}</div>
-              ) : searchDisplayItems.length ? (
-                <>
-                  {!searchInput.trim() && <div className="search-recommendation-label">Recommended</div>}
-                  <div className="search-results-list" role="listbox" aria-label={searchInput.trim() ? "Search results" : "Recommended titles"}>
-                    {searchDisplayItems.map((item, index) => {
-                      const identity = item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
-                        ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
-                      const date = item.releaseDate || item.firstAirDate || item.airedFrom || item.heroYear || item.releaseYear || "";
-                      const mediaLabel = item.mediaType === "cartoon_movie" ? "Cartoon movie"
-                        : item.mediaType === "cartoon_tv" ? "Cartoon series"
-                        : item.mediaType === "tv" ? "TV series"
-                        : item.mediaType === "anime" ? "Anime" : "Movie";
-                      const poster = item.posterUrl || item.posterFallbackUrl || item.heroPoster;
-                      return (
-                        <button
-                          key={item.mediaType + ":" + identity}
-                          type="button"
-                          id={searchOptionId(item)}
-                          className={"suggestion-item" + (selectedSearchIndex === index ? " is-active" : "")}
-                          role="option"
-                          aria-selected={selectedSearchIndex === index}
-                          onClick={() => openSearchResult(item)}
-                        >
-                          {poster
-                            ? <img src={optimizeTmdbImageUrl(poster, "w92")} alt="" loading="lazy" decoding="async" />
-                            : <div className="suggestion-poster"><BootstrapIcon icon="film" size={15} /></div>}
-                          <span className="suggestion-title">
-                            <strong>{item.heroTitle || item.titleEnglish || item.title}</strong>
-                            <small>{mediaLabel}{date ? " · " + String(date).slice(0, 10) : ""}</small>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {searchError && <div className="search-inline-error" role="status">{searchError}</div>}
-                  {searchInput.trim() && searchHasMore && (
-                    <div className="search-dialog-footer">
-                      <button type="button" className="ghost-button" onClick={loadMoreSearch} disabled={searchLoadingMore}>
-                        {searchLoadingMore ? "Loading…" : "Load more"}
-                      </button>
+            {!kidsMode && (
+              <div className="search-keyboard-hint">
+                <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span><kbd>Enter</kbd> Open result</span>
+                <span><kbd>Esc</kbd> Close</span>
+                <span className="search-global-shortcut"><kbd>Ctrl</kbd>/<kbd>⌘</kbd> <kbd>K</kbd> Search anywhere</span>
+              </div>
+            )}
+            <div className="search-filter-row">
+              {!kidsMode && (
+                <div className="search-type-filters" role="group" aria-label="Filter by media type">
+                  {[
+                    { value: "all", label: "All" },
+                    { value: "movie", label: "Movies" },
+                    { value: "tv", label: "TV series" },
+                    { value: "anime", label: "Anime" }
+                  ].map((filter) => (
+                    <button key={filter.value} type="button"
+                      className={"search-type-button" + (searchType === filter.value ? " active" : "")}
+                      aria-pressed={searchType === filter.value} onClick={() => setSearchType(filter.value)}>
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <label className="search-year-filter">
+                <span>Release year</span>
+                <select value={searchYear} onChange={(event) => setSearchYear(event.target.value)} aria-label={kidsMode ? "Filter cartoons by database release year" : "Filter by release year"}>
+                  <option value="all">All years</option>
+                  {searchYears.map((year) => <option key={year} value={String(year)}>{year}</option>)}
+                  {searchYears.length === 0 && <option value="" disabled>{searchDateRange ? "No database years available" : "Loading database years…"}</option>}
+                </select>
+              </label>
+              {!kidsMode && (
+                <label className="search-sort-filter">
+                  <span><SlidersHorizontal size={12} /> Sort results</span>
+                  <select value={searchSort} onChange={(event) => { setSearchSort(event.target.value); setSelectedSearchIndex(0); }} aria-label="Sort search results">
+                    <option value="relevance">Best match</option>
+                    <option value="newest">Newest first</option>
+                    <option value="popular">Most popular</option>
+                    <option value="rating">Highest rated</option>
+                  </select>
+                </label>
+              )}
+            </div>
+            {searchDateRange && (
+              <p className="search-results-caption" aria-label={kidsMode ? "Cartoon catalogue release date range" : "Catalogue release year range"}>
+                {kidsMode ? "Database dates:" : "Database years:"} {kidsMode
+                  ? (searchDateRange.oldestDate || searchDateRange.oldestYear || "—") + " – " + (searchDateRange.newestDate || searchDateRange.newestYear || "—")
+                  : (searchDateRange.oldestYear || "—") + " – " + (searchDateRange.newestYear || "—")}
+              </p>
+            )}
+
+            {searchInput.trim().length > 0 && searchInput.trim().length < (kidsMode ? 2 : 3) ? (
+              <div className="suggestion-empty">{kidsMode ? "Enter at least 2 characters to search cartoons." : "Enter at least 3 characters to start smart search."}</div>
+            ) : !kidsMode && !searchInput.trim() && searchType === "all" && searchYear === "all" ? (
+              <div className="search-idle-state">
+                <div className="search-idle-intro">
+                  <span className="search-idle-icon"><Search size={18} /></span>
+                  <span><strong>What would you like to watch?</strong><small>Search by title, original title, or a catalogue ID. Minor spelling mistakes are okay.</small></span>
+                </div>
+                {recentSearches.length > 0 ? (
+                  <div className="search-recent-section">
+                    <div className="search-recent-heading">
+                      <span><Clock3 size={13} /> Recent searches</span>
+                      <button type="button" onClick={() => {
+                        setRecentSearches([]);
+                        try { localStorage.removeItem("situla:search-history:v1"); } catch {}
+                      }}>Clear history</button>
                     </div>
+                    <div className="search-recent-list">
+                      {recentSearches.map((term) => (
+                        <button key={term} type="button" className="search-recent-chip" onClick={() => {
+                          setSearchInput(term);
+                          setSearchType("all");
+                          setSearchYear("all");
+                          setSearchSort("relevance");
+                        }}>{term}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="search-idle-tip">Try a title like “Interstellar”, an original title, or paste an IMDb / TMDB / MAL ID.</p>
+                )}
+              </div>
+            ) : suggestionsLoading ? (
+              <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching the catalog…</div>
+            ) : searchError && !suggestions.length ? (
+              <div className="suggestion-empty" role="alert">{searchError}</div>
+            ) : suggestions.length ? (
+              <>
+                <div className="search-results-caption">
+                  {suggestions.length} results shown · {kidsMode ? "Approved cartoons" : searchType === "all" ? "All catalogs" : searchType === "tv" ? "TV series" : searchType === "anime" ? "Anime" : "Movies"}
+                  {searchYear !== "all" ? " · " + searchYear : ""}
+                  {kidsMode ? " · Database release dates" : " · " + ({ relevance: "Best match", newest: "Newest first", popular: "Most popular", rating: "Highest rated" }[searchSort] || "Best match")}
+                </div>
+                <div className="search-results-list" role="listbox" aria-label="Search results">
+                  {suggestions.map((item, index) => {
+                    const identity = item.mediaType === "tv" || item.mediaType === "cartoon_tv" || item.mediaType === "cartoon_movie"
+                      ? item.tmdbId : item.mediaType === "anime" ? item.malId : item.imdbId;
+                    const date = item.releaseDate || item.firstAirDate || item.airedFrom || (item.releaseYear ? String(item.releaseYear) : "Release date unavailable");
+                    const mediaLabel = item.mediaType === "cartoon_movie" ? "CARTOON MOVIE" : item.mediaType === "cartoon_tv" ? "CARTOON SERIES" : String(item.mediaType || "movie").toUpperCase();
+                    return (
+                      <button
+                        key={item.mediaType + ":" + identity}
+                        type="button"
+                        id={searchOptionId(item)}
+                        className={"suggestion-item" + (selectedSearchIndex === index ? " is-active" : "")}
+                        role="option"
+                        aria-selected={selectedSearchIndex === index}
+                        onClick={() => openSearchResult(item)}
+                      >
+                        {item.posterUrl || item.posterFallbackUrl
+                          ? <img src={optimizeTmdbImageUrl(item.posterUrl || item.posterFallbackUrl, "w92")} alt="" loading="lazy" decoding="async" />
+                          : <div className="suggestion-poster"><BootstrapIcon icon="film" size={17} /></div>}
+                        <span className="suggestion-title">
+                          <strong>{item.titleEnglish || item.title}</strong>
+                          <small>{mediaLabel} · {date}</small>
+                        </span>
+                        <BootstrapIcon icon="play-fill" size={16} />
+                      </button>
+                    );
+                  })}
+                </div>
+                {searchError && <div className="search-inline-error" role="status">{searchError}</div>}
+                <div className="search-dialog-footer">
+                  <span>{searchHasMore ? "More matches available" : "End of matching results"}</span>
+                  {searchHasMore && (
+                    <button type="button" className="ghost-button" onClick={loadMoreSearch} disabled={searchLoadingMore}>
+                      {searchLoadingMore ? "Loading…" : "Load more"}
+                    </button>
                   )}
-                </>
-              ) : searchInput.trim().length >= (kidsMode ? 2 : 3) ? (
-                <div className="suggestion-empty">No results</div>
-              ) : null}
+                </div>
+              </>
+            ) : (
+              <div className="suggestion-empty">No matching titles found for these filters.</div>
+            )}
           </section>
         </div>,
         document.body

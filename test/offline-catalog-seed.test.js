@@ -282,8 +282,9 @@ test("catalog cards render differentiated automatic badges and search asks for a
   assert.doesNotMatch(app, /item\.catalogBadge &&/);
   assert.doesNotMatch(app, /catalogBadge\.icon/);
   assert.doesNotMatch(app, /popular-pill|isPopularCatalogItem/);
-  assert.match(app, /placeholder="Search titles, original names or catalogue IDs/);
+  assert.ok(app.includes('placeholder={kidsMode ? "Search cartoons…" : "Search movies, TV & anime…"}'));
   assert.doesNotMatch(app, /Search a title or IMDb \/ TMDB \/ MAL ID/);
+  assert.doesNotMatch(app, /SMART CATALOG SEARCH|Recent searches|search-keyboard-hint/);
   assert.match(css, /\.catalog-badge-hot/);
   assert.match(css, /\.catalog-badge-popular/);
   assert.match(css, /\.catalog-badge-featured/);

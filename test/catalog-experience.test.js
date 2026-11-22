@@ -66,8 +66,9 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.match(api, /hasMore/);
   assert.match(app, /className="search-overlay"/);
   assert.match(app, /role="dialog" aria-modal="true"/);
-  assert.match(app, /search-type-filters/);
-  assert.match(app, /search-year-filter/);
+  assert.match(app, /searchRecommendations/);
+  assert.match(app, /searchDisplayItems/);
+  assert.doesNotMatch(app, /search-type-filters|search-year-filter|search-sort-filter/);
   assert.match(app, /searchInput\.trim\(\)\.length < \(kidsMode \? 2 : 3\)/);
   assert.match(app, /setSearchInput\(event\.target\.value\)/);
   assert.match(app, /loadMoreSearch/);
@@ -75,8 +76,8 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.match(app, /router\.push\("\/watch\/" \+ encodeURIComponent\(imdbId\)\)/);
   assert.match(app, /router\.push\("\/tv\/" \+ tmdbId\)/);
   assert.match(app, /router\.push\("\/anime\/" \+ encodeURIComponent\(malId\)\)/);
-  assert.match(css, /\.search-type-button\.active/);
-  assert.match(css, /\.search-year-filter select/);
+  assert.match(css, /\.search-dialog-input \{/);
+  assert.match(css, /\.search-recommendation-label/);
   assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 

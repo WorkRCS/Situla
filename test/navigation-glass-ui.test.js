@@ -139,20 +139,19 @@ test('desktop navigation keeps one toggle next to the sidebar brand and no dupli
   assert.match(css, /\.site-app-header \.brand-lockup \{ display:none !important; \}/);
 });
 
-test('advanced search supports keyboard navigation, recent queries and safe sort modes', async () => {
-  const [app, api, ranker] = await Promise.all([
+test('search uses a simple field and concise catalogue recommendations', async () => {
+  const [app, css] = await Promise.all([
     read("../app/components/situla-app.jsx"),
-    read("../src/app.js"),
-    read("../src/search-ranking.js")
+    read("../app/globals.css")
   ]);
   assert.match(app, /handleGlobalSearchShortcut/);
   assert.match(app, /event\.key === "ArrowDown"/);
   assert.match(app, /event\.key === "ArrowUp"/);
-  assert.match(app, /situla:search-history:v1/);
-  assert.match(app, /search-sort-filter/);
-  assert.match(app, /value="popular">Most popular/);
-  assert.match(api, /Choose a valid search sort order/);
-  assert.match(ranker, /sort === 'newest'/);
-  assert.match(ranker, /sort === 'popular'/);
-  assert.match(ranker, /sort === 'rating'/);
+  assert.match(app, /const searchRecommendations = useMemo/);
+  assert.match(app, /searchDisplayItems/);
+  assert.match(app, /search-recommendation-label/);
+  assert.ok(app.includes('placeholder={kidsMode ? "Search cartoons…" : "Search movies, TV & anime…"}'));
+  assert.doesNotMatch(app, /search-keyboard-hint|search-type-filters|search-sort-filter|search-recent-section|Recent searches|SMART CATALOG SEARCH/);
+  assert.match(css, /\.search-dialog \{[\s\S]*?border-radius:12px/);
+  assert.match(css, /\.suggestion-item \{[\s\S]*?border-radius:7px !important/);
 });
