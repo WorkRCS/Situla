@@ -182,17 +182,33 @@ export default function ThreeCardHero({
     paletteRequestRef.current?.abort();
     const controller = new AbortController();
     paletteRequestRef.current = controller;
-    void samplePosterPalette(imageUrl, controller.signal)
-      .then((palette) => {
-        if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
-          onPaletteChange?.(palette);
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
-          onPaletteChange?.(null);
-        }
-      });
+    const sampleWhenIdle = () => {
+      if (controller.signal.aborted) return;
+      void samplePosterPalette(imageUrl, controller.signal)
+        .then((palette) => {
+          if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
+            onPaletteChange?.(palette);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted && activeIdentityRef.current === activeIdentity) {
+            onPaletteChange?.(null);
+          }
+        });
+    };
+
+    // Palette sampling is decorative; let the slide animation and image decode finish first.
+    if (typeof window.requestIdleCallback === "function") {
+      const idleHandle = window.requestIdleCallback(sampleWhenIdle, { timeout: 1400 });
+      controller.signal.addEventListener("abort", () => {
+        window.cancelIdleCallback?.(idleHandle);
+      }, { once: true });
+    } else {
+      const timerHandle = window.setTimeout(sampleWhenIdle, 460);
+      controller.signal.addEventListener("abort", () => {
+        window.clearTimeout(timerHandle);
+      }, { once: true });
+    }
   }, [activeIdentity, onPaletteChange]);
 
   if (!hasItems) return null;
@@ -241,7 +257,7 @@ export default function ThreeCardHero({
             >
               {isCenter ? renderCenter?.(item, onCenterImageLoad) : (
                 <div className="home-hero-deck-side" aria-hidden="true">
-                  {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+                  {image && <img src={image} alt="" loading={Math.abs(offset) === 1 ? "eager" : "lazy"} decoding="async" />}
                   <span className="home-hero-deck-side-copy">
                     <small>{offset < 0 ? "UP NEXT" : "COMING UP"}</small>
                     <strong>{title}</strong>
