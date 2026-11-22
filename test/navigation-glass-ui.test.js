@@ -158,13 +158,23 @@ test('search uses a simple field and concise catalogue recommendations', async (
   assert.match(css, /\.suggestion-item \{[\s\S]*?border-radius:7px !important/);
 });
 
-test("catalogue card badges, rating and actions stay readable without overlapping", async () => {
+test("catalogue card badges stay readable while save and share controls remain icon-sized", async () => {
   const css = await read("../app/globals.css");
-  const finalCards = css.slice(css.lastIndexOf("/* Low-memory catalogue rendering"));
-  assert.match(finalCards, /\.movie-card \.catalog-badge\s*\{[\s\S]*?max-width:calc\(100% - 64px\) !important/);
-  assert.match(finalCards, /\.movie-card > \.save-button[\s\S]*?width:40px !important/);
-  assert.match(finalCards, /\.movie-card > \.share-button[\s\S]*?top:54px !important/);
-  assert.match(finalCards, /\.movie-card \.rating-pill\s*\{[\s\S]*?max-width:calc\(100% - 50px\) !important/);
-  assert.match(finalCards, /\.home-collection-rated \.series-card \.rating-pill\s*\{[\s\S]*?bottom:8px !important/);
+  const finalCards = css.slice(css.lastIndexOf("/* Media actions stay icon-sized"));
+  assert.match(finalCards, /max-width:calc\(100% - 49px\) !important/);
+  assert.match(finalCards, /width:32px !important/);
+  assert.match(finalCards, /\.movie-card > \.share-button[\s\S]*?top:43px !important/);
+  assert.match(finalCards, /\.movie-card > \.save-button svg[\s\S]*?width:16px !important/);
+  assert.match(finalCards, /\.movie-card \.rating-pill\s*\{[\s\S]*?font-size:10px !important/);
+  assert.match(finalCards, /\.home-collection-rated \.series-card \.rating-pill\s*\{[\s\S]*?bottom:7px !important/);
+});
+
+test("landing header retains the Situla logo and title on tablet, phone and narrow phones", async () => {
+  const css = await read("../app/globals.css");
+  const landingHeader = css.slice(css.lastIndexOf("/* Landing-only brand lockup"));
+  assert.match(landingHeader, /@media \(min-width:768px\) and \(max-width:1100px\)[\s\S]*?\.site-app-header\.home-app-header \.brand-copy\s*\{[\s\S]*?display:grid !important/);
+  assert.match(landingHeader, /@media \(max-width:767px\)[\s\S]*?\.site-app-header\.home-app-header \.brand-copy \{ display:grid !important; \}/);
+  assert.match(landingHeader, /@media \(max-width:390px\)[\s\S]*?\.site-app-header\.home-app-header \.brand-copy\s*\{[\s\S]*?display:grid !important/);
+  assert.match(landingHeader, /\.site-app-header\.home-app-header \.brand-logo/);
 });
 
