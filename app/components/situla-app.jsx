@@ -24,7 +24,7 @@ import {
   setCachedAccountUser
 } from "../../src/client-account-session.js";
 import { normalizeSavedMediaList, savedMediaKey, savedMediaType, toggleSavedMedia } from "../../src/saved-media.js";
-import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick } from "lucide-react";
+import { ArrowUpRight, Baby, BadgeCheck, CalendarDays, Heart, LogOut, Search, ShieldCheck, UserRound, Share2, MousePointerClick, SlidersHorizontal } from "lucide-react";
 const BOOTSTRAP_ICONS = {
   home: "house-door-fill",
   search: "search",
@@ -817,8 +817,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   const [searchType, setSearchType] = useState("all");
   const [searchYear, setSearchYear] = useState("all");
   const [searchSort, setSearchSort] = useState("relevance");
+  const [searchGenre, setSearchGenre] = useState("all");
+  const [searchFiltersOpen, setSearchFiltersOpen] = useState(false);
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(0);
   const [searchYears, setSearchYears] = useState([]);
+  const [searchGenres, setSearchGenres] = useState([]);
   const [searchDateRange, setSearchDateRange] = useState(null);
   const [searchError, setSearchError] = useState("");
   const [searchHasMore, setSearchHasMore] = useState(false);
@@ -1113,8 +1116,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     setSearchType("all");
     setSearchYear("all");
     setSearchSort("relevance");
+    setSearchGenre("all");
+    setSearchFiltersOpen(false);
     setSelectedSearchIndex(0);
     setSearchYears([]);
+    setSearchGenres([]);
     setSearchDateRange(null);
     setSuggestions([]);
     setSearchHasMore(false);
@@ -1125,11 +1131,14 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
   }, [kidsModeReady, kidsMode]);
 
   useEffect(() => {
-    if (!kidsModeReady || !searchOpen || kidsMode) return undefined;
+    if (!kidsModeReady || !searchOpen) return undefined;
     const controller = new AbortController();
-    async function loadNormalSearchYears() {
+    async function loadSearchFilters() {
+      const endpoint = kidsMode
+        ? "/api/cartoons/search/filters"
+        : "/api/search/filters?type=" + encodeURIComponent(searchType);
       try {
-        const response = await fetch("/api/search/filters?type=" + encodeURIComponent(searchType), {
+        const response = await fetch(endpoint, {
           cache: "no-store",
           credentials: "same-origin",
           signal: controller.signal
@@ -1140,23 +1149,28 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const years = Array.isArray(payload.years)
           ? payload.years.map(Number).filter((year) => Number.isInteger(year))
           : [];
+        const genres = Array.isArray(payload.genres)
+          ? [...new Set(payload.genres.map((value) => String(value || "").trim()).filter(Boolean))]
+          : [];
         setSearchYears(years);
+        setSearchGenres(genres);
         setSearchDateRange({
           oldestYear: payload.oldestYear ?? (years.length ? years[years.length - 1] : null),
           newestYear: payload.newestYear ?? (years.length ? years[0] : null)
         });
         setSearchYear((current) => current !== "all" && !years.includes(Number(current)) ? "all" : current);
+        setSearchGenre((current) => current !== "all" && !genres.some((value) => value.toLocaleLowerCase() === current.toLocaleLowerCase()) ? "all" : current);
       } catch {
         if (!controller.signal.aborted) {
           setSearchYears([]);
+          setSearchGenres([]);
           setSearchDateRange(null);
         }
       }
     }
-    loadNormalSearchYears();
+    loadSearchFilters();
     return () => controller.abort();
   }, [kidsModeReady, kidsMode, searchOpen, searchType]);
-
   useEffect(() => {
     if (!kidsModeReady || !searchOpen) return undefined;
     const requestVersion = ++searchRequestVersion.current;
@@ -1178,6 +1192,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         const params = new URLSearchParams({ page: '1', limit: '20' });
         if (value.length >= 2) params.set('q', value);
         if (searchYear !== 'all') params.set('year', searchYear);
+        if (searchGenre !== 'all') params.set('genre', searchGenre);
         try {
           const response = await fetch('/api/cartoons/search?' + params.toString(), {
             cache: 'no-store', credentials: 'same-origin',
@@ -1209,7 +1224,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
         if (isCurrentRequest()) searchRequestVersion.current += 1;
       };
     }
-    if (value.length > 0 && value.length < 3) {
+    if (value.length > 0 && value.length < 2) {
       setSuggestions([]);
       setSuggestionsLoading(false);
       setSearchError('');
@@ -1217,7 +1232,8 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       setSearchPage(1);
       return undefined;
     }
-    const hasFilters = searchType !== 'all' || searchYear !== 'all';
+    const hasFilters = searchType !== 'all' || searchYear !== 'all' ||
+      searchGenre !== 'all' || searchSort !== 'relevance';
     if (!value && !hasFilters) {
       setSuggestions([]);
       setSuggestionsLoading(false);
@@ -1232,8 +1248,9 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       setSuggestionsLoading(true);
       setSearchError('');
       const params = new URLSearchParams({ page: '1', limit: '20', type: searchType });
-      if (value.length >= 3) params.set('q', value);
+      if (value.length >= 2) params.set('q', value);
       if (searchYear !== 'all') params.set('year', searchYear);
+      if (searchGenre !== 'all') params.set('genre', searchGenre);
       params.set('sort', searchSort);
       try {
         const response = await fetch('/api/search?' + params.toString(), {
@@ -1257,13 +1274,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
       } finally {
         if (!controller.signal.aborted && isCurrentRequest()) setSuggestionsLoading(false);
       }
-    }, value.length >= 3 ? 180 : 0);
+    }, value.length >= 2 ? 130 : 0);
     return () => {
       window.clearTimeout(timer);
       controller.abort();
       if (isCurrentRequest()) searchRequestVersion.current += 1;
     };
-  }, [searchInput, searchOpen, searchType, searchYear, searchSort, kidsModeReady, kidsMode]);
+  }, [searchInput, searchOpen, searchType, searchYear, searchSort, searchGenre, kidsModeReady, kidsMode]);
   useEffect(() => {
     if (!kidsModeReady || kidsMode) { setLoading(false); return undefined; }
     if (tab !== "home" && tab !== "movies" && tab !== "search") return;
@@ -1541,11 +1558,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (requestKidsMode) {
       if (value.length >= 2) params.set('q', value);
       if (searchYear !== 'all') params.set('year', searchYear);
+      if (searchGenre !== 'all') params.set('genre', searchGenre);
     } else {
       params.set('type', searchType);
       params.set('sort', searchSort);
-      if (value.length >= 3) params.set('q', value);
+      if (value.length >= 2) params.set('q', value);
       if (searchYear !== 'all') params.set('year', searchYear);
+      if (searchGenre !== 'all') params.set('genre', searchGenre);
     }
     setSearchLoadingMore(true);
     setSearchError('');
@@ -1921,7 +1940,11 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
     if (tab === "home" && featured) prefetchHomeSpotlight(featured);
   }, [tab, featured?.heroId]);
 
-  const searchDisplayItems = searchInput.trim()
+  const searchActiveFilterCount = Number(!kidsMode && searchType !== "all") +
+    Number(searchYear !== "all") + Number(searchGenre !== "all") +
+    Number(!kidsMode && searchSort !== "relevance");
+  const searchHasActiveFilters = searchActiveFilterCount > 0;
+  const searchDisplayItems = searchInput.trim() || searchHasActiveFilters
     ? suggestions
     : kidsMode ? suggestions : searchRecommendations;
 
@@ -2074,6 +2097,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 <BootstrapIcon icon="x-lg" size={16} />
               </button>
             </div>
+            <div className="search-input-row">
             <label className="search-dialog-input">
               <Search size={18} aria-hidden="true" />
               <input
@@ -2115,7 +2139,69 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 </button>
               )}
             </label>
-            {searchInput.trim().length > 0 && searchInput.trim().length < (kidsMode ? 2 : 3) ? null
+            <button
+              type="button"
+              className={"search-filter-toggle" + (searchFiltersOpen ? " is-open" : "") + (searchActiveFilterCount ? " has-filters" : "")}
+              aria-label="Search filters"
+              aria-expanded={searchFiltersOpen}
+              aria-controls="search-filter-panel"
+              onClick={() => setSearchFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal size={15} />
+              <span>Filters</span>
+              {searchActiveFilterCount > 0 && <small>{searchActiveFilterCount}</small>}
+            </button>
+            </div>
+            {searchFiltersOpen && (
+              <div className="search-filter-panel" id="search-filter-panel" aria-label="Search filters">
+                {!kidsMode && (
+                  <label className="search-filter-field">
+                    <span>Category</span>
+                    <select value={searchType} onChange={(event) => { setSearchType(event.target.value); setSelectedSearchIndex(0); }}>
+                      <option value="all">All</option>
+                      <option value="movie">Movies</option>
+                      <option value="tv">TV series</option>
+                      <option value="anime">Anime</option>
+                    </select>
+                  </label>
+                )}
+                <label className="search-filter-field">
+                  <span>Genre</span>
+                  <select value={searchGenre} onChange={(event) => { setSearchGenre(event.target.value); setSelectedSearchIndex(0); }}>
+                    <option value="all">All genres</option>
+                    {searchGenres.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+                  </select>
+                </label>
+                <label className="search-filter-field">
+                  <span>Release year</span>
+                  <select value={searchYear} onChange={(event) => { setSearchYear(event.target.value); setSelectedSearchIndex(0); }}>
+                    <option value="all">Any year</option>
+                    {searchYears.map((year) => <option key={year} value={String(year)}>{year}</option>)}
+                  </select>
+                </label>
+                {!kidsMode && (
+                  <label className="search-filter-field">
+                    <span>Sort by</span>
+                    <select value={searchSort} onChange={(event) => { setSearchSort(event.target.value); setSelectedSearchIndex(0); }}>
+                      <option value="relevance">Best match</option>
+                      <option value="newest">Newest</option>
+                      <option value="popular">Most popular</option>
+                      <option value="rating">Highest rated</option>
+                    </select>
+                  </label>
+                )}
+                {searchActiveFilterCount > 0 && (
+                  <button type="button" className="search-filter-reset" onClick={() => {
+                    setSearchType("all");
+                    setSearchYear("all");
+                    setSearchGenre("all");
+                    setSearchSort("relevance");
+                    setSelectedSearchIndex(0);
+                  }}>Clear filters</button>
+                )}
+              </div>
+            )}
+            {searchInput.trim().length > 0 && searchInput.trim().length < 2 ? null
               : suggestionsLoading ? (
                 <div className="suggestion-loading"><span className="suggestion-spinner" /> Searching…</div>
               ) : searchError && !searchDisplayItems.length ? (
@@ -2148,7 +2234,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                             : <div className="suggestion-poster"><BootstrapIcon icon="film" size={15} /></div>}
                           <span className="suggestion-title">
                             <strong>{item.heroTitle || item.titleEnglish || item.title}</strong>
-                            <small>{mediaLabel}{date ? " · " + String(date).slice(0, 10) : ""}</small>
+                            <small>{mediaLabel}{date ? " · " + String(date).slice(0, 10) : ""}{(Number(item.voteAverage ?? item.score) > 0) ? " · ★ " + Number(item.voteAverage ?? item.score).toFixed(1) : ""}</small>
                           </span>
                         </button>
                       );
@@ -2163,7 +2249,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                     </div>
                   )}
                 </>
-              ) : searchInput.trim().length >= (kidsMode ? 2 : 3) ? (
+              ) : searchInput.trim().length >= 2 ? (
                 <div className="suggestion-empty">No results</div>
               ) : null}
           </section>

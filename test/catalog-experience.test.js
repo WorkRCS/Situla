@@ -69,7 +69,10 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.match(app, /searchRecommendations/);
   assert.match(app, /searchDisplayItems/);
   assert.doesNotMatch(app, /search-type-filters|search-year-filter|search-sort-filter/);
-  assert.match(app, /searchInput\.trim\(\)\.length < \(kidsMode \? 2 : 3\)/);
+  assert.match(app, /search-filter-toggle/);
+  assert.match(app, /search-filter-panel/);
+  assert.match(app, /searchGenre/);
+  assert.match(app, /searchInput\.trim\(\)\.length < 2/);
   assert.match(app, /setSearchInput\(event\.target\.value\)/);
   assert.match(app, /loadMoreSearch/);
   assert.match(app, /onClick=\{\(\) => openSearchResult\(item\)\}/);
@@ -78,6 +81,8 @@ test("global search uses shared type/year filters and direct media navigation", 
   assert.match(app, /router\.push\("\/anime\/" \+ encodeURIComponent\(malId\)\)/);
   assert.match(css, /\.search-dialog-input \{/);
   assert.match(css, /\.search-recommendation-label/);
+  assert.match(css, /\.search-filter-panel \{/);
+  assert.match(css, /\.search-filter-toggle \{/);
   assert.doesNotMatch(api, /activeGroups.*Math\.random\(\)/s);
 });
 
