@@ -218,17 +218,22 @@ test("Cartoon listing pages use the same responsive catalogue frame and Movie/TV
   assert.ok(detail.includes("!hasEpisodeGuide"));
 });
 
-test("Search popup stays minimal while the catalogue still validates database years", async () => {
+test("advanced search keeps filters tucked away and loads database facets", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const backend = await read("../src/app.js");
   const helper = await read("../src/search-year-options.js");
 
   assert.ok(app.includes('/api/search/filters?type='));
-  assert.ok(!app.includes('searchYears.map((year) => <option'));
-  assert.ok(!app.includes('className="search-year-filter"'));
+  assert.ok(app.includes('/api/cartoons/search/filters'));
+  assert.ok(app.includes('searchFiltersOpen'));
+  assert.ok(app.includes('search-filter-panel'));
+  assert.ok(app.includes('searchYears.map((year) => <option'));
+  assert.ok(app.includes('searchGenres.map((genre) => <option'));
+  assert.ok(app.includes('className="search-filter-field"'));
   assert.ok(app.includes('setSearchType("all")'));
   assert.ok(app.includes('setSearchYear("all")'));
   assert.ok(backend.includes("app.get('/api/search/filters'"));
+  assert.ok(backend.includes("app.get('/api/cartoons/search/filters'"));
   assert.ok(backend.includes("catalog.Model.distinct('releaseYear'"));
   assert.ok(backend.includes("catalog.Model.distinct(catalog.dateField"));
   assert.ok(backend.includes("buildSearchYearOptions(values)"));
