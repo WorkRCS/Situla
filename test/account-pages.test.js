@@ -45,7 +45,7 @@ test("Login and profile routes provide the requested demo account experience", a
   assert.ok(login.includes("Password"));
   assert.ok(login.includes("Continue with email"));
   assert.ok(login.includes("Continue with Google"));
-  assert.doesNotMatch(login, /login-auth-hint|New email\\?|create a Free account automatically|Enter your account password|Password: 10–128 bytes/);
+  assert.doesNotMatch(login, /login-auth-hint|New email|create a Free account automatically|Enter your account password|Password: 10/);
   assert.match(login, /type=\{showPassword \? "text" : "password"\}/);
   assert.doesNotMatch(login, /name="password"[^>]*placeholder=/);
   assert.ok(login.includes("/api/auth/email"));
@@ -179,7 +179,7 @@ test("Login, Plans and Profile keep their existing content with a clearer respon
     read("../app/plans/plans-page.jsx"),
     read("../app/profile/page.jsx")
   ]);
-  const loginView = login.slice(login.indexOf("export function LoginPage"), login.indexOf("\\nfunction formatAccessDuration"));
+  const loginView = login.slice(login.indexOf("export function LoginPage"), login.indexOf("\nfunction formatAccessDuration"));
   assert.doesNotMatch(loginView, /New email\\?|create a Free account automatically|Enter your account password|login-auth-hint/);
   assert.ok(loginView.includes("Continue with email"));
   assert.ok(loginView.includes("Continue with Google"));
