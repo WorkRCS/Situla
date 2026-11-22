@@ -72,3 +72,27 @@ test('search results support newest, popularity and rating sort modes', () => {
   assert.equal(rankSearchResults(items, 'Dune', 'popular')[0].releaseDate, '2019-01-01');
   assert.equal(rankSearchResults(items, 'Dune', 'rating')[0].releaseDate, '2019-01-01');
 });
+
+
+test('advanced search can find a title through cast, crew, genre and studio metadata', () => {
+  const byCrew = searchRelevanceScore({
+    title: 'The Dark Knight',
+    searchTerms: ['Christian Bale', 'Heath Ledger', 'Christopher Nolan', 'Action', 'Crime']
+  }, 'Christopher Nolan');
+  const byGenre = searchRelevanceScore({
+    title: 'An unrelated title',
+    genres: ['Science Fiction', 'Adventure']
+  }, 'science fiction');
+  const exactTitle = searchRelevanceScore({ title: 'Science Fiction' }, 'science fiction');
+  assert.ok(byCrew > 0);
+  assert.ok(byGenre > 0);
+  assert.ok(exactTitle > byGenre);
+});
+
+test('IMDb, external IMDb, TMDB, MAL and AniList identifiers receive exact priority', () => {
+  assert.ok(searchRelevanceScore({ title: 'A Film', imdbId: 'tt1234567' }, 'tt1234567') > 1000);
+  assert.ok(searchRelevanceScore({ title: 'A Show', externalImdbId: 'tt7654321' }, 'tt7654321') > 1000);
+  assert.ok(searchRelevanceScore({ title: 'Anime', malId: 42 }, '42') > 1000);
+  assert.ok(searchRelevanceScore({ title: 'Anime', anilistId: 99 }, '99') > 1000);
+  assert.ok(searchRelevanceScore({ title: 'Series', tmdbId: 123 }, '123') > 1000);
+});
