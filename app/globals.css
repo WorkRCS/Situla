@@ -10159,3 +10159,205 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   }
 }
 
+/* Landing-only brand lockup: keep the Situla name visible beside the icon on small screens. */
+@media (min-width:768px) and (max-width:1100px) {
+  .site-app-header.home-app-header .header-inner {
+    display:flex !important;
+    grid-template-columns:none !important;
+    justify-content:space-between;
+    gap:14px;
+    padding-inline:clamp(16px,2.4vw,24px) !important;
+  }
+  .site-app-header.home-app-header .desktop-nav { display:none !important; }
+  .site-app-header.home-app-header .brand-lockup {
+    display:flex !important;
+    flex:0 0 auto;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+  .site-app-header.home-app-header .brand-copy {
+    display:grid !important;
+    min-width:0;
+    gap:2px;
+  }
+  .site-app-header.home-app-header .header-actions {
+    display:flex;
+    width:auto;
+    min-width:0;
+    flex:0 0 auto;
+    justify-content:flex-end;
+    gap:8px;
+    margin-left:auto;
+  }
+}
+@media (max-width:767px) {
+  .site-app-header.home-app-header .brand-copy { display:grid !important; }
+  .site-app-header.home-app-header .header-inner {
+    justify-content:space-between;
+    gap:7px;
+  }
+  .site-app-header.home-app-header .header-actions {
+    flex:0 0 auto;
+    width:auto;
+    justify-content:flex-end;
+  }
+}
+@media (max-width:390px) {
+  .site-app-header.home-app-header .header-inner {
+    gap:5px;
+    padding-inline:8px !important;
+  }
+  .site-app-header.home-app-header .brand-lockup { gap:5px; }
+  .site-app-header.home-app-header .brand-logo {
+    width:31px;
+    height:31px;
+  }
+  .site-app-header.home-app-header .brand-copy {
+    display:grid !important;
+    gap:1px;
+  }
+  .site-app-header.home-app-header .brand-copy strong {
+    font-size:12px;
+    letter-spacing:.06em;
+  }
+  .site-app-header.home-app-header .brand-copy small {
+    display:block !important;
+    font-size:6px;
+    letter-spacing:.09em;
+    line-height:1.1;
+  }
+  .site-app-header.home-app-header .header-actions { gap:4px; }
+  .site-app-header.home-app-header .header-avatar-trigger,
+  .site-app-header.home-app-header .header-notification-trigger,
+  .site-app-header.home-app-header .header-actions .header-search-trigger {
+    width:34px;
+    min-width:34px;
+    height:34px;
+    min-height:34px;
+  }
+}
+
+/* The landing hero animates one composited track; slides do not run a second transition. */
+.home-hero-deck {
+  contain:layout paint;
+  isolation:isolate;
+}
+.home-hero-deck-track {
+  transition:transform 360ms cubic-bezier(.2,.72,.2,1) !important;
+  will-change:transform;
+  backface-visibility:hidden;
+  transform-style:preserve-3d;
+}
+.home-hero-deck-track.is-rebasing {
+  transition:none !important;
+}
+.home-hero-deck-slide,
+.home-hero-deck-slide.is-center,
+.home-hero-deck-slide.is-adjacent,
+.home-hero-deck-slide.is-outer {
+  transition:none !important;
+  filter:none !important;
+  backface-visibility:hidden;
+}
+.home-hero-deck-slide.is-center { opacity:1; transform:scale(1); }
+.home-hero-deck-slide.is-adjacent { opacity:.84; transform:scale(.86); }
+.home-hero-deck-slide.is-outer { opacity:.22; transform:scale(.76); }
+.home-hero-deck-side img {
+  transform:translateZ(0);
+  backface-visibility:hidden;
+  filter:none !important;
+}
+@media (max-width:760px) {
+  .home-hero-deck-track {
+    transition-duration:320ms !important;
+  }
+  .home-hero-deck-slide.is-adjacent { opacity:.86; transform:scale(.89); }
+  .home-hero-deck-slide.is-outer { opacity:.18; transform:scale(.79); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .home-hero-deck-track,
+  .home-hero-deck-track.is-rebasing,
+  .home-hero-deck-slide,
+  .home-hero-deck-slide.is-center,
+  .home-hero-deck-slide.is-adjacent,
+  .home-hero-deck-slide.is-outer {
+    transition:none !important;
+  }
+}
+
+/* Media actions stay icon-sized and visually quiet; labels keep a stable readable scale. */
+.movie-card .catalog-badge {
+  left:7px !important;
+  top:7px !important;
+  max-width:calc(100% - 49px) !important;
+  min-height:22px !important;
+  box-sizing:border-box !important;
+  padding:4px 7px !important;
+  border-radius:6px !important;
+  font-size:9.5px !important;
+  line-height:1.1 !important;
+  letter-spacing:.035em !important;
+}
+.movie-card > .save-button,
+.movie-card > .share-button,
+.movie-card.series-card-tv > .save-button,
+.movie-card.series-card-tv > .share-button {
+  right:7px !important;
+  width:32px !important;
+  height:32px !important;
+  min-width:32px !important;
+  min-height:32px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  border:0 !important;
+  border-radius:50% !important;
+  color:#f5f6fa !important;
+  background:rgba(6,8,12,.32) !important;
+  box-shadow:none !important;
+  opacity:.96;
+}
+.movie-card > .save-button,
+.movie-card.series-card-tv > .save-button { top:7px !important; }
+.movie-card > .share-button,
+.movie-card.series-card-tv > .share-button { top:43px !important; }
+.movie-card > .save-button svg,
+.movie-card > .share-button svg {
+  width:16px !important;
+  height:16px !important;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9));
+}
+@media (hover:hover) and (pointer:fine) {
+  .movie-card > .save-button:hover,
+  .movie-card > .share-button:hover {
+    color:#f5d58f !important;
+    background:rgba(6,8,12,.62) !important;
+  }
+}
+.movie-card > .save-button:focus-visible,
+.movie-card > .share-button:focus-visible {
+  outline:2px solid rgba(245,213,143,.9);
+  outline-offset:1px;
+}
+.movie-card .rating-pill {
+  left:7px !important;
+  bottom:7px !important;
+  max-width:calc(100% - 42px) !important;
+  min-height:24px !important;
+  padding:4px 8px !important;
+  gap:4px !important;
+  font-size:10px !important;
+  line-height:1.1 !important;
+}
+.movie-card .rating-pill svg {
+  width:12px !important;
+  height:12px !important;
+}
+.home-collection-rated .series-card .rating-pill {
+  left:7px !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:7px !important;
+}
+
