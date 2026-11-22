@@ -105,19 +105,22 @@ test("Hero carousel keeps the active middle card larger than its side previews",
 
 
 
-test("Hero fits the viewport, keeps side previews softly blurred and contains mobile copy", async () => {
-  const css = await read("../app/globals.css");
+test("Hero fits the viewport, keeps side previews clear and contains mobile copy", async () => {
+  const [css, heroComponent] = await Promise.all([
+    read("../app/globals.css"),
+    read("../app/components/three-card-hero.jsx")
+  ]);
   const hero = css.slice(css.indexOf("/* Three-card Home spotlight:"));
 
   assert.match(hero, /height:clamp\(300px,min\(34vw,44svh\),430px\)/);
   assert.match(hero, /height:clamp\(290px,min\(38vw,46svh\),390px\)/);
   assert.match(hero, /will-change:transform/);
-  assert.match(hero, /loading=\{Math\.abs\(offset\) === 1 \? "eager" : "lazy"\}/);
-  assert.match(hero, /requestIdleCallback\(sampleWhenIdle, \{ timeout: 1400 \}\)/);
   assert.match(hero, /height:clamp\(285px,44svh,350px\)/);
   assert.match(hero, /height:100%; min-height:0; overflow:hidden/);
   assert.match(hero, /font-size:clamp\(19px,5vw,27px\)/);
   assert.match(hero, /min-height:33px/);
+  assert.match(heroComponent, /loading=\{Math\.abs\(offset\) === 1 \? "eager" : "lazy"\}/);
+  assert.match(heroComponent, /requestIdleCallback\(sampleWhenIdle, \{ timeout: 1400 \}\)/);
 });
 
 test("Full-site glass styling remains dark and applies restrained blur to shared navigation planes", async () => {
