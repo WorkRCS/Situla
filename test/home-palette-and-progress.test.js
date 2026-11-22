@@ -98,7 +98,9 @@ test("Hero carousel keeps the active middle card larger than its side previews",
   assert.match(css, /\.home-hero-deck-slide\.is-center\s*\{[\s\S]*?transform:scale\(1\)/);
   assert.match(css, /\.home-hero-deck-slide\.is-adjacent\s*\{[\s\S]*?transform:scale\(\.84\)/);
   assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.home-hero-deck-slide\.is-adjacent[^}]*transform:scale\(\.88\)/);
-  assert.match(css, /transition:opacity 520ms ease,filter 520ms ease,transform 520ms ease/);
+  assert.match(css, /\.home-hero-deck-track\s*\{[\s\S]*?transition:transform 360ms/);
+  assert.match(css, /\.home-hero-deck-slide,[\s\S]*?transition:none !important/);
+  assert.match(css, /\.home-hero-deck-slide\.is-adjacent\s*\{[\s\S]*?filter:none !important/);
 });
 
 
@@ -109,7 +111,9 @@ test("Hero fits the viewport, keeps side previews softly blurred and contains mo
 
   assert.match(hero, /height:clamp\(300px,min\(34vw,44svh\),430px\)/);
   assert.match(hero, /height:clamp\(290px,min\(38vw,46svh\),390px\)/);
-  assert.match(hero, /filter:blur\(\.7px\)/);
+  assert.match(hero, /will-change:transform/);
+  assert.match(hero, /loading=\{Math\.abs\(offset\) === 1 \? "eager" : "lazy"\}/);
+  assert.match(hero, /requestIdleCallback\(sampleWhenIdle, \{ timeout: 1400 \}\)/);
   assert.match(hero, /height:clamp\(285px,44svh,350px\)/);
   assert.match(hero, /height:100%; min-height:0; overflow:hidden/);
   assert.match(hero, /font-size:clamp\(19px,5vw,27px\)/);
@@ -130,3 +134,19 @@ test("Full-site glass styling remains dark and applies restrained blur to shared
   assert.doesNotMatch(glass, /\.movie-card[^}]*backdrop-filter/);
   assert.match(glass, /Only the large navigation planes sample the backdrop/);
 });
+
+test("landing hero slides through one compositor-friendly track with prepared adjacent posters", async () => {
+  const [hero, css] = await Promise.all([
+    read("../app/components/three-card-hero.jsx"),
+    read("../app/globals.css")
+  ]);
+  const finalMotion = css.slice(css.lastIndexOf("/* The landing hero animates one composited track"));
+  assert.match(hero, /onTransitionEnd=\{finishTransition\}/);
+  assert.match(hero, /loading=\{Math\.abs\(offset\) === 1 \? "eager" : "lazy"\}/);
+  assert.match(finalMotion, /transition:transform 360ms/);
+  assert.match(finalMotion, /will-change:transform/);
+  assert.match(finalMotion, /\.home-hero-deck-track\.is-rebasing\s*\{[\s\S]*?transition:none !important/);
+  assert.match(finalMotion, /\.home-hero-deck-slide,[\s\S]*?transition:none !important/);
+  assert.match(finalMotion, /@media \(max-width:760px\)[\s\S]*?transition-duration:320ms !important/);
+});
+
