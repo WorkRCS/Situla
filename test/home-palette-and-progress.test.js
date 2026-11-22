@@ -127,7 +127,7 @@ test("Full-site glass styling remains dark and applies restrained blur to shared
   const css = await read("../app/globals.css");
   const glassStart = css.indexOf("/* Shared dark-glass tokens for responsive Situla surfaces.");
   const navigationGlass = css.indexOf("Only the large navigation planes sample the backdrop", glassStart);
-  const glassEnd = css.indexOf("\\n/* ", navigationGlass);
+  const glassEnd = css.indexOf("/* Desktop restores the brand in the top header", navigationGlass);
   const glass = css.slice(glassStart, glassEnd > glassStart ? glassEnd : undefined);
 
   assert.match(glass, /--situla-glass-surface:rgba\(15,18,27,\.76\)/);
