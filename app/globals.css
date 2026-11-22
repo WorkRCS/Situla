@@ -10058,8 +10058,6 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
   text-overflow:ellipsis !important;
   white-space:nowrap !important;
   box-shadow:none !important;
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
 }
 .movie-card > .save-button,
 .movie-card > .share-button,
@@ -10143,10 +10141,10 @@ body:has(.bottom-nav) .site-footer.site-footer-app {
 .site-workspace > .site-sidebar,
 .bottom-nav,
 .site-workspace-mobile-nav,
-.movie-card .catalog-badge,
-.movie-card .rating-pill,
-.movie-card > .save-button,
-.movie-card > .share-button {
+.catalog-badge,
+.rating-pill,
+.save-button,
+.share-button {
   -webkit-backdrop-filter:none !important;
   backdrop-filter:none !important;
 }
