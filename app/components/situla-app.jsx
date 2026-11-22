@@ -70,6 +70,20 @@ function formatRuntime(minutes) {
   return formatRuntimeDuration(minutes);
 }
 
+function getAccountInitials(user) {
+  const supplied = String(user?.initials || "").trim();
+  if (supplied) return Array.from(supplied).slice(0, 2).join("").toLocaleUpperCase();
+
+  const displayName = String(
+    user?.name || user?.displayName || user?.fullName || user?.email || ""
+  ).trim();
+  const words = displayName.split(/\\s+/).filter(Boolean);
+  const initials = words.length > 1
+    ? words.slice(0, 2).map((word) => Array.from(word)[0] || "").join("")
+    : Array.from(words[0] || "").slice(0, 2).join("");
+  return initials.toLocaleUpperCase() || "S";
+}
+
 function chooseFreshSpotlight(items, storageKey, idField = "imdbId") {
   const validItems = (Array.isArray(items) ? items : []).filter((item) => item && item[idField]);
   if (!validItems.length) return null;
@@ -1921,13 +1935,13 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
               >
-                <span className="header-avatar-initials">{accountUser?.initials || 'S'}</span>
+                <span className="header-avatar-initials">{getAccountInitials(accountUser)}</span>
                 {demoSignedIn && <span className="header-avatar-online" aria-hidden="true" />}
               </button>
               {accountOpen && (
                 <div className="header-account-popover" role="menu" aria-label="User account">
                   <div className="header-popover-identity">
-                    <span className="header-popover-avatar">{accountUser?.initials || 'S'}</span>
+                    <span className="header-popover-avatar">{getAccountInitials(accountUser)}</span>
                     <span>
                       <strong>{demoSignedIn ? accountUser?.name || 'Welcome to Situla' : "Welcome to Situla"}</strong>
                       <small>{demoSignedIn ? accountUser?.email || 'Sign in to access your account' : "Sign in to access your account"}</small>

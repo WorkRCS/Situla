@@ -95,3 +95,32 @@ test("mobile navigation is explicitly hidden on desktop and enabled only below t
   assert.match(app, /<nav className=\{["']bottom-nav/);
   assert.match(sidebar, /className=\{["']bottom-nav site-workspace-mobile-nav/);
 });
+
+
+test("mobile navigation docks flush to the viewport with only its top corners rounded", async () => {
+  const css = await read("../app/globals.css");
+  const app = await read("../app/components/situla-app.jsx");
+  const fixedDock = css.slice(css.lastIndexOf("/* Mobile/tablet navigation is a fixed"));
+
+  assert.match(css, /\.site-app-header\s*\{[\s\S]*?position:sticky !important;[\s\S]*?top:0 !important;/);
+  assert.match(fixedDock, /position:fixed !important/);
+  assert.match(fixedDock, /bottom:0 !important/);
+  assert.match(fixedDock, /left:0 !important/);
+  assert.match(fixedDock, /width:100% !important/);
+  assert.match(fixedDock, /border-radius:22px 22px 0 0 !important/);
+  assert.match(fixedDock, /transform:none !important/);
+  assert.match(app, /function getAccountInitials\(user\)/);
+  assert.match(app, /getAccountInitials\(accountUser\)/);
+});
+
+test("header avatar initials stay legible on glass and fall back to the account name", async () => {
+  const [app, css] = await Promise.all([
+    read("../app/components/situla-app.jsx"),
+    read("../app/globals.css")
+  ]);
+
+  assert.match(app, /user\?\.name \|\| user\?\.displayName \|\| user\?\.fullName \|\| user\?\.email/);
+  assert.match(app, /return initials\.toLocaleUpperCase\(\) \|\| "S"/);
+  assert.match(app, /<span className="header-avatar-initials">\{getAccountInitials\(accountUser\)\}<\/span>/);
+  assert.match(css, /\.site-app-header \.header-avatar-initials\s*\{[\s\S]*?color:#2a1c0a !important;[\s\S]*?background:linear-gradient\(145deg,#ffe8b8,#d99a3e\) !important/);
+});
