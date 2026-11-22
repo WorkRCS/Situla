@@ -448,22 +448,21 @@ test("Home and catalog headers share one search trigger without an inline catalo
   assert.match(css, /@media \(max-width:767px\)[\s\S]*?header-search-label \{ display:none; \}/);
 });
 
-test("Sidebar collapse updates the parent grid and persists between routes", async () => {
+test("Sidebar collapse updates the parent grid and returns to collapsed on a fresh mount", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
 
   assert.match(app, /onCollapsedChange=\{setSidebarCollapsed\}/);
   assert.match(app, /sidebarCollapsed \? " is-sidebar-collapsed" : ""/);
-  assert.match(sidebar, /localStorage\.setItem\("situla:sidebar-collapsed:v2"/);
+  assert.match(sidebar, /const \[collapsed, setCollapsed\] = useState\(true\)/);
   assert.match(sidebar, /onCollapsedChange\?\.\(collapsed\)/);
+  assert.doesNotMatch(sidebar, /localStorage|sidebar-collapsed:v2/);
   assert.match(sidebar, /site-workspace" \+ \(sidebarCollapsed \? " is-sidebar-collapsed"/);
   assert.match(css, /\.home-page-layout\.is-sidebar-collapsed/);
   assert.match(css, /\.site-workspace\.is-sidebar-collapsed/);
   assert.doesNotMatch(css, /:has\(> \.site-sidebar\.is-collapsed\)/);
 });
-
-
 test("sidebar routes share the exact existing seven-item mobile navigation bar", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
