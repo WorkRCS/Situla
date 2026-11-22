@@ -455,7 +455,7 @@ test("Sidebar collapse updates the parent grid and persists between routes", asy
 
   assert.match(app, /onCollapsedChange=\{setSidebarCollapsed\}/);
   assert.match(app, /sidebarCollapsed \? " is-sidebar-collapsed" : ""/);
-  assert.match(sidebar, /localStorage\.setItem\("situla:sidebar-collapsed:v1"/);
+  assert.match(sidebar, /localStorage\.setItem\("situla:sidebar-collapsed:v2"/);
   assert.match(sidebar, /onCollapsedChange\?\.\(collapsed\)/);
   assert.match(sidebar, /site-workspace" \+ \(sidebarCollapsed \? " is-sidebar-collapsed"/);
   assert.match(css, /\.home-page-layout\.is-sidebar-collapsed/);

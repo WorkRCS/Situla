@@ -1925,7 +1925,9 @@ app.get('/api/search', async (c) => {
       uniqueItems.push(item);
     }
 
-    const rankedItems = rankSearchResults(uniqueItems, query, sort);
+    const rankedItems = sort === 'relevance'
+      ? rankSearchResults(uniqueItems, query)
+      : rankSearchResults(uniqueItems, query, sort);
     const items = rankedItems.slice(offset, offset + limit);
     const hasMore = page < 20 && (
       rankedItems.length > offset + limit ||

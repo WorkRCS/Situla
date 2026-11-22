@@ -282,7 +282,7 @@ test("catalog cards render differentiated automatic badges and search asks for a
   assert.doesNotMatch(app, /item\.catalogBadge &&/);
   assert.doesNotMatch(app, /catalogBadge\.icon/);
   assert.doesNotMatch(app, /popular-pill|isPopularCatalogItem/);
-  assert.match(app, /placeholder="Search & Title"/);
+  assert.match(app, /placeholder="Search titles, original names or catalogue IDs/);
   assert.doesNotMatch(app, /Search a title or IMDb \/ TMDB \/ MAL ID/);
   assert.match(css, /\.catalog-badge-hot/);
   assert.match(css, /\.catalog-badge-popular/);
