@@ -2157,7 +2157,7 @@ export default function SitulaApp({ view = "home", initialQuery = "" }) {
                   {searchError && <div className="search-inline-error" role="status">{searchError}</div>}
                   {searchInput.trim() && searchHasMore && (
                     <div className="search-dialog-footer">
-                      <button type="button" className="ghost-button" onClick={loadMoreSearch} disabled={searchLoadingMore}>
+                      <button type="button" className="search-load-more" onClick={loadMoreSearch} disabled={searchLoadingMore}>
                         {searchLoadingMore ? "Loading…" : "Load more"}
                       </button>
                     </div>

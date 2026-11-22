@@ -218,14 +218,14 @@ test("Cartoon listing pages use the same responsive catalogue frame and Movie/TV
   assert.ok(detail.includes("!hasEpisodeGuide"));
 });
 
-test("Normal and Kids search year selectors come from database date ranges only", async () => {
+test("Search popup stays minimal while the catalogue still validates database years", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const backend = await read("../src/app.js");
   const helper = await read("../src/search-year-options.js");
 
   assert.ok(app.includes('/api/search/filters?type='));
-  assert.ok(app.includes('searchYears.map((year) => <option'));
-  assert.ok(!app.includes('new Date().getFullYear() - 1869'));
+  assert.ok(!app.includes('searchYears.map((year) => <option'));
+  assert.ok(!app.includes('className="search-year-filter"'));
   assert.ok(app.includes('setSearchType("all")'));
   assert.ok(app.includes('setSearchYear("all")'));
   assert.ok(backend.includes("app.get('/api/search/filters'"));
