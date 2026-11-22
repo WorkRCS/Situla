@@ -256,13 +256,12 @@ export function LoginPage() {
               <span>Password</span>
               <span className="account-input-wrap">
                 <LockKeyhole size={17} />
-                <input type={showPassword ? "text" : "password"} name="password" autoComplete="current-password" placeholder="At least 10 characters" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} maxLength={128} required />
+                <input type={showPassword ? "text" : "password"} name="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} maxLength={128} required />
                 <button type="button" className="account-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </span>
             </label>
-            <p className="login-auth-hint">New email? Situla will create a Free account automatically. Existing email? Enter your account password to sign in. Password: 10–128 bytes.</p>
             <button type="submit" className="account-primary-button" disabled={submitting}>Continue with email</button>
           </form>
           {authError && <p className="account-action-notice" role="alert">{authError}</p>}
