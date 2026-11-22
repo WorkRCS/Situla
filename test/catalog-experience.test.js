@@ -275,7 +275,7 @@ test("Movie, TV and Anime catalogue cards use the same polished card and badge s
   assert.match(css, /prefers-reduced-motion:reduce[\s\S]*?\.movie-card \.movie-poster img/);
 });
 
-test("mobile/tablet navigation keeps a proportionate glass dock with seven default items and five Kids items", async () => {
+test("mobile/tablet navigation uses a proportionate glass dock with seven default items and five Kids items", async () => {
   const app = await read("../app/components/situla-app.jsx");
   const sidebar = await read("../app/components/site-sidebar.jsx");
   const css = await read("../app/globals.css");
@@ -287,16 +287,15 @@ test("mobile/tablet navigation keeps a proportionate glass dock with seven defau
   assert.ok(workspaceNav.includes("(activeKidsMode ? SITE_KIDS_MOBILE_NAV_ITEMS : SITE_MOBILE_NAV_ITEMS).map"));
   assert.ok(workspaceNav.includes('className={"nav-button site-workspace-mobile-link"'));
   assert.doesNotMatch(bottomNav, /navigateBack|setSearchOpen|>Search</);
-  assert.ok(css.includes("position:fixed !important"));
-  assert.ok(css.includes("bottom:0 !important"));
-  assert.ok(css.includes("width:100% !important"));\n  assert.ok(css.includes("width:min(940px,calc(100% - 44px)) !important"));
-  assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important"));
+  assert.ok(css.includes("grid-template-columns:repeat(7,minmax(0,1fr)) !important;"));
   assert.ok(css.includes(".bottom-nav.is-kids-nav { grid-template-columns:repeat(5,minmax(0,1fr)) !important; }"));
-  assert.ok(css.includes("border-radius:22px 22px 0 0 !important"));\n  assert.ok(css.includes("border-radius:25px !important"));
-  assert.ok(css.includes("backdrop-filter:blur(14px) saturate(148%) !important"));
-  assert.ok(css.includes("backdrop-filter:none !important"));
-  const finalDock = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
-  assert.doesNotMatch(finalDock, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
+
+  const finalDock = css.slice(css.lastIndexOf("/* Situla navigation glass system:"));
+  assert.ok(finalDock.includes("left:50% !important;"));
+  assert.ok(finalDock.includes("transform:translateX(-50%) !important;"));
+  assert.ok(finalDock.includes("width:min(940px,calc(100% - 44px)) !important;"));
+  assert.ok(finalDock.includes("backdrop-filter:blur(14px) saturate(148%) !important;"));
+  assert.match(finalDock, /\.bottom-nav \.nav-button\.active::before/);
 });
 
 test("all Situla page text is non-selectable", async () => {

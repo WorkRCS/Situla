@@ -125,8 +125,8 @@ test("Full-site glass styling remains dark and applies restrained blur to shared
   assert.match(glass, /backdrop-filter:blur\(7px\) saturate\(122%\)/);
   assert.match(glass, /prefers-reduced-transparency:reduce/);
   assert.match(glass, /--situla-glass-shadow:inset 0 1px 0/);
-  assert.doesNotMatch(glass, /\.gold-button|\.ghost-button|\.plans-card-action|\.nav-button/);
-  assert.doesNotMatch(glass, /0 5px 16px/);\n  assert.match(glass, /Only the large navigation planes sample the backdrop/);
+  assert.doesNotMatch(glass, /\.gold-button|\.ghost-button|\.plans-card-action/);
+  assert.doesNotMatch(glass, /0 5px 16px/);
   assert.doesNotMatch(glass, /\.movie-card[^}]*backdrop-filter/);
+  assert.match(glass, /Only the large navigation planes sample the backdrop/);
 });
-

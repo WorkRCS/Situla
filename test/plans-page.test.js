@@ -122,12 +122,13 @@ test("Plans is standalone, keeps only its back link and owns the footer in the s
 
 test("the shared workspace nav is a centered floating glass capsule with a proportionate responsive width", async () => {
   const css = await read("../app/globals.css");
-  const sharedNav = css.slice(css.lastIndexOf("/* Match the existing mobile navigation bar"));
+  const sharedNav = css.slice(css.lastIndexOf("/* Situla navigation glass system:"));
   assert.ok(sharedNav.includes("position:fixed !important;"));
   assert.ok(sharedNav.includes("left:50% !important;"));
   assert.ok(sharedNav.includes("right:auto !important;"));
   assert.ok(sharedNav.includes("bottom:max(14px,env(safe-area-inset-bottom)) !important;"));
   assert.ok(sharedNav.includes("width:min(940px,calc(100% - 44px)) !important;"));
   assert.ok(sharedNav.includes("border-radius:25px !important;"));
-  assert.doesNotMatch(sharedNav, /left:50%;[\s\S]*?transform:translateX\(-50%\)/);
+  assert.ok(sharedNav.includes("backdrop-filter:blur(14px) saturate(148%) !important;"));
+  assert.match(sharedNav, /\.bottom-nav \.nav-button\.active::before/);
 });
